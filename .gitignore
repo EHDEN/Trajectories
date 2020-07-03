@@ -1,0 +1,28 @@
+# Do not add .Rproj.user and .Rhistory to git as it may contain sensitive information #
+###################
+.Rproj.user
+.Rhistory
+
+# Do not add .Renviron to git as it may contain ddatabase credentials #
+###################
+.Renviron
+
+# Do not add errorReport.txt to git repository #
+###################
+errorReport.txt
+
+# Do not add log files to git repository #
+###################
+*.log
+
+# Do not add OS generated files #
+######################
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+.RData

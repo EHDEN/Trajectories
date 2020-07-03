@@ -1,0 +1,29 @@
+Package: Trajectories
+Type: Package
+Title: Tool to visualize temporal event trajectories in OMOP common data model
+Version: 0.0.1
+Date: 2020-04-07
+Description: Takes events from OMOP CDM database, detects significant directional event pairs, visualizes them.
+LazyData: true
+Authors@R: c(
+    person("Kadri", "Künnapuu", , "kadri.kunnapuu@stacc.ee", role = c("aut", "cre")),
+    person("Kadri", "Ligi", role = c("aut")),
+    person("Raivo", "Kolde", role = c("aut")),
+    person("Sulev", "Reisberg", role = c("aut")),
+    person("Sven", "Laur", role = c("aut"))
+    )
+Maintainer: Kadri Künnapuu <kadri.kunnapuu@stacc.ee>
+License: license
+Depends:
+    R (>= 3.2.2),
+    DatabaseConnector (>= 2.2.0),
+    dplyr (>= 0.8.5),
+    stringi (>= 1.4.5),
+    SqlRender (>= 1.5.2),
+    ff,
+    ffbase (>= 0.12.7),
+    igraph (>= 1.2.5)
+Imports:
+    networkD3 (>= 2.0.3)
+Encoding: UTF-8
+RoxygenNote: 7.0.2
