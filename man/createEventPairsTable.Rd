@@ -24,6 +24,7 @@ createEventPairsTable(
   minimumDaysBetweenEvents,
   maximumDaysBetweenEvents,
   minPatientsPerEventPair,
+  daysBeforeIndexDate = Inf,
   prefixForResultTableNames = "",
   cohortTableSchema,
   cohortTable,
@@ -69,6 +70,8 @@ createEventPairsTable(
 \item{maximumDaysBetweenEvents}{The maximum number of days between 2 events of the patient that can be considered as event pair}
 
 \item{minPatientsPerEventPair}{Minimum number of people having event1 -> event2 progression to be included in analysis. Can be used for limiting analysis to frequent event pairs only. However, it does not throw less frequent diagnosis pairs out of the (control group) data and therefore, does not affect the statistical significance.}
+
+\item{daysBeforeIndexDate}{0 or any positive number that indicates for how many days before index date of the cohort the events are included in the analysis. In case one wants to include all events before index date, use value Inf}
 
 \item{prefixForResultTableNames}{This is the prefix that is used for all table names in analysis process. The aim is to avoid any collision with output table names (when someone runs the same analysis in parallel). Default value is ''.}
 

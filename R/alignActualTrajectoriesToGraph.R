@@ -6,14 +6,14 @@ library(dplyr)
 
 #' Adds numcohortCustom value to graph edges - actual number of people (out of all people who have EVENTNAME) on that edge
 #'
-#' @param g
+#' @param g an igrpah object that is created by specific graph functions in this package
 #' @param packageName
 #' @param connection
 #' @param resultsSchema
 #' @param prefixForResultTableNames
 #' @param limit Max number of trajectories to align (to limit the analysis). Set to NA if no limit.
 #' @param eventname
-#' @param sqlRole
+#' @param sqlRole SQL role that is used to create tables in resultsSchema. Set to FALSE if a specific role is not needed
 #'
 #' @return
 #' @export
@@ -21,7 +21,7 @@ library(dplyr)
 #' @examples
 alignActualTrajectoriesToGraph <- function(packageName,
                                            connection,
-                                           sqlRole,
+                                           sqlRole=F,
                                            resultsSchema,
                                            prefixForResultTableNames,
                                            g,
@@ -48,8 +48,7 @@ alignActualTrajectoriesToGraph <- function(packageName,
   tablename<-paste0(resultsSchema,'.',prefixForResultTableNames,'mylinks')
 
     #but before actual TABLE CREATE there is an extra step: if sqlRole is given, set session to correct role before creating the table
-    RenderedSql=SqlRender::translate(sql = paste0("SET ROLE ",sqlRole,";"), targetDialect=attr(connection, "dbms"), oracleTempSchema = NULL)
-    DatabaseConnector::executeSql(connection, RenderedSql)
+    Trajectories::setRole(connection,sqlRole)
 
   insertTable(connection, tablename, edges, tempTable=F, progressBar=T)
 
@@ -61,7 +60,6 @@ alignActualTrajectoriesToGraph <- function(packageName,
                                                    packageName=packageName,
                                                    dbms=attr(connection, "dbms"),
                                                    resultsSchema =  resultsSchema,
-                                                   sqlRole = sqlRole,
                                                    prefiX = prefixForResultTableNames,
                                                    eventid=eventid,
                                                    limit=limit

@@ -1,6 +1,3 @@
--- If sqlRole is given then let's use it
-{sqlRole != ''}?{SET ROLE @sqlRole;}
-
 -- crete temporary tables for calculation
 
 IF OBJECT_ID('@resultsSchema.@prefixcohorts_with_d1', 'U') IS NOT NULL

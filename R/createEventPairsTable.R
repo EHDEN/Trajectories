@@ -6,7 +6,7 @@ library(SqlRender)
 #' @param connection DatabaseConnectorConnection object that is used to connect with database
 #' @param dbms The target SQL dialect that is used by SqlRender
 #' @param oracleTempSchema A schema that can be used to create temp tables in when using Oracle. Used by SqlRender
-#' @param sqlRole Database role that is used when creating tables to 'resultsSchema'. It should also have access to 'cdmDatabaseSchema' and 'vocabDatabaseSchema'. Set to empty string ('') if setting a specific role is not needed.
+#' @param sqlRole Database role that is used when creating tables to 'resultsSchema'. It should also have access to 'cdmDatabaseSchema' and 'vocabDatabaseSchema'. Set to F a specific role is not needed.
 #' @param resultsSchema Database schema where the temporary analysis tables are created. They are temporary in a sense that they are deleted in the end of the analysis (the tables are not created as CREATE TEMPORARY TABLE...)
 #' @param cdmDatabaseSchema Database schema where the actual OMOP-formatted data is stored and taken into analysis
 #' @param vocabDatabaseSchema Database schema that contains 'concept' table of OMOP vocabulary
@@ -36,7 +36,7 @@ createEventPairsTable<-function(packageName,
                                 connection,
                                 dbms,
                                 oracleTempSchema,
-                                sqlRole,
+                                sqlRole=F,
                                 resultsSchema,
                                 cdmDatabaseSchema,
                                 vocabDatabaseSchema,
@@ -101,14 +101,13 @@ createEventPairsTable<-function(packageName,
 
   print(paste0("Running SQL..."))
 
-  # Make sure that no-one uses F as sqlRole
-  if(sqlRole==F) sqlRole="";
+  #Set SQL role of the database session
+  Trajectories::setRole(connection,sqlRole)
 
   RenderedSql = SqlRender::loadRenderTranslateSql(sqlFilename='1CohortCC.sql',
                                                   packageName=packageName,
                                                   dbms = dbms,
                                                   oracleTempSchema = NULL,
-                                                  sqlRole = sqlRole,
                                                   resultsSchema = resultsSchema,
                                                   cdmDatabaseSchema = cdmDatabaseSchema,
                                                   vocabDatabaseSchema = vocabDatabaseSchema,

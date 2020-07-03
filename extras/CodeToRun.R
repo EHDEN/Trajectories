@@ -11,7 +11,7 @@ resultsSchema = 'ohdsi_dev' #s chema the user has writing access to (used ti wri
 oracleTempSchema = "temp_schema" # In case you are using oracle, schema for temporary tables need to be specified. A schema where temp tables can be created in Oracle. Otherwise leave it as it is (is not used)
 USER = Sys.getenv('DB_USERNAME') #Currently takes the value form .Renviron file in the package folder
 PASS = Sys.getenv('DB_PASSWORD') #Currently takes the value form .Renviron file in the package folder
-sqlRole = 'hwisc_epi_ohdsi_dev_create'  # Role to use in SQL for writing tables in 'resultsSchema'. It should also have access to 'cdmDatabaseSchema' and 'vocabDatabaseSchema'. Set to empty string ('') if setting a specific role is not neeed
+sqlRole = F  # Role to use in SQL for writing tables in 'resultsSchema'. It should also have access to 'cdmDatabaseSchema' and 'vocabDatabaseSchema'. Set to FALSE (or F) if setting to a specific role is not needed. In Estonian data is has to be hwisc_epi_ohdsi_dev_create
 
 
 

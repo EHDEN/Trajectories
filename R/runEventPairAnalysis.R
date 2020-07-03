@@ -7,7 +7,7 @@ library(ff)
 #' @param connection DatabaseConnectorConnection object that is used to connect with database
 #' @param dbms The target SQL dialect that is used by SqlRender
 #' @param oracleTempSchema A schema that can be used to create temp tables in when using Oracle. Used by SqlRender
-#' @param sqlRole Database role that is used when creating tables in 'resultsSchema'. Set to empty string ('') if setting a specific role is not needed.
+#' @param sqlRole Database role that is used when creating tables in 'resultsSchema'. Set to F if a specific role is not needed.
 #' @param resultsSchema Database schema where the temporary analysis tables are created. They are temporary in a sense that they are deleted in the end of the analysis (the tables are not created as CREATE TEMPORARY TABLE...)
 #' @param prefixForResultTableNames This is the prefix that is used for all table names in analysis process. Table with that prefix should already exist in the database (created by function createEventPairsTable()). Default value is ''.
 #' @param eventPairResultsFilename Filename where the results of the analysis (significant directional event pairs) are written to
@@ -21,15 +21,15 @@ runEventPairAnalysis<-function(packageName,
                                connection,
                                dbms,
                                oracleTempSchema = NULL,
-                               sqlRole='',
+                               sqlRole=F,
                                resultsSchema,
                                prefixForResultTableNames = "",
                                eventPairResultsFilename = 'event_pairs.tsv',
                                eventPairResultsStatsFilename = 'event_pairs_stats.txt') {
   print(paste0("Detect statistically significant directional event pairs and write the results to ",eventPairResultsFilename,"..."))
 
-  # Make sure that no-one uses F as sqlRole
-  if(sqlRole==F) sqlRole="";
+  #Set SQL role of the database session
+  Trajectories::setRole(connection,sqlRole)
 
   # Get all (frequent) event pairs from the database
   RenderedSql <- SqlRender::loadRenderTranslateSql("2GetPairs.sql",
@@ -147,7 +147,6 @@ runEventPairAnalysis<-function(packageName,
         RenderedSql <- SqlRender::loadRenderTranslateSql("7DirectionCounts.sql",
                                                          packageName=packageName,
                                                          dbms=dbms,
-                                                         sqlRole = sqlRole,
                                                          resultsSchema =  resultsSchema,
                                                          diag1 = diagnosis1,
                                                          diag2 = diagnosis2,
@@ -208,7 +207,6 @@ runEventPairAnalysis<-function(packageName,
   RenderedSql <- SqlRender::loadRenderTranslateSql("11ResultsReader.sql",
                                                    packageName=packageName,
                                                    dbms=dbms,
-                                                   #role_for_writing = sqlRole,
                                                    resultsSchema =  resultsSchema,
                                                    prefix = prefixForResultTableNames,
                                                    cutoff_val=cutoff_pval,

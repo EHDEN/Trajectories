@@ -13,11 +13,13 @@ createIgraph(
   eventPairResultsFilename,
   outputFolder,
   cohortName = "",
-  eventName = ""
+  eventName = NA
 )
 }
 \arguments{
 \item{outputFolder}{Output folder (should exist) without trailing slash}
+
+\item{eventName}{Exact concept name that is used for building trajectories. Must exist in event pairs data table. If not specified (NA) (recommended) creates trajectories for top 5 events.}
 }
 \value{
 

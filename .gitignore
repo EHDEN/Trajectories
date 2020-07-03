@@ -10,6 +10,7 @@
 # Do not add errorReport.txt to git repository #
 ###################
 errorReport.txt
+errorReportSql.txt
 
 # Do not add log files to git repository #
 ###################

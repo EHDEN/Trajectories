@@ -1,6 +1,3 @@
--- If sqlRole is given then let's use it
-{sqlRole != ''}?{SET ROLE @sqlRole;}
-
 IF OBJECT_ID('@resultsSchema.@prefiXcohorts_with_d1', 'U') IS NOT NULL
   DROP TABLE @resultsSchema.@prefiXcohorts_with_d1;
 IF OBJECT_ID('@resultsSchema.@prefiXcohorts_with_d1d2', 'U') IS NOT NULL

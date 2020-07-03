@@ -7,7 +7,7 @@ library(DatabaseConnector)
 #' @param packageName
 #' @param connection DatabaseConnectorConnection object that is used to connect with database
 #' @param dbms
-#' @param sqlRole SQL role that is used to drop cohort table in cohortTableSchema. Set to empty string ('') if setting a specific role is not needed.
+#' @param sqlRole SQL role that is used to drop cohort table in cohortTableSchema. Set to FALSE if a specific role is not needed
 #' @param cohortTableSchema
 #' @param cohortTable
 #'
@@ -18,19 +18,18 @@ library(DatabaseConnector)
 dropCohortTable<-function(packageName,
                             connection,
                              dbms,
-                             sqlRole='',
+                             sqlRole=F,
                              cohortTableSchema = cohortTableSchema,
                              cohortTable = "my_cohorts") {
 
   print(paste0('Dropping cohort table <',cohortTable,'> from <',cohortTableSchema,'> schema...'))
 
-  # Make sure that no-one uses F as sqlRole
-  if(sqlRole==F) sqlRole="";
+  #Set SQL role of the database session
+  Trajectories::setRole(connection,sqlRole)
 
   RenderedSql <- SqlRender::loadRenderTranslateSql('dropCohortTable.sql',
                                                  packageName=packageName,
                                                  dbms=dbms,
-                                                 sqlRole=sqlRole,
                                                  cohortTableSchema=cohortTableSchema,
                                                  cohortTable=cohortTable
   )

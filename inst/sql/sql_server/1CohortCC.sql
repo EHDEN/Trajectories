@@ -5,9 +5,6 @@
 -- 3) @resultsSchema.@prefiXevent_summary - gender, age, discharge_time, person_count based on events_person_pairs
 ---------------------------------
 
--- If sqlRole is given then let's use it
-{sqlRole != ''}?{SET ROLE @sqlRole;}
-
 
 ---------------------------------------------------------------------------------------
 -- Create a temporary table for debugging
