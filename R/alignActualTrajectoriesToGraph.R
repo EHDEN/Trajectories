@@ -1,5 +1,3 @@
-library(ff)
-library(ffbase)
 library(igraph)
 library(dplyr)
 

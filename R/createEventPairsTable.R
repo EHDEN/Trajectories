@@ -111,7 +111,6 @@ createEventPairsTable<-function(packageName,
                                                   resultsSchema = resultsSchema,
                                                   cdmDatabaseSchema = cdmDatabaseSchema,
                                                   vocabDatabaseSchema = vocabDatabaseSchema,
-                                                  dbUsername=connection@jConnection$getUserName(), #only to log the username to debug table (allows finding "my" tables later)
                                                   earliestDate =  earliestDate,
                                                   minimumDaysBetweenEvents = minimumDaysBetweenEvents,
                                                   maximumDaysBetweenEvents = maximumDaysBetweenEvents,

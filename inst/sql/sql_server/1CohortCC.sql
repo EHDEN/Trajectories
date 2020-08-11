@@ -17,7 +17,7 @@ CREATE TABLE @resultsSchema.@prefiXdebug (
     timestamp DATETIME DEFAULT CURRENT_TIMESTAMP
 );
 
-INSERT INTO @resultsSchema.@prefiXdebug (entry) VALUES ('Debug table created by @dbUsername');
+INSERT INTO @resultsSchema.@prefiXdebug (entry) VALUES ('Debug table created');
 
 
 ---------------------------------------------------------------------------------------

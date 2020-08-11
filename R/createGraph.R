@@ -1,5 +1,3 @@
-library(ff)
-library(ffbase)
 library(igraph)
 library(dplyr)
 #' Builds an igraph object based on event pairs data in "eventPairResultsFilename" file

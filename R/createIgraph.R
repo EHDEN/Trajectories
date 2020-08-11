@@ -1,5 +1,3 @@
-library(ff)
-library(ffbase)
 library(igraph)
 library(dplyr)
 #' Title
@@ -218,7 +216,6 @@ filterIgraphRemoveLowEffectLinks<-function(g, edge_param_to_sort_by=c('effect','
 addNumcohortCustom <- function(g, eventname, actualTrajs) {
 
 
-  #actualTrajs<-read.csv2.ffdf(file = "/Users/sulevr/temp/cohorts_of_pairs.tsv", sep = '\t', header = TRUE) #we use ff-package here to avoid reading the whole file into memory
 
   print(paste0('Aligning actual event trajectories (of people who have actually had <',eventname,'>) to the graph (',length(E(g)),' edges in total)...'))
 

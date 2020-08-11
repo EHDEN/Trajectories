@@ -20,8 +20,6 @@ Depends:
     dplyr (>= 0.8.5),
     stringi (>= 1.4.5),
     SqlRender (>= 1.5.2),
-    ff,
-    ffbase (>= 0.12.7),
     igraph (>= 1.2.5)
 Imports:
     networkD3 (>= 2.0.3)
