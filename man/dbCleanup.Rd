@@ -9,7 +9,7 @@ dbCleanup(
   connection,
   dbms,
   oracleTempSchema = NULL,
-  sqlRole = "",
+  sqlRole = F,
   resultsSchema,
   prefixForResultTableNames = ""
 )
@@ -23,7 +23,7 @@ dbCleanup(
 
 \item{oracleTempSchema}{A schema that can be used to create temp tables in when using Oracle. Used by SqlRender}
 
-\item{sqlRole}{Database role that was used when creating/dropping tables in resultsSchema. Set to empty string ('') if setting a specific role is not needed.}
+\item{sqlRole}{Database role that was used when creating/dropping tables in resultsSchema. Set to F if a specicif role is not needed}
 
 \item{resultsSchema}{Database schema where the temporary analysis tables were created.}
 

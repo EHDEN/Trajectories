@@ -22,7 +22,6 @@ mainOutputFolder='/Users/sulevr/temp'
 
 # The following parameters are used in the calculations.
 # You can change them, but you can also leave them as they are.
-earliestDate = '1900-01-01' # Cutoff date - all events before that date are cut off from the data. Format 'yyyy-mm-dd'. Can be used for limiting possible bias during dataset launching stage.
 minimumDaysBetweenEvents = 1 # The smallest number of days between 2 events of the patient that can be considered as event pair. Usually we have used 1.
 # TODO should investigate what happens if minimumDaysBetweenEvents=0, 1, -1.... This number cannot be negative (breaks SQL)! Seems that 0 does not make sense as in this case we cannot check direction. So, the minimum value should be 1, I guess.
 maximumDaysBetweenEvents = 3650  # The maximum number of days between 2 events of the patient that can be considered as event pair. Ususally we have not really limited it so we have used 3650 (10 years)
@@ -33,7 +32,7 @@ addProcedures=T # TRUE/FALSE parameter to indicate whether events from Procedure
 # NB! DO NOT USE BOTH addDrugEras=T and addDrugExposures=T (not both) as it leads to analysis duplication and breaks some code... (same "drug" event may occur several times which is not allowed)
 addDrugExposures=F # TRUE/FALSE parameter to indicate whether events from Drug_exposure table should be included in the analysis
 addDrugEras=T# TRUE/FALSE parameter to indicate whether events from Drug_era table should be included in the analysis. NB! use either addDrugEras=T or addDrugExposures=T (not both) as it leads to analysis duplication...
-addBirths=T # TRUE/FALSE parameter to indicate whether births events should be included in the analysis. It uses birth dates of the persons, if these dates >= 'earliestDate'
+addBirths=T # TRUE/FALSE parameter to indicate whether births events should be included in the analysis.
 addDeaths=T # TRUE/FALSE parameter to indicate whether events from Death table should be included in the analysis.
 daysBeforeIndexDate=Inf # 0 or any positive number that indicates for how many days before index date of the cohort the events are included in the analysis. In case one wants to include all events before index date, use value Inf
 cohortSqlFile='example_cohort_RA.sql'
@@ -123,7 +122,6 @@ Trajectories::createEventPairsTable(packageName=packageName,
                                            addDrugEras=addDrugEras,
                                            addBirths=addBirths,
                                            addDeaths=addDeaths,
-                                           earliestDate =  earliestDate,
                                            minimumDaysBetweenEvents = minimumDaysBetweenEvents,
                                            maximumDaysBetweenEvents = maximumDaysBetweenEvents,
                                            minPatientsPerEventPair = minPatientsPerEventPair,

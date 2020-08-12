@@ -9,7 +9,7 @@ createEventPairsTable(
   connection,
   dbms,
   oracleTempSchema,
-  sqlRole,
+  sqlRole = F,
   resultsSchema,
   cdmDatabaseSchema,
   vocabDatabaseSchema,
@@ -20,7 +20,6 @@ createEventPairsTable(
   addDrugEras = F,
   addBirths = F,
   addDeaths = T,
-  earliestDate,
   minimumDaysBetweenEvents,
   maximumDaysBetweenEvents,
   minPatientsPerEventPair,
@@ -41,7 +40,7 @@ createEventPairsTable(
 
 \item{oracleTempSchema}{A schema that can be used to create temp tables in when using Oracle. Used by SqlRender}
 
-\item{sqlRole}{Database role that is used when creating tables to 'resultsSchema'. It should also have access to 'cdmDatabaseSchema' and 'vocabDatabaseSchema'. Set to empty string ('') if setting a specific role is not needed.}
+\item{sqlRole}{Database role that is used when creating tables to 'resultsSchema'. It should also have access to 'cdmDatabaseSchema' and 'vocabDatabaseSchema'. Set to F a specific role is not needed.}
 
 \item{resultsSchema}{Database schema where the temporary analysis tables are created. They are temporary in a sense that they are deleted in the end of the analysis (the tables are not created as CREATE TEMPORARY TABLE...)}
 
@@ -62,8 +61,6 @@ createEventPairsTable(
 \item{addBirths}{TRUE/FALSE parameter to indicate whether births events should be included in the analysis. It uses birth dates of the persons, if these dates >= 'earliestDate'}
 
 \item{addDeaths}{TRUE/FALSE parameter to indicate whether events from Death table should be included in the analysis.}
-
-\item{earliestDate}{Cutoff date - all events before that date are cut off from the data. Format 'yyyy-mm-dd'. Can be used for limiting possible bias during dataset launching stage.}
 
 \item{minimumDaysBetweenEvents}{The minimum number of days between 2 events of the patient that can be considered as event pair}
 

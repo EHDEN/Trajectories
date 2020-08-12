@@ -7,7 +7,7 @@
 alignActualTrajectoriesToGraph(
   packageName,
   connection,
-  sqlRole,
+  sqlRole = F,
   resultsSchema,
   prefixForResultTableNames,
   g,
@@ -16,7 +16,9 @@ alignActualTrajectoriesToGraph(
 )
 }
 \arguments{
-\item{sqlRole}{}
+\item{sqlRole}{SQL role that is used to create tables in resultsSchema. Set to FALSE if a specific role is not needed}
+
+\item{g}{an igrpah object that is created by specific graph functions in this package}
 
 \item{limit}{Max number of trajectories to align (to limit the analysis). Set to NA if no limit.}
 }

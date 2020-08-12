@@ -8,7 +8,7 @@ createCohortTable(
   packageName,
   connection,
   dbms,
-  sqlRole = "",
+  sqlRole = F,
   cohortTableSchema = cohortTableSchema,
   cohortTable = "my_cohorts"
 )
@@ -16,7 +16,7 @@ createCohortTable(
 \arguments{
 \item{connection}{DatabaseConnectorConnection object that is used to connect with database}
 
-\item{sqlRole}{SQL role that is used to create cohort table in cohortTableSchema. Set to empty string ('') if setting a specific role is not needed.}
+\item{sqlRole}{SQL role that is used to create cohort table in cohortTableSchema. Set to FALSE if a specific role is not needed}
 
 \item{cohortTable}{}
 }

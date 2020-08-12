@@ -9,7 +9,7 @@ runEventPairAnalysis(
   connection,
   dbms,
   oracleTempSchema = NULL,
-  sqlRole = "",
+  sqlRole = F,
   resultsSchema,
   prefixForResultTableNames = "",
   eventPairResultsFilename = "event_pairs.tsv",
@@ -25,7 +25,7 @@ runEventPairAnalysis(
 
 \item{oracleTempSchema}{A schema that can be used to create temp tables in when using Oracle. Used by SqlRender}
 
-\item{sqlRole}{Database role that is used when creating tables in 'resultsSchema'. Set to empty string ('') if setting a specific role is not needed.}
+\item{sqlRole}{Database role that is used when creating tables in 'resultsSchema'. Set to F if a specific role is not needed.}
 
 \item{resultsSchema}{Database schema where the temporary analysis tables are created. They are temporary in a sense that they are deleted in the end of the analysis (the tables are not created as CREATE TEMPORARY TABLE...)}
 

@@ -7,7 +7,7 @@
 createIgraph(
   packageName,
   connection,
-  sqlRole,
+  sqlRole = F,
   resultsSchema,
   prefixForResultTableNames,
   eventPairResultsFilename,
@@ -17,6 +17,8 @@ createIgraph(
 )
 }
 \arguments{
+\item{sqlRole}{Database role that is used when creating tables to 'resultsSchema'. Set to F if a specific role is not needed.}
+
 \item{outputFolder}{Output folder (should exist) without trailing slash}
 
 \item{eventName}{Exact concept name that is used for building trajectories. Must exist in event pairs data table. If not specified (NA) (recommended) creates trajectories for top 5 events.}

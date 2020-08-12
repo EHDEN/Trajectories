@@ -147,14 +147,13 @@ CREATE TABLE @resultsSchema.@prefiXevents AS
      SELECT
       c.cohort_id                   AS cohort_id,
       4216316                       AS dgn, -- this is a birth event
-      MIN(e.birth_datetime::date)   AS date
+      MIN(CAST(e.birth_datetime AS DATE))   AS date
      FROM @cdmDatabaseSchema.person e
-     INNER JOIN @resultsSchema.@prefiXetcohort c ON e.person_id=c.person_id {@daysBeforeIndexDate == Inf} ? {} : { AND DATEADD(day,@daysBeforeIndexDate,e.condition_start_date)>=c.cohort_start_date } AND e.birth_datetime::date>=c.cohort_start_date AND e.birth_datetime::date<=c.cohort_end_date
+     INNER JOIN @resultsSchema.@prefiXetcohort c ON e.person_id=c.person_id {@daysBeforeIndexDate == Inf} ? {} : { AND DATEADD(day,@daysBeforeIndexDate,e.condition_start_date)>=c.cohort_start_date } AND CAST(e.birth_datetime AS DATE)>=c.cohort_start_date AND CAST(e.birth_datetime AS DATE)<=c.cohort_end_date
      WHERE
       TRUE=@addBirths -- if addBirths is TRUE, then this UNION is ADDED, otherwise this query give 0 rows as result
       AND
       e.birth_datetime IS NOT NULL
-      --AND birth_datetime::date >= date '@earliestDate'
     GROUP BY c.cohort_id
 
     UNION ALL -- we use UNION ALL as it does not try to delete duplicates (faster) (although there cant be any anyways)
@@ -163,9 +162,9 @@ CREATE TABLE @resultsSchema.@prefiXevents AS
     SELECT
       c.cohort_id                 AS cohort_id,
       40566982                    AS dgn, -- this is a death event
-      MIN(e.death_datetime::date) AS date
+      MIN(CAST(e.death_datetime AS DATE)) AS date
     FROM @cdmDatabaseSchema.death e
-    INNER JOIN @resultsSchema.@prefiXetcohort c on e.person_id=c.person_id {@daysBeforeIndexDate == Inf} ? {} : { AND DATEADD(day,@daysBeforeIndexDate,e.condition_start_date)>=c.cohort_start_date } AND e.death_datetime::date>=c.cohort_start_date AND e.death_datetime::date<=c.cohort_end_date
+    INNER JOIN @resultsSchema.@prefiXetcohort c on e.person_id=c.person_id {@daysBeforeIndexDate == Inf} ? {} : { AND DATEADD(day,@daysBeforeIndexDate,e.condition_start_date)>=c.cohort_start_date } AND CAST(e.death_datetime AS DATE)>=c.cohort_start_date AND CAST(e.death_datetime AS DATE)<=c.cohort_end_date
     WHERE
       TRUE=@addDeaths -- if addDeaths is TRUE, then this UNION is ADDED, otherwise this query give 0 rows as result
       AND

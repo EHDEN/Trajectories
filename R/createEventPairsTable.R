@@ -15,9 +15,8 @@ library(SqlRender)
 #' @param addProcedures TRUE/FALSE parameter to indicate whether events from Procedure_occurrence table should be included in the analysis
 #' @param addDrugExposures TRUE/FALSE parameter to indicate whether events from Drug_exposure table should be included in the analysis
 #' @param addDrugEras TRUE/FALSE parameter to indicate whether events from Drug_era table should be included in the analysis
-#' @param addBirths TRUE/FALSE parameter to indicate whether births events should be included in the analysis. It uses birth dates of the persons, if these dates >= 'earliestDate'
+#' @param addBirths TRUE/FALSE parameter to indicate whether births events should be included in the analysis.
 #' @param addDeaths TRUE/FALSE parameter to indicate whether events from Death table should be included in the analysis.
-#' @param earliestDate Cutoff date - all events before that date are cut off from the data. Format 'yyyy-mm-dd'. Can be used for limiting possible bias during dataset launching stage.
 #' @param minimumDaysBetweenEvents The minimum number of days between 2 events of the patient that can be considered as event pair
 #' @param maximumDaysBetweenEvents The maximum number of days between 2 events of the patient that can be considered as event pair
 #' @param minPatientsPerEventPair Minimum number of people having event1 -> event2 progression to be included in analysis. Can be used for limiting analysis to frequent event pairs only. However, it does not throw less frequent diagnosis pairs out of the (control group) data and therefore, does not affect the statistical significance.
@@ -47,7 +46,6 @@ createEventPairsTable<-function(packageName,
                                 addDrugEras=F,
                                 addBirths=F,
                                 addDeaths=T,
-                                earliestDate,
                                 minimumDaysBetweenEvents,
                                 maximumDaysBetweenEvents,
                                 minPatientsPerEventPair,
@@ -65,7 +63,6 @@ createEventPairsTable<-function(packageName,
         paste(format(Sys.time(), '%d %B %Y %H:%M')),
         paste(''),
         paste('dbms:',dbms),
-        paste('minimal_condition_start_date:',earliestDate),
         paste('minimumDaysBetweenEvents:',minimumDaysBetweenEvents),
         paste('maximumDaysBetweenEvents:',maximumDaysBetweenEvents),
         paste('minPatientsPerEventPair:',minPatientsPerEventPair),
@@ -111,7 +108,6 @@ createEventPairsTable<-function(packageName,
                                                   resultsSchema = resultsSchema,
                                                   cdmDatabaseSchema = cdmDatabaseSchema,
                                                   vocabDatabaseSchema = vocabDatabaseSchema,
-                                                  earliestDate =  earliestDate,
                                                   minimumDaysBetweenEvents = minimumDaysBetweenEvents,
                                                   maximumDaysBetweenEvents = maximumDaysBetweenEvents,
                                                   minPatientsPerEventPair = minPatientsPerEventPair,
