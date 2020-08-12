@@ -22,6 +22,7 @@ vocabDatabaseSchema = 'ohdsi' # schema containing concepts library
 resultsSchema = 'ohdsi_dev' #s chema the user has writing access to (used ti write new tables into)
 oracleTempSchema = "temp_schema" # In case you are using oracle, schema for temporary tables need to be specified. A schema where temp tables can be created in Oracle. Otherwise leave it as it is (is not used)
 sqlRole = 'hwisc_epi_ohdsi_dev_create'  # Role to use in SQL for writing tables in 'resultsSchema'. It should also have access to 'cdmDatabaseSchema' and 'vocabDatabaseSchema'. Set to FALSE (or F) if setting to a specific role is not needed. In Estonian data is has to be hwisc_epi_ohdsi_dev_create
+library(stringi)
 prefixForResultTableNames = paste0(  if(!is.null(attr(connectionDetails,'user'))) substr(USER,1,2), stri_rand_strings(1, 2, pattern = "[A-Za-z]"), sep="_") # To avoid any collision with output table names (when someone runs the same analysis in parallel) we use a prefix for all table names that consists of 2 letters from username and 2 random characters. In case there is no username given (e.g Eunomia package, the prefix is simply 2 random characters)
 #Cohort table specifications (currently in development. Leave them as they are)
 cohortTableSchema=resultsSchema #currently in development. Leave it as it is.
@@ -64,7 +65,7 @@ mainOutputFolder='/Users/sulevr/temp'
 minimumDaysBetweenEvents = 1 # The smallest number of days between 2 events of the patient that can be considered as event pair. Usually we have used 1.
 # TODO should investigate what happens if minimumDaysBetweenEvents=0, 1, -1.... This number cannot be negative (breaks SQL)! Seems that 0 does not make sense as in this case we cannot check direction. So, the minimum value should be 1, I guess.
 maximumDaysBetweenEvents = 3650  # The maximum number of days between 2 events of the patient that can be considered as event pair. Ususally we have not really limited it so we have used 3650 (10 years)
-minPatientsPerEventPair = 5 # Minimum number of people having event1 -> event2 progression to be included in analysis. Can be used for limiting analysis to frequent event pairs only. However, it does not throw less frequent diagnosis pairs out of the (control group) data and therefore, does not affect the statistical significance.
+minPatientsPerEventPair = 100 # Minimum number of people having event1 -> event2 progression to be included in analysis. Can be used for limiting analysis to frequent event pairs only. However, it does not throw less frequent diagnosis pairs out of the (control group) data and therefore, does not affect the statistical significance.
 addConditions=T # TRUE/FALSE parameter to indicate whether events from Condition_occurrence table should be included in the analysis
 addObservations=T # TRUE/FALSE parameter to indicate whether events from Condition_occurrence table should be included in the analysis
 addProcedures=T # TRUE/FALSE parameter to indicate whether events from Procedure_occurrence table should be included in the analysis
@@ -81,7 +82,6 @@ cohortName="Rheumatoid arthritis" # Reader-friendly short description of the coh
 
 # The following parameters are just for customisation, mainly used during the development process of the package.
 # You can leave them as they are.
-library(stringi)
 packageName='Trajectories' #do not edit, this is required by SqlRender::loadRenderTranslateSql
 
 
@@ -99,12 +99,6 @@ if (!dir.exists(outputFolder)){
   dir.create(outputFolder)
 }
 
-
-
-# ##################################################
-# Load the main package
-# ##################################################
-library(Trajectories)
 
 
 # ##################################################
