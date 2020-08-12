@@ -191,17 +191,11 @@ CREATE TABLE  @resultsSchema.@prefiXsingle_event_cohorts AS
     GROUP BY cohort_id
     HAVING COUNT(dgn)=1;
 
-DELETE FROM @resultsSchema.@prefiXevents e
-WHERE EXISTS
-  (SELECT 1
-    FROM @resultsSchema.@prefiXsingle_event_cohorts d
-    WHERE e.cohort_id = d.cohort_id);
+DELETE FROM @resultsSchema.@prefiXevents
+WHERE cohort_id IN (SELECT cohort_id FROM @resultsSchema.@prefiXsingle_event_cohorts);
 
-DELETE FROM @resultsSchema.@prefiXetcohort e
-WHERE EXISTS
-  (SELECT 1
-    FROM @resultsSchema.@prefiXsingle_event_cohorts d
-    WHERE e.cohort_id = d.cohort_id);
+DELETE FROM @resultsSchema.@prefiXetcohort
+WHERE cohort_id IN (SELECT cohort_id FROM @resultsSchema.@prefiXsingle_event_cohorts);
 
 
 IF OBJECT_ID('@resultsSchema.@prefiXsingle_event_cohorts', 'U') IS NOT NULL
@@ -398,14 +392,13 @@ SET EVENT2_COUNT = (SELECT event_counts FROM @resultsSchema.@prefiXevent_counts 
 
 --- Instead of using concept id-s, take concept names + concept domains to d1d2_model from concept table
 UPDATE @resultsSchema.@prefiXd1d2_model
-SET EVENT1_NAME = concept.concept_name, EVENT1_DOMAIN=concept.domain_id
-FROM @vocabDatabaseSchema.concept
-WHERE @prefiXd1d2_model.event1_concept_id=concept.concept_id;
+SET EVENT1_NAME = (SELECT concept.concept_name FROM @vocabDatabaseSchema.concept WHERE concept_id=event1_concept_id),
+    EVENT1_DOMAIN = (SELECT concept.domain_id FROM @vocabDatabaseSchema.concept WHERE concept_id=event1_concept_id);
+
 
 UPDATE @resultsSchema.@prefiXd1d2_model
-SET EVENT2_NAME = concept.concept_name, EVENT2_DOMAIN=concept.domain_id
-FROM @vocabDatabaseSchema.concept
-WHERE @prefiXd1d2_model.event2_concept_id=concept.concept_id;
+SET EVENT2_NAME = (SELECT concept.concept_name FROM @vocabDatabaseSchema.concept WHERE concept_id=event2_concept_id),
+    EVENT2_DOMAIN = (SELECT concept.domain_id FROM @vocabDatabaseSchema.concept WHERE concept_id=event2_concept_id);
 
 
 ---------------------------------------------------------------------
@@ -419,8 +412,8 @@ IF OBJECT_ID('@resultsSchema.@prefiXd1d2_summary', 'U') IS NOT NULL
 
 CREATE TABLE @resultsSchema.@prefiXd1d2_summary as
     SELECT
-      a.event1_concept_id,
-      a.event2_concept_id,
+      a.event1_concept_id AS event1_concept_id,
+      a.event2_concept_id AS event2_concept_id,
       gender,
       age,
       discharge_time,
