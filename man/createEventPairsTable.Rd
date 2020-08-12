@@ -7,7 +7,6 @@
 createEventPairsTable(
   packageName,
   connection,
-  dbms,
   oracleTempSchema,
   sqlRole = F,
   resultsSchema,
@@ -36,8 +35,6 @@ createEventPairsTable(
 
 \item{connection}{DatabaseConnectorConnection object that is used to connect with database}
 
-\item{dbms}{The target SQL dialect that is used by SqlRender}
-
 \item{oracleTempSchema}{A schema that can be used to create temp tables in when using Oracle. Used by SqlRender}
 
 \item{sqlRole}{Database role that is used when creating tables to 'resultsSchema'. It should also have access to 'cdmDatabaseSchema' and 'vocabDatabaseSchema'. Set to F a specific role is not needed.}
@@ -58,7 +55,7 @@ createEventPairsTable(
 
 \item{addDrugEras}{TRUE/FALSE parameter to indicate whether events from Drug_era table should be included in the analysis}
 
-\item{addBirths}{TRUE/FALSE parameter to indicate whether births events should be included in the analysis. It uses birth dates of the persons, if these dates >= 'earliestDate'}
+\item{addBirths}{TRUE/FALSE parameter to indicate whether births events should be included in the analysis.}
 
 \item{addDeaths}{TRUE/FALSE parameter to indicate whether events from Death table should be included in the analysis.}
 

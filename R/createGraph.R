@@ -18,10 +18,6 @@ createGraph<-function(eventPairResultsFilename) {
   #remove everything with births (remove from here later, just for debugging)
   #e<-e[e$EVENT1_NAME!='Pneumonia',]
 
-  #actual trajectories
-  #t = read.csv2.ffdf(file = eventPairCohortsFilename, sep = '\t', header = TRUE) #we use ff-package here to avoid reading the whole file into memory
-  #ffload(eventPairCohortsFilename, overwrite=TRUE) #loads an object "trajs" from file
-
   # convert chr columns to numeric
   e$EVENT_PAIR_EFFECT<-as.numeric(e$EVENT_PAIR_EFFECT)
   e$AVG_NUMBER_OF_DAYS_BETWEEN_EVENTS<-as.numeric(e$AVG_NUMBER_OF_DAYS_BETWEEN_EVENTS)
@@ -32,12 +28,12 @@ createGraph<-function(eventPairResultsFilename) {
   #In each event pair the age of event1 might be different
   #For a graph, we use the minimum date of the following: MIN( min(25% quantile if given), min (event2_estimated_age if given))
   # first, find out what is the lowest age_q25 for that event, if the event is among event1
-  x<-e %>% group_by(EVENT1_NAME) %>% mutate(min_q25_age_of_event1=quantile(Q25_AGE_OF_COHORT_EVENT1_OCCURS_FIRST,c(0.25))) %>% ungroup() %>% select (event=EVENT1_NAME,age=min_q25_age_of_event1)
+  #x<-e %>% group_by(EVENT1_NAME) %>% mutate(min_q25_age_of_event1=quantile(Q25_AGE_OF_COHORT_EVENT1_OCCURS_FIRST,c(0.25))) %>% ungroup() %>% select (event=EVENT1_NAME,age=min_q25_age_of_event1)
   # second, find out what is the expected age for that event, if the event is among event2 (calculated from event1 age)
-  e$event2_estimated_age <- e$Q25_AGE_OF_COHORT_EVENT1_OCCURS_FIRST+round(e$AVG_NUMBER_OF_DAYS_BETWEEN_EVENTS/365.25)
-  y<-e %>% group_by(EVENT2_NAME) %>% mutate(min_estimated_age=quantile(event2_estimated_age,c(0.25))) %>% ungroup() %>% select (event=EVENT2_NAME,age=min_estimated_age)
+  #e$event2_estimated_age <- e$Q25_AGE_OF_COHORT_EVENT1_OCCURS_FIRST+round(e$AVG_NUMBER_OF_DAYS_BETWEEN_EVENTS/365.25)
+  #y<-e %>% group_by(EVENT2_NAME) %>% mutate(min_estimated_age=quantile(event2_estimated_age,c(0.25))) %>% ungroup() %>% select (event=EVENT2_NAME,age=min_estimated_age)
   # Finally, take the minimum value of those 2
-  AGES<-as.data.frame(rbind(x,y) %>% group_by(event) %>% mutate(AGE_FOR_GRAPH=min(age)) %>% ungroup() %>% select (event,AGE_FOR_GRAPH) %>% unique())
+  #AGES<-as.data.frame(rbind(x,y) %>% group_by(event) %>% mutate(AGE_FOR_GRAPH=min(age)) %>% ungroup() %>% select (event,AGE_FOR_GRAPH) %>% unique())
   # End of age calculation
 
   # calculate max event count for scaling
@@ -68,16 +64,18 @@ createGraph<-function(eventPairResultsFilename) {
                                                 count=e[i,'EVENT1_COUNT'],
                                                 #size=e[i,'EVENT1_COUNT']/max_event_count,
                                                 color=COLORS[[e[i,'EVENT1_DOMAIN']]],
-                                                labelcolor=LABELCOLORS[[e[i,'EVENT1_DOMAIN']]],
-                                                age=AGES[AGES$event==e1,'AGE_FOR_GRAPH'])
+                                                labelcolor=LABELCOLORS[[e[i,'EVENT1_DOMAIN']]]
+                                                #, age=AGES[AGES$event==e1,'AGE_FOR_GRAPH']
+                                                )
       }
       if(!e2 %in% V(g)$name) {g <- g + vertices(e2,
                                                 concept_id=e[i,'EVENT2_CONCEPT_ID'],
                                                 count=e[i,'EVENT2_COUNT'],
                                                 #size=e[i,'EVENT2_COUNT']/max_event_count,
                                                 color=COLORS[[e[i,'EVENT2_DOMAIN']]],
-                                                labelcolor=LABELCOLORS[[e[i,'EVENT2_DOMAIN']]],
-                                                age=AGES[AGES$event==e2,'AGE_FOR_GRAPH'])
+                                                labelcolor=LABELCOLORS[[e[i,'EVENT2_DOMAIN']]]
+                                                #, age=AGES[AGES$event==e2,'AGE_FOR_GRAPH']
+                                                )
       }
       # add edge
       g <- g + edge(e1,

@@ -4,7 +4,6 @@ library(SqlRender)
 #'
 #' @param packageName Must always have value 'Trajectories'. The value is needed by SqlRender to find the SQL scripts from the right path.
 #' @param connection DatabaseConnectorConnection object that is used to connect with database
-#' @param dbms The target SQL dialect that is used by SqlRender
 #' @param oracleTempSchema A schema that can be used to create temp tables in when using Oracle. Used by SqlRender
 #' @param sqlRole Database role that is used when creating tables to 'resultsSchema'. It should also have access to 'cdmDatabaseSchema' and 'vocabDatabaseSchema'. Set to F a specific role is not needed.
 #' @param resultsSchema Database schema where the temporary analysis tables are created. They are temporary in a sense that they are deleted in the end of the analysis (the tables are not created as CREATE TEMPORARY TABLE...)
@@ -33,7 +32,6 @@ library(SqlRender)
 #' @examples
 createEventPairsTable<-function(packageName,
                                 connection,
-                                dbms,
                                 oracleTempSchema,
                                 sqlRole=F,
                                 resultsSchema,
@@ -62,7 +60,7 @@ createEventPairsTable<-function(packageName,
         paste('============================================================'),
         paste(format(Sys.time(), '%d %B %Y %H:%M')),
         paste(''),
-        paste('dbms:',dbms),
+        paste('dbms:',connection@dbms),
         paste('minimumDaysBetweenEvents:',minimumDaysBetweenEvents),
         paste('maximumDaysBetweenEvents:',maximumDaysBetweenEvents),
         paste('minPatientsPerEventPair:',minPatientsPerEventPair),
@@ -103,7 +101,7 @@ createEventPairsTable<-function(packageName,
 
   RenderedSql = SqlRender::loadRenderTranslateSql(sqlFilename='1CohortCC.sql',
                                                   packageName=packageName,
-                                                  dbms = dbms,
+                                                  dbms = connection@dbms,
                                                   oracleTempSchema = NULL,
                                                   resultsSchema = resultsSchema,
                                                   cdmDatabaseSchema = cdmDatabaseSchema,
@@ -132,7 +130,7 @@ createEventPairsTable<-function(packageName,
   # Get all (frequent) event pairs from the database
   RenderedSql <- SqlRender::loadRenderTranslateSql("2GetPairs.sql",
                                                    packageName=packageName,
-                                                   dbms=dbms,
+                                                   dbms=connection@dbms,
                                                    resultsSchema = resultsSchema,
                                                    prefix = prefixForResultTableNames
   )

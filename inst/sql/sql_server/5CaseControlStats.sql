@@ -1,11 +1,11 @@
 SELECT --a.event1_concept_id,
        --b.event2_concept_id,
-       a.gender,
-       a.age,
-       a.discharge_time,
-       c.cohort_count as control_count, -- number of cohorts that have event pairs
+       a.gender AS gender,
+       a.age AS age,
+       a.discharge_time AS discharge_time,
+       c.cohort_count AS control_count, -- number of cohorts that have event pairs
        CASE WHEN d.cohort_count IS NULL THEN 0 ELSE d.cohort_count END AS control_d2, -- number of cohorts that have event2_concept_id as the second event of the event pair
-       a.cohort_count as case_count, -- number of cohorts that have event1_concept_id as the first event of the event pair
+       a.cohort_count AS case_count, -- number of cohorts that have event1_concept_id as the first event of the event pair
        CASE WHEN b.cohort_count IS NULL THEN 0 ELSE b.cohort_count END AS case_d2 -- number of cohorts that have exactly event1_concept_id->event2_concept_id event pair
   FROM
     @resultsSchema.@prefixd1_summary a
