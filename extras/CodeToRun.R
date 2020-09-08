@@ -17,18 +17,18 @@ connectionDetails = createConnectionDetails(dbms = 'postgresql',#  e.g. oracle, 
                                             connectionString = "jdbc:postgresql://10.6.6.29:5432/hwisc_epi")
 
 
-# Setting database parameters:
+# Setting database parameters - CHANGE ACCORDING TO YOUR DATABASE:
 library(stringi)
 trajectoryLocalArgs <- Trajectories::createTrajectoryLocalArgs(oracleTempSchema = "temp_schema",
-                                                               prefixForResultTableNames = "kadritest", #/ paste0(  if(!is.null(attr(connectionDetails,'user'))) substr(USER,1,2), stri_rand_strings(1, 2, pattern = "[A-Za-z]"), sep="_")
+                                                               prefixForResultTableNames = "test", #/ paste0(  if(!is.null(attr(connectionDetails,'user'))) substr(USER,1,2), stri_rand_strings(1, 2, pattern = "[A-Za-z]"), sep="_")
                                                                cdmDatabaseSchema = 'ohdsi',
                                                                vocabDatabaseSchema = 'ohdsi',
-                                                               resultsSchema = 'ohdsi_dev',
-                                                               sqlRole = 'hwisc_epi_ohdsi_dev_create',
+                                                               resultsSchema = 'results',
+                                                               sqlRole = 'myRole',
                                                                cohortTableSchema= 'ohdsi_dev',
                                                                cohortTable='cohort',
                                                                cohortId=1,
-                                                               mainOutputFolder='/Users/Kaust/temp',
+                                                               mainOutputFolder='/temp',
                                                                cohortSqlFile='example_cohort_RA.sql')
 
 
