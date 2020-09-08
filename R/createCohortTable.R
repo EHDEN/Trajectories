@@ -15,23 +15,20 @@ library(DatabaseConnector)
 #' @export
 #'
 #' @examples
-createCohortTable<-function(packageName,
-                            connection,
-                             dbms,
-                             sqlRole=F,
-                             cohortTableSchema = cohortTableSchema,
-                             cohortTable = "my_cohorts") {
+createCohortTable<-function(connection,
+                            trajectoryAnalysisArgs,
+                            trajectoryLocalArgs) {
 
-  print(paste0('Creating cohort table <',cohortTable,'> to <',cohortTableSchema,'> schema...'))
-
+  print(paste0('Creating cohort table <',trajectoryLocalArgs$cohortTable,'> to <',trajectoryLocalArgs$cohortTableSchema,'> schema...'))
+  print(trajectoryLocalArgs)
   #Set SQL role of the database session
-  Trajectories::setRole(connection,sqlRole)
+  Trajectories::setRole(connection,trajectoryLocalArgs$sqlRole)
 
   RenderedSql <- SqlRender::loadRenderTranslateSql('createCohortTable.sql',
-                                                 packageName=packageName,
-                                                 dbms=dbms,
-                                                 cohortTableSchema=cohortTableSchema,
-                                                 cohortTable=cohortTable
+                                                 packageName=trajectoryAnalysisArgs$packageName,
+                                                 dbms=connection@dbms,
+                                                 cohortTableSchema=trajectoryLocalArgs$cohortTableSchema,
+                                                 cohortTable=trajectoryLocalArgs$cohortTable
   )
   DatabaseConnector::executeSql(connection, RenderedSql)
 

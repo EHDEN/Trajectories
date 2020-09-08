@@ -4,20 +4,12 @@
 \alias{dbCleanup}
 \title{Removes all database tables that were created during the analysis}
 \usage{
-dbCleanup(
-  packageName = packageName,
-  connection,
-  dbms,
-  oracleTempSchema = NULL,
-  sqlRole = F,
-  resultsSchema,
-  prefixForResultTableNames = ""
-)
+dbCleanup(connection, trajectoryAnalysisArgs, trajectoryLocalArgs)
 }
 \arguments{
-\item{packageName}{Must always have value 'Trajectories'. The value is needed by SqlRender to find the SQL scripts from the right path.}
-
 \item{connection}{DatabaseConnectorConnection object that is used to connect with database}
+
+\item{packageName}{Must always have value 'Trajectories'. The value is needed by SqlRender to find the SQL scripts from the right path.}
 
 \item{dbms}{The target SQL dialect that is used by SqlRender}
 

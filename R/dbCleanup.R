@@ -14,24 +14,20 @@ library(SqlRender)
 #' @export
 #'
 #' @examples
-dbCleanup<-function(packageName=packageName,
-                               connection,
-                               dbms,
-                               oracleTempSchema = NULL,
-                               sqlRole = F,
-                               resultsSchema,
-                               prefixForResultTableNames = '') {
+dbCleanup<-function(connection,
+                    trajectoryAnalysisArgs,
+                    trajectoryLocalArgs) {
 
-  print(paste0("Cleanup: dropping all analysis tables with prefix '",prefixForResultTableNames,"' from database..."))
+  print(paste0("Cleanup: dropping all analysis tables with prefix '",trajectoryLocalArgs$prefixForResultTableNames,"' from database..."))
 
   #Set SQL role of the database session
-  Trajectories::setRole(connection,sqlRole)
+  Trajectories::setRole(connection,trajectoryLocalArgs$sqlRole)
 
   RenderedSql <- SqlRender::loadRenderTranslateSql("12TableDropper.sql",
-                                                   packageName=packageName,
-                                                   dbms=dbms,
-                                                   resultsSchema =  resultsSchema,
-                                                   prefiX = prefixForResultTableNames
+                                                   packageName=trajectoryAnalysisArgs$packageName,
+                                                   dbms=connection@dbms,
+                                                   resultsSchema =  trajectoryLocalArgs$resultsSchema,
+                                                   prefiX = trajectoryLocalArgs$prefixForResultTableNames
   )
   DatabaseConnector::executeSql(connection, RenderedSql)
   print('...done.')

@@ -4,14 +4,7 @@
 \alias{dropCohortTable}
 \title{Function to drop cohort table.}
 \usage{
-dropCohortTable(
-  packageName,
-  connection,
-  dbms,
-  sqlRole = F,
-  cohortTableSchema = cohortTableSchema,
-  cohortTable = "my_cohorts"
-)
+dropCohortTable(connection, trajectoryAnalysisArgs, trajectoryLocalArgs)
 }
 \arguments{
 \item{connection}{DatabaseConnectorConnection object that is used to connect with database}

@@ -1,5 +1,4 @@
 library(SqlRender)
-
 #' Creates event pairs table and populates it with the data
 #'
 #' @param packageName Must always have value 'Trajectories'. The value is needed by SqlRender to find the SQL scripts from the right path.
@@ -30,30 +29,12 @@ library(SqlRender)
 #' @export
 #'
 #' @examples
-createEventPairsTable<-function(packageName,
-                                connection,
-                                oracleTempSchema,
-                                sqlRole=F,
-                                resultsSchema,
-                                cdmDatabaseSchema,
-                                vocabDatabaseSchema,
-                                addConditions=T,
-                                addObservations=F,
-                                addProcedures=F,
-                                addDrugExposures=F,
-                                addDrugEras=F,
-                                addBirths=F,
-                                addDeaths=T,
-                                minimumDaysBetweenEvents,
-                                maximumDaysBetweenEvents,
-                                minPatientsPerEventPair,
-                                daysBeforeIndexDate=Inf,
-                                prefixForResultTableNames = '',
-                                cohortTableSchema,
-                                cohortTable,
-                                cohortId=1,
-                                eventParametersFilename = 'event_parameters.txt') {
-  print(paste0("Create database tables for all event pairs (patient level data + summary statistics) to '",resultsSchema,"' schema..."))
+createEventPairsTable<-function(connection,
+                                trajectoryAnalysisArgs,
+                                trajectoryLocalArgs,
+                                eventParametersFilename
+                               ) {
+  print(paste0("Create database tables for all event pairs (patient level data + summary statistics) to '",trajectoryLocalArgs$resultsSchema,"' schema..."))
   print(paste("(Hint: The lower the 'minPatientsPerEventPair' parameter, the more time the analysis takes)"))
 
   msg=c(paste('PARAMETER VALUES THAT WERE USED TO CREATE EVENT PAIR TABLES:'),
@@ -61,66 +42,56 @@ createEventPairsTable<-function(packageName,
         paste(format(Sys.time(), '%d %B %Y %H:%M')),
         paste(''),
         paste('dbms:',connection@dbms),
-        paste('minimumDaysBetweenEvents:',minimumDaysBetweenEvents),
-        paste('maximumDaysBetweenEvents:',maximumDaysBetweenEvents),
-        paste('minPatientsPerEventPair:',minPatientsPerEventPair),
-        paste('prefixForResultTableNames for created tables:',prefixForResultTableNames),
-        paste('addConditions:',addConditions),
-        paste('addObservations:',addObservations),
-        paste('addProcedures:',addProcedures),
-        paste('addDrugExposures:',addDrugExposures),
-        paste('addDrugEras:',addDrugEras),
-        paste('addBirths:',addBirths),
-        paste('addDeaths:',addDeaths),
-        paste('daysBeforeIndexDate:',daysBeforeIndexDate)
+        paste(trajectoryAnalysisArgs),
+        paste('prefixForResultTableNames for created tables:',trajectoryLocalArgs$prefixForResultTableNames)
   )
   print(msg)
 
   #sanitud check of the input parameters
 
-  if(daysBeforeIndexDate<0) stop(paste0('ERROR: parameter daysBeforeIndexDate=',daysBeforeIndexDate,' but negative values are not allowed.'))
+  #if(daysBeforeIndexDate<0) stop(paste0('ERROR: parameter daysBeforeIndexDate=',daysBeforeIndexDate,' but negative values are not allowed.'))
 
-  if(addDrugEras==T & addDrugExposures==T) stop('ERROR: Both addDrugEras and addDrugExposures parameters are set to TRUE, but these should not be both TRUE at the same time. Set at least one of them to FALSE.')
+  #if(addDrugEras==T & addDrugExposures==T) stop('ERROR: Both addDrugEras and addDrugExposures parameters are set to TRUE, but these should not be both TRUE at the same time. Set at least one of them to FALSE.')
 
 
-  if(eventParametersFilename!=F) {
-    print(paste0('Writing event pair creation parameters to ',eventParametersFilename,'...'))
+  #if(eventParametersFilename!=F) {
+  #  print(paste0('Writing event pair creation parameters to ',eventParametersFilename,'...'))
 
-    fileConn<-file(eventParametersFilename)
-    writeLines(msg, fileConn)
-    close(fileConn)
+  #  fileConn<-file(eventParametersFilename)
+  #  writeLines(msg, fileConn)
+  #  close(fileConn)
 
-    print('... done.')
-  }
+   # print('... done.')
+  #}
 
 
   print(paste0("Running SQL..."))
 
   #Set SQL role of the database session
-  Trajectories::setRole(connection,sqlRole)
+  Trajectories::setRole(connection,trajectoryLocalArgs$sqlRole)
 
   RenderedSql = SqlRender::loadRenderTranslateSql(sqlFilename='1CohortCC.sql',
-                                                  packageName=packageName,
+                                                  packageName=trajectoryAnalysisArgs$packageName,
                                                   dbms = connection@dbms,
                                                   oracleTempSchema = NULL,
-                                                  resultsSchema = resultsSchema,
-                                                  cdmDatabaseSchema = cdmDatabaseSchema,
-                                                  vocabDatabaseSchema = vocabDatabaseSchema,
-                                                  minimumDaysBetweenEvents = minimumDaysBetweenEvents,
-                                                  maximumDaysBetweenEvents = maximumDaysBetweenEvents,
-                                                  minPatientsPerEventPair = minPatientsPerEventPair,
-                                                  daysBeforeIndexDate=daysBeforeIndexDate,
-                                                  prefiX = prefixForResultTableNames,
-                                                  cohortTableSchema=cohortTableSchema,
-                                                  cohortTable=cohortTable,
-                                                  cohortId=cohortId,
-                                                  addConditions=addConditions,
-                                                  addObservations=addObservations,
-                                                  addProcedures=addProcedures,
-                                                  addDrugExposures=addDrugExposures,
-                                                  addDrugEras=addDrugEras,
-                                                  addBirths=addBirths,
-                                                  addDeaths=addDeaths
+                                                  resultsSchema = trajectoryLocalArgs$resultsSchema,
+                                                  cdmDatabaseSchema = trajectoryLocalArgs$cdmDatabaseSchema,
+                                                  vocabDatabaseSchema = trajectoryLocalArgs$vocabDatabaseSchema,
+                                                  minimumDaysBetweenEvents = trajectoryAnalysisArgs$minimumDaysBetweenEvents,
+                                                  maximumDaysBetweenEvents = trajectoryAnalysisArgs$maximumDaysBetweenEvents,
+                                                  minPatientsPerEventPair = trajectoryAnalysisArgs$minPatientsPerEventPair,
+                                                  daysBeforeIndexDate = trajectoryAnalysisArgs$daysBeforeIndexDate,
+                                                  prefiX = trajectoryLocalArgs$prefixForResultTableNames,
+                                                  cohortTableSchema = trajectoryLocalArgs$cohortTableSchema,
+                                                  cohortTable = trajectoryLocalArgs$cohortTable,
+                                                  cohortId = trajectoryLocalArgs$cohortId,
+                                                  addConditions = trajectoryAnalysisArgs$addConditions,
+                                                  addObservations = trajectoryAnalysisArgs$addObservations,
+                                                  addProcedures = trajectoryAnalysisArgs$addProcedures,
+                                                  addDrugExposures = trajectoryAnalysisArgs$addDrugExposures,
+                                                  addDrugEras = trajectoryAnalysisArgs$addDrugEras,
+                                                  addBirths = trajectoryAnalysisArgs$addBirths,
+                                                  addDeaths = trajectoryAnalysisArgs$addDeaths
   )
 
 
@@ -129,10 +100,10 @@ createEventPairsTable<-function(packageName,
 
   # Get all (frequent) event pairs from the database
   RenderedSql <- SqlRender::loadRenderTranslateSql("2GetPairs.sql",
-                                                   packageName=packageName,
+                                                   packageName=trajectoryAnalysisArgs$packageName,
                                                    dbms=connection@dbms,
-                                                   resultsSchema = resultsSchema,
-                                                   prefix = prefixForResultTableNames
+                                                   resultsSchema = trajectoryLocalArgs$resultsSchema,
+                                                   prefix = trajectoryLocalArgs$prefixForResultTableNames
   )
   dpairs = DatabaseConnector::querySql(connection, RenderedSql)
   print(paste0('There are ',nrow(dpairs),' event pairs that are going to be analyzed.'))

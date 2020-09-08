@@ -15,5 +15,3 @@ removeOrphanNodes<-function(g) {
   g <- g - V(g)[which(degrees==0)]
 
 }
-
-

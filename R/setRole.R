@@ -1,3 +1,5 @@
+#library(usethis)
+#use_test()
 #' This function switches role of the database session by simply executing SET ROLE ...;
 #'
 #' @param connection
@@ -8,7 +10,8 @@
 #'
 #' @examples
 setRole <- function(connection,
-                    sqlRole=F) {
+                    sqlRole) {
+
   if(is.na(sqlRole) | is.logical(sqlRole) | sqlRole=='') {
     #sqlRole is not set or is set incorrectly, do nothing
   } else {

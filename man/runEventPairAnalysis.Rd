@@ -5,21 +5,21 @@
 \title{Runs the analysis that detects statistically significant directional event pairs and writes the results to file. Data is taken from database and it is expected that the tables are created by function createEventPairsTable()}
 \usage{
 runEventPairAnalysis(
-  packageName,
   connection,
-  dbms,
-  oracleTempSchema = NULL,
-  sqlRole = F,
-  resultsSchema,
-  prefixForResultTableNames = "",
+  trajectoryAnalysisArgs,
+  trajectoryLocalArgs,
   eventPairResultsFilename = "event_pairs.tsv",
   eventPairResultsStatsFilename = "event_pairs_stats.txt"
 )
 }
 \arguments{
-\item{packageName}{Must always have value 'Trajectories'. The value is needed by SqlRender to find the SQL scripts from the right path.}
-
 \item{connection}{DatabaseConnectorConnection object that is used to connect with database}
+
+\item{eventPairResultsFilename}{Filename where the results of the analysis (significant directional event pairs) are written to}
+
+\item{eventPairResultsStatsFilename}{Filename where the some statics, used p-value threshold etc. are written for later use.}
+
+\item{packageName}{Must always have value 'Trajectories'. The value is needed by SqlRender to find the SQL scripts from the right path.}
 
 \item{dbms}{The target SQL dialect that is used by SqlRender}
 
@@ -30,10 +30,6 @@ runEventPairAnalysis(
 \item{resultsSchema}{Database schema where the temporary analysis tables are created. They are temporary in a sense that they are deleted in the end of the analysis (the tables are not created as CREATE TEMPORARY TABLE...)}
 
 \item{prefixForResultTableNames}{This is the prefix that is used for all table names in analysis process. Table with that prefix should already exist in the database (created by function createEventPairsTable()). Default value is ''.}
-
-\item{eventPairResultsFilename}{Filename where the results of the analysis (significant directional event pairs) are written to}
-
-\item{eventPairResultsStatsFilename}{Filename where the some statics, used p-value threshold etc. are written for later use.}
 }
 \value{
 

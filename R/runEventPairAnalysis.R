@@ -1,3 +1,4 @@
+
 library(SqlRender)
 library(ff)
 
@@ -17,26 +18,22 @@ library(ff)
 #' @export
 #'
 #' @examples
-runEventPairAnalysis<-function(packageName,
-                               connection,
-                               dbms,
-                               oracleTempSchema = NULL,
-                               sqlRole=F,
-                               resultsSchema,
-                               prefixForResultTableNames = "",
+runEventPairAnalysis<-function(connection,
+                               trajectoryAnalysisArgs,
+                               trajectoryLocalArgs,
                                eventPairResultsFilename = 'event_pairs.tsv',
-                               eventPairResultsStatsFilename = 'event_pairs_stats.txt') {
+                               eventPairResultsStatsFilename = 'event_pairs_stats.txt' ) {
   print(paste0("Detect statistically significant directional event pairs and write the results to ",eventPairResultsFilename,"..."))
 
   #Set SQL role of the database session
-  Trajectories::setRole(connection,sqlRole)
+  Trajectories::setRole(connection, trajectoryLocalArgs$sqlRole)
 
   # Get all (frequent) event pairs from the database
   RenderedSql <- SqlRender::loadRenderTranslateSql("2GetPairs.sql",
-                                                   packageName=packageName,
-                                                   dbms=dbms,
-                                                   resultsSchema = resultsSchema,
-                                                   prefix = prefixForResultTableNames
+                                                   packageName=trajectoryAnalysisArgs$packageName,
+                                                   dbms=connection@dbms,
+                                                   resultsSchema =  trajectoryLocalArgs$resultsSchema,
+                                                   prefix =  trajectoryLocalArgs$prefixForResultTableNames
   )
   dpairs = DatabaseConnector::querySql(connection, RenderedSql)
 
@@ -58,12 +55,12 @@ runEventPairAnalysis<-function(packageName,
 
       # Extract necessary event1_concept_id->event2_concept_id data from table d1d2_analysistable
       RenderedSql <- SqlRender::loadRenderTranslateSql("5CaseControlStats.sql",
-                                                       packageName=packageName,
-                                                       dbms=dbms,
+                                                       packageName=trajectoryAnalysisArgs$packageName,
+                                                       dbms=connection@dbms,
                                                        event1=diagnosis1,
                                                        event2=diagnosis2,
-                                                       resultsSchema =  resultsSchema,
-                                                       prefix = prefixForResultTableNames
+                                                       resultsSchema =   trajectoryLocalArgs$resultsSchema,
+                                                       prefix =  trajectoryLocalArgs$prefixForResultTableNames
       )
       case_control = DatabaseConnector::querySql(connection, RenderedSql)
 
@@ -122,14 +119,14 @@ runEventPairAnalysis<-function(packageName,
 
       # Writing the results back to database
       RenderedSql <- SqlRender::loadRenderTranslateSql("6PvalInserter.sql",
-                                                       packageName=packageName,
-                                                       dbms=dbms,
-                                                       resultsSchema =  resultsSchema,
+                                                       packageName=trajectoryAnalysisArgs$packageName,
+                                                       dbms=connection@dbms,
+                                                       resultsSchema =   trajectoryLocalArgs$resultsSchema,
                                                        pval = event_pair_pvalue,
                                                        effect = event_pair_effect,
                                                        diag1 = diagnosis1,
                                                        diag2 = diagnosis2,
-                                                       prefix = prefixForResultTableNames
+                                                       prefix =  trajectoryLocalArgs$prefixForResultTableNames
       )
       DatabaseConnector::executeSql(connection, RenderedSql)
 
@@ -145,23 +142,23 @@ runEventPairAnalysis<-function(packageName,
 
         #Calculate in database: among people that have event1_concept_id and event2_concept_id pair, how many have date1<date2, date1=date2, date1>date2
         RenderedSql <- SqlRender::loadRenderTranslateSql("7DirectionCounts.sql",
-                                                         packageName=packageName,
-                                                         dbms=dbms,
-                                                         resultsSchema =  resultsSchema,
+                                                         packageName=trajectoryAnalysisArgs$packageName,
+                                                         dbms=connection@dbms,
+                                                         resultsSchema =   trajectoryLocalArgs$resultsSchema,
                                                          diag1 = diagnosis1,
                                                          diag2 = diagnosis2,
-                                                         prefix = prefixForResultTableNames
+                                                         prefix =  trajectoryLocalArgs$prefixForResultTableNames
         )
         DatabaseConnector::executeSql(connection, RenderedSql)
 
         # Get calculation results from database
         RenderedSql <- SqlRender::loadRenderTranslateSql("8DpairReader.sql",
-                                                         packageName=packageName,
-                                                         dbms=dbms,
-                                                         resultsSchema =  resultsSchema,
+                                                         packageName=trajectoryAnalysisArgs$packageName,
+                                                         dbms=connection@dbms,
+                                                         resultsSchema =   trajectoryLocalArgs$resultsSchema,
                                                          diag1=diagnosis1,
                                                          diag2=diagnosis2,
-                                                         prefix = prefixForResultTableNames
+                                                         prefix =  trajectoryLocalArgs$prefixForResultTableNames
         )
         direction_counts = DatabaseConnector::querySql(connection, RenderedSql)
 
@@ -178,13 +175,13 @@ runEventPairAnalysis<-function(packageName,
 
         # Store the pvalue to database
         RenderedSql <- SqlRender::loadRenderTranslateSql("9PvalInserterDirection.sql",
-                                                         packageName=packageName,
-                                                         dbms=dbms,
-                                                         resultsSchema =  resultsSchema,
+                                                         packageName=trajectoryAnalysisArgs$packageName,
+                                                         dbms=connection@dbms,
+                                                         resultsSchema =   trajectoryLocalArgs$resultsSchema,
                                                          pval = event_pair_pvalue,
                                                          diag1 = diagnosis1,
                                                          diag2 = diagnosis2,
-                                                         prefix = prefixForResultTableNames
+                                                         prefix =  trajectoryLocalArgs$prefixForResultTableNames
         )
         DatabaseConnector::executeSql(connection, RenderedSql)
 
@@ -205,10 +202,10 @@ runEventPairAnalysis<-function(packageName,
 
   # Read in results
   RenderedSql <- SqlRender::loadRenderTranslateSql("11ResultsReader.sql",
-                                                   packageName=packageName,
-                                                   dbms=dbms,
-                                                   resultsSchema =  resultsSchema,
-                                                   prefix = prefixForResultTableNames,
+                                                   packageName=trajectoryAnalysisArgs$packageName,
+                                                   dbms=connection@dbms,
+                                                   resultsSchema =   trajectoryLocalArgs$resultsSchema,
+                                                   prefix =  trajectoryLocalArgs$prefixForResultTableNames,
                                                    cutoff_val=cutoff_pval,
                                                    effectSize = 1.1
   )

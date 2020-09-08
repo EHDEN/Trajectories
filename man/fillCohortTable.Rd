@@ -4,22 +4,12 @@
 \alias{fillCohortTable}
 \title{Function to fill the cohort table.}
 \usage{
-fillCohortTable(
-  cohortSqlFile,
-  packageName,
-  connection,
-  cdmDatabaseSchema,
-  vocabDatabaseSchema,
-  cohortTableSchema,
-  cohortTable = "my_cohorts",
-  oracleTempSchema,
-  target_cohort_id = 1
-)
+fillCohortTable(connection, trajectoryAnalysisArgs, trajectoryLocalArgs)
 }
 \arguments{
-\item{cohortSqlFile}{SQL file in the package directory/inst/sql/sql_server). If set to F, uses built-in (example) cohort definition (example_cohort_RA.sql).}
-
 \item{connection}{DatabaseConnectorConnection object that is used to connect with database}
+
+\item{cohortSqlFile}{SQL file in the package directory/inst/sql/sql_server). If set to F, uses built-in (example) cohort definition (example_cohort_RA.sql).}
 
 \item{target_cohort_id}{ID that is given to the created cohort. Default is 1.}
 }

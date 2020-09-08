@@ -15,23 +15,20 @@ library(DatabaseConnector)
 #' @export
 #'
 #' @examples
-dropCohortTable<-function(packageName,
-                            connection,
-                             dbms,
-                             sqlRole=F,
-                             cohortTableSchema = cohortTableSchema,
-                             cohortTable = "my_cohorts") {
+dropCohortTable<-function(connection,
+                          trajectoryAnalysisArgs,
+                          trajectoryLocalArgs) {
 
-  print(paste0('Dropping cohort table <',cohortTable,'> from <',cohortTableSchema,'> schema...'))
+  print(paste0('Dropping cohort table <',trajectoryLocalArgs$cohortTable,'> from <',trajectoryLocalArgs$cohortTableSchema,'> schema...'))
 
   #Set SQL role of the database session
-  Trajectories::setRole(connection,sqlRole)
+  Trajectories::setRole(connection,trajectoryLocalArgs$sqlRole)
 
   RenderedSql <- SqlRender::loadRenderTranslateSql('dropCohortTable.sql',
-                                                 packageName=packageName,
-                                                 dbms=dbms,
-                                                 cohortTableSchema=cohortTableSchema,
-                                                 cohortTable=cohortTable
+                                                 packageName=trajectoryAnalysisArgs$packageName,
+                                                 dbms=connection@dbms,
+                                                 cohortTableSchema=trajectoryLocalArgs$cohortTableSchema,
+                                                 cohortTable=trajectoryLocalArgs$cohortTable
   )
   DatabaseConnector::executeSql(connection, RenderedSql)
 

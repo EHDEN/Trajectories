@@ -81,3 +81,4 @@ filterByLift <- function(g, lift.threshold=2) {
   print(paste0(num_edges_removed,' edges removed from the graph by lift analysis, ',length(E(g)),' edges remaining.'))
   return(g)
 }
+

@@ -4,14 +4,7 @@
 \alias{createCohortTable}
 \title{Function to create empty cohort table. Script is based on  https://ohdsi.github.io/TheBookOfOhdsi/SqlAndR.html#implementing-the-study-using-sql-and-r (21th May 2020)}
 \usage{
-createCohortTable(
-  packageName,
-  connection,
-  dbms,
-  sqlRole = F,
-  cohortTableSchema = cohortTableSchema,
-  cohortTable = "my_cohorts"
-)
+createCohortTable(connection, trajectoryAnalysisArgs, trajectoryLocalArgs)
 }
 \arguments{
 \item{connection}{DatabaseConnectorConnection object that is used to connect with database}

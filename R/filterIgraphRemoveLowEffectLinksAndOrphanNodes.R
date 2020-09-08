@@ -50,3 +50,4 @@ filterIgraphRemoveLowEffectLinksAndOrphanNodes<-function(g, limitOfLinks=20,edge
   print(paste0('...done. The resulting graph contains ',length(V(g)),' events and ',length(E(g)),' links between them.'))
   return(g)
 }
+

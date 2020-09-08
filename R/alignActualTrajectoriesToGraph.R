@@ -17,11 +17,9 @@ library(dplyr)
 #' @export
 #'
 #' @examples
-alignActualTrajectoriesToGraph <- function(packageName,
-                                           connection,
-                                           sqlRole=F,
-                                           resultsSchema,
-                                           prefixForResultTableNames,
+alignActualTrajectoriesToGraph <- function(connection,
+                                           trajectoryAnalysisArgs,
+                                           trajectoryLocalArgs,
                                            g,
                                            eventname,
                                            limit=1000) {
@@ -43,10 +41,10 @@ alignActualTrajectoriesToGraph <- function(packageName,
 
   e<-igraph::as_data_frame(g,what="edges")
   edges<- e %>% select(e1_concept_id,e2_concept_id)
-  tablename<-paste0(resultsSchema,'.',prefixForResultTableNames,'mylinks')
+  tablename<-paste0(trajectoryLocalArgs$resultsSchema,'.',trajectoryLocalArgs$prefixForResultTableNames,'mylinks')
 
     #but before actual TABLE CREATE there is an extra step: if sqlRole is given, set session to correct role before creating the table
-    Trajectories::setRole(connection,sqlRole)
+    Trajectories::setRole(connection,trajectoryLocalArgs$sqlRole)
 
   insertTable(connection, tablename, edges, tempTable=F, progressBar=T)
 
@@ -55,10 +53,10 @@ alignActualTrajectoriesToGraph <- function(packageName,
   #align trajectories to graph (to get the exact E1->E2 counts with no intermediate events)
   print('Extracting actual sequences of these events...')
   RenderedSql <- SqlRender::loadRenderTranslateSql("map_actual_trajs_to_graph2.sql",
-                                                   packageName=packageName,
+                                                   packageName=trajectoryAnalysisArgs$packageName,
                                                    dbms=attr(connection, "dbms"),
-                                                   resultsSchema =  resultsSchema,
-                                                   prefiX = prefixForResultTableNames,
+                                                   resultsSchema =  trajectoryLocalArgs$resultsSchema,
+                                                   prefiX = trajectoryLocalArgs$prefixForResultTableNames,
                                                    eventid=eventid,
                                                    limit=limit
   )
@@ -69,10 +67,10 @@ alignActualTrajectoriesToGraph <- function(packageName,
   print('Reading actual event trajectories (getting cohort_id-s)...')
 
   RenderedSql <- SqlRender::loadRenderTranslateSql("get_actual_trajs_to_graph_persons.sql",
-                                                   packageName=packageName,
+                                                   packageName=trajectoryAnalysisArgs$packageName,
                                                    dbms=attr(connection, "dbms"),
-                                                   resultsSchema =  resultsSchema,
-                                                   prefiX = prefixForResultTableNames
+                                                   resultsSchema =  trajectoryLocalArgs$resultsSchema,
+                                                   prefiX = trajectoryLocalArgs$prefixForResultTableNames
   )
   res<-DatabaseConnector::querySql(connection, RenderedSql)
 
@@ -87,10 +85,10 @@ alignActualTrajectoriesToGraph <- function(packageName,
     print(paste0('Aligning ',length(chunk),' trajectories to graph (',i,'/',length(chunks),')...'))
 
     RenderedSql <- SqlRender::loadRenderTranslateSql("get_actual_trajs_to_graph2.sql",
-                                                     packageName=packageName,
+                                                     packageName=trajectoryAnalysisArgs$packageName,
                                                      dbms=attr(connection, "dbms"),
-                                                     resultsSchema =  resultsSchema,
-                                                     prefiX = prefixForResultTableNames,
+                                                     resultsSchema =  trajectoryLocalArgs$resultsSchema,
+                                                     prefiX = trajectoryLocalArgs$prefixForResultTableNames,
                                                      cohortids=paste(chunk,collapse=",")
     )
     res<-DatabaseConnector::querySql(connection, RenderedSql)

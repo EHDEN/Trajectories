@@ -5,35 +5,18 @@
 \title{Creates event pairs table and populates it with the data}
 \usage{
 createEventPairsTable(
-  packageName,
   connection,
-  oracleTempSchema,
-  sqlRole = F,
-  resultsSchema,
-  cdmDatabaseSchema,
-  vocabDatabaseSchema,
-  addConditions = T,
-  addObservations = F,
-  addProcedures = F,
-  addDrugExposures = F,
-  addDrugEras = F,
-  addBirths = F,
-  addDeaths = T,
-  minimumDaysBetweenEvents,
-  maximumDaysBetweenEvents,
-  minPatientsPerEventPair,
-  daysBeforeIndexDate = Inf,
-  prefixForResultTableNames = "",
-  cohortTableSchema,
-  cohortTable,
-  cohortId = 1,
-  eventParametersFilename = "event_parameters.txt"
+  trajectoryAnalysisArgs,
+  trajectoryLocalArgs,
+  eventParametersFilename
 )
 }
 \arguments{
-\item{packageName}{Must always have value 'Trajectories'. The value is needed by SqlRender to find the SQL scripts from the right path.}
-
 \item{connection}{DatabaseConnectorConnection object that is used to connect with database}
+
+\item{eventParametersFilename}{Filename where the parameters of creating event pairs are written (so that one could later see what what where the exact parameters). Default value is 'event_parameters.txt'. If set to FALSE, no output file is created.}
+
+\item{packageName}{Must always have value 'Trajectories'. The value is needed by SqlRender to find the SQL scripts from the right path.}
 
 \item{oracleTempSchema}{A schema that can be used to create temp tables in when using Oracle. Used by SqlRender}
 
@@ -65,13 +48,11 @@ createEventPairsTable(
 
 \item{minPatientsPerEventPair}{Minimum number of people having event1 -> event2 progression to be included in analysis. Can be used for limiting analysis to frequent event pairs only. However, it does not throw less frequent diagnosis pairs out of the (control group) data and therefore, does not affect the statistical significance.}
 
-\item{daysBeforeIndexDate}{0 or any positive number that indicates for how many days before index date of the cohort the events are included in the analysis. In case one wants to include all events before index date, use value Inf}
-
 \item{prefixForResultTableNames}{This is the prefix that is used for all table names in analysis process. The aim is to avoid any collision with output table names (when someone runs the same analysis in parallel). Default value is ''.}
 
 \item{cohortId}{Cohort ID in cohortTable. Default value is 1.}
 
-\item{eventParametersFilename}{Filename where the parameters of creating event pairs are written (so that one could later see what what where the exact parameters). Default value is 'event_parameters.txt'. If set to FALSE, no output file is created.}
+\item{daysBeforeIndexDate}{0 or any positive number that indicates for how many days before index date of the cohort the events are included in the analysis. In case one wants to include all events before index date, use value Inf}
 }
 \value{
 

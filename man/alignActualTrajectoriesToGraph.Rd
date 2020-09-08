@@ -5,22 +5,20 @@
 \title{Adds numcohortCustom value to graph edges - actual number of people (out of all people who have EVENTNAME) on that edge}
 \usage{
 alignActualTrajectoriesToGraph(
-  packageName,
   connection,
-  sqlRole = F,
-  resultsSchema,
-  prefixForResultTableNames,
+  trajectoryAnalysisArgs,
+  trajectoryLocalArgs,
   g,
   eventname,
   limit = 1000
 )
 }
 \arguments{
-\item{sqlRole}{SQL role that is used to create tables in resultsSchema. Set to FALSE if a specific role is not needed}
-
 \item{g}{an igrpah object that is created by specific graph functions in this package}
 
 \item{limit}{Max number of trajectories to align (to limit the analysis). Set to NA if no limit.}
+
+\item{sqlRole}{SQL role that is used to create tables in resultsSchema. Set to FALSE if a specific role is not needed}
 }
 \value{
 

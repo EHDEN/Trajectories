@@ -20,8 +20,11 @@ Depends:
     dplyr (>= 0.8.5),
     stringi (>= 1.4.5),
     SqlRender (>= 1.5.2),
-    igraph (>= 1.2.5)
+    igraph (>= 1.2.5),
+    testthat (>= 2.3.2)
 Imports:
     networkD3 (>= 2.0.3)
 Encoding: UTF-8
 RoxygenNote: 7.1.1
+Suggests: 
+    testthat (>= 2.1.0)

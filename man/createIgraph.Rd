@@ -5,23 +5,20 @@
 \title{Title}
 \usage{
 createIgraph(
-  packageName,
   connection,
-  sqlRole = F,
-  resultsSchema,
-  prefixForResultTableNames,
+  trajectoryAnalysisArgs,
+  trajectoryLocalArgs,
   eventPairResultsFilename,
   outputFolder,
-  cohortName = "",
   eventName = NA
 )
 }
 \arguments{
-\item{sqlRole}{Database role that is used when creating tables to 'resultsSchema'. Set to F if a specific role is not needed.}
-
 \item{outputFolder}{Output folder (should exist) without trailing slash}
 
 \item{eventName}{Exact concept name that is used for building trajectories. Must exist in event pairs data table. If not specified (NA) (recommended) creates trajectories for top 5 events.}
+
+\item{sqlRole}{Database role that is used when creating tables to 'resultsSchema'. Set to F if a specific role is not needed.}
 }
 \value{
 

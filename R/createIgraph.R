@@ -16,21 +16,18 @@ library(dplyr)
 #' @export
 #'
 #' @examples
-createIgraph<-function(packageName,
-                       connection,
-                       sqlRole=F,
-                       resultsSchema,
-                       prefixForResultTableNames,
+createIgraph<-function(connection,
+                       trajectoryAnalysisArgs,
+                       trajectoryLocalArgs,
                        eventPairResultsFilename,
                        outputFolder,
-                       cohortName="",
                        eventName=NA) {
 
   # create igraph object from event pairs
   g<-Trajectories::createGraph(eventPairResultsFilename)
 
 
-  COHORTNAME=cohortName
+  cohortName=trajectoryAnalysisArgs$cohortName
   OUTPUTFOLDER=paste0(outputFolder,"/")
 
 
@@ -38,7 +35,7 @@ createIgraph<-function(packageName,
 
 
   # create plot of all event pairs (no filtering)
-  title=paste0('All significant directional event pairs among ',COHORTNAME,' patients')
+  title=paste0('All significant directional event pairs among ',cohortName,' patients')
   Trajectories::plotIgraph(g,layout=layout_with_fr,linknumbers=round(100*E(g)$prob),outputPdfFullpath=paste0(OUTPUTFOLDER,make.names(title),'.pdf'),title=paste0(title,"\n",format(Sys.time(), '%d %B %Y %H:%M')))
 
   # Remove low-probability event pairs (keep 50 event pairs with highest probability)
@@ -46,7 +43,7 @@ createIgraph<-function(packageName,
   for(limitOfLinks in s) {
     #limitOfLinks=50
     h<-Trajectories::filterIgraphRemoveLowEffectLinksAndOrphanNodes(g, limitOfLinks=limitOfLinks,edge_param_to_sort_by='prob')
-    title=paste0(limitOfLinks,' high-probability event pairs among ',COHORTNAME,' patients')
+    title=paste0(limitOfLinks,' high-probability event pairs among ',cohortName,' patients')
     Trajectories::plotIgraph(h,layout=layout_with_fr,linknumbers=round(100*E(h)$prob),outputPdfFullpath=paste0(OUTPUTFOLDER,make.names(title),'.pdf'),title=paste0(title,"\n",format(Sys.time(), '%d %B %Y %H:%M')))
   }
 
@@ -68,28 +65,26 @@ createIgraph<-function(packageName,
     if(EVENTNAME %in% V(g)$name) {
 
       constructed.graph<-Trajectories::filterIgraphCrossingEvent(g, eventname = EVENTNAME, limitOfNodes=limitOfNodes, edge_param_to_sort_by=edge_param_to_sort_by)
-      title=paste0("Constructed most-likely trajectories in ",COHORTNAME," cohort through\n",EVENTNAME,"\n(based on ",V(g)[V(g)$name==EVENTNAME]$count," patients and limited to ",limitOfNodes," events)")
+      title=paste0("Constructed most-likely trajectories in ",cohortName," cohort through\n",EVENTNAME,"\n(based on ",V(g)[V(g)$name==EVENTNAME]$count," patients and limited to ",limitOfNodes," events)")
       Trajectories::plotIgraph(constructed.graph,layout=layout_with_fr,linknumbers=round(E(constructed.graph)$prob*100),outputPdfFullpath=paste0(OUTPUTFOLDER,make.names(title),'.pdf'),title=paste0(title,"\n",format(Sys.time(), '%d %B %Y %H:%M')))
 
 
       #align actual trajectories to constructed graph
       limitOfTrajs=NA
-      h<-Trajectories::alignActualTrajectoriesToGraph (packageName=packageName,
-                                                              connection=connection,
-                                                              sqlRole=sqlRole,
-                                                              resultsSchema=resultsSchema,
-                                                              prefixForResultTableNames=prefixForResultTableNames,
-                                                              g=constructed.graph,
-                                                              eventname=EVENTNAME,
-                                                              limit=limitOfTrajs)
+      h<-Trajectories::alignActualTrajectoriesToGraph (connection=connection,
+                                                       trajectoryAnalysisArgs=trajectoryAnalysisArgs,
+                                                       trajectoryLocalArgs=trajectoryLocalArgs,
+                                                       g=constructed.graph,
+                                                       eventname=EVENTNAME,
+                                                       limit=limitOfTrajs)
       #remove edges and nodes with count=0
       h<-h-E(h)[E(h)$alignedTrajsCount==0]
       h<-h-V(h)[V(h)$alignedTrajsCount==0]
       #E(h)$alignedTrajsProb=E(h)$alignedTrajsCount/V(h)[ends(h,E(h),names=F)[,1]]$alignedTrajsCount
       E(h)$alignedTrajsProb=E(h)$alignedTrajsCount/V(h)[V(h)$name==EVENTNAME]$alignedTrajsCount #probability relative to EVENTNAME
-      title=paste0(ifelse(is.na(limitOfTrajs),'All ',''),V(h)[V(h)$name==EVENTNAME]$alignedTrajsCount," actual trajectories of ",COHORTNAME," patients having/passing\n",EVENTNAME," (EVENT),\naligned to constructed graph of ",limitOfNodes," events (frequency relative to EVENT given on edges)")
+      title=paste0(ifelse(is.na(limitOfTrajs),'All ',''),V(h)[V(h)$name==EVENTNAME]$alignedTrajsCount," actual trajectories of ",cohortName," patients having/passing\n",EVENTNAME," (EVENT),\naligned to constructed graph of ",limitOfNodes," events (frequency relative to EVENT given on edges)")
       Trajectories::plotIgraph(h,layout=layout_with_fr,nodesizes=V(h)$alignedTrajsCount,linknumbers=round(E(h)$alignedTrajsProb*100),outputPdfFullpath=paste0(OUTPUTFOLDER,make.names(title),'.pdf'),title=paste0(title,"\n",format(Sys.time(), '%d %B %Y %H:%M')))
-      title=paste0(ifelse(is.na(limitOfTrajs),'All ',''),V(h)[V(h)$name==EVENTNAME]$alignedTrajsCount," actual trajectories of ",COHORTNAME," patients having/passing\n",EVENTNAME," (EVENT),\naligned to constructed graph of ",limitOfNodes," events (trajectory count on edge)")
+      title=paste0(ifelse(is.na(limitOfTrajs),'All ',''),V(h)[V(h)$name==EVENTNAME]$alignedTrajsCount," actual trajectories of ",cohortName," patients having/passing\n",EVENTNAME," (EVENT),\naligned to constructed graph of ",limitOfNodes," events (trajectory count on edge)")
       Trajectories::plotIgraph(h,layout=layout_with_fr,nodesizes=V(h)$alignedTrajsCount,linknumbers=round(E(h)$alignedTrajsCount),outputPdfFullpath=paste0(OUTPUTFOLDER,make.names(title),'.pdf'),title=paste0(title,"\n",format(Sys.time(), '%d %B %Y %H:%M')))
 
 
@@ -101,20 +96,18 @@ createIgraph<-function(packageName,
 
       #align actual trajectories to full graph (takes looong time)
       limitOfTrajs=10000
-      h<-Trajectories::alignActualTrajectoriesToGraph (packageName=packageName,
-                                                              connection=connection,
-                                                              sqlRole=sqlRole,
-                                                              resultsSchema=resultsSchema,
-                                                              prefixForResultTableNames=prefixForResultTableNames,
-                                                              g=g,
-                                                              eventname=EVENTNAME,
-                                                              limit=limitOfTrajs)
+      h<-Trajectories::alignActualTrajectoriesToGraph (connection=connection,
+                                                       trajectoryAnalysisArgs=trajectoryAnalysisArgs,
+                                                       trajectoryLocalArgs=trajectoryLocalArgs,
+                                                       g=g,
+                                                       eventname=EVENTNAME,
+                                                       limit=limitOfTrajs)
       #remove edges and nodes with count=0
       h<-h-E(h)[E(h)$alignedTrajsCount==0]
       h<-h-V(h)[V(h)$alignedTrajsCount==0]
       #E(h)$alignedTrajsProb=E(h)$alignedTrajsCount/V(h)[ends(h,E(h),names=F)[,1]]$alignedTrajsCount
       E(h)$alignedTrajsProb=E(h)$alignedTrajsCount/V(h)[V(h)$name==EVENTNAME]$alignedTrajsCount #probability relative to EVENTNAME
-      title=paste0(ifelse(is.na(limitOfTrajs),'All ',limitOfTrajs)," actual trajectories of ",COHORTNAME," patients having/passing\n",EVENTNAME," (EVENT),\naligned to full graph (frequency relative to EVENT given on edge)")
+      title=paste0(ifelse(is.na(limitOfTrajs),'All ',limitOfTrajs)," actual trajectories of ",cohortName," patients having/passing\n",EVENTNAME," (EVENT),\naligned to full graph (frequency relative to EVENT given on edge)")
       Trajectories::plotIgraph(h,layout=layout_with_fr,nodesizes=V(h)$alignedTrajsCount,linknumbers=round(E(h)$alignedTrajsProb*100),outputPdfFullpath=paste0(OUTPUTFOLDER,make.names(title),'.pdf'),title=paste0(title,"\n",format(Sys.time(), '%d %B %Y %H:%M')))
 
       x<-igraph::as_data_frame(h, what='edges')

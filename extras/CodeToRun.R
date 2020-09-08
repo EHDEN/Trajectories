@@ -10,79 +10,45 @@ library(DatabaseConnector)
 
 # Set connection details either via connectionString (option 1) or connectionDetails (option 2):
 
-#  OPTION 1 - Via connectionString:
 
 connectionDetails = createConnectionDetails(dbms = 'postgresql',#  e.g. oracle, postgresql, redshift. See for all options in DatabaseConnector::createConnectionDetails()
                                             user = Sys.getenv('DB_USERNAME'), #Currently takes the value form .Renviron file in the package folder
                                             password = Sys.getenv('DB_PASSWORD'), #Currently takes the value form .Renviron file in the package folder
                                             connectionString = "jdbc:postgresql://10.6.6.29:5432/hwisc_epi")
 
-cdmDatabaseSchema = 'ohdsi' # schema containing source data
-vocabDatabaseSchema = 'ohdsi' # schema containing concepts library
-resultsSchema = 'ohdsi_dev' #s chema the user has writing access to (used ti write new tables into)
-oracleTempSchema = "temp_schema" # In case you are using oracle, schema for temporary tables need to be specified. A schema where temp tables can be created in Oracle. Otherwise leave it as it is (is not used)
-sqlRole = 'hwisc_epi_ohdsi_dev_create'  # Role to use in SQL for writing tables in 'resultsSchema'. It should also have access to 'cdmDatabaseSchema' and 'vocabDatabaseSchema'. Set to FALSE (or F) if setting to a specific role is not needed. In Estonian data is has to be hwisc_epi_ohdsi_dev_create
+
+# Setting database parameters:
 library(stringi)
-prefixForResultTableNames = paste0(  if(!is.null(attr(connectionDetails,'user'))) substr(USER,1,2), stri_rand_strings(1, 2, pattern = "[A-Za-z]"), sep="_") # To avoid any collision with output table names (when someone runs the same analysis in parallel) we use a prefix for all table names that consists of 2 letters from username and 2 random characters. In case there is no username given (e.g Eunomia package, the prefix is simply 2 random characters)
-#Cohort table specifications (currently in development. Leave them as they are)
-cohortTableSchema=resultsSchema #currently in development. Leave it as it is.
-cohortTable=paste0(prefixForResultTableNames,'cohort') #currently in development. Leave it as it is.
-cohortId=1
-
-#  OPTION 2 - via Eunomia example package (runs on local SQLite engine inside R):
-
-if(!require(drat)){
-  install.packages("drat")
-  library(drat)
-}
-drat::addRepo("OHDSI")
-if(!require(Eunomia)){
-  install.packages("Eunomia")
-  library(Eunomia)
-  #create cohorts
-}
-connectionDetails <- getEunomiaConnectionDetails()
-cdmDatabaseSchema = 'main' # schema containing source data
-vocabDatabaseSchema = 'main' # schema containing concepts library
-resultsSchema = 'main'
-sqlRole = F
-prefixForResultTableNames = "" #no need for prefix in Eunomia as it is run locally anyways
-#Cohort table specifications (currently in development. Leave them as they are)
-Eunomia::createCohorts(connectionDetails)
-cohortTableSchema='main'
-cohortTable='cohort'
-cohortId=1
-
-# THE REST OF THE PARAMETERS:
-
-# Change the output folder path. This is the folder where the final results are produced.
-# Use full path and do NOT add trailing slash!
-# The folder must already exist.
-mainOutputFolder='/Users/sulevr/temp'
-
-# The following parameters are used in the calculations.
-# You can change them, but you can also leave them as they are.
-minimumDaysBetweenEvents = 1 # The smallest number of days between 2 events of the patient that can be considered as event pair. Usually we have used 1.
-# TODO should investigate what happens if minimumDaysBetweenEvents=0, 1, -1.... This number cannot be negative (breaks SQL)! Seems that 0 does not make sense as in this case we cannot check direction. So, the minimum value should be 1, I guess.
-maximumDaysBetweenEvents = 3650  # The maximum number of days between 2 events of the patient that can be considered as event pair. Ususally we have not really limited it so we have used 3650 (10 years)
-minPatientsPerEventPair = 100 # Minimum number of people having event1 -> event2 progression to be included in analysis. Can be used for limiting analysis to frequent event pairs only. However, it does not throw less frequent diagnosis pairs out of the (control group) data and therefore, does not affect the statistical significance.
-addConditions=T # TRUE/FALSE parameter to indicate whether events from Condition_occurrence table should be included in the analysis
-addObservations=T # TRUE/FALSE parameter to indicate whether events from Condition_occurrence table should be included in the analysis
-addProcedures=T # TRUE/FALSE parameter to indicate whether events from Procedure_occurrence table should be included in the analysis
-# NB! DO NOT USE BOTH addDrugEras=T and addDrugExposures=T (not both) as it leads to analysis duplication and breaks some code... (same "drug" event may occur several times which is not allowed)
-addDrugExposures=F # TRUE/FALSE parameter to indicate whether events from Drug_exposure table should be included in the analysis
-addDrugEras=T# TRUE/FALSE parameter to indicate whether events from Drug_era table should be included in the analysis. NB! use either addDrugEras=T or addDrugExposures=T (not both) as it leads to analysis duplication...
-addBirths=T # TRUE/FALSE parameter to indicate whether births events should be included in the analysis.
-addDeaths=T # TRUE/FALSE parameter to indicate whether events from Death table should be included in the analysis.
-daysBeforeIndexDate=Inf # 0 or any positive number that indicates for how many days before index date of the cohort the events are included in the analysis. In case one wants to include all events before index date, use value Inf
-cohortSqlFile='example_cohort_RA.sql'
-#cohortSqlFile='example_cohort_pregnantwomen.sql'
-cohortName="Rheumatoid arthritis" # Reader-friendly short description of the cohort. Used in graph titles and file names (can contain spaces)
+trajectoryLocalArgs <- Trajectories::createTrajectoryLocalArgs(oracleTempSchema = "temp_schema",
+                                                               prefixForResultTableNames = "kadritest", #/ paste0(  if(!is.null(attr(connectionDetails,'user'))) substr(USER,1,2), stri_rand_strings(1, 2, pattern = "[A-Za-z]"), sep="_")
+                                                               cdmDatabaseSchema = 'ohdsi',
+                                                               vocabDatabaseSchema = 'ohdsi',
+                                                               resultsSchema = 'ohdsi_dev',
+                                                               sqlRole = 'hwisc_epi_ohdsi_dev_create',
+                                                               cohortTableSchema= 'ohdsi_dev',
+                                                               cohortTable='cohort',
+                                                               cohortId=1,
+                                                               mainOutputFolder='/Users/Kaust/temp',
+                                                               cohortSqlFile='example_cohort_RA.sql')
 
 
-# The following parameters are just for customisation, mainly used during the development process of the package.
-# You can leave them as they are.
-packageName='Trajectories' #do not edit, this is required by SqlRender::loadRenderTranslateSql
+# Setting analysis parameters.
+# NB! DO NOT USE BOTH addDrugEras=T and addDrugExposures=T (not both) as it leads to analysis duplication and breaks some code...
+# (same "drug" event may occur several times which is not allowed)
+
+trajectoryAnalysisArgs <- Trajectories::createTrajectoryAnalysisArgs(minimumDaysBetweenEvents = 1,
+                                                                     maximumDaysBetweenEvents = 3650,
+                                                                     minPatientsPerEventPair = 100,
+                                                                     addConditions=T,
+                                                                     addObservations=T,
+                                                                     addProcedures=T,
+                                                                     addDrugExposures=F,
+                                                                     addDrugEras=T,
+                                                                     addBirths=T,
+                                                                     addDeaths=T,
+                                                                     daysBeforeIndexDate=Inf,
+                                                                     packageName='Trajectories',
+                                                                     cohortName="Rheumatoid arthritis")
 
 
 
@@ -90,16 +56,12 @@ packageName='Trajectories' #do not edit, this is required by SqlRender::loadRend
 # End of setting parameters. The actual code follows.
 
 
-
-
 #create subfolder for the results if not exists already
-subFolder=make.names(cohortName)
-outputFolder <- file.path(mainOutputFolder, subFolder)
+subFolder=make.names(trajectoryAnalysisArgs$cohortName)
+outputFolder <- file.path(trajectoryLocalArgs$mainOutputFolder, subFolder)
 if (!dir.exists(outputFolder)){
   dir.create(outputFolder)
 }
-
-
 
 # ##################################################
 # Connect to database
@@ -109,100 +71,47 @@ connection <- DatabaseConnector::connect(connectionDetails)
 
 on.exit(DatabaseConnector::disconnect(connection))
 
-
 # Create new cohort table
-Trajectories::createCohortTable(packageName=packageName,
-                                connection=connection,
-                                dbms = connection@dbms,
-                                sqlRole = sqlRole,
-                                cohortTableSchema = cohortTableSchema,
-                                cohortTable = cohortTable)
+
+Trajectories::createCohortTable(connection=connection,
+                                trajectoryAnalysisArgs=trajectoryAnalysisArgs,
+                                trajectoryLocalArgs=trajectoryLocalArgs)
 # Fill cohort table with example cohort data
-Trajectories::fillCohortTable(
-  cohortSqlFile=cohortSqlFile,
-  #cohortSqlFile='example_cohort_atrial_arrythmia.sql',
-  #cohortSqlFile='example_cohort_atopic_dermatitis.sql',
-  #cohortSqlFile='example_cohort_RA.sql',
-  #cohortSqlFile='example_cohort_pregnantwomen.sql',
-  #cohortSqlFile='example_cohort_asthma_without_COPD.sql',
-  packageName=packageName,
-  connection=connection,
-  cdmDatabaseSchema=cdmDatabaseSchema,
-  vocabDatabaseSchema=vocabDatabaseSchema,
-  cohortTableSchema=cohortTableSchema,
-  cohortTable = cohortTable,
-  oracleTempSchema = oracleTempSchema,
-  target_cohort_id = cohortId)
+Trajectories::fillCohortTable(connection=connection,
+                              trajectoryAnalysisArgs,
+                              trajectoryLocalArgs)
 
 # Create database tables of all event pairs (patient level data + summary statistics)
-Trajectories::createEventPairsTable(packageName=packageName,
-                                    connection=connection,
-                                    oracleTempSchema = NULL,
-                                    sqlRole = sqlRole,
-                                    resultsSchema =   resultsSchema,
-                                    cdmDatabaseSchema = cdmDatabaseSchema,
-                                    vocabDatabaseSchema = vocabDatabaseSchema,
-                                    addConditions=addConditions,
-                                    addObservations=addObservations,
-                                    addProcedures=addProcedures,
-                                    addDrugExposures=addDrugExposures,
-                                    addDrugEras=addDrugEras,
-                                    addBirths=addBirths,
-                                    addDeaths=addDeaths,
-                                    minimumDaysBetweenEvents = minimumDaysBetweenEvents,
-                                    maximumDaysBetweenEvents = maximumDaysBetweenEvents,
-                                    minPatientsPerEventPair = minPatientsPerEventPair,
-                                    daysBeforeIndexDate=daysBeforeIndexDate,
-                                    prefixForResultTableNames = prefixForResultTableNames,
-                                    cohortTableSchema=cohortTableSchema,
-                                    cohortTable=cohortTable,
-                                    cohortId=cohortId,
+Trajectories::createEventPairsTable(connection=connection,
+                                    trajectoryAnalysisArgs=trajectoryAnalysisArgs,
+                                    trajectoryLocalArgs=trajectoryLocalArgs,
                                     eventParametersFilename = paste0(outputFolder,'/event_parameters.txt'))
 
 
 # Detect statistically significant directional event pairs and write the results to eventPairResultsFilename
-Trajectories::runEventPairAnalysis(
-  packageName=packageName,
-  connection=connection,
-  dbms = connection@dbms,
-  oracleTempSchema = NULL,
-  sqlRole = sqlRole,
-  resultsSchema =   resultsSchema,
-  prefixForResultTableNames = prefixForResultTableNames,
-  eventPairResultsFilename = paste0(outputFolder,'/event_pairs.tsv'),
-  eventPairResultsStatsFilename = paste0(outputFolder,'/event_pair_stats.txt')
+Trajectories::runEventPairAnalysis(connection=connection,
+                                   trajectoryAnalysisArgs=trajectoryAnalysisArgs,
+                                   trajectoryLocalArgs=trajectoryLocalArgs,
+                                   eventPairResultsFilename = paste0(outputFolder,'/event_pairs.tsv'),
+                                   eventPairResultsStatsFilename = paste0(outputFolder,'/event_pair_stats.txt')
 )
 
 #creates graph from eventPairResultsFilename, also alignes the a
-Trajectories::createIgraph(packageName=packageName,
-                           connection=connection,
-                           sqlRole = sqlRole,
-                           resultsSchema =   resultsSchema,
-                           prefixForResultTableNames = prefixForResultTableNames,
+Trajectories::createIgraph(connection=connection,
+                           trajectoryAnalysisArgs=trajectoryAnalysisArgs,
+                           trajectoryLocalArgs=trajectoryLocalArgs,
                            eventPairResultsFilename = paste0(outputFolder,'/event_pairs.tsv'),
                            outputFolder=outputFolder, #without trailing slash
-                           cohortName=cohortName,
                            eventName=NA) #we use NA here to draw graphs for top5 events
 
 
-
-
-
 # Drop created cohort table
-Trajectories::dropCohortTable(packageName=packageName,
-                              connection=connection,
-                              dbms = connection@dbms,
-                              sqlRole = sqlRole,
-                              cohortTableSchema = cohortTableSchema,
-                              cohortTable = cohortTable)
+Trajectories::dropCohortTable(connection=connection,
+                              trajectoryAnalysisArgs=trajectoryAnalysisArgs,
+                              trajectoryLocalArgs=trajectoryLocalArgs)
 
 # Cleanup database after analysis
-Trajectories::dbCleanup(packageName=packageName,
-                        connection=connection,
-                        dbms = connection@dbms,
-                        oracleTempSchema = NULL,
-                        sqlRole = sqlRole,
-                        resultsSchema =   resultsSchema,
-                        prefixForResultTableNames = prefixForResultTableNames)
-
+Trajectories::dbCleanup(connection=connection,
+                        trajectoryAnalysisArgs=trajectoryAnalysisArgs,
+                        trajectoryLocalArgs=trajectoryLocalArgs)
 
