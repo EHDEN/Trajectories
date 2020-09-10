@@ -75,9 +75,6 @@ createEventPairsTable<-function(connection,
                                                   addDeaths = trajectoryAnalysisArgs$addDeaths
   )
 
-  fileConn<-file("creaate_table_as_CohortCC.txt")
-  writeLines(RenderedSql, fileConn)
-  close(fileConn)
 
   DatabaseConnector::executeSql(connection, RenderedSql)
 
