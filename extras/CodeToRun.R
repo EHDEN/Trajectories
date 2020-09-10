@@ -19,16 +19,18 @@ connectionDetails = createConnectionDetails(dbms = 'postgresql',#  e.g. oracle, 
 # Setting database parameters - CHANGE ACCORDING TO YOUR DATABASE:
 # library(stringi)
 trajectoryLocalArgs <- Trajectories::createTrajectoryLocalArgs(oracleTempSchema = "temp_schema",
-                                                               prefixForResultTableNames = "sr_", # Alternatively, you could use this to randomly generate the prefix (requires library(stringi) to be loaded): paste0(  if(!is.null(attr(connectionDetails,'user'))) substr(USER,1,2), stri_rand_strings(1, 2, pattern = "[A-Za-z]"), sep="_")
-                                                               cdmDatabaseSchema = 'ohdsi_cdm',
-                                                               vocabDatabaseSchema = 'ohdsi_vocab',
+
+                                                            prefixForResultTableNames = "sr_", # Alternatively, you could use this to randomly generate the prefix (requires library(stringi) to be loaded): paste0(  if(!is.null(attr(connectionDetails,'user'))) substr(USER,1,2), stri_rand_strings(1, 2, pattern = "[A-Za-z]"), sep="_")
+                                                             cdmDatabaseSchema = 'ohdsi_cdm',
+                                                              vocabDatabaseSchema = 'ohdsi_vocab',
                                                                resultsSchema = 'ohdsi_temp',
-                                                               sqlRole = F, # You may always use 'F'. Setting specific role might be useful in PostgreSQL when you want to create tables by using specific role so that the others also see the results. However, then you must ensure that this role has permissions to read from all necessary schemas and also create tables to resultsSchema
+                                                              sqlRole = F, # You may always use 'F'. Setting specific role might be useful in PostgreSQL when you want to create tables by using specific role so that the others also see the results. However, then you must ensure that this role has permissions to read from all necessary schemas and also create tables to resultsSchema
                                                                cohortTableSchema= 'ohdsi_temp',
                                                                cohortTable='cohort',
                                                                cohortId=1,
                                                                mainOutputFolder='/Users/sulevr/temp',
                                                                databaseHumanReadableName='RITA MAITT', #Use something short. It will be added to the titles of the graph.
+
                                                                cohortSqlFile='example_cohort_RA.sql')
 
 

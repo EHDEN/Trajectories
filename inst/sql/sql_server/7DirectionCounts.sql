@@ -3,12 +3,13 @@
 IF OBJECT_ID('@resultsSchema.@prefixcohorts_with_d1', 'U') IS NOT NULL
   DROP TABLE @resultsSchema.@prefixcohorts_with_d1;
 
-CREATE TABLE @resultsSchema.@prefixcohorts_with_d1 as
+--CREATE TABLE @resultsSchema.@prefixcohorts_with_d1 as
     SELECT
                cohort_id as cohort_id,
                dgn,
                date,
                age
+        INTO @resultsSchema.@prefixcohorts_with_d1
         FROM
              @resultsSchema.@prefixevents_cohort
         WHERE
@@ -20,7 +21,7 @@ CREATE TABLE @resultsSchema.@prefixcohorts_with_d1 as
 IF OBJECT_ID('@resultsSchema.@prefixcohorts_with_d1d2', 'U') IS NOT NULL
   DROP TABLE @resultsSchema.@prefixcohorts_with_d1d2;
 
-CREATE TABLE @resultsSchema.@prefixcohorts_with_d1d2 as
+--CREATE TABLE @resultsSchema.@prefixcohorts_with_d1d2 as
     SELECT
                a.cohort_id as cohort_id,
                b.dgn as event1_concept_id,
@@ -28,6 +29,7 @@ CREATE TABLE @resultsSchema.@prefixcohorts_with_d1d2 as
                b.date as date1,
                a.date as date2,
                a.age as event1_age
+        INTO @resultsSchema.@prefixcohorts_with_d1d2
         FROM
              @resultsSchema.@prefixevents_cohort a
                  JOIN @resultsSchema.@prefixcohorts_with_d1 b

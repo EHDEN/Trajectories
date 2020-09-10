@@ -32,7 +32,7 @@ INSERT INTO @resultsSchema.@prefiXdebug (entry) VALUES ('Creating @resultsSchema
 IF OBJECT_ID('@resultsSchema.@prefiXmycohort', 'U') IS NOT NULL
   DROP TABLE @resultsSchema.@prefiXetcohort;
 
-CREATE TABLE @resultsSchema.@prefiXetcohort AS
+--CREATE TABLE @resultsSchema.@prefiXetcohort AS
     SELECT
            ROW_NUMBER() OVER (
             ORDER BY cohort.subject_id, cohort.cohort_start_date
@@ -44,6 +44,7 @@ CREATE TABLE @resultsSchema.@prefiXetcohort AS
            YEAR(p.birth_datetime) AS year_of_birth,
            cohort.cohort_start_date AS cohort_start_date,
            cohort.cohort_end_date AS cohort_end_date
+    INTO @resultsSchema.@prefiXetcohort
     FROM
         @cohortTableSchema.@cohortTable AS cohort
         LEFT JOIN @cdmDatabaseSchema.person p on cohort.subject_id=p.person_id
@@ -66,13 +67,14 @@ INSERT INTO @resultsSchema.@prefiXdebug (entry) VALUES ('Creating @resultsSchema
 
 IF OBJECT_ID('@resultsSchema.@prefiXevents', 'U') IS NOT NULL
   DROP TABLE @resultsSchema.@prefiXevents;
-CREATE TABLE @resultsSchema.@prefiXevents AS
+--CREATE TABLE @resultsSchema.@prefiXevents AS
 
     -- conditions
     SELECT
       c.cohort_id                  AS cohort_id,
       e.condition_concept_id       AS dgn,
       MIN(e.condition_start_date)  AS date -- This is min date per one cohort (for patients with multiple cohorts, there are several min dates)
+    INTO @resultsSchema.@prefiXevents
     FROM @cdmDatabaseSchema.condition_occurrence e
     INNER JOIN @resultsSchema.@prefiXetcohort c ON e.person_id=c.person_id {@daysBeforeIndexDate == Inf} ? {} : { AND DATEADD(day,@daysBeforeIndexDate,e.condition_start_date)>=c.cohort_start_date } AND e.condition_start_date<=c.cohort_end_date
     WHERE
@@ -183,10 +185,11 @@ INSERT INTO @resultsSchema.@prefiXdebug (entry) VALUES ('Creating @resultsSchema
 IF OBJECT_ID('@resultsSchema.@prefiXsingle_event_cohorts', 'U') IS NOT NULL
   DROP TABLE @resultsSchema.@prefiXsingle_event_cohorts;
 
-CREATE TABLE  @resultsSchema.@prefiXsingle_event_cohorts AS
+--CREATE TABLE  @resultsSchema.@prefiXsingle_event_cohorts AS
     SELECT
         cohort_id,
         COUNT(dgn) AS no_events
+    INTO @resultsSchema.@prefiXsingle_event_cohorts
     FROM @resultsSchema.@prefiXevents
     GROUP BY cohort_id
     HAVING COUNT(dgn)=1;
@@ -210,10 +213,11 @@ INSERT INTO @resultsSchema.@prefiXdebug (entry) VALUES ('Creating @resultsSchema
 
 IF OBJECT_ID('@resultsSchema.@prefiXevents_cohort', 'U') IS NOT NULL
   DROP TABLE @resultsSchema.@prefiXevents_cohort;
-CREATE TABLE  @resultsSchema.@prefiXevents_cohort AS
+--CREATE TABLE  @resultsSchema.@prefiXevents_cohort AS
     SELECT e.*,
            p.gender,
            p.year_of_birth
+    INTO @resultsSchema.@prefiXevents_cohort
     FROM  @resultsSchema.@prefiXevents AS e
         INNER JOIN  @resultsSchema.@prefiXetcohort AS p
             ON e.cohort_id = p.cohort_id;
@@ -245,9 +249,10 @@ INSERT INTO @resultsSchema.@prefiXdebug (entry) VALUES ('Creating @resultsSchema
 IF OBJECT_ID('@resultsSchema.@prefiXevent_counts', 'U') IS NOT NULL
   DROP TABLE @resultsSchema.@prefiXevent_counts;
 
-CREATE TABLE  @resultsSchema.@prefiXevent_counts AS
+--CREATE TABLE  @resultsSchema.@prefiXevent_counts AS
 SELECT dgn,
        COUNT(cohort_id)  AS event_counts
+INTO @resultsSchema.@prefiXevent_counts
 FROM @resultsSchema.@prefiXevents_cohort
 GROUP BY dgn;
 
@@ -262,7 +267,7 @@ INSERT INTO @resultsSchema.@prefiXdebug (entry) VALUES ('Creating @resultsSchema
 IF OBJECT_ID('@resultsSchema.@prefiXpairs', 'U') IS NOT NULL
   DROP TABLE @resultsSchema.@prefiXpairs;
 
-CREATE TABLE  @resultsSchema.@prefiXpairs AS
+--CREATE TABLE  @resultsSchema.@prefiXpairs AS
     SELECT  a.cohort_id,
             a.gender,
 
@@ -310,6 +315,7 @@ CREATE TABLE  @resultsSchema.@prefiXpairs AS
             DATEDIFF(DAY,
                     a.date,
                     b.date) AS diff_days
+    INTO @resultsSchema.@prefiXpairs
     FROM
            @resultsSchema.@prefiXevents_cohort a
            JOIN  @resultsSchema.@prefiXevents_cohort b -- full join!
@@ -340,12 +346,13 @@ INSERT INTO @resultsSchema.@prefiXdebug (entry) VALUES ('Creating @resultsSchema
 IF OBJECT_ID('@resultsSchema.@prefiXD1D2_model', 'U') IS NOT NULL
   DROP TABLE @resultsSchema.@prefiXD1D2_model;
 
-CREATE TABLE @resultsSchema.@prefiXD1D2_model as
+--CREATE TABLE @resultsSchema.@prefiXD1D2_model as
     SELECT
             event1_concept_id,
             event2_concept_id,
             ROUND(AVG(diff_days)) AS AVG_NUMBER_OF_DAYS_BETWEEN_EVENTS,
             count(*) AS EVENT1_EVENT2_COHORT_COUNT
+    INTO @resultsSchema.@prefiXD1D2_model
     FROM
      @resultsSchema.@prefiXpairs
     GROUP BY
@@ -410,7 +417,7 @@ INSERT INTO @resultsSchema.@prefiXdebug (entry) VALUES ('Creating @resultsSchema
 IF OBJECT_ID('@resultsSchema.@prefiXd1d2_summary', 'U') IS NOT NULL
   DROP TABLE @resultsSchema.@prefiXd1d2_summary;
 
-CREATE TABLE @resultsSchema.@prefiXd1d2_summary as
+--CREATE TABLE @resultsSchema.@prefiXd1d2_summary as
     SELECT
       a.event1_concept_id AS event1_concept_id,
       a.event2_concept_id AS event2_concept_id,
@@ -418,6 +425,7 @@ CREATE TABLE @resultsSchema.@prefiXd1d2_summary as
       age,
       discharge_time,
       count(*) AS cohort_count -- as there can't be duplicate event1_concept_id->event2_concept_id event pairs per cohorts, count(*) in this table gives the cohort count
+    INTO @resultsSchema.@prefiXd1d2_summary
     FROM @resultsSchema.@prefiXpairs a
       INNER JOIN @resultsSchema.@prefiXD1D2_model b ON a.event1_concept_id=b.event1_concept_id AND a.event2_concept_id=b.event2_concept_id -- limit the table to event pairs only that are going to be analyzed
     GROUP BY a.event1_concept_id, a.event2_concept_id, gender, age, discharge_time
@@ -434,12 +442,13 @@ INSERT INTO @resultsSchema.@prefiXdebug (entry) VALUES ('Creating @resultsSchema
 IF OBJECT_ID('@resultsSchema.@prefiXsummary', 'U') IS NOT NULL
   DROP TABLE @resultsSchema.@prefiXsummary;
 
-CREATE TABLE @resultsSchema.@prefiXsummary as
+--CREATE TABLE @resultsSchema.@prefiXsummary as
     SELECT
       gender,
       age,
       discharge_time,
       count(DISTINCT cohort_id) AS cohort_count
+    INTO @resultsSchema.@prefiXsummary
     FROM @resultsSchema.@prefiXpairs
     GROUP BY gender, age, discharge_time
     ORDER BY gender, age, discharge_time;
@@ -455,13 +464,14 @@ INSERT INTO @resultsSchema.@prefiXdebug (entry) VALUES ('Creating @resultsSchema
 IF OBJECT_ID('@resultsSchema.@prefiXd1_summary', 'U') IS NOT NULL
   DROP TABLE @resultsSchema.@prefiXd1_summary;
 
-CREATE TABLE @resultsSchema.@prefiXd1_summary as
+--CREATE TABLE @resultsSchema.@prefiXd1_summary as
     SELECT
       a.event1_concept_id,
       gender,
       age,
       discharge_time,
       count(DISTINCT cohort_id) AS cohort_count
+    INTO @resultsSchema.@prefiXd1_summary
     FROM @resultsSchema.@prefiXpairs a
     INNER JOIN (SELECT DISTINCT event1_concept_id FROM @resultsSchema.@prefiXD1D2_model) b ON a.event1_concept_id=b.event1_concept_id -- limit the table to event pairs only that are going to be analyzed
     GROUP BY a.event1_concept_id, gender, age, discharge_time;
@@ -475,13 +485,14 @@ INSERT INTO @resultsSchema.@prefiXdebug (entry) VALUES ('Creating @resultsSchema
 
 IF OBJECT_ID('@resultsSchema.@prefiXd2_summary', 'U') IS NOT NULL
   DROP TABLE @resultsSchema.@prefiXd2_summary;
-CREATE TABLE @resultsSchema.@prefiXd2_summary as
+--CREATE TABLE @resultsSchema.@prefiXd2_summary as
     SELECT
       a.event2_concept_id,
       gender,
       age,
       discharge_time,
       count(DISTINCT cohort_id) AS cohort_count
+    INTO @resultsSchema.@prefiXd2_summary
     FROM @resultsSchema.@prefiXpairs a
     INNER JOIN (SELECT DISTINCT event2_concept_id FROM @resultsSchema.@prefiXD1D2_model) b ON a.event2_concept_id=b.event2_concept_id -- limit the table to event pairs only that are going to be analyzed
     GROUP BY a.event2_concept_id, gender, age, discharge_time;
