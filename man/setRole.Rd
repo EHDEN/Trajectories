@@ -4,9 +4,11 @@
 \alias{setRole}
 \title{This function switches role of the database session by simply executing SET ROLE ...;}
 \usage{
-setRole(connection, trajectoryLocalArgs)
+setRole(connection, sqlRole)
 }
 \arguments{
+\item{connection}{DatabaseConnectorConnection object that is used to connect with database}
+
 \item{sqlRole}{SQL role to be set}
 }
 \value{

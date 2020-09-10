@@ -14,11 +14,17 @@ alignActualTrajectoriesToGraph(
 )
 }
 \arguments{
-\item{g}{an igrpah object that is created by specific graph functions in this package}
+\item{connection}{Database connection object created by createConnectionDetails() method in DatabaseConnector package}
+
+\item{trajectoryAnalysisArgs}{TrajectoryAnalysisArgs object that must be created by createTrajectoryAnalysisArgs() method}
+
+\item{trajectoryLocalArgs}{TrajectoryLocalArgs object that must be created by createTrajectoryLocalArgs() method}
+
+\item{g}{An igrpah object that is created by specific graph functions in this package}
+
+\item{eventname}{Event name (concept name) through which the trajectories are analyzed}
 
 \item{limit}{Max number of trajectories to align (to limit the analysis). Set to NA if no limit.}
-
-\item{sqlRole}{SQL role that is used to create tables in resultsSchema. Set to FALSE if a specific role is not needed}
 }
 \value{
 

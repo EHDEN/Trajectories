@@ -4,12 +4,9 @@ library(DatabaseConnector)
 
 #' Function to drop cohort table.
 #'
-#' @param packageName
+#' @param trajectoryAnalysisArgs TrajectoryAnalysisArgs object that must be created by createTrajectoryAnalysisArgs() method
+#' @param trajectoryLocalArgs TrajectoryLocalArgs object that must be created by createTrajectoryLocalArgs() method
 #' @param connection DatabaseConnectorConnection object that is used to connect with database
-#' @param dbms
-#' @param sqlRole SQL role that is used to drop cohort table in cohortTableSchema. Set to FALSE if a specific role is not needed
-#' @param cohortTableSchema
-#' @param cohortTable
 #'
 #' @return
 #' @export

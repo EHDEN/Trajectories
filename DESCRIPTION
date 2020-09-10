@@ -13,17 +13,14 @@ Authors@R: c(
     person("Sven", "Laur", role = c("aut"))
     )
 Maintainer: Kadri Künnapuu <kadri.kunnapuu@stacc.ee>
-License: license
+License: GPL-3
 Depends:
     R (>= 3.2.2),
     DatabaseConnector (>= 2.2.0),
     dplyr (>= 0.8.5),
-    stringi (>= 1.4.5),
     SqlRender (>= 1.5.2),
-    igraph (>= 1.2.5),
-    testthat (>= 2.3.2)
+    igraph (>= 1.2.5)
 Imports:
-    networkD3 (>= 2.0.3)
 Encoding: UTF-8
 RoxygenNote: 7.1.1
 Suggests: 

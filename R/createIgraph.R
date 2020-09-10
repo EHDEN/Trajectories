@@ -2,15 +2,12 @@ library(igraph)
 library(dplyr)
 #' Title
 #'
-#' @param eventPairResultsFilename
-#' @param packageName
-#' @param connection
-#' @param resultsSchema
-#' @param prefixForResultTableNames
-#' @param sqlRole Database role that is used when creating tables to 'resultsSchema'. Set to F if a specific role is not needed.
-#' @param cohortName
+#' @param eventPairResultsFilename File path to event pairs that is used for building an igraph object.
+#' @param connection Database connection object created by createConnectionDetails() method in DatabaseConnector package
 #' @param eventName Exact concept name that is used for building trajectories. Must exist in event pairs data table. If not specified (NA) (recommended) creates trajectories for top 5 events.
 #' @param outputFolder Output folder (should exist) without trailing slash
+#' @param trajectoryAnalysisArgs TrajectoryAnalysisArgs object that must be created by createTrajectoryAnalysisArgs() method
+#' @param trajectoryLocalArgs TrajectoryLocalArgs object that must be created by createTrajectoryLocalArgs() method
 #'
 #' @return
 #' @export

@@ -2,7 +2,7 @@
 #use_test()
 #' This function switches role of the database session by simply executing SET ROLE ...;
 #'
-#' @param connection
+#' @param connection DatabaseConnectorConnection object that is used to connect with database
 #' @param sqlRole SQL role to be set
 #'
 #' @return

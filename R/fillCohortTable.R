@@ -5,15 +5,9 @@ library(DatabaseConnector)
 
 #' Function to fill the cohort table.
 #'
-#' @param cohortSqlFile SQL file in the package directory/inst/sql/sql_server). If set to F, uses built-in (example) cohort definition (example_cohort_RA.sql).
-#' @param packageName
+#' @param trajectoryAnalysisArgs TrajectoryAnalysisArgs object that must be created by createTrajectoryAnalysisArgs() method
+#' @param trajectoryLocalArgs TrajectoryLocalArgs object that must be created by createTrajectoryLocalArgs() method
 #' @param connection DatabaseConnectorConnection object that is used to connect with database
-#' @param cdm_database_schema
-#' @param vocabDatabaseSchema
-#' @param cohortTableSchema
-#' @param cohortTable
-#' @param oracleTempSchema
-#' @param target_cohort_id ID that is given to the created cohort. Default is 1.
 #'
 #' @return
 #' @export

@@ -3,7 +3,7 @@ library(igraph)
 
 #' Creates force network graph from the event pairs
 #'
-#' @param g
+#' @param g igraph object
 #'
 #' @return
 #' @export

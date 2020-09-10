@@ -7,7 +7,9 @@
 filterByLift(g, lift.threshold = 2)
 }
 \arguments{
-\item{lift.threshold}{}
+\item{g}{igraph object}
+
+\item{lift.threshold}{lift.threshold}
 }
 \value{
 

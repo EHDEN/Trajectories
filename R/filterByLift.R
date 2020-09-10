@@ -1,7 +1,7 @@
 #' Title
 #'
-#' @param g
-#' @param lift.threshold
+#' @param g igraph object
+#' @param lift.threshold lift.threshold
 #'
 #' @return
 #' @export

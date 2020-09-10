@@ -4,15 +4,11 @@ library(ff)
 
 #' Runs the analysis that detects statistically significant directional event pairs and writes the results to file. Data is taken from database and it is expected that the tables are created by function createEventPairsTable()
 #'
-#' @param packageName Must always have value 'Trajectories'. The value is needed by SqlRender to find the SQL scripts from the right path.
 #' @param connection DatabaseConnectorConnection object that is used to connect with database
-#' @param dbms The target SQL dialect that is used by SqlRender
-#' @param oracleTempSchema A schema that can be used to create temp tables in when using Oracle. Used by SqlRender
-#' @param sqlRole Database role that is used when creating tables in 'resultsSchema'. Set to F if a specific role is not needed.
-#' @param resultsSchema Database schema where the temporary analysis tables are created. They are temporary in a sense that they are deleted in the end of the analysis (the tables are not created as CREATE TEMPORARY TABLE...)
-#' @param prefixForResultTableNames This is the prefix that is used for all table names in analysis process. Table with that prefix should already exist in the database (created by function createEventPairsTable()). Default value is ''.
 #' @param eventPairResultsFilename Filename where the results of the analysis (significant directional event pairs) are written to
 #' @param eventPairResultsStatsFilename Filename where the some statics, used p-value threshold etc. are written for later use.
+#' @param trajectoryAnalysisArgs TrajectoryAnalysisArgs object that must be created by createTrajectoryAnalysisArgs() method
+#' @param trajectoryLocalArgs TrajectoryLocalArgs object that must be created by createTrajectoryLocalArgs() method
 #'
 #' @return
 #' @export

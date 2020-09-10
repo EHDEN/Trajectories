@@ -9,9 +9,9 @@ fillCohortTable(connection, trajectoryAnalysisArgs, trajectoryLocalArgs)
 \arguments{
 \item{connection}{DatabaseConnectorConnection object that is used to connect with database}
 
-\item{cohortSqlFile}{SQL file in the package directory/inst/sql/sql_server). If set to F, uses built-in (example) cohort definition (example_cohort_RA.sql).}
+\item{trajectoryAnalysisArgs}{TrajectoryAnalysisArgs object that must be created by createTrajectoryAnalysisArgs() method}
 
-\item{target_cohort_id}{ID that is given to the created cohort. Default is 1.}
+\item{trajectoryLocalArgs}{TrajectoryLocalArgs object that must be created by createTrajectoryLocalArgs() method}
 }
 \value{
 

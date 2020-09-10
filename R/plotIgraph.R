@@ -1,8 +1,8 @@
 #' Title
 #'
-#' @param g
-#' @param layout
-#' @param outputPdfFullpath
+#' @param g igraph object
+#' @param layout layout of igraph object
+#' @param outputPdfFullpath Full path to output PDF file
 #'
 #' @return
 #' @export

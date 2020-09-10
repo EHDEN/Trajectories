@@ -13,7 +13,11 @@ filterIgraphRemoveLowEffectLinksAndOrphanNodes(
 )
 }
 \arguments{
-\item{g}{}
+\item{g}{igraph object}
+
+\item{limitOfLinks}{limitOfLinks}
+
+\item{edge_param_to_sort_by}{edge_param_to_sort_by}
 }
 \value{
 

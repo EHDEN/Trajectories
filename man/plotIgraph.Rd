@@ -14,7 +14,11 @@ plotIgraph(
 )
 }
 \arguments{
-\item{outputPdfFullpath}{}
+\item{g}{igraph object}
+
+\item{layout}{layout of igraph object}
+
+\item{outputPdfFullpath}{Full path to output PDF file}
 }
 \value{
 

@@ -15,21 +15,13 @@ runEventPairAnalysis(
 \arguments{
 \item{connection}{DatabaseConnectorConnection object that is used to connect with database}
 
+\item{trajectoryAnalysisArgs}{TrajectoryAnalysisArgs object that must be created by createTrajectoryAnalysisArgs() method}
+
+\item{trajectoryLocalArgs}{TrajectoryLocalArgs object that must be created by createTrajectoryLocalArgs() method}
+
 \item{eventPairResultsFilename}{Filename where the results of the analysis (significant directional event pairs) are written to}
 
 \item{eventPairResultsStatsFilename}{Filename where the some statics, used p-value threshold etc. are written for later use.}
-
-\item{packageName}{Must always have value 'Trajectories'. The value is needed by SqlRender to find the SQL scripts from the right path.}
-
-\item{dbms}{The target SQL dialect that is used by SqlRender}
-
-\item{oracleTempSchema}{A schema that can be used to create temp tables in when using Oracle. Used by SqlRender}
-
-\item{sqlRole}{Database role that is used when creating tables in 'resultsSchema'. Set to F if a specific role is not needed.}
-
-\item{resultsSchema}{Database schema where the temporary analysis tables are created. They are temporary in a sense that they are deleted in the end of the analysis (the tables are not created as CREATE TEMPORARY TABLE...)}
-
-\item{prefixForResultTableNames}{This is the prefix that is used for all table names in analysis process. Table with that prefix should already exist in the database (created by function createEventPairsTable()). Default value is ''.}
 }
 \value{
 

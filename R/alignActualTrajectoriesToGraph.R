@@ -4,14 +4,12 @@ library(dplyr)
 
 #' Adds numcohortCustom value to graph edges - actual number of people (out of all people who have EVENTNAME) on that edge
 #'
-#' @param g an igrpah object that is created by specific graph functions in this package
-#' @param packageName
-#' @param connection
-#' @param resultsSchema
-#' @param prefixForResultTableNames
+#' @param g An igrpah object that is created by specific graph functions in this package
+#' @param connection Database connection object created by createConnectionDetails() method in DatabaseConnector package
 #' @param limit Max number of trajectories to align (to limit the analysis). Set to NA if no limit.
-#' @param eventname
-#' @param sqlRole SQL role that is used to create tables in resultsSchema. Set to FALSE if a specific role is not needed
+#' @param trajectoryAnalysisArgs TrajectoryAnalysisArgs object that must be created by createTrajectoryAnalysisArgs() method
+#' @param trajectoryLocalArgs TrajectoryLocalArgs object that must be created by createTrajectoryLocalArgs() method
+#' @param eventname Event name (concept name) through which the trajectories are analyzed
 #'
 #' @return
 #' @export

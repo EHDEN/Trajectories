@@ -8,51 +8,17 @@ createEventPairsTable(
   connection,
   trajectoryAnalysisArgs,
   trajectoryLocalArgs,
-  eventParametersFilename
+  eventParametersFilename = "event_parameters.txt"
 )
 }
 \arguments{
 \item{connection}{DatabaseConnectorConnection object that is used to connect with database}
 
+\item{trajectoryAnalysisArgs}{TrajectoryAnalysisArgs object that must be created by createTrajectoryAnalysisArgs() method}
+
+\item{trajectoryLocalArgs}{TrajectoryLocalArgs object that must be created by createTrajectoryLocalArgs() method}
+
 \item{eventParametersFilename}{Filename where the parameters of creating event pairs are written (so that one could later see what what where the exact parameters). Default value is 'event_parameters.txt'. If set to FALSE, no output file is created.}
-
-\item{packageName}{Must always have value 'Trajectories'. The value is needed by SqlRender to find the SQL scripts from the right path.}
-
-\item{oracleTempSchema}{A schema that can be used to create temp tables in when using Oracle. Used by SqlRender}
-
-\item{sqlRole}{Database role that is used when creating tables to 'resultsSchema'. It should also have access to 'cdmDatabaseSchema' and 'vocabDatabaseSchema'. Set to F a specific role is not needed.}
-
-\item{resultsSchema}{Database schema where the temporary analysis tables are created. They are temporary in a sense that they are deleted in the end of the analysis (the tables are not created as CREATE TEMPORARY TABLE...)}
-
-\item{cdmDatabaseSchema}{Database schema where the actual OMOP-formatted data is stored and taken into analysis}
-
-\item{vocabDatabaseSchema}{Database schema that contains 'concept' table of OMOP vocabulary}
-
-\item{addConditions}{TRUE/FALSE parameter to indicate whether events from Condition_occurrence table should be included in the analysis}
-
-\item{addObservations}{TRUE/FALSE parameter to indicate whether events from Observation table should be included in the analysis}
-
-\item{addProcedures}{TRUE/FALSE parameter to indicate whether events from Procedure_occurrence table should be included in the analysis}
-
-\item{addDrugExposures}{TRUE/FALSE parameter to indicate whether events from Drug_exposure table should be included in the analysis}
-
-\item{addDrugEras}{TRUE/FALSE parameter to indicate whether events from Drug_era table should be included in the analysis}
-
-\item{addBirths}{TRUE/FALSE parameter to indicate whether births events should be included in the analysis.}
-
-\item{addDeaths}{TRUE/FALSE parameter to indicate whether events from Death table should be included in the analysis.}
-
-\item{minimumDaysBetweenEvents}{The minimum number of days between 2 events of the patient that can be considered as event pair}
-
-\item{maximumDaysBetweenEvents}{The maximum number of days between 2 events of the patient that can be considered as event pair}
-
-\item{minPatientsPerEventPair}{Minimum number of people having event1 -> event2 progression to be included in analysis. Can be used for limiting analysis to frequent event pairs only. However, it does not throw less frequent diagnosis pairs out of the (control group) data and therefore, does not affect the statistical significance.}
-
-\item{prefixForResultTableNames}{This is the prefix that is used for all table names in analysis process. The aim is to avoid any collision with output table names (when someone runs the same analysis in parallel). Default value is ''.}
-
-\item{cohortId}{Cohort ID in cohortTable. Default value is 1.}
-
-\item{daysBeforeIndexDate}{0 or any positive number that indicates for how many days before index date of the cohort the events are included in the analysis. In case one wants to include all events before index date, use value Inf}
 }
 \value{
 

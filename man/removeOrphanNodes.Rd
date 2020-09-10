@@ -7,7 +7,7 @@
 removeOrphanNodes(g)
 }
 \arguments{
-\item{g}{}
+\item{g}{igraph object}
 }
 \value{
 

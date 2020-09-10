@@ -9,9 +9,9 @@ dropCohortTable(connection, trajectoryAnalysisArgs, trajectoryLocalArgs)
 \arguments{
 \item{connection}{DatabaseConnectorConnection object that is used to connect with database}
 
-\item{sqlRole}{SQL role that is used to drop cohort table in cohortTableSchema. Set to FALSE if a specific role is not needed}
+\item{trajectoryAnalysisArgs}{TrajectoryAnalysisArgs object that must be created by createTrajectoryAnalysisArgs() method}
 
-\item{cohortTable}{}
+\item{trajectoryLocalArgs}{TrajectoryLocalArgs object that must be created by createTrajectoryLocalArgs() method}
 }
 \value{
 

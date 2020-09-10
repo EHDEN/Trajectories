@@ -1,6 +1,8 @@
 #' Title
 #'
-#' @param g
+#' @param g igraph object
+#' @param limitOfLinks limitOfLinks
+#' @param edge_param_to_sort_by edge_param_to_sort_by
 #'
 #' @return
 #' @export

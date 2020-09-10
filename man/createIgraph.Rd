@@ -14,11 +14,17 @@ createIgraph(
 )
 }
 \arguments{
+\item{connection}{Database connection object created by createConnectionDetails() method in DatabaseConnector package}
+
+\item{trajectoryAnalysisArgs}{TrajectoryAnalysisArgs object that must be created by createTrajectoryAnalysisArgs() method}
+
+\item{trajectoryLocalArgs}{TrajectoryLocalArgs object that must be created by createTrajectoryLocalArgs() method}
+
+\item{eventPairResultsFilename}{File path to event pairs that is used for building an igraph object.}
+
 \item{outputFolder}{Output folder (should exist) without trailing slash}
 
 \item{eventName}{Exact concept name that is used for building trajectories. Must exist in event pairs data table. If not specified (NA) (recommended) creates trajectories for top 5 events.}
-
-\item{sqlRole}{Database role that is used when creating tables to 'resultsSchema'. Set to F if a specific role is not needed.}
 }
 \value{
 
