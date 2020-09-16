@@ -4,12 +4,7 @@
 \alias{createEventPairsTable}
 \title{Creates event pairs table and populates it with the data}
 \usage{
-createEventPairsTable(
-  connection,
-  trajectoryAnalysisArgs,
-  trajectoryLocalArgs,
-  eventParametersFilename = "event_parameters.txt"
-)
+createEventPairsTable(connection, trajectoryAnalysisArgs, trajectoryLocalArgs)
 }
 \arguments{
 \item{connection}{DatabaseConnectorConnection object that is used to connect with database}
@@ -17,8 +12,6 @@ createEventPairsTable(
 \item{trajectoryAnalysisArgs}{TrajectoryAnalysisArgs object that must be created by createTrajectoryAnalysisArgs() method}
 
 \item{trajectoryLocalArgs}{TrajectoryLocalArgs object that must be created by createTrajectoryLocalArgs() method}
-
-\item{eventParametersFilename}{Filename where the parameters of creating event pairs are written (so that one could later see what what where the exact parameters). Default value is 'event_parameters.txt'. If set to FALSE, no output file is created.}
 }
 \value{
 

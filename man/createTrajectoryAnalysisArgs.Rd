@@ -2,7 +2,7 @@
 % Please edit documentation in R/TrajectoryArguments.R
 \name{createTrajectoryAnalysisArgs}
 \alias{createTrajectoryAnalysisArgs}
-\title{An object to hold analysis-specific data}
+\title{Creates an object to hold analysis-specific data}
 \usage{
 createTrajectoryAnalysisArgs(
   minimumDaysBetweenEvents,
@@ -51,5 +51,5 @@ createTrajectoryAnalysisArgs(
 
 }
 \description{
-An object to hold analysis-specific data
+Creates an object to hold analysis-specific data
 }

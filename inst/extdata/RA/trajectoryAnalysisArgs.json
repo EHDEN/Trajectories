@@ -1,0 +1,15 @@
+{
+  "minimumDaysBetweenEvents": [1],
+  "maximumDaysBetweenEvents": [3650],
+  "minPatientsPerEventPair": [100],
+  "addConditions": [true],
+  "addObservations": [true],
+  "addProcedures": [false],
+  "addDrugExposures": [false],
+  "addDrugEras": [true],
+  "addBirths": [true],
+  "addDeaths": [true],
+  "daysBeforeIndexDate": ["Inf"],
+  "packageName": ["Trajectories"],
+  "cohortName": ["Rheumatoid arthritis"]
+}

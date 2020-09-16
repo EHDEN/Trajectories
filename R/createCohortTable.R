@@ -17,7 +17,7 @@ createCohortTable<-function(connection,
                             trajectoryLocalArgs) {
 
   print(paste0('Creating cohort table <',trajectoryLocalArgs$cohortTable,'> to <',trajectoryLocalArgs$cohortTableSchema,'> schema...'))
-  print(trajectoryLocalArgs)
+
   #Set SQL role of the database session
   Trajectories::setRole(connection,trajectoryLocalArgs$sqlRole)
 

@@ -1,0 +1,15 @@
+{
+  "minimumDaysBetweenEvents": [1],
+  "maximumDaysBetweenEvents": [3650],
+  "minPatientsPerEventPair": [1000],
+  "addConditions": [true],
+  "addObservations": [true],
+  "addProcedures": [true],
+  "addDrugExposures": [false],
+  "addDrugEras": [true],
+  "addBirths": [true],
+  "addDeaths": [true],
+  "daysBeforeIndexDate": ["Inf"],
+  "packageName": ["Trajectories"],
+  "cohortName": ["Type 2 diabetes"]
+}

@@ -4,13 +4,7 @@
 \alias{runEventPairAnalysis}
 \title{Runs the analysis that detects statistically significant directional event pairs and writes the results to file. Data is taken from database and it is expected that the tables are created by function createEventPairsTable()}
 \usage{
-runEventPairAnalysis(
-  connection,
-  trajectoryAnalysisArgs,
-  trajectoryLocalArgs,
-  eventPairResultsFilename = "event_pairs.tsv",
-  eventPairResultsStatsFilename = "event_pairs_stats.txt"
-)
+runEventPairAnalysis(connection, trajectoryAnalysisArgs, trajectoryLocalArgs)
 }
 \arguments{
 \item{connection}{DatabaseConnectorConnection object that is used to connect with database}
@@ -18,10 +12,6 @@ runEventPairAnalysis(
 \item{trajectoryAnalysisArgs}{TrajectoryAnalysisArgs object that must be created by createTrajectoryAnalysisArgs() method}
 
 \item{trajectoryLocalArgs}{TrajectoryLocalArgs object that must be created by createTrajectoryLocalArgs() method}
-
-\item{eventPairResultsFilename}{Filename where the results of the analysis (significant directional event pairs) are written to}
-
-\item{eventPairResultsStatsFilename}{Filename where the some statics, used p-value threshold etc. are written for later use.}
 }
 \value{
 

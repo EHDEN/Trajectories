@@ -1,12 +1,9 @@
-
 library(SqlRender)
-library(ff)
+#library(ff)
 
 #' Runs the analysis that detects statistically significant directional event pairs and writes the results to file. Data is taken from database and it is expected that the tables are created by function createEventPairsTable()
 #'
 #' @param connection DatabaseConnectorConnection object that is used to connect with database
-#' @param eventPairResultsFilename Filename where the results of the analysis (significant directional event pairs) are written to
-#' @param eventPairResultsStatsFilename Filename where the some statics, used p-value threshold etc. are written for later use.
 #' @param trajectoryAnalysisArgs TrajectoryAnalysisArgs object that must be created by createTrajectoryAnalysisArgs() method
 #' @param trajectoryLocalArgs TrajectoryLocalArgs object that must be created by createTrajectoryLocalArgs() method
 #'
@@ -16,9 +13,12 @@ library(ff)
 #' @examples
 runEventPairAnalysis<-function(connection,
                                trajectoryAnalysisArgs,
-                               trajectoryLocalArgs,
-                               eventPairResultsFilename = 'event_pairs.tsv',
-                               eventPairResultsStatsFilename = 'event_pairs_stats.txt' ) {
+                               trajectoryLocalArgs) {
+
+  outputFolder<-Trajectories::GetOutputFolder(trajectoryLocalArgs,trajectoryAnalysisArgs)
+  eventPairResultsFilename = file.path(outputFolder,'event_pairs.tsv')
+  eventPairResultsStatsFilename = file.path(outputFolder,'event_pairs_stats.txt')
+
   print(paste0("Detect statistically significant directional event pairs and write the results to ",eventPairResultsFilename,"..."))
 
   #Set SQL role of the database session

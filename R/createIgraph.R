@@ -2,10 +2,8 @@ library(igraph)
 library(dplyr)
 #' Title
 #'
-#' @param eventPairResultsFilename File path to event pairs that is used for building an igraph object.
 #' @param connection Database connection object created by createConnectionDetails() method in DatabaseConnector package
 #' @param eventName Exact concept name that is used for building trajectories. Must exist in event pairs data table. If not specified (NA) (recommended) creates trajectories for top 5 events.
-#' @param outputFolder Output folder (should exist) without trailing slash
 #' @param trajectoryAnalysisArgs TrajectoryAnalysisArgs object that must be created by createTrajectoryAnalysisArgs() method
 #' @param trajectoryLocalArgs TrajectoryLocalArgs object that must be created by createTrajectoryLocalArgs() method
 #'
@@ -16,16 +14,17 @@ library(dplyr)
 createIgraph<-function(connection,
                        trajectoryAnalysisArgs,
                        trajectoryLocalArgs,
-                       eventPairResultsFilename,
-                       outputFolder,
                        eventName=NA) {
+
+  outputFolder<-Trajectories::GetOutputFolder(trajectoryLocalArgs,trajectoryAnalysisArgs)
+  eventPairResultsFilename = file.path(outputFolder,'event_pairs.tsv')
 
   # create igraph object from event pairs
   g<-Trajectories::createGraph(eventPairResultsFilename)
 
 
   cohortName=trajectoryAnalysisArgs$cohortName
-  OUTPUTFOLDER=paste0(outputFolder,"/")
+
 
 
 
@@ -33,7 +32,7 @@ createIgraph<-function(connection,
 
   # create plot of all event pairs (no filtering)
   title=paste0('All significant directional event pairs among ',cohortName,' patients')
-  Trajectories::plotIgraph(g,layout=layout_with_fr,linknumbers=round(100*E(g)$prob),outputPdfFullpath=paste0(OUTPUTFOLDER,make.names(title),'.pdf'),title=paste0(title,"\n",format(Sys.time(), '%d %B %Y %H:%M')))
+  Trajectories::plotIgraph(g,layout=layout_with_fr,linknumbers=round(100*E(g)$prob),outputPdfFullpath=file.path(outputFolder,paste0(make.names(title),'.pdf')),title=paste0(title,"\n",format(Sys.time(), '%d %B %Y %H:%M')))
 
   # Remove low-probability event pairs (keep 50 event pairs with highest probability)
   s=c(20,50)
@@ -41,7 +40,7 @@ createIgraph<-function(connection,
     #limitOfLinks=50
     h<-Trajectories::filterIgraphRemoveLowEffectLinksAndOrphanNodes(g, limitOfLinks=limitOfLinks,edge_param_to_sort_by='prob')
     title=paste0(limitOfLinks,' high-probability event pairs among ',cohortName,' patients')
-    Trajectories::plotIgraph(h,layout=layout_with_fr,linknumbers=round(100*E(h)$prob),outputPdfFullpath=paste0(OUTPUTFOLDER,make.names(title),'.pdf'),title=paste0(title,"\n",format(Sys.time(), '%d %B %Y %H:%M')))
+    Trajectories::plotIgraph(h,layout=layout_with_fr,linknumbers=round(100*E(h)$prob),outputPdfFullpath=file.path(outputFolder,paste0(make.names(title),'.pdf')),title=paste0(title,"\n",format(Sys.time(), '%d %B %Y %H:%M')))
   }
 
 
@@ -63,7 +62,7 @@ createIgraph<-function(connection,
 
       constructed.graph<-Trajectories::filterIgraphCrossingEvent(g, eventname = EVENTNAME, limitOfNodes=limitOfNodes, edge_param_to_sort_by=edge_param_to_sort_by)
       title=paste0("Constructed most-likely trajectories in ",cohortName," cohort through\n",EVENTNAME,"\n(based on ",V(g)[V(g)$name==EVENTNAME]$count," patients and limited to ",limitOfNodes," events)")
-      Trajectories::plotIgraph(constructed.graph,layout=layout_with_fr,linknumbers=round(E(constructed.graph)$prob*100),outputPdfFullpath=paste0(OUTPUTFOLDER,make.names(title),'.pdf'),title=paste0(title,"\n",format(Sys.time(), '%d %B %Y %H:%M')))
+      Trajectories::plotIgraph(constructed.graph,layout=layout_with_fr,linknumbers=round(E(constructed.graph)$prob*100),outputPdfFullpath=file.path(outputFolder,paste0(make.names(title),'.pdf')),title=paste0(title,"\n",format(Sys.time(), '%d %B %Y %H:%M')))
 
 
       #align actual trajectories to constructed graph
@@ -80,15 +79,15 @@ createIgraph<-function(connection,
       #E(h)$alignedTrajsProb=E(h)$alignedTrajsCount/V(h)[ends(h,E(h),names=F)[,1]]$alignedTrajsCount
       E(h)$alignedTrajsProb=E(h)$alignedTrajsCount/V(h)[V(h)$name==EVENTNAME]$alignedTrajsCount #probability relative to EVENTNAME
       title=paste0(ifelse(is.na(limitOfTrajs),'All ',''),V(h)[V(h)$name==EVENTNAME]$alignedTrajsCount," actual trajectories of ",cohortName," patients having/passing\n",EVENTNAME," (EVENT),\naligned to constructed graph of ",limitOfNodes," events (frequency relative to EVENT given on edges)")
-      Trajectories::plotIgraph(h,layout=layout_with_fr,nodesizes=V(h)$alignedTrajsCount,linknumbers=round(E(h)$alignedTrajsProb*100),outputPdfFullpath=paste0(OUTPUTFOLDER,make.names(title),'.pdf'),title=paste0(title,"\n",format(Sys.time(), '%d %B %Y %H:%M')))
+      Trajectories::plotIgraph(h,layout=layout_with_fr,nodesizes=V(h)$alignedTrajsCount,linknumbers=round(E(h)$alignedTrajsProb*100),outputPdfFullpath=file.path(outputFolder,paste0(make.names(title),'.pdf')),title=paste0(title,"\n",format(Sys.time(), '%d %B %Y %H:%M')))
       title=paste0(ifelse(is.na(limitOfTrajs),'All ',''),V(h)[V(h)$name==EVENTNAME]$alignedTrajsCount," actual trajectories of ",cohortName," patients having/passing\n",EVENTNAME," (EVENT),\naligned to constructed graph of ",limitOfNodes," events (trajectory count on edge)")
-      Trajectories::plotIgraph(h,layout=layout_with_fr,nodesizes=V(h)$alignedTrajsCount,linknumbers=round(E(h)$alignedTrajsCount),outputPdfFullpath=paste0(OUTPUTFOLDER,make.names(title),'.pdf'),title=paste0(title,"\n",format(Sys.time(), '%d %B %Y %H:%M')))
+      Trajectories::plotIgraph(h,layout=layout_with_fr,nodesizes=V(h)$alignedTrajsCount,linknumbers=round(E(h)$alignedTrajsCount),outputPdfFullpath=file.path(outputFolder,paste0(make.names(title),'.pdf')),title=paste0(title,"\n",format(Sys.time(), '%d %B %Y %H:%M')))
 
 
       x<-igraph::as_data_frame(h, what='edges')
       y<-igraph::as_data_frame(h, what='vertices')
-      write.table(x,file=paste0(OUTPUTFOLDER,make.names(title),'.edges.csv'),quote=FALSE, sep="\t", col.names = NA)
-      write.table(y,file=paste0(OUTPUTFOLDER,make.names(title),'.vertices.csv'),quote=FALSE, sep="\t", col.names = NA)
+      write.table(x,file=file.path(outputFolder,paste0(make.names(title),'.edges.csv')),quote=FALSE, sep="\t", col.names = NA)
+      write.table(y,file=file.path(outputFolder,paste0(make.names(title),'.vertices.csv')),quote=FALSE, sep="\t", col.names = NA)
 
 
       #align actual trajectories to full graph (takes looong time)
@@ -105,12 +104,12 @@ createIgraph<-function(connection,
       #E(h)$alignedTrajsProb=E(h)$alignedTrajsCount/V(h)[ends(h,E(h),names=F)[,1]]$alignedTrajsCount
       E(h)$alignedTrajsProb=E(h)$alignedTrajsCount/V(h)[V(h)$name==EVENTNAME]$alignedTrajsCount #probability relative to EVENTNAME
       title=paste0(ifelse(is.na(limitOfTrajs),'All ',limitOfTrajs)," actual trajectories of ",cohortName," patients having/passing\n",EVENTNAME," (EVENT),\naligned to full graph (frequency relative to EVENT given on edge)")
-      Trajectories::plotIgraph(h,layout=layout_with_fr,nodesizes=V(h)$alignedTrajsCount,linknumbers=round(E(h)$alignedTrajsProb*100),outputPdfFullpath=paste0(OUTPUTFOLDER,make.names(title),'.pdf'),title=paste0(title,"\n",format(Sys.time(), '%d %B %Y %H:%M')))
+      Trajectories::plotIgraph(h,layout=layout_with_fr,nodesizes=V(h)$alignedTrajsCount,linknumbers=round(E(h)$alignedTrajsProb*100),outputPdfFullpath=file.path(outputFolder,paste0(make.names(title),'.pdf')),title=paste0(title,"\n",format(Sys.time(), '%d %B %Y %H:%M')))
 
       x<-igraph::as_data_frame(h, what='edges')
       y<-igraph::as_data_frame(h, what='vertices')
-      write.table(x,file=paste0(OUTPUTFOLDER,make.names(title),'.edges.csv'),quote=FALSE, sep="\t", col.names = NA)
-      write.table(y,file=paste0(OUTPUTFOLDER,make.names(title),'.vertices.csv'),quote=FALSE, sep="\t", col.names = NA)
+      write.table(x,file=file.path(outputFolder,paste0(make.names(title),'.edges.csv')),quote=FALSE, sep="\t", col.names = NA)
+      write.table(y,file=file.path(outputFolder,paste0(make.names(title),'.vertices.csv')),quote=FALSE, sep="\t", col.names = NA)
 
 
     } else {

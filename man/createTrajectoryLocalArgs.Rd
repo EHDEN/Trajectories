@@ -2,7 +2,7 @@
 % Please edit documentation in R/TrajectoryArguments.R
 \name{createTrajectoryLocalArgs}
 \alias{createTrajectoryLocalArgs}
-\title{An object to hold local database-specific parameters}
+\title{Creates an object to hold local database-specific parameters}
 \usage{
 createTrajectoryLocalArgs(
   cdmDatabaseSchema,
@@ -13,10 +13,10 @@ createTrajectoryLocalArgs(
   prefixForResultTableNames = "",
   cohortTableSchema,
   cohortTable,
-  cohortId,
+  cohortId = 1,
+  inputFolder = system.file("extdata", "RA", package = "Trajectories"),
   mainOutputFolder = getwd(),
-  databaseHumanReadableName = "My database",
-  cohortSqlFile
+  databaseHumanReadableName = "My database"
 )
 }
 \arguments{
@@ -36,17 +36,17 @@ createTrajectoryLocalArgs(
 
 \item{cohortTable}{Name of the cohort table in cohortTableSchema}
 
-\item{cohortId}{ID of the cohort (in cohortTable) that will be used for the analysis}
+\item{cohortId}{ID of the cohort (in cohortTable) that will be used for the analysis (default value is 1)}
+
+\item{inputFolder}{Full path to input folder that contains SQL file for cohort definition and optionally also trajectoryAnalysisArgs.json. You can use built-in folders of this package such as: inputFolder=system.file("extdata", "RA", package = "Trajectories") which is also the default value}
 
 \item{mainOutputFolder}{The output folder path. This is the folder where the final results are produced into. Use full path and do NOT add trailing slash! The folder must already exist. Default value is the default working directory.}
 
 \item{databaseHumanReadableName}{In the future, it will be added to the titles of the graph to indicate what data is this. Use something short. Currently this parameter is not used.}
-
-\item{cohortSqlFile}{Name of the built-in cohort file to be used when creating cohorts. Currently, you can use 'example_cohort_RA.sql', for instance}
 }
 \value{
 
 }
 \description{
-An object to hold local database-specific parameters
+Creates an object to hold local database-specific parameters
 }

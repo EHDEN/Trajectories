@@ -17,28 +17,35 @@ fillCohortTable<-function(connection,
                           trajectoryAnalysisArgs,
                           trajectoryLocalArgs) {
 
-  print(paste0('Filling cohort table <',trajectoryLocalArgs$cohortTable,'> in <',trajectoryLocalArgs$cohortTableSchema,'> schema...'))
-  if(trajectoryLocalArgs$cohortSqlFile==F) {
-    cohortSqlFile='example_cohort_RA.sql'
-    print(paste0('As cohortSqlFile==F, using built-in (example) cohort definition from packageDirectory/inst/sql/sql_server/',cohortSqlFile))
-  } else {
-    cohortSqlFile=trajectoryLocalArgs$cohortSqlFile
-    print(paste0('Using packageDirectory/inst/sql/sql_server/',cohortSqlFile,' as cohort definition'))
-  }
+    f<-paste0(trajectoryLocalArgs$inputFolder,'/cohort.sql')
+    print(paste0('Filling cohort table <',trajectoryLocalArgs$cohortTable,'> in <',trajectoryLocalArgs$cohortTableSchema,'> schema based on cohort definition in <',f,'>...'))
 
-    sql <- SqlRender::loadRenderTranslateSql(sqlFilename = trajectoryLocalArgs$cohortSqlFile,
-                                             packageName = trajectoryAnalysisArgs$packageName,
-                                             dbms = attr(connection, "dbms"),
-                                             oracleTempSchema = trajectoryLocalArgs$oracleTempSchema,
-                                             cdm_database_schema = trajectoryLocalArgs$cdmDatabaseSchema,
-                                             vocabulary_database_schema = trajectoryLocalArgs$vocabDatabaseSchema,
-                                             target_database_schema = trajectoryLocalArgs$cohortTableSchema,
-                                             target_cohort_table = trajectoryLocalArgs$cohortTable,
-                                             target_cohort_id = trajectoryLocalArgs$cohortId)
+    if (!dir.exists(trajectoryLocalArgs$inputFolder)) stop(paste0("ERROR in fillCohortTable(): trajectoryLocalArgs$inputFolder '",inputFolder,"' does not exist."))
+    if (!file.exists(f)) stop(paste0("ERROR in fillCohortTable(): there is no 'cohort.sql' file in inputFolder '",trajectoryLocalArgs$inputFolder,"'."))
 
+    #Read in SQL
+    sql <- readChar(f, file.info(f)$size)
+
+    # Store it also to output folder (for later audits)
+    outputFolder<-Trajectories::GetOutputFolder(trajectoryLocalArgs,trajectoryAnalysisArgs)
+    file.copy(from=f, to=paste0(outputFolder,'/cohort_used.sql'))
+
+    #replace parameter values in SQL
+    sql <- SqlRender::render(sql = sql,
+                             cdm_database_schema = trajectoryLocalArgs$cdmDatabaseSchema,
+                             vocabulary_database_schema = trajectoryLocalArgs$vocabDatabaseSchema,
+                             target_database_schema = trajectoryLocalArgs$cohortTableSchema,
+                             target_cohort_table = trajectoryLocalArgs$cohortTable,
+                             target_cohort_id = trajectoryLocalArgs$cohortId)
+
+    #translate into right dialect
+    sql <- SqlRender::translate(sql = sql,
+                                targetDialect=attr(connection, "dbms"),
+                                oracleTempSchema = trajectoryLocalArgs$oracleTempSchema)
+    #execute translated SQL
     DatabaseConnector::executeSql(connection, sql)
 
-    print('...done.')
+    print('...done filling cohort table.')
 
     #check how many records are there in the cohort table
     RenderedSql <- SqlRender::render("SELECT COUNT(*) FROM @target_database_schema.@target_cohort_table WHERE cohort_definition_id = @target_cohort_id;",
