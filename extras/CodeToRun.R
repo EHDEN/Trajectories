@@ -7,7 +7,7 @@ library(DatabaseConnector)
 # ##################################################
 
 # Change the values of the following parameters according to your database setup
-connectionDetails = createConnectionDetails(dbms = 'postgresql',#  e.g. oracle, postgresql, redshift. See for all options in DatabaseConnector::createConnectionDetails()
+connectionDetails = createConnectionDetails(dbms = 'sql server',#  e.g. oracle, postgresql, redshift. See for all options in DatabaseConnector::createConnectionDetails()
                                             user = Sys.getenv('DB_USERNAME'), #Currently takes the value form .Renviron file in the package folder
                                             password = Sys.getenv('DB_PASSWORD'), #Currently takes the value form .Renviron file in the package folder
                                             connectionString = "jdbc:postgresql://localhost:63333/maitt"
@@ -31,23 +31,23 @@ trajectoryLocalArgs <- Trajectories::createTrajectoryLocalArgs(oracleTempSchema 
 
 # Setting analysis parameters. Two options here:
 # a) either to to load them automatically from inputFolder via:
-     trajectoryAnalysisArgs<-Trajectories::TrajectoryAnalysisArgsFromInputFolder(trajectoryLocalArgs)
+     #trajectoryAnalysisArgs<-Trajectories::TrajectoryAnalysisArgsFromInputFolder(trajectoryLocalArgs)
      # and note that you can still make changes to the parameters after loading it from file like this:
      # trajectoryAnalysisArgs$minPatientsPerEventPair=1000
 # b) or set them manually:
-#trajectoryAnalysisArgs <- Trajectories::createTrajectoryAnalysisArgs(minimumDaysBetweenEvents = 1,
-#                                                                     maximumDaysBetweenEvents = 3650,
-#                                                                     minPatientsPerEventPair = 1000,
-#                                                                     addConditions=T,
-#                                                                     addObservations=T,
-#                                                                     addProcedures=T,
-#                                                                     addDrugExposures=F, # NB! DO NOT USE BOTH addDrugEras=T and addDrugExposures=T (not both) as it leads to analysis duplication and breaks some code... (same "drug" event may occur several times which is not allowed)
-#                                                                     addDrugEras=T, # NB! DO NOT USE BOTH addDrugEras=T and addDrugExposures=T (not both) as it leads to analysis duplication and breaks some code... (same "drug" event may occur several times which is not allowed)
-#                                                                     addBirths=T,
-#                                                                     addDeaths=T,
-#                                                                     daysBeforeIndexDate=Inf,
-#                                                                     packageName='Trajectories',
-#                                                                     cohortName="Type 2 diabetes")
+trajectoryAnalysisArgs <- Trajectories::createTrajectoryAnalysisArgs(minimumDaysBetweenEvents = 1,
+                                                                     maximumDaysBetweenEvents = 3650,
+                                                                     minPatientsPerEventPair = 1000,
+                                                                     addConditions=1,
+                                                                     addObservations=1,
+                                                                     addProcedures=1,
+                                                                     addDrugExposures=0, # NB! DO NOT USE BOTH addDrugEras=T and addDrugExposures=T (not both) as it leads to analysis duplication and breaks some code... (same "drug" event may occur several times which is not allowed)
+                                                                     addDrugEras=1, # NB! DO NOT USE BOTH addDrugEras=T and addDrugExposures=T (not both) as it leads to analysis duplication and breaks some code... (same "drug" event may occur several times which is not allowed)
+                                                                     addBirths=1,
+                                                                     addDeaths=1,
+                                                                     daysBeforeIndexDate=Inf,
+                                                                     packageName='Trajectories',
+                                                                     cohortName="Rheumatoid.arthritis")
 
 # ##################################################
 # End of setting parameters. The actual code follows.
@@ -63,7 +63,9 @@ connection <- DatabaseConnector::connect(connectionDetails)
 
 on.exit(DatabaseConnector::disconnect(connection)) #Close db connection on error or exit
 
+########################################################################
 
+#######################################################################
 
 #Create output folder for this analysis
 outputFolder<-Trajectories::GetOutputFolder(trajectoryLocalArgs,trajectoryAnalysisArgs,createIfMissing=T)

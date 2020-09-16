@@ -78,7 +78,7 @@ IF OBJECT_ID('@resultsSchema.@prefiXevents', 'U') IS NOT NULL
     FROM @cdmDatabaseSchema.condition_occurrence e
     INNER JOIN @resultsSchema.@prefiXetcohort c ON e.person_id=c.person_id {@daysBeforeIndexDate == Inf} ? {} : { AND DATEADD(day,@daysBeforeIndexDate,e.condition_start_date)>=c.cohort_start_date } AND e.condition_start_date<=c.cohort_end_date
     WHERE
-      TRUE=@addConditions -- if addConditions is TRUE, then this UNION is ADDED, otherwise this query give 0 rows as result
+      1=@addConditions -- if addConditions is TRUE, then this UNION is ADDED, otherwise this query give 0 rows as result
       AND
       e.condition_concept_id!=0
     GROUP BY c.cohort_id,e.condition_concept_id
@@ -93,7 +93,7 @@ IF OBJECT_ID('@resultsSchema.@prefiXevents', 'U') IS NOT NULL
     FROM @cdmDatabaseSchema.observation e
     INNER JOIN @resultsSchema.@prefiXetcohort c ON e.person_id=c.person_id {@daysBeforeIndexDate == Inf} ? {} : { AND DATEADD(day,@daysBeforeIndexDate,e.condition_start_date)>=c.cohort_start_date } AND e.observation_date>=c.cohort_start_date AND e.observation_date<=c.cohort_end_date
     WHERE
-      TRUE=@addObservations -- if addObservations is TRUE, then this UNION is ADDED, otherwise this query give 0 rows as result
+      1=@addObservations -- if addObservations is TRUE, then this UNION is ADDED, otherwise this query give 0 rows as result
       AND
       observation_concept_id!=0
     GROUP BY c.cohort_id,observation_concept_id
@@ -108,7 +108,7 @@ IF OBJECT_ID('@resultsSchema.@prefiXevents', 'U') IS NOT NULL
     FROM @cdmDatabaseSchema.procedure_occurrence e
     INNER JOIN @resultsSchema.@prefiXetcohort c ON e.person_id=c.person_id {@daysBeforeIndexDate == Inf} ? {} : { AND DATEADD(day,@daysBeforeIndexDate,e.condition_start_date)>=c.cohort_start_date } AND e.procedure_date>=c.cohort_start_date AND e.procedure_date<=c.cohort_end_date
     WHERE
-      TRUE=@addProcedures -- if addProcedures is TRUE, then this UNION is ADDED, otherwise this query give 0 rows as result
+      1=@addProcedures -- if addProcedures is TRUE, then this UNION is ADDED, otherwise this query give 0 rows as result
       AND
       procedure_concept_id!=0
     GROUP BY c.cohort_id,e.procedure_concept_id
@@ -123,7 +123,7 @@ IF OBJECT_ID('@resultsSchema.@prefiXevents', 'U') IS NOT NULL
     FROM @cdmDatabaseSchema.drug_exposure e
     INNER JOIN @resultsSchema.@prefiXetcohort c ON e.person_id=c.person_id {@daysBeforeIndexDate == Inf} ? {} : { AND DATEADD(day,@daysBeforeIndexDate,e.condition_start_date)>=c.cohort_start_date } AND e.drug_exposure_start_date>=c.cohort_start_date AND e.drug_exposure_start_date<=c.cohort_end_date
     WHERE
-      TRUE=@addDrugExposures -- if addDrugExposures is TRUE, then this UNION is ADDED, otherwise this query give 0 rows as result
+      1=@addDrugExposures -- if addDrugExposures is TRUE, then this UNION is ADDED, otherwise this query give 0 rows as result
       AND
       drug_concept_id!=0
     GROUP BY c.cohort_id,e.drug_concept_id
@@ -138,7 +138,7 @@ IF OBJECT_ID('@resultsSchema.@prefiXevents', 'U') IS NOT NULL
     FROM @cdmDatabaseSchema.drug_era e
     INNER JOIN @resultsSchema.@prefiXetcohort c ON e.person_id=c.person_id {@daysBeforeIndexDate == Inf} ? {} : { AND DATEADD(day,@daysBeforeIndexDate,e.condition_start_date)>=c.cohort_start_date } AND e.drug_era_start_date>=c.cohort_start_date AND e.drug_era_start_date<=c.cohort_end_date
     WHERE
-      TRUE=@addDrugEras -- if addDrugEras is TRUE, then this UNION is ADDED, otherwise this query give 0 rows as result
+      1=@addDrugEras -- if addDrugEras is TRUE, then this UNION is ADDED, otherwise this query give 0 rows as result
       AND
       drug_concept_id!=0
     GROUP BY c.cohort_id,e.drug_concept_id
@@ -153,7 +153,7 @@ IF OBJECT_ID('@resultsSchema.@prefiXevents', 'U') IS NOT NULL
      FROM @cdmDatabaseSchema.person e
      INNER JOIN @resultsSchema.@prefiXetcohort c ON e.person_id=c.person_id {@daysBeforeIndexDate == Inf} ? {} : { AND DATEADD(day,@daysBeforeIndexDate,e.condition_start_date)>=c.cohort_start_date } AND CAST(e.birth_datetime AS DATE)>=c.cohort_start_date AND CAST(e.birth_datetime AS DATE)<=c.cohort_end_date
      WHERE
-      TRUE=@addBirths -- if addBirths is TRUE, then this UNION is ADDED, otherwise this query give 0 rows as result
+      1=@addBirths -- if addBirths is TRUE, then this UNION is ADDED, otherwise this query give 0 rows as result
       AND
       e.birth_datetime IS NOT NULL
     GROUP BY c.cohort_id
@@ -168,7 +168,7 @@ IF OBJECT_ID('@resultsSchema.@prefiXevents', 'U') IS NOT NULL
     FROM @cdmDatabaseSchema.death e
     INNER JOIN @resultsSchema.@prefiXetcohort c on e.person_id=c.person_id {@daysBeforeIndexDate == Inf} ? {} : { AND DATEADD(day,@daysBeforeIndexDate,e.condition_start_date)>=c.cohort_start_date } AND CAST(e.death_datetime AS DATE)>=c.cohort_start_date AND CAST(e.death_datetime AS DATE)<=c.cohort_end_date
     WHERE
-      TRUE=@addDeaths -- if addDeaths is TRUE, then this UNION is ADDED, otherwise this query give 0 rows as result
+      1=@addDeaths -- if addDeaths is TRUE, then this UNION is ADDED, otherwise this query give 0 rows as result
       AND
       e.death_datetime IS NOT NULL
     GROUP BY c.cohort_id
@@ -227,7 +227,8 @@ IF OBJECT_ID('@resultsSchema.@prefiXevents_cohort', 'U') IS NOT NULL
 -- Adding age during event
 ------------------------------------------------------------------------------------
 
-ALTER TABLE  @resultsSchema.@prefiXevents_cohort ADD COLUMN age INTEGER;
+ALTER TABLE  @resultsSchema.@prefiXevents_cohort
+            ADD age int NULL;
 UPDATE  @resultsSchema.@prefiXevents_cohort SET
     age= YEAR(date)- year_of_birth;
 
@@ -235,7 +236,8 @@ UPDATE  @resultsSchema.@prefiXevents_cohort SET
 -- Adding year and month of event
 ------------------------------------------------------------------------------------
 
-ALTER TABLE  @resultsSchema.@prefiXevents_cohort ADD COLUMN discharge_time VARCHAR(6);
+ALTER TABLE  @resultsSchema.@prefiXevents_cohort
+            ADD discharge_time VARCHAR(6) NULL;
 UPDATE  @resultsSchema.@prefiXevents_cohort SET
     discharge_time = CONCAT(YEAR(date), MONTH(date));
 
@@ -350,8 +352,8 @@ IF OBJECT_ID('@resultsSchema.@prefiXD1D2_model', 'U') IS NOT NULL
     SELECT
             event1_concept_id,
             event2_concept_id,
-            ROUND(AVG(diff_days)) AS AVG_NUMBER_OF_DAYS_BETWEEN_EVENTS,
-            count(*) AS EVENT1_EVENT2_COHORT_COUNT
+            round(avg(diff_days),0) avg_number_of_days_between_events,
+            count(*) event1_event2_cohort_count
     INTO @resultsSchema.@prefiXD1D2_model
     FROM
      @resultsSchema.@prefiXpairs
@@ -365,25 +367,25 @@ IF OBJECT_ID('@resultsSchema.@prefiXD1D2_model', 'U') IS NOT NULL
 DELETE FROM @resultsSchema.@prefiXD1D2_model where EVENT1_EVENT2_COHORT_COUNT< @minPatientsPerEventPair; -- Minimum limit
 -- It is correct to not delete ther corresponding rows from @resultsSchema.@prefiXpairs as these rows can still be used for controls
 
-ALTER TABLE @resultsSchema.@prefiXD1D2_model ADD COLUMN EVENT1_NAME VARCHAR(255);
-ALTER TABLE @resultsSchema.@prefiXD1D2_model ADD COLUMN EVENT1_DOMAIN VARCHAR(20);
-ALTER TABLE @resultsSchema.@prefiXD1D2_model ADD COLUMN EVENT2_NAME VARCHAR(255);
-ALTER TABLE @resultsSchema.@prefiXD1D2_model ADD COLUMN EVENT2_DOMAIN VARCHAR(20);
-ALTER TABLE @resultsSchema.@prefiXD1D2_model ADD COLUMN EVENT_PAIR_PVALUE FLOAT;
-ALTER TABLE @resultsSchema.@prefiXd1d2_model ADD COLUMN EVENT_PAIR_EFFECT DECIMAL;
-ALTER TABLE @resultsSchema.@prefiXD1D2_model ADD COLUMN COHORT_COUNT_EVENT1_OCCURS_FIRST INT;
-ALTER TABLE @resultsSchema.@prefiXD1D2_model ADD COLUMN AVG_AGE_OF_COHORT_EVENT1_OCCURS_FIRST FLOAT;
-ALTER TABLE @resultsSchema.@prefiXD1D2_model ADD COLUMN MIN_AGE_OF_COHORT_EVENT1_OCCURS_FIRST FLOAT;
-ALTER TABLE @resultsSchema.@prefiXD1D2_model ADD COLUMN Q25_AGE_OF_COHORT_EVENT1_OCCURS_FIRST FLOAT;
-ALTER TABLE @resultsSchema.@prefiXD1D2_model ADD COLUMN MEDIAN_AGE_OF_COHORT_EVENT1_OCCURS_FIRST FLOAT;
-ALTER TABLE @resultsSchema.@prefiXD1D2_model ADD COLUMN Q75_AGE_OF_COHORT_EVENT1_OCCURS_FIRST FLOAT;
-ALTER TABLE @resultsSchema.@prefiXD1D2_model ADD COLUMN MAX_AGE_OF_COHORT_EVENT1_OCCURS_FIRST FLOAT;
-ALTER TABLE @resultsSchema.@prefiXD1D2_model ADD COLUMN COHORT_COUNT_EVENT2_OCCURS_FIRST INT;
-ALTER TABLE @resultsSchema.@prefiXD1D2_model ADD COLUMN COHORT_COUNT_EVENT1_EVENT2_OCCUR_ON_SAME_DAY INT;
-ALTER TABLE @resultsSchema.@prefiXD1D2_model ADD COLUMN DIRECTIONAL_EVENT_PAIR_PVALUE FLOAT;
-ALTER TABLE @resultsSchema.@prefiXD1D2_model ADD COLUMN EVENT1_COUNT INT;
-ALTER TABLE @resultsSchema.@prefiXD1D2_model ADD COLUMN EVENT2_COUNT INT;
-ALTER TABLE @resultsSchema.@prefiXD1D2_model ADD COLUMN COHORT_COUNT_HAVING_E2_RIGHT_AFTER_E1 INT; --this field is filled after the analysis when we consider only trajectories and events that are significant
+ALTER TABLE @resultsSchema.@prefiXD1D2_model ADD EVENT1_NAME VARCHAR(255) NULL;
+ALTER TABLE @resultsSchema.@prefiXD1D2_model ADD EVENT1_DOMAIN VARCHAR(20) NULL;
+ALTER TABLE @resultsSchema.@prefiXD1D2_model ADD EVENT2_NAME VARCHAR(255) NULL;
+ALTER TABLE @resultsSchema.@prefiXD1D2_model ADD EVENT2_DOMAIN VARCHAR(20) NULL;
+ALTER TABLE @resultsSchema.@prefiXD1D2_model ADD EVENT_PAIR_PVALUE FLOAT NULL;
+ALTER TABLE @resultsSchema.@prefiXd1d2_model ADD EVENT_PAIR_EFFECT DECIMAL NULL;
+ALTER TABLE @resultsSchema.@prefiXD1D2_model ADD COHORT_COUNT_EVENT1_OCCURS_FIRST INT NULL;
+ALTER TABLE @resultsSchema.@prefiXD1D2_model ADD AVG_AGE_OF_COHORT_EVENT1_OCCURS_FIRST FLOAT NULL;
+ALTER TABLE @resultsSchema.@prefiXD1D2_model ADD MIN_AGE_OF_COHORT_EVENT1_OCCURS_FIRST FLOAT NULL;
+ALTER TABLE @resultsSchema.@prefiXD1D2_model ADD Q25_AGE_OF_COHORT_EVENT1_OCCURS_FIRST FLOAT NULL;
+ALTER TABLE @resultsSchema.@prefiXD1D2_model ADD MEDIAN_AGE_OF_COHORT_EVENT1_OCCURS_FIRST FLOAT NULL;
+ALTER TABLE @resultsSchema.@prefiXD1D2_model ADD Q75_AGE_OF_COHORT_EVENT1_OCCURS_FIRST FLOAT NULL;
+ALTER TABLE @resultsSchema.@prefiXD1D2_model ADD MAX_AGE_OF_COHORT_EVENT1_OCCURS_FIRST FLOAT NULL;
+ALTER TABLE @resultsSchema.@prefiXD1D2_model ADD COHORT_COUNT_EVENT2_OCCURS_FIRST INT NULL;
+ALTER TABLE @resultsSchema.@prefiXD1D2_model ADD COHORT_COUNT_EVENT1_EVENT2_OCCUR_ON_SAME_DAY INT NULL;
+ALTER TABLE @resultsSchema.@prefiXD1D2_model ADD DIRECTIONAL_EVENT_PAIR_PVALUE FLOAT NULL;
+ALTER TABLE @resultsSchema.@prefiXD1D2_model ADD EVENT1_COUNT INT NULL;
+ALTER TABLE @resultsSchema.@prefiXD1D2_model ADD EVENT2_COUNT INT NULL;
+ALTER TABLE @resultsSchema.@prefiXD1D2_model ADD COHORT_COUNT_HAVING_E2_RIGHT_AFTER_E1 INT NULL; --this field is filled after the analysis when we consider only trajectories and events that are significant
 
 
 CREATE INDEX @prefiXD1D2_model_d1_idx ON @resultsSchema.@prefiXD1D2_model(event1_concept_id);
