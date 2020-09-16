@@ -49,15 +49,15 @@ createEventPairsTable<-function(connection,
                                                   cohortTableSchema = trajectoryLocalArgs$cohortTableSchema,
                                                   cohortTable = trajectoryLocalArgs$cohortTable,
                                                   cohortId = trajectoryLocalArgs$cohortId,
-                                                  addConditions = trajectoryAnalysisArgs$addConditions,
-                                                  addObservations = trajectoryAnalysisArgs$addObservations,
-                                                  addProcedures = trajectoryAnalysisArgs$addProcedures,
-                                                  addDrugExposures = trajectoryAnalysisArgs$addDrugExposures,
-                                                  addDrugEras = trajectoryAnalysisArgs$addDrugEras,
-                                                  addBirths = trajectoryAnalysisArgs$addBirths,
-                                                  addDeaths = trajectoryAnalysisArgs$addDeaths
+                                                  addConditions = ifelse(trajectoryAnalysisArgs$addConditions==T,1,0),
+                                                  addObservations = ifelse(trajectoryAnalysisArgs$addObservations==T,1,0),
+                                                  addProcedures = ifelse(trajectoryAnalysisArgs$addProcedures==T,1,0),
+                                                  addDrugExposures = ifelse(trajectoryAnalysisArgs$addDrugExposures==T,1,0),
+                                                  addDrugEras = ifelse(trajectoryAnalysisArgs$addDrugEras==T,1,0),
+                                                  addBirths = ifelse(trajectoryAnalysisArgs$addBirths==T,1,0),
+                                                  addDeaths = ifelse(trajectoryAnalysisArgs$addDeaths==T,1,0)
   )
-
+#
 
   DatabaseConnector::executeSql(connection, RenderedSql)
 

@@ -12,10 +12,12 @@
 setRole <- function(connection,
                     sqlRole) {
 
+  statement_sqlserver =paste0("EXECUTE AS USER =  '",sqlRole,"';")
+  statement_other = paste0("SET ROLE ",sqlRole,";")
   if(is.na(sqlRole) | is.logical(sqlRole) | sqlRole=='') {
     #sqlRole is not set or is set incorrectly, do nothing
   } else {
-    RenderedSql=SqlRender::translate(sql = paste0("EXECUTE AS USER =  '",sqlRole,"';"), targetDialect=attr(connection, "dbms"))
+    RenderedSql=SqlRender::translate(sql =ifelse(connection@dbms=="sql server",statement_sqlserver,statement_other) , targetDialect=attr(connection, "dbms"))
     DatabaseConnector::executeSql(connection, RenderedSql)
     print(paste0('Database role set to ',sqlRole))
   }
