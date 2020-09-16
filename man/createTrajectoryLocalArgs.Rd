@@ -45,7 +45,7 @@ createTrajectoryLocalArgs(
 \item{databaseHumanReadableName}{In the future, it will be added to the titles of the graph to indicate what data is this. Use something short. Currently this parameter is not used.}
 }
 \value{
-
+TrajectoryLocalArgs object
 }
 \description{
 Creates an object to hold local database-specific parameters

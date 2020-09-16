@@ -26,7 +26,7 @@ createTrajectoryAnalysisArgs(
 
 \item{maximumDaysBetweenEvents}{The maximum number of days between 2 events of the patient that can be considered as event pair. Ususally we have not really limited it so we have used 3650 (10 years)}
 
-\item{minPatientsPerEventPair}{Minimum number of people having event1 -> event2 progression to be included in analysis. Can be used for limiting analysis to frequent event pairs only. However, it does not throw less frequent diagnosis pairs out of the (control group) data and therefore, does not affect the statistical significance.}
+\item{minPatientsPerEventPair}{Minimum number of people having event1 -> event2 progression to be included in analysis. If the value is >=1, it is considered as the absolute count of event pairs. If the value is less than 1, the value is considered as prevalence among the cohort size. For instance, if you have 1000 persons in the cohort and the value is 0.05, each event pair must occur at least 1000x0.05=50 times. Can be used for limiting analysis to frequent event pairs only. However, it does not throw less frequent diagnosis pairs out of the (control group) data and therefore, does not affect the statistical significance.}
 
 \item{addConditions}{TRUE/FALSE parameter to indicate whether events from Condition_occurrence table should be included in the analysis}
 
@@ -51,7 +51,7 @@ createTrajectoryAnalysisArgs(
 \item{description}{This is a placeholder for any description of the study/cohort/analysis. For instance, it would be wise to descibe here what kind of cohort is that and what the analysis does.}
 }
 \value{
-
+TrajectoryAnalysisArgs object
 }
 \description{
 Creates an object to hold analysis-specific data

@@ -3,7 +3,7 @@
 #'
 #' @param minimumDaysBetweenEvents The smallest number of days between 2 events of the patient that can be considered as event pair. Usually we have used 1.
 #' @param maximumDaysBetweenEvents The maximum number of days between 2 events of the patient that can be considered as event pair. Ususally we have not really limited it so we have used 3650 (10 years)
-#' @param minPatientsPerEventPair Minimum number of people having event1 -> event2 progression to be included in analysis. Can be used for limiting analysis to frequent event pairs only. However, it does not throw less frequent diagnosis pairs out of the (control group) data and therefore, does not affect the statistical significance.
+#' @param minPatientsPerEventPair Minimum number of people having event1 -> event2 progression to be included in analysis. If the value is >=1, it is considered as the absolute count of event pairs. If the value is less than 1, the value is considered as prevalence among the cohort size. For instance, if you have 1000 persons in the cohort and the value is 0.05, each event pair must occur at least 1000x0.05=50 times. Can be used for limiting analysis to frequent event pairs only. However, it does not throw less frequent diagnosis pairs out of the (control group) data and therefore, does not affect the statistical significance.
 #' @param addConditions TRUE/FALSE parameter to indicate whether events from Condition_occurrence table should be included in the analysis
 #' @param addObservations TRUE/FALSE parameter to indicate whether events from Condition_occurrence table should be included in the analysis
 #' @param addProcedures TRUE/FALSE parameter to indicate whether events from Procedure_occurrence table should be included in the analysis
@@ -16,7 +16,7 @@
 #' @param cohortName Reader-friendly short description of the cohort. Used in graph titles and file names (can contain spaces)
 #' @param description This is a placeholder for any description of the study/cohort/analysis. For instance, it would be wise to descibe here what kind of cohort is that and what the analysis does.
 #'
-#' @return
+#' @return TrajectoryAnalysisArgs object
 #' @export
 #'
 #' @examples
@@ -62,7 +62,7 @@ createTrajectoryAnalysisArgs <- function(minimumDaysBetweenEvents,
 #' @param mainOutputFolder The output folder path. This is the folder where the final results are produced into. Use full path and do NOT add trailing slash! The folder must already exist. Default value is the default working directory.
 #' @param databaseHumanReadableName In the future, it will be added to the titles of the graph to indicate what data is this. Use something short. Currently this parameter is not used.
 #'
-#' @return
+#' @return TrajectoryLocalArgs object
 #' @export
 #'
 #' @examples
@@ -148,7 +148,7 @@ TrajectoryAnalysisArgsToJson<-function(trajectoryAnalysisArgs, filepath) {
 #'
 #' @param filepath Full path to JSON file
 #'
-#' @return
+#' @return TrajectoryAnalysisArgs object
 #' @export
 #'
 #' @examples
@@ -177,7 +177,7 @@ TrajectoryAnalysisArgsFromJson<-function(filepath) {
 
 #' Searches for trajectoryAnalysisArgs.json file from inputFolder (defined in trajectoryLocalArgs), creates trajectoryAnalysisArgs object from it and returns it.
 #'
-#' @param trajectoryLocalArgs Object created by Trajectories::createTrajectoryLocalArgs() method
+#' @inheritParams GetOutputFolder
 #'
 #' @return TrajectoryLocalArgs object
 #' @export
@@ -188,7 +188,9 @@ TrajectoryAnalysisArgsFromInputFolder<-function(trajectoryLocalArgs) {
   return(trajectoryAnalysisArgs)
 }
 
-#' Returns full path to output folder for the results. If createIfMissing=T, then creates the folder by combining mainOutputFolder, database name and analysis name (requires that mainOutputFolder already exists)
+#' Returns full path to output folder for the results.
+#'
+#' Basically combines the value of mainOutputFolder, database name, and analysis name to get the output folder. Checks also that the folder exists. If createIfMissing=T, then creates the necessary subfolders under mainOutputFolder.
 #'
 #' @param trajectoryLocalArgs  Object created by Trajectories::createTrajectoryLocalArgs() method
 #' @param trajectoryAnalysisArgs  Object created by Trajectories::createTrajectoryAnalysisArgs() method

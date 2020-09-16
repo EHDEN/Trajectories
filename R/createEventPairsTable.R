@@ -2,8 +2,7 @@ library(SqlRender)
 #' Creates event pairs table and populates it with the data
 #'
 #' @param connection DatabaseConnectorConnection object that is used to connect with database
-#' @param trajectoryAnalysisArgs TrajectoryAnalysisArgs object that must be created by createTrajectoryAnalysisArgs() method
-#' @param trajectoryLocalArgs TrajectoryLocalArgs object that must be created by createTrajectoryLocalArgs() method
+#' @inheritParams GetOutputFolder
 #' @return
 #' @export
 #'
@@ -12,7 +11,23 @@ createEventPairsTable<-function(connection,
                                 trajectoryAnalysisArgs,
                                 trajectoryLocalArgs
                                ) {
-  print(paste0("Create database tables for all event pairs (patient level data + summary statistics) to '",trajectoryLocalArgs$resultsSchema,"' schema..."))
+  print(paste0("Create database tables + data for all event pairs to '",trajectoryLocalArgs$resultsSchema,"' schema..."))
+
+
+  #In case trajectoryAnalysisArgs$minPatientsPerEventPair < 1, the actual value means "prevalence", not absolute number.
+  #Therefore, we need to calculate the absolute number from this
+  if(trajectoryAnalysisArgs$minPatientsPerEventPair<1) {
+    cohortCount<-getCohortSize(connection, trajectoryLocalArgs)
+    minPatientsPerEventPair=round(cohortCount*trajectoryAnalysisArgs$minPatientsPerEventPair)
+    print(paste0('Parameter value of minPatientsPerEventPair=',trajectoryAnalysisArgs$minPatientsPerEventPair,' is less than 1. ',
+                  'Therefore, it is handled as prevalence instead of an absolute number. ',
+                  'The absolute number is calculated based on cohort size (n=',cohortCount,') as follows: ',
+                  'minPatientsPerEventPair = ',cohortCount,' x ',trajectoryAnalysisArgs$minPatientsPerEventPair,' = ',minPatientsPerEventPair)
+          )
+  } else {
+    minPatientsPerEventPair=trajectoryAnalysisArgs$minPatientsPerEventPair
+  }
+
 
   print(paste0("Running SQL..."))
 
@@ -28,7 +43,7 @@ createEventPairsTable<-function(connection,
                                                   vocabDatabaseSchema = trajectoryLocalArgs$vocabDatabaseSchema,
                                                   minimumDaysBetweenEvents = trajectoryAnalysisArgs$minimumDaysBetweenEvents,
                                                   maximumDaysBetweenEvents = trajectoryAnalysisArgs$maximumDaysBetweenEvents,
-                                                  minPatientsPerEventPair = trajectoryAnalysisArgs$minPatientsPerEventPair,
+                                                  minPatientsPerEventPair = minPatientsPerEventPair,
                                                   daysBeforeIndexDate = trajectoryAnalysisArgs$daysBeforeIndexDate,
                                                   prefiX = trajectoryLocalArgs$prefixForResultTableNames,
                                                   cohortTableSchema = trajectoryLocalArgs$cohortTableSchema,

@@ -10,7 +10,7 @@ TrajectoryAnalysisArgsFromJson(filepath)
 \item{filepath}{Full path to JSON file}
 }
 \value{
-
+TrajectoryAnalysisArgs object
 }
 \description{
 Reads trajectoryAnalysisArgs object from JSON file

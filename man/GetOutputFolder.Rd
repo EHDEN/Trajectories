@@ -2,7 +2,7 @@
 % Please edit documentation in R/TrajectoryArguments.R
 \name{GetOutputFolder}
 \alias{GetOutputFolder}
-\title{Returns full path to output folder for the results. If createIfMissing=T, then creates the folder by combining mainOutputFolder, database name and analysis name (requires that mainOutputFolder already exists)}
+\title{Returns full path to output folder for the results.}
 \usage{
 GetOutputFolder(
   trajectoryLocalArgs,
@@ -21,5 +21,5 @@ GetOutputFolder(
 Full output path
 }
 \description{
-Returns full path to output folder for the results. If createIfMissing=T, then creates the folder by combining mainOutputFolder, database name and analysis name (requires that mainOutputFolder already exists)
+Basically combines the value of mainOutputFolder, database name, and analysis name to get the output folder. Checks also that the folder exists. If createIfMissing=T, then creates the necessary subfolders under mainOutputFolder.
 }
