@@ -58,7 +58,7 @@ createTrajectoryAnalysisArgs <- function(minimumDaysBetweenEvents,
 #' @param cohortTableSchema Schema where cohort table is located
 #' @param cohortTable Name of the cohort table in cohortTableSchema
 #' @param cohortId ID of the cohort (in cohortTable) that will be used for the analysis (default value is 1)
-#' @param inputFolder Full path to input folder that contains SQL file for cohort definition and optionally also trajectoryAnalysisArgs.json. You can use built-in folders of this package such as: inputFolder=system.file("extdata", "RA", package = "Trajectories") which is also the default value
+#' @param inputFolder Full path to input folder that contains SQL file for cohort definition (SQL Server format) and optionally also trajectoryAnalysisArgs.json. You can use built-in folders of this package such as: inputFolder=system.file("extdata", "RA", package = "Trajectories") which is also the default value
 #' @param mainOutputFolder The output folder path. This is the folder where the final results are produced into. Use full path and do NOT add trailing slash! The folder must already exist. Default value is the default working directory.
 #' @param databaseHumanReadableName In the future, it will be added to the titles of the graph to indicate what data is this. Use something short. Currently this parameter is not used.
 #'

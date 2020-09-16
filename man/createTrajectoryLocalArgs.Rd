@@ -38,7 +38,7 @@ createTrajectoryLocalArgs(
 
 \item{cohortId}{ID of the cohort (in cohortTable) that will be used for the analysis (default value is 1)}
 
-\item{inputFolder}{Full path to input folder that contains SQL file for cohort definition and optionally also trajectoryAnalysisArgs.json. You can use built-in folders of this package such as: inputFolder=system.file("extdata", "RA", package = "Trajectories") which is also the default value}
+\item{inputFolder}{Full path to input folder that contains SQL file for cohort definition (SQL Server format) and optionally also trajectoryAnalysisArgs.json. You can use built-in folders of this package such as: inputFolder=system.file("extdata", "RA", package = "Trajectories") which is also the default value}
 
 \item{mainOutputFolder}{The output folder path. This is the folder where the final results are produced into. Use full path and do NOT add trailing slash! The folder must already exist. Default value is the default working directory.}
 
