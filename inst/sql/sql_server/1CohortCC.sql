@@ -29,7 +29,7 @@ INSERT INTO @resultsSchema.@prefiXdebug (entry) VALUES ('Debug table created');
 
 INSERT INTO @resultsSchema.@prefiXdebug (entry) VALUES ('Creating @resultsSchema.@prefiXetcohort...');
 
-IF OBJECT_ID('@resultsSchema.@prefiXmycohort', 'U') IS NOT NULL
+IF OBJECT_ID('@resultsSchema.@prefiXetcohort', 'U') IS NOT NULL
   DROP TABLE @resultsSchema.@prefiXetcohort;
 
 --CREATE TABLE @resultsSchema.@prefiXetcohort AS
