@@ -1,9 +1,9 @@
 {
   "minimumDaysBetweenEvents": [1],
   "maximumDaysBetweenEvents": [3650],
-  "minPatientsPerEventPair": [1000],
+  "minPatientsPerEventPair": [0.1],
   "addConditions": [true],
-  "addObservations": [true],
+  "addObservations": [false],
   "addProcedures": [true],
   "addDrugExposures": [false],
   "addDrugEras": [true],
