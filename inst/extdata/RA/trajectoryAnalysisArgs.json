@@ -11,5 +11,6 @@
   "addDeaths": [true],
   "daysBeforeIndexDate": ["Inf"],
   "packageName": ["Trajectories"],
-  "cohortName": ["Rheumatoid arthritis"]
+  "cohortName": ["Rheumatoid arthritis"],
+  "description": ["Rheumatoid arthritis study"]
 }

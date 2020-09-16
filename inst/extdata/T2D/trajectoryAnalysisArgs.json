@@ -11,5 +11,6 @@
   "addDeaths": [true],
   "daysBeforeIndexDate": ["Inf"],
   "packageName": ["Trajectories"],
-  "cohortName": ["Type 2 diabetes"]
+  "cohortName": ["Type 2 diabetes"],
+  "description": ["Type 2 diabetes study"]
 }

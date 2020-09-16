@@ -14,6 +14,7 @@
 #' @param daysBeforeIndexDate 0 or any positive number that indicates for how many days before index date of the cohort the events are included in the analysis. In case one wants to include all events before index date, use value Inf
 #' @param packageName Do not use/edit, this is required by SqlRender::loadRenderTranslateSql
 #' @param cohortName Reader-friendly short description of the cohort. Used in graph titles and file names (can contain spaces)
+#' @param description This is a placeholder for any description of the study/cohort/analysis. For instance, it would be wise to descibe here what kind of cohort is that and what the analysis does.
 #'
 #' @return
 #' @export
@@ -31,7 +32,8 @@ createTrajectoryAnalysisArgs <- function(minimumDaysBetweenEvents,
                                          addDeaths,
                                          daysBeforeIndexDate,
                                          packageName = 'Trajectories',
-                                         cohortName) {
+                                         cohortName,
+                                         description = '') {
 
 
   if(addDrugExposures==T & addDrugEras==T) stop("Error in createTrajectoryAnalysisArgs(): parameters values for 'addDrugExposures' and 'addDrugEras' are TRUE but both of them cannot be TRUE at the same time (choose one of them or set both to FALSE)")
@@ -39,7 +41,7 @@ createTrajectoryAnalysisArgs <- function(minimumDaysBetweenEvents,
   value <- list(minimumDaysBetweenEvents=minimumDaysBetweenEvents,maximumDaysBetweenEvents=maximumDaysBetweenEvents, minPatientsPerEventPair=minPatientsPerEventPair,
                 addConditions=addConditions,addObservations=addObservations,addProcedures=addProcedures,addDrugExposures=addDrugExposures,
                 addDrugEras=addDrugEras,addBirths=addBirths,addDeaths=addDeaths,
-                daysBeforeIndexDate=daysBeforeIndexDate,packageName=packageName,cohortName=cohortName)
+                daysBeforeIndexDate=daysBeforeIndexDate,packageName=packageName,cohortName=cohortName,description=description)
   class(value) <- 'TrajectoryAnalysisArgs'
   return(value)
 
@@ -167,7 +169,8 @@ TrajectoryAnalysisArgsFromJson<-function(filepath) {
                                addDeaths=r.obj$addDeaths,
                                daysBeforeIndexDate=r.obj$daysBeforeIndexDate,
                                packageName=r.obj$packageName,
-                               cohortName=r.obj$cohortName)
+                               cohortName=r.obj$cohortName,
+                               description=r.obj$description)
   print('...done.')
   return(trajectoryAnalysisArgs)
 }

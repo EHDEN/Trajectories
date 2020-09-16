@@ -17,7 +17,8 @@ createTrajectoryAnalysisArgs(
   addDeaths,
   daysBeforeIndexDate,
   packageName = "Trajectories",
-  cohortName
+  cohortName,
+  description = ""
 )
 }
 \arguments{
@@ -46,6 +47,8 @@ createTrajectoryAnalysisArgs(
 \item{packageName}{Do not use/edit, this is required by SqlRender::loadRenderTranslateSql}
 
 \item{cohortName}{Reader-friendly short description of the cohort. Used in graph titles and file names (can contain spaces)}
+
+\item{description}{This is a placeholder for any description of the study/cohort/analysis. For instance, it would be wise to descibe here what kind of cohort is that and what the analysis does.}
 }
 \value{
 
