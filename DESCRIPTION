@@ -1,6 +1,6 @@
 Package: Trajectories
 Type: Package
-Title: Tool to visualize temporal event trajectories in OMOP common data model
+Title: Tool to detect and visualize temporal event trajectories in OMOP common data model
 Version: 0.0.1
 Date: 2020-04-07
 Description: Takes events from OMOP CDM database, detects significant directional event pairs, visualizes them.
