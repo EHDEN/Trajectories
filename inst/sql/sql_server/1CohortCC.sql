@@ -76,7 +76,9 @@ IF OBJECT_ID('@resultsSchema.@prefiXevents', 'U') IS NOT NULL
   DROP TABLE @resultsSchema.@prefiXevents;
 --CREATE TABLE @resultsSchema.@prefiXevents AS
 
-    SELECT * FROM
+    SELECT * INTO
+    @resultsSchema.@prefiXevents
+    FROM
 
     (
     -- conditions
@@ -183,7 +185,7 @@ IF OBJECT_ID('@resultsSchema.@prefiXevents', 'U') IS NOT NULL
       e.death_datetime IS NOT NULL
     GROUP BY c.cohort_id
 
-    ) SSS INTO @resultsSchema.@prefiXevents
+    ) SSS
 
 ;
 
