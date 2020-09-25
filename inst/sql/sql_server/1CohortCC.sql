@@ -19,6 +19,11 @@ CREATE TABLE @resultsSchema.@prefiXdebug (
 
 INSERT INTO @resultsSchema.@prefiXdebug (entry) VALUES ('Debug table created');
 
+-- First, add some data about the size of the database
+INSERT INTO @resultsSchema.@prefiXdebug (entry) VALUES (CONCAT('Database size: There are ',CAST((SELECT COUNT(*) FROM @cdmDatabaseSchema.person) AS VARCHAR),' rows in @cdmDatabaseSchema.person'));
+INSERT INTO @resultsSchema.@prefiXdebug (entry) VALUES (CONCAT('Database size: There are ',CAST((SELECT COUNT(*) FROM @cdmDatabaseSchema.condition_occurrence) AS VARCHAR),' rows in @cdmDatabaseSchema.condition_occurrence'));
+
+
 
 ---------------------------------------------------------------------------------------
 -- Create a temporary "etcohort" table - it is basically the same table & content as the cohort in OMOP cohorts table but
@@ -58,6 +63,8 @@ IF OBJECT_ID('@resultsSchema.@prefiXetcohort', 'U') IS NOT NULL
         -- AND person_id IN (SELECT DISTINCT person_id FROM @cdmDatabaseSchema.condition_occurrence where condition_source_value like 'C50%');
 ;
 
+INSERT INTO @resultsSchema.@prefiXdebug (entry) VALUES (CONCAT('..done. There are ',CAST((SELECT COUNT(*) FROM @resultsSchema.@prefiXetcohort) AS VARCHAR),' rows in @resultsSchema.@prefiXetcohort'));
+
 ---------------------------------------------------------------------------------------------
 -- Create an events table.
 -- Keeping only the first occurrence of each event type for each cohort
@@ -69,12 +76,15 @@ IF OBJECT_ID('@resultsSchema.@prefiXevents', 'U') IS NOT NULL
   DROP TABLE @resultsSchema.@prefiXevents;
 --CREATE TABLE @resultsSchema.@prefiXevents AS
 
+    SELECT * FROM
+
+    (
     -- conditions
     SELECT
       c.cohort_id                  AS cohort_id,
       e.condition_concept_id       AS dgn,
       MIN(e.condition_start_date)  AS date -- This is min date per one cohort (for patients with multiple cohorts, there are several min dates)
-    INTO @resultsSchema.@prefiXevents
+    
     FROM @cdmDatabaseSchema.condition_occurrence e
     INNER JOIN @resultsSchema.@prefiXetcohort c ON e.person_id=c.person_id {@daysBeforeIndexDate == Inf} ? {} : { AND DATEADD(day,@daysBeforeIndexDate,e.condition_start_date)>=c.cohort_start_date } AND e.condition_start_date<=c.cohort_end_date
     WHERE
@@ -173,7 +183,11 @@ IF OBJECT_ID('@resultsSchema.@prefiXevents', 'U') IS NOT NULL
       e.death_datetime IS NOT NULL
     GROUP BY c.cohort_id
 
+    ) SSS INTO @resultsSchema.@prefiXevents
+
 ;
+
+INSERT INTO @resultsSchema.@prefiXdebug (entry) VALUES (CONCAT('..done. There are ',CAST((SELECT COUNT(*) FROM @resultsSchema.@prefiXevents) AS VARCHAR),' rows in @resultsSchema.@prefiXevents'));
 
 
 ---------------------------------------------------------------------------------------------
@@ -194,6 +208,8 @@ IF OBJECT_ID('@resultsSchema.@prefiXsingle_event_cohorts', 'U') IS NOT NULL
     GROUP BY cohort_id
     HAVING COUNT(dgn)=1;
 
+INSERT INTO @resultsSchema.@prefiXdebug (entry) VALUES (CONCAT('..done. There are ',CAST((SELECT COUNT(*) FROM @resultsSchema.@prefiXsingle_event_cohorts) AS VARCHAR),' rows in @resultsSchema.@prefiXsingle_event_cohorts'));
+
 DELETE FROM @resultsSchema.@prefiXevents
 WHERE cohort_id IN (SELECT cohort_id FROM @resultsSchema.@prefiXsingle_event_cohorts);
 
@@ -203,6 +219,8 @@ WHERE cohort_id IN (SELECT cohort_id FROM @resultsSchema.@prefiXsingle_event_coh
 
 IF OBJECT_ID('@resultsSchema.@prefiXsingle_event_cohorts', 'U') IS NOT NULL
   DROP TABLE @resultsSchema.@prefiXsingle_event_cohorts;
+
+
 
 
 ---------------------------------------------------------------------------------------------
@@ -218,9 +236,11 @@ IF OBJECT_ID('@resultsSchema.@prefiXevents_cohort', 'U') IS NOT NULL
            p.gender,
            p.year_of_birth
     INTO @resultsSchema.@prefiXevents_cohort
-    FROM  @resultsSchema.@prefiXevents AS e
-        INNER JOIN  @resultsSchema.@prefiXetcohort AS p
+    FROM  @resultsSchema.@prefiXevents e
+        INNER JOIN  @resultsSchema.@prefiXetcohort p
             ON e.cohort_id = p.cohort_id;
+
+INSERT INTO @resultsSchema.@prefiXdebug (entry) VALUES (CONCAT('..done. There are ',CAST((SELECT COUNT(*) FROM @resultsSchema.@prefiXevents_cohort) AS VARCHAR),' rows in @resultsSchema.@prefiXevents_cohort'));
 
 
 ------------------------------------------------------------------------------------
@@ -257,6 +277,9 @@ SELECT dgn,
 INTO @resultsSchema.@prefiXevent_counts
 FROM @resultsSchema.@prefiXevents_cohort
 GROUP BY dgn;
+
+INSERT INTO @resultsSchema.@prefiXdebug (entry) VALUES (CONCAT('..done. There are ',CAST((SELECT COUNT(*) FROM @resultsSchema.@prefiXevent_counts) AS VARCHAR),' rows in @resultsSchema.@prefiXevent_counts'));
+
 
 ------------------------------------------------------------------------------------
 -- Event pair creation
@@ -336,7 +359,7 @@ IF OBJECT_ID('@resultsSchema.@prefiXpairs', 'U') IS NOT NULL
 -- CREATE INDEX @prefiXpairs_d2_idx ON @resultsSchema.@prefiXpairs(event2_concept_id);
 -- CREATE INDEX @prefiXpairs_d1d2_idx ON o@resultsSchema.@prefiXpairs(event1_concept_id,event2_concept_id);
 
-
+INSERT INTO @resultsSchema.@prefiXdebug (entry) VALUES (CONCAT('..done. There are ',CAST((SELECT COUNT(*) FROM @resultsSchema.@prefiXpairs) AS VARCHAR),' rows in @resultsSchema.@prefiXpairs'));
 
 ---------------------------------------------------------------------
 -- Create separate table for event pairs that are going to be analysed
@@ -366,6 +389,9 @@ IF OBJECT_ID('@resultsSchema.@prefiXD1D2_model', 'U') IS NOT NULL
 
 DELETE FROM @resultsSchema.@prefiXD1D2_model where EVENT1_EVENT2_COHORT_COUNT< @minPatientsPerEventPair; -- Minimum limit
 -- It is correct to not delete ther corresponding rows from @resultsSchema.@prefiXpairs as these rows can still be used for controls
+
+INSERT INTO @resultsSchema.@prefiXdebug (entry) VALUES (CONCAT('..done. There are ',CAST((SELECT COUNT(*) FROM @resultsSchema.@prefiXD1D2_model) AS VARCHAR),' rows in @resultsSchema.@prefiXD1D2_model'));
+
 
 ALTER TABLE @resultsSchema.@prefiXD1D2_model ADD EVENT1_NAME VARCHAR(255) NULL;
 ALTER TABLE @resultsSchema.@prefiXD1D2_model ADD EVENT1_DOMAIN VARCHAR(20) NULL;
@@ -433,6 +459,8 @@ IF OBJECT_ID('@resultsSchema.@prefiXd1d2_summary', 'U') IS NOT NULL
     GROUP BY a.event1_concept_id, a.event2_concept_id, gender, age, discharge_time
     ORDER BY event1_concept_id, event2_concept_id, gender, age, discharge_time;
 
+INSERT INTO @resultsSchema.@prefiXdebug (entry) VALUES (CONCAT('..done. There are ',CAST((SELECT COUNT(*) FROM @resultsSchema.@prefiXd1d2_summary) AS VARCHAR),' rows in @resultsSchema.@prefiXd1d2_summary'));
+
 
 ---------------------------------------------------------------------
 -- Create gender,age,discharge-time summary table for all event pairs
@@ -454,6 +482,10 @@ IF OBJECT_ID('@resultsSchema.@prefiXsummary', 'U') IS NOT NULL
     FROM @resultsSchema.@prefiXpairs
     GROUP BY gender, age, discharge_time
     ORDER BY gender, age, discharge_time;
+
+INSERT INTO @resultsSchema.@prefiXdebug (entry) VALUES (CONCAT('..done. There are ',CAST((SELECT COUNT(*) FROM @resultsSchema.@prefiXsummary) AS VARCHAR),' rows in @resultsSchema.@prefiXsummary'));
+
+
 
 -------------------------------------------------------
 
@@ -478,6 +510,8 @@ IF OBJECT_ID('@resultsSchema.@prefiXd1_summary', 'U') IS NOT NULL
     INNER JOIN (SELECT DISTINCT event1_concept_id FROM @resultsSchema.@prefiXD1D2_model) b ON a.event1_concept_id=b.event1_concept_id -- limit the table to event pairs only that are going to be analyzed
     GROUP BY a.event1_concept_id, gender, age, discharge_time;
 
+INSERT INTO @resultsSchema.@prefiXdebug (entry) VALUES (CONCAT('..done. There are ',CAST((SELECT COUNT(*) FROM @resultsSchema.@prefiXd1_summary) AS VARCHAR),' rows in @resultsSchema.@prefiXd1_summary'));
+
 
 ---------------------------------------------------------------------
 -- Create gender,age,discharge-time summary table for event2_concept_id
@@ -499,5 +533,4 @@ IF OBJECT_ID('@resultsSchema.@prefiXd2_summary', 'U') IS NOT NULL
     INNER JOIN (SELECT DISTINCT event2_concept_id FROM @resultsSchema.@prefiXD1D2_model) b ON a.event2_concept_id=b.event2_concept_id -- limit the table to event pairs only that are going to be analyzed
     GROUP BY a.event2_concept_id, gender, age, discharge_time;
 
--------------------------------------------------------
-
+INSERT INTO @resultsSchema.@prefiXdebug (entry) VALUES (CONCAT('..done. There are ',CAST((SELECT COUNT(*) FROM @resultsSchema.@prefiXd2_summary) AS VARCHAR),' rows in @resultsSchema.@prefiXd2_summary'));

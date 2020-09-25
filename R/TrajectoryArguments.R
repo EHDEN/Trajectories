@@ -58,7 +58,7 @@ createTrajectoryAnalysisArgs <- function(minimumDaysBetweenEvents,
 #' @param cohortTableSchema Schema where cohort table is located
 #' @param cohortTable Name of the cohort table in cohortTableSchema
 #' @param cohortId ID of the cohort (in cohortTable) that will be used for the analysis (default value is 1)
-#' @param inputFolder Full path to input folder that contains SQL file for cohort definition (SQL Server format) and optionally also trajectoryAnalysisArgs.json. You can use built-in folders of this package such as: inputFolder=system.file("extdata", "RA", package = "Trajectories") which is also the default value
+#' @param inputFolder Full path to input folder that contains SQL file for cohort definition (SQL Server format) and optionally also trajectoryAnalysisArgs.json. You can use built-in folders of this package such as: inputFolder=system.file("extdata", "RA", package = "Trajectories") which is also the default value. In case your cohort data already exists in the database and you do not need to build it from scratch, set the value to FALSE.
 #' @param mainOutputFolder The output folder path. This is the folder where the final results are produced into. Use full path and do NOT add trailing slash! The folder must already exist. Default value is the default working directory.
 #' @param databaseHumanReadableName In the future, it will be added to the titles of the graph to indicate what data is this. Use something short. Currently this parameter is not used.
 #'
@@ -80,9 +80,11 @@ createTrajectoryLocalArgs <- function(cdmDatabaseSchema,
                                       databaseHumanReadableName='My database') {
 
   #Sanity checks
-  if (!dir.exists(inputFolder)) stop(paste0("ERROR in createTrajectoryLocalArgs(): inputFolder '",inputFolder,"' does not exist."))
+  if(!is.logical(inputFolder)) {
+    if (!dir.exists(inputFolder)) stop(paste0("ERROR in createTrajectoryLocalArgs(): inputFolder '",inputFolder,"' does not exist."))
+    if (!file.exists(file.path(inputFolder,'cohort.sql'))) stop(paste0("ERROR in createTrajectoryLocalArgs(): there is no 'cohort.sql' file in inputFolder '",inputFolder,"'."))
+  }
   if (!dir.exists(mainOutputFolder)) stop(paste0("ERROR in createTrajectoryLocalArgs(): mainOutputFolder '",mainOutputFolder,"' does not exist."))
-  if (!file.exists(file.path(inputFolder,'cohort.sql'))) stop(paste0("ERROR in createTrajectoryLocalArgs(): there is no 'cohort.sql' file in inputFolder '",inputFolder,"'."))
   #if (!file.exists(paste0(inputFolder,'/trajectoryAnalysisArgs.json'))) stop(paste0("ERROR in createTrajectoryLocalArgs(): there is no 'trajectoryAnalysisArgs.json' file in inputFolder '",inputFolder,"'."))
 
   value <- list(cdmDatabaseSchema=cdmDatabaseSchema,vocabDatabaseSchema=vocabDatabaseSchema,
