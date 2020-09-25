@@ -35,17 +35,21 @@ alignActualTrajectoriesToGraph <- function(connection,
   eventid=V(g)[V(g)$name==eventname]$concept_id
 
   #First, put event pairs of the graph into table
-  print(paste0('Putting ',length(E(g)),' event pairs of the graph into database...'))
+  print(paste0('Putting ',length(E(g)),' event pairs of the graph into database to align to ',eventname,'...'))
 
   e<-igraph::as_data_frame(g,what="edges")
   edges<- e %>% select(e1_concept_id,e2_concept_id)
   tablename<-paste0(trajectoryLocalArgs$resultsSchema,'.',trajectoryLocalArgs$prefixForResultTableNames,'mylinks')
 
     #but before actual TABLE CREATE there is an extra step: if sqlRole is given, set session to correct role before creating the table
-    Trajectories::setRole(connection,trajectoryLocalArgs$sqlRole)
+  Trajectories::setRole(connection,trajectoryLocalArgs$sqlRole)
 
   insertTable(connection, tablename, edges, tempTable=F, progressBar=T)
 
+  #querySql(connection, paste0("SELECT COUNT(*) FROM mylinks"))
+
+
+  #querySql(connection, paste0("SELECT * FROM sqlite_master"))
 
 
   #align trajectories to graph (to get the exact E1->E2 counts with no intermediate events)

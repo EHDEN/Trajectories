@@ -77,10 +77,6 @@ Trajectories::createIgraph(connection=connection,
                            eventName=NA) #we use NA here to draw graphs for top5 events
 
 
-# Drop created cohort table
-Trajectories::dropCohortTable(connection=connection,
-                              trajectoryAnalysisArgs=trajectoryAnalysisArgs,
-                              trajectoryLocalArgs=trajectoryLocalArgs)
 
 # Cleanup database after analysis
 Trajectories::dbCleanup(connection=connection,

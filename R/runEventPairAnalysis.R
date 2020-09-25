@@ -42,12 +42,20 @@ runEventPairAnalysis<-function(connection,
   }
   print(paste0('We use Bonferroni multiple test correction, therefore p-value threshold 0.05/',nrow(dpairs),'=',cutoff_pval,' is used in this analysis.'))
 
+  significant_pairs_count=0
+  significant_directional_pairs_count=0
   # For each event pair, run the analysis
   for(i in 1:nrow(dpairs))
     {
       diagnosis1 = dpairs[i,'EVENT1_CONCEPT_ID']
       diagnosis2 = dpairs[i,'EVENT2_CONCEPT_ID']
-      print(paste0('Analyzing event pair ',diagnosis1,' -> ',diagnosis2,' (total progress ',round(100*i/nrow(dpairs)),'%)...'))
+      print(paste0('Analyzing event pair ',diagnosis1,' -> ',diagnosis2,' (total progress ',
+                                                                            round(100*i/nrow(dpairs)),
+                                                                            '%, # sign pairs: ',
+                                                                            significant_pairs_count,
+                                                                            ', # ordered sign pairs: ',
+                                                                            significant_directional_pairs_count,
+                                                                            ')...'))
 
       # Extract necessary event1_concept_id->event2_concept_id data from table d1d2_analysistable
       RenderedSql <- SqlRender::loadRenderTranslateSql("5CaseControlStats.sql",
@@ -124,7 +132,7 @@ runEventPairAnalysis<-function(connection,
                                                        diag2 = diagnosis2,
                                                        prefix =  trajectoryLocalArgs$prefixForResultTableNames
       )
-      DatabaseConnector::executeSql(connection, RenderedSql)
+      DatabaseConnector::executeSql(connection, sql=RenderedSql, progressBar = FALSE, reportOverallTime = FALSE)
 
 
       # In case the event1_concept_id-event2_concept_id event pair is significant, let's investigate whether the order of the events is also important
@@ -133,7 +141,7 @@ runEventPairAnalysis<-function(connection,
         print(paste0('Event pair ',diagnosis1,' -> ',diagnosis2,' is not significant.'))
 
       } else {
-
+        significant_pairs_count <- significant_pairs_count + 1
         print(paste0('Event pair ',diagnosis1,' -> ',diagnosis2,' is significant. Testing its directionality...'))
 
         #Calculate in database: among people that have event1_concept_id and event2_concept_id pair, how many have date1<date2, date1=date2, date1>date2
@@ -145,7 +153,7 @@ runEventPairAnalysis<-function(connection,
                                                          diag2 = diagnosis2,
                                                          prefix =  trajectoryLocalArgs$prefixForResultTableNames
         )
-        DatabaseConnector::executeSql(connection, RenderedSql)
+        DatabaseConnector::executeSql(connection, sql=RenderedSql, progressBar = FALSE, reportOverallTime = FALSE)
 
         # Get calculation results from database
         RenderedSql <- SqlRender::loadRenderTranslateSql("8DpairReader.sql",
@@ -179,7 +187,7 @@ runEventPairAnalysis<-function(connection,
                                                          diag2 = diagnosis2,
                                                          prefix =  trajectoryLocalArgs$prefixForResultTableNames
         )
-        DatabaseConnector::executeSql(connection, RenderedSql)
+        DatabaseConnector::executeSql(connection, sql=RenderedSql, progressBar = FALSE, reportOverallTime = FALSE)
 
         if (event_pair_pvalue > cutoff_pval){
 
@@ -187,6 +195,7 @@ runEventPairAnalysis<-function(connection,
 
         } else {
 
+          significant_directional_pairs_count <- significant_directional_pairs_count + 1
           print(paste0('The direction of event pair ',diagnosis1,' -> ',diagnosis2,' is significant.'))
 
         }

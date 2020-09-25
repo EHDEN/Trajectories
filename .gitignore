@@ -12,6 +12,10 @@
 errorReport.txt
 errorReportSql.txt
 
+# Do not add DatabaseConnector profiling files into git repository #
+###################
+statement_*.sql
+
 # Do not add log files to git repository #
 ###################
 *.log

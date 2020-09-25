@@ -57,9 +57,9 @@ createEventPairsTable<-function(connection,
                                                   addBirths = ifelse(trajectoryAnalysisArgs$addBirths==T,1,0),
                                                   addDeaths = ifelse(trajectoryAnalysisArgs$addDeaths==T,1,0)
   )
-#
 
-  DatabaseConnector::executeSql(connection, RenderedSql)
+
+  DatabaseConnector::executeSql(connection, sql=RenderedSql, profile=F, progressBar = TRUE, reportOverallTime = TRUE)
 
 
   # Get all (frequent) event pairs from the database
