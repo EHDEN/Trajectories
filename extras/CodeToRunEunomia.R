@@ -27,55 +27,33 @@ trajectoryLocalArgs <- Trajectories::createTrajectoryLocalArgs(oracleTempSchema 
                                                                sqlRole = F,
                                                                cohortTableSchema='main',
                                                                cohortTable='cohort',
-                                                               cohortId=1,
-                                                               mainOutputFolder='/Users/Kaust/temp',
-                                                               cohortSqlFile='example_cohort_RA.sql')
-
-
-# Setting analysis parameters.
-# NB! DO NOT USE BOTH addDrugEras=T and addDrugExposures=T (not both) as it leads to analysis duplication and breaks some code...
-# (same "drug" event may occur several times which is not allowed)
-
-trajectoryAnalysisArgs <- Trajectories::createTrajectoryAnalysisArgs(minimumDaysBetweenEvents = 1,
-                                                                     maximumDaysBetweenEvents = 3650,
-                                                                     minPatientsPerEventPair = 100,
-                                                                     addConditions=T,
-                                                                     addObservations=T,
-                                                                     addProcedures=T,
-                                                                     addDrugExposures=F,
-                                                                     addDrugEras=T,
-                                                                     addBirths=T,
-                                                                     addDeaths=T,
-                                                                     daysBeforeIndexDate=Inf,
-                                                                     packageName='Trajectories',
-                                                                     cohortName="Rheumatoid arthritis")
+                                                               cohortId=5,
+                                                               inputFolder=system.file("extdata", "fulldb", package = "Trajectories"), # Full path to input folder that contains SQL file for cohort definition and optionally also trajectoryAnalysisArgs.json. You can use built-in folders of this package such as: inputFolder=system.file("extdata", "T2D", package = "Trajectories")
+                                                               mainOutputFolder='/Users/sulevr/temp', #Subfolders to this will be created automatically
+                                                               databaseHumanReadableName='Eunomia')
 
 
 
-# ##################################################
-# End of setting parameters. The actual code follows.
+trajectoryAnalysisArgs<-Trajectories::TrajectoryAnalysisArgsFromInputFolder(trajectoryLocalArgs)
 
-
-#create subfolder for the results if not exists already
-subFolder=make.names(trajectoryAnalysisArgs$cohortName)
-outputFolder <- file.path(trajectoryLocalArgs$mainOutputFolder, subFolder)
-if (!dir.exists(outputFolder)){
-  dir.create(outputFolder)
-}
-
-# ##################################################
-# Connect to database
-# ##################################################
 
 connection <- DatabaseConnector::connect(connectionDetails)
+on.exit(DatabaseConnector::disconnect(connection)) #Close db connection on error or exit
 
-on.exit(DatabaseConnector::disconnect(connection))
+
+
+
+#Create output folder for this analysis
+outputFolder<-Trajectories::GetOutputFolder(trajectoryLocalArgs,trajectoryAnalysisArgs,createIfMissing=T)
+
+# Store used analysis arguments to JSON file
+Trajectories::TrajectoryAnalysisArgsToJson(trajectoryAnalysisArgs, file.path(outputFolder,"trajectoryAnalysisArgs_used.json"))
 
 # Create new cohort table
+#Trajectories::createCohortTable(connection=connection,
+#                                trajectoryAnalysisArgs=trajectoryAnalysisArgs,
+#                                trajectoryLocalArgs=trajectoryLocalArgs)
 
-Trajectories::createCohortTable(connection=connection,
-                                trajectoryAnalysisArgs=trajectoryAnalysisArgs,
-                                trajectoryLocalArgs=trajectoryLocalArgs)
 # Fill cohort table with example cohort data
 Trajectories::fillCohortTable(connection=connection,
                               trajectoryAnalysisArgs,
@@ -84,24 +62,18 @@ Trajectories::fillCohortTable(connection=connection,
 # Create database tables of all event pairs (patient level data + summary statistics)
 Trajectories::createEventPairsTable(connection=connection,
                                     trajectoryAnalysisArgs=trajectoryAnalysisArgs,
-                                    trajectoryLocalArgs=trajectoryLocalArgs,
-                                    eventParametersFilename = paste0(outputFolder,'/event_parameters.txt'))
+                                    trajectoryLocalArgs=trajectoryLocalArgs)
 
 
 # Detect statistically significant directional event pairs and write the results to eventPairResultsFilename
 Trajectories::runEventPairAnalysis(connection=connection,
                                    trajectoryAnalysisArgs=trajectoryAnalysisArgs,
-                                   trajectoryLocalArgs=trajectoryLocalArgs,
-                                   eventPairResultsFilename = paste0(outputFolder,'/event_pairs.tsv'),
-                                   eventPairResultsStatsFilename = paste0(outputFolder,'/event_pair_stats.txt')
-)
+                                   trajectoryLocalArgs=trajectoryLocalArgs)
 
 #creates graph from eventPairResultsFilename, also alignes the a
 Trajectories::createIgraph(connection=connection,
                            trajectoryAnalysisArgs=trajectoryAnalysisArgs,
                            trajectoryLocalArgs=trajectoryLocalArgs,
-                           eventPairResultsFilename = paste0(outputFolder,'/event_pairs.tsv'),
-                           outputFolder=outputFolder, #without trailing slash
                            eventName=NA) #we use NA here to draw graphs for top5 events
 
 

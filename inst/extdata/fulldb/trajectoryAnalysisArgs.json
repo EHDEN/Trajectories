@@ -1,0 +1,16 @@
+{
+  "minimumDaysBetweenEvents": [1],
+  "maximumDaysBetweenEvents": [3650],
+  "minPatientsPerEventPair": [0.1],
+  "addConditions": [true],
+  "addObservations": [true],
+  "addProcedures": [true],
+  "addDrugExposures": [false],
+  "addDrugEras": [true],
+  "addBirths": [true],
+  "addDeaths": [true],
+  "daysBeforeIndexDate": ["Inf"],
+  "packageName": ["Trajectories"],
+  "cohortName": ["Full database"],
+  "description": ["Full database study"]
+}
