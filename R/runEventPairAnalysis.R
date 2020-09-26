@@ -53,7 +53,7 @@ runEventPairAnalysis<-function(connection,
                                                                             round(100*i/nrow(dpairs)),
                                                                             '%, # sign pairs: ',
                                                                             significant_pairs_count,
-                                                                            ', # ordered sign pairs: ',
+                                                                            ', # sign directional pairs: ',
                                                                             significant_directional_pairs_count,
                                                                             ')...'))
 

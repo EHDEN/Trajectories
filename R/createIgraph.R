@@ -1,6 +1,10 @@
 library(igraph)
 library(dplyr)
-#' Title
+library(stringi)
+#' Creates igraph plots for the analysis results
+#'
+#' Analysis results have to exist in output folder, set by Trajectories::GetOutputFolder(trajectoryLocalArgs,trajectoryAnalysisArgs).
+#' This function also alignes actual trajectories to the graph, therefore it requires database connection.
 #'
 #' @param connection Database connection object created by createConnectionDetails() method in DatabaseConnector package
 #' @param eventName Exact concept name that is used for building trajectories. Must exist in event pairs data table. If not specified (NA) (recommended) creates trajectories for top 5 events.
@@ -32,7 +36,9 @@ createIgraph<-function(connection,
 
   # create plot of all event pairs (no filtering)
   title=paste0('All significant directional event pairs among ',cohortName,' patients')
-  Trajectories::plotIgraph(g,layout=layout_with_fr,linknumbers=round(100*E(g)$prob),outputPdfFullpath=file.path(outputFolder,paste0(make.names(title),'.pdf')),title=paste0(title,"\n",format(Sys.time(), '%d %B %Y %H:%M')))
+  #Truncate the title for file name if it is too long
+  truncated_title=ifelse(stri_length(title)<=200,title,paste(substr(title,1,200)))
+  Trajectories::plotIgraph(g,layout=layout_with_fr,linknumbers=round(100*E(g)$prob),outputPdfFullpath=file.path(outputFolder,paste0(make.names(truncated_title),'.pdf')),title=paste0(title,"\n",format(Sys.time(), '%d %B %Y %H:%M')))
 
   # Remove low-probability event pairs (keep 50 event pairs with highest probability)
   s=c(20,50)
@@ -40,7 +46,9 @@ createIgraph<-function(connection,
     #limitOfLinks=50
     h<-Trajectories::filterIgraphRemoveLowEffectLinksAndOrphanNodes(g, limitOfLinks=limitOfLinks,edge_param_to_sort_by='prob')
     title=paste0(limitOfLinks,' high-probability event pairs among ',cohortName,' patients')
-    Trajectories::plotIgraph(h,layout=layout_with_fr,linknumbers=round(100*E(h)$prob),outputPdfFullpath=file.path(outputFolder,paste0(make.names(title),'.pdf')),title=paste0(title,"\n",format(Sys.time(), '%d %B %Y %H:%M')))
+    #Truncate the title for file name if it is too long
+    truncated_title=ifelse(stri_length(title)<=200,title,paste(substr(title,1,200)))
+    Trajectories::plotIgraph(h,layout=layout_with_fr,linknumbers=round(100*E(h)$prob),outputPdfFullpath=file.path(outputFolder,paste0(make.names(truncated_title),'.pdf')),title=paste0(title,"\n",format(Sys.time(), '%d %B %Y %H:%M')))
   }
 
 
@@ -62,7 +70,9 @@ createIgraph<-function(connection,
 
       constructed.graph<-Trajectories::filterIgraphCrossingEvent(g, eventname = EVENTNAME, limitOfNodes=limitOfNodes, edge_param_to_sort_by=edge_param_to_sort_by)
       title=paste0("Constructed most-likely trajectories in ",cohortName," cohort through\n",EVENTNAME,"\n(based on ",V(g)[V(g)$name==EVENTNAME]$count," patients and limited to ",limitOfNodes," events)")
-      Trajectories::plotIgraph(constructed.graph,layout=layout_with_fr,linknumbers=round(E(constructed.graph)$prob*100),outputPdfFullpath=file.path(outputFolder,paste0(make.names(title),'.pdf')),title=paste0(title,"\n",format(Sys.time(), '%d %B %Y %H:%M')))
+      #Truncate the title for file name if it is too long
+      truncated_title=ifelse(stri_length(title)<=200,title,paste(substr(title,1,200)))
+      Trajectories::plotIgraph(constructed.graph,layout=layout_with_fr,linknumbers=round(E(constructed.graph)$prob*100),outputPdfFullpath=file.path(outputFolder,paste0(make.names(truncated_title),'.pdf')),title=paste0(title,"\n",format(Sys.time(), '%d %B %Y %H:%M')))
 
 
       #align actual trajectories to constructed graph
@@ -79,15 +89,20 @@ createIgraph<-function(connection,
       #E(h)$alignedTrajsProb=E(h)$alignedTrajsCount/V(h)[ends(h,E(h),names=F)[,1]]$alignedTrajsCount
       E(h)$alignedTrajsProb=E(h)$alignedTrajsCount/V(h)[V(h)$name==EVENTNAME]$alignedTrajsCount #probability relative to EVENTNAME
       title=paste0(ifelse(is.na(limitOfTrajs),'All ',''),V(h)[V(h)$name==EVENTNAME]$alignedTrajsCount," actual trajectories of ",cohortName," patients having/passing\n",EVENTNAME," (EVENT),\naligned to constructed graph of ",limitOfNodes," events (frequency relative to EVENT given on edges)")
-      Trajectories::plotIgraph(h,layout=layout_with_fr,nodesizes=V(h)$alignedTrajsCount,linknumbers=round(E(h)$alignedTrajsProb*100),outputPdfFullpath=file.path(outputFolder,paste0(make.names(title),'.pdf')),title=paste0(title,"\n",format(Sys.time(), '%d %B %Y %H:%M')))
+      #Truncate the title for file name if it is too long
+      truncated_title=ifelse(stri_length(title)<=200,title,paste(substr(title,1,200)))
+
+      Trajectories::plotIgraph(h,layout=layout_with_fr,nodesizes=V(h)$alignedTrajsCount,linknumbers=round(E(h)$alignedTrajsProb*100),outputPdfFullpath=file.path(outputFolder,paste0(make.names(truncated_title),'.pdf')),title=paste0(title,"\n",format(Sys.time(), '%d %B %Y %H:%M')))
       title=paste0(ifelse(is.na(limitOfTrajs),'All ',''),V(h)[V(h)$name==EVENTNAME]$alignedTrajsCount," actual trajectories of ",cohortName," patients having/passing\n",EVENTNAME," (EVENT),\naligned to constructed graph of ",limitOfNodes," events (trajectory count on edge)")
-      Trajectories::plotIgraph(h,layout=layout_with_fr,nodesizes=V(h)$alignedTrajsCount,linknumbers=round(E(h)$alignedTrajsCount),outputPdfFullpath=file.path(outputFolder,paste0(make.names(title),'.pdf')),title=paste0(title,"\n",format(Sys.time(), '%d %B %Y %H:%M')))
+      #Truncate the title for file name if it is too long
+      truncated_title=ifelse(stri_length(title)<=200,title,paste(substr(title,1,200)))
+      Trajectories::plotIgraph(h,layout=layout_with_fr,nodesizes=V(h)$alignedTrajsCount,linknumbers=round(E(h)$alignedTrajsCount),outputPdfFullpath=file.path(outputFolder,paste0(make.names(truncated_title),'.pdf')),title=paste0(title,"\n",format(Sys.time(), '%d %B %Y %H:%M')))
 
 
       x<-igraph::as_data_frame(h, what='edges')
       y<-igraph::as_data_frame(h, what='vertices')
-      write.table(x,file=file.path(outputFolder,paste0(make.names(title),'.edges.csv')),quote=FALSE, sep="\t", col.names = NA)
-      write.table(y,file=file.path(outputFolder,paste0(make.names(title),'.vertices.csv')),quote=FALSE, sep="\t", col.names = NA)
+      write.table(x,file=file.path(outputFolder,paste0(make.names(truncated_title),'.edges.csv')),quote=FALSE, sep="\t", col.names = NA)
+      write.table(y,file=file.path(outputFolder,paste0(make.names(truncated_title),'.vertices.csv')),quote=FALSE, sep="\t", col.names = NA)
 
 
       #align actual trajectories to full graph (takes looong time)
@@ -104,12 +119,14 @@ createIgraph<-function(connection,
       #E(h)$alignedTrajsProb=E(h)$alignedTrajsCount/V(h)[ends(h,E(h),names=F)[,1]]$alignedTrajsCount
       E(h)$alignedTrajsProb=E(h)$alignedTrajsCount/V(h)[V(h)$name==EVENTNAME]$alignedTrajsCount #probability relative to EVENTNAME
       title=paste0(ifelse(is.na(limitOfTrajs),'All ',limitOfTrajs)," actual trajectories of ",cohortName," patients having/passing\n",EVENTNAME," (EVENT),\naligned to full graph (frequency relative to EVENT given on edge)")
-      Trajectories::plotIgraph(h,layout=layout_with_fr,nodesizes=V(h)$alignedTrajsCount,linknumbers=round(E(h)$alignedTrajsProb*100),outputPdfFullpath=file.path(outputFolder,paste0(make.names(title),'.pdf')),title=paste0(title,"\n",format(Sys.time(), '%d %B %Y %H:%M')))
+      #Truncate the title for file name if it is too long
+      truncated_title=ifelse(stri_length(title)<=200,title,paste(substr(title,1,200)))
+      Trajectories::plotIgraph(h,layout=layout_with_fr,nodesizes=V(h)$alignedTrajsCount,linknumbers=round(E(h)$alignedTrajsProb*100),outputPdfFullpath=file.path(outputFolder,paste0(make.names(truncated_title),'.pdf')),title=paste0(title,"\n",format(Sys.time(), '%d %B %Y %H:%M')))
 
       x<-igraph::as_data_frame(h, what='edges')
       y<-igraph::as_data_frame(h, what='vertices')
-      write.table(x,file=file.path(outputFolder,paste0(make.names(title),'.edges.csv')),quote=FALSE, sep="\t", col.names = NA)
-      write.table(y,file=file.path(outputFolder,paste0(make.names(title),'.vertices.csv')),quote=FALSE, sep="\t", col.names = NA)
+      write.table(x,file=file.path(outputFolder,paste0(make.names(truncated_title),'.edges.csv')),quote=FALSE, sep="\t", col.names = NA)
+      write.table(y,file=file.path(outputFolder,paste0(make.names(truncated_title),'.vertices.csv')),quote=FALSE, sep="\t", col.names = NA)
 
 
     } else {

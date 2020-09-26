@@ -28,7 +28,7 @@ FROM ee
     from ee
     GROUP BY ee.cohort_id, ee.date
 ) ee2 ON ee.cohort_id=ee2.cohort_id and ee.date=ee2.date
-ORDER BY cohort_id,cohort_day;
+ORDER BY ee.cohort_id,cohort_day;
 
 
 -- list E1->E2 eventpairs in the data. Takes only such eventpairs, where events occur right to next other (no intermediate significant events)

@@ -39,14 +39,35 @@ alignActualTrajectoriesToGraph <- function(connection,
 
   e<-igraph::as_data_frame(g,what="edges")
   edges<- e %>% select(e1_concept_id,e2_concept_id)
-  tablename<-paste0(trajectoryLocalArgs$resultsSchema,'.',trajectoryLocalArgs$prefixForResultTableNames,'mylinks')
+
 
     #but before actual TABLE CREATE there is an extra step: if sqlRole is given, set session to correct role before creating the table
   Trajectories::setRole(connection,trajectoryLocalArgs$sqlRole)
 
-  insertTable(connection, tablename, edges, tempTable=F, progressBar=T)
+  #26 Sep 2020: Can't use simply insertTable here because in Eunomia package it does not solve schema name correctly. That's why this is commented out and we manually create SQL here :(
+  #insertTable(connection, tablename, edges, tempTable=F, progressBar=T)
 
-  #querySql(connection, paste0("SELECT COUNT(*) FROM mylinks"))
+  #Create empty table manually
+  RenderedSql <- SqlRender::loadRenderTranslateSql("create_mylinks_table.sql",
+                                                   packageName=trajectoryAnalysisArgs$packageName,
+                                                   dbms=attr(connection, "dbms"),
+                                                   resultsSchema =  trajectoryLocalArgs$resultsSchema,
+                                                   prefiX = trajectoryLocalArgs$prefixForResultTableNames
+  )
+  DatabaseConnector::executeSql(connection, RenderedSql)
+
+  #Fill with data
+  tablename<-paste0(trajectoryLocalArgs$resultsSchema,'.',trajectoryLocalArgs$prefixForResultTableNames,'mylinks')
+  insertSql <- paste("INSERT INTO ",
+                     tablename,
+                     " (e1_concept_id, e2_concept_id) VALUES ",
+                     paste(paste("(",paste(edges$e1_concept_id, edges$e2_concept_id, sep=","),")") , collapse=","),
+                     ";",
+                     sep = "")
+  RenderedSql <- SqlRender::translate(insertSql,targetDialect=attr(connection, "dbms"))
+  DatabaseConnector::executeSql(connection, RenderedSql)
+
+  #querySql(connection, paste0("SELECT COUNT(*) FROM main.mylinks"))
 
 
   #querySql(connection, paste0("SELECT * FROM sqlite_master"))
