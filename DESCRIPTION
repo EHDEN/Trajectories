@@ -21,7 +21,8 @@ Depends:
     SqlRender (>= 1.5.2),
     igraph (>= 1.2.5)
 Imports:
-    jsonlite (>= 1.7.1)
+    jsonlite (>= 1.7.1),
+    stringi (>= 1.4.5)
 Encoding: UTF-8
 RoxygenNote: 7.1.1
 Suggests: 

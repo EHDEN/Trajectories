@@ -40,7 +40,9 @@ runEventPairAnalysis<-function(connection,
     print('Nothing to analyze, exit analysis function.')
     return(1);
   }
-  print(paste0('We use Bonferroni multiple test correction, therefore p-value threshold 0.05/',nrow(dpairs),'=',cutoff_pval,' is used in this analysis.'))
+  print(paste0('We use Bonferroni multiple test correction, therefore p-value threshold 0.05/',nrow(dpairs),'=',cutoff_pval,' is used in association analysis.'))
+  print(paste0('For directionality tests, a different p-value threshold is used. It depends on the actual number of significant associactions and will be calculated in the end of analysis.'))
+  print(paste0('To indicate the estimated number of significant event pairs while the anaylsis is running, we use the same (very conservative) p-value threshold as for association analysis.'))
 
   significant_pairs_count=0
   significant_directional_pairs_count=0
@@ -53,7 +55,7 @@ runEventPairAnalysis<-function(connection,
                                                                             round(100*i/nrow(dpairs)),
                                                                             '%, # sign pairs: ',
                                                                             significant_pairs_count,
-                                                                            ', # sign directional pairs: ',
+                                                                            ', estimated # sign directional pairs: ',
                                                                             significant_directional_pairs_count,
                                                                             ')...'))
 
@@ -204,6 +206,15 @@ runEventPairAnalysis<-function(connection,
 
   } # for
 
+  print('Adjusting p-value cutoff for directionality tests...')
+  print(paste0('  Found ',significant_pairs_count,' significant event pairs.'))
+  print(paste0('  For all of them, we conducted directionality test.'))
+  if(significant_pairs_count>0) {
+    cutoff_pval_direction=0.05/significant_pairs_count
+  } else {
+    cutoff_pval_direction=0.05
+  }
+  print(paste0('... Therefore, Bonferroni corrected p-value threshold for directionality tests is 0.05/',significant_pairs_count,'=',cutoff_pval_direction))
 
   # Read in results
   RenderedSql <- SqlRender::loadRenderTranslateSql("11ResultsReader.sql",
@@ -211,7 +222,21 @@ runEventPairAnalysis<-function(connection,
                                                    dbms=connection@dbms,
                                                    resultsSchema =   trajectoryLocalArgs$resultsSchema,
                                                    prefix =  trajectoryLocalArgs$prefixForResultTableNames,
-                                                   cutoff_val=cutoff_pval,
+                                                   cutoff_val=cutoff_pval_direction,
+                                                   effectSize = 1.0
+  )
+  selected_data = DatabaseConnector::querySql(connection, RenderedSql)
+  significant_directional_pairs_count=nrow(selected_data)
+  print(paste0('There are ',significant_directional_pairs_count,' significant directional event pairs having p-val > ',cutoff_pval_direction,'.'))
+  print('Some of them may have very small effect. Therefore, we extract significant event pairs that have effect size > 1.1')
+
+
+  RenderedSql <- SqlRender::loadRenderTranslateSql("11ResultsReader.sql",
+                                                   packageName=trajectoryAnalysisArgs$packageName,
+                                                   dbms=connection@dbms,
+                                                   resultsSchema =   trajectoryLocalArgs$resultsSchema,
+                                                   prefix =  trajectoryLocalArgs$prefixForResultTableNames,
+                                                   cutoff_val=cutoff_pval_direction,
                                                    effectSize = 1.1
   )
   selected_data = DatabaseConnector::querySql(connection, RenderedSql)
@@ -219,9 +244,8 @@ runEventPairAnalysis<-function(connection,
   # Write result table into file
   write.table(selected_data, file=eventPairResultsFilename, quote=FALSE, sep='\t', col.names = NA)
 
-  # Print some output message that all succeed so far
-  print(paste0('Found ',nrow(selected_data),' event pairs that have significant direction and have effect size > 1.1.'))
-  print(paste0('These event pairs were written to ',eventPairResultsFilename))
+  print(paste0('Out of ',significant_pairs_count,' significant event pairs, ',significant_directional_pairs_count,' have significant direction. Out of these, ',nrow(selected_data),' have effect size > 1.1.'))
+  print(paste0('These ',nrow(selected_data),' event pairs were written to ',eventPairResultsFilename))
 
 
   # Show some event pair statistics:
@@ -230,8 +254,11 @@ runEventPairAnalysis<-function(connection,
         paste(format(Sys.time(), '%d %B %Y %H:%M')),
         paste(''),
         paste('Total number of event pairs analyzed:',nrow(dpairs)),
-        paste('Bonferroni corrected p-value threshold:',cutoff_pval),
-        paste('Number of significant directional event pairs having effect size > 1.1:',nrow(selected_data)),
+        paste('Bonferroni corrected p-value threshold for association test:',cutoff_pval),
+        paste('Bonferroni corrected p-value threshold for directionality test:',cutoff_pval),
+        paste('Number of significant event pairs:',significant_pairs_count),
+        paste('Number of significant event pairs with significant direction:',significant_directional_pairs_count),
+        paste('Number of significant event pairs with significant direction having effect size > 1.1:',nrow(selected_data)),
         paste('These significant event pairs written to:',eventPairResultsFilename)
 
   )

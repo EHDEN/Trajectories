@@ -2,7 +2,7 @@
 % Please edit documentation in R/createIgraph.R
 \name{createIgraph}
 \alias{createIgraph}
-\title{Title}
+\title{Creates igraph plots for the analysis results}
 \usage{
 createIgraph(
   connection,
@@ -24,5 +24,6 @@ createIgraph(
 
 }
 \description{
-Title
+Analysis results have to exist in output folder, set by Trajectories::GetOutputFolder(trajectoryLocalArgs,trajectoryAnalysisArgs).
+This function also alignes actual trajectories to the graph, therefore it requires database connection.
 }
