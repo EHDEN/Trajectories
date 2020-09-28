@@ -46,7 +46,7 @@ IF OBJECT_ID('@resultsSchema.@prefiXetcohort', 'U') IS NOT NULL
            CASE WHEN p.gender_concept_id = 8532 THEN 'F'
                WHEN p.gender_concept_id = 8507 THEN 'M'
                END AS gender,
-           YEAR(p.birth_datetime) AS year_of_birth,
+           p.year_of_birth AS year_of_birth,
            cohort.cohort_start_date AS cohort_start_date,
            cohort.cohort_end_date AS cohort_end_date
     INTO @resultsSchema.@prefiXetcohort
