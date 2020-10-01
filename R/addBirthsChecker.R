@@ -1,4 +1,14 @@
 library(SqlRender)
+#' Title
+#'
+#' @param connection
+#' @param trajectoryAnalysisArgs
+#' @param trajectoryLocalArgs
+#'
+#' @return
+#' @export
+#'
+#' @examples
 addBirthsChecker <- function(connection,
                              trajectoryAnalysisArgs,
                              trajectoryLocalArgs) {
