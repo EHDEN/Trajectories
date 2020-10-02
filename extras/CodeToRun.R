@@ -62,14 +62,6 @@ on.exit(DatabaseConnector::disconnect(connection)) #Close db connection on error
 
 ########################################################################
 
-#######################################################################
-#######################################################################
-# Check if there is data in person.birth_datetime if addBirths=T
-if(trajectoryAnalysisArgs$addBirths==T){
-  Trajectories::addBirthsChecker(connection=connection,
-                                 trajectoryAnalysisArgs=trajectoryAnalysisArgs,
-                                 trajectoryLocalArgs=trajectoryLocalArgs)
-}
 #Create output folder for this analysis
 outputFolder<-Trajectories::GetOutputFolder(trajectoryLocalArgs,trajectoryAnalysisArgs,createIfMissing=T)
 
