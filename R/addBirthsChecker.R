@@ -21,6 +21,8 @@ addBirthsChecker <- function(connection,
   birthDateTimeCount = DatabaseConnector::querySql(connection, births_sql)
   if(birthDateTimeCount$BIRTHCOUNTS<1) {
     warning("the column person.birth_datetime is empty")
+    print("The column person.birth_datetime is empty, setting addBirths to False")
+    trajectoryAnalysisArgs$addBirths=F
     } else {
       print("data is available for addBirths functionality.")
     }

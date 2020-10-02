@@ -28,7 +28,12 @@ createEventPairsTable<-function(connection,
     minPatientsPerEventPair=trajectoryAnalysisArgs$minPatientsPerEventPair
   }
 
-
+  # Check if there is data in person.birth_datetime if addBirths=T
+  if(trajectoryAnalysisArgs$addBirths==T){
+    Trajectories::addBirthsChecker(connection=connection,
+                                   trajectoryAnalysisArgs=trajectoryAnalysisArgs,
+                                   trajectoryLocalArgs=trajectoryLocalArgs)
+  }
   print(paste0("Running SQL..."))
 
   #Set SQL role of the database session
