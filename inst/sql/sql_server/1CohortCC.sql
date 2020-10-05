@@ -86,7 +86,7 @@ IF OBJECT_ID('@resultsSchema.@prefiXevents', 'U') IS NOT NULL
       c.cohort_id                  AS cohort_id,
       e.condition_concept_id       AS dgn,
       MIN(e.condition_start_date)  AS date -- This is min date per one cohort (for patients with multiple cohorts, there are several min dates)
-    
+     -- for CDM 6 use condition_start_datetime?
     FROM @cdmDatabaseSchema.condition_occurrence e
     INNER JOIN @resultsSchema.@prefiXetcohort c ON e.person_id=c.person_id {@daysBeforeIndexDate == Inf} ? {} : { AND DATEADD(day,@daysBeforeIndexDate,e.condition_start_date)>=c.cohort_start_date } AND e.condition_start_date<=c.cohort_end_date
     WHERE
@@ -176,13 +176,13 @@ IF OBJECT_ID('@resultsSchema.@prefiXevents', 'U') IS NOT NULL
     SELECT
       c.cohort_id                 AS cohort_id,
       40566982                    AS dgn, -- this is a death event
-      MIN(CAST(e.death_datetime AS DATE)) AS date
+      MIN(CAST(e.death_date AS DATE)) AS date --death.death_datetime not required in CDM 5.1, death.death_date used instead
     FROM @cdmDatabaseSchema.death e
-    INNER JOIN @resultsSchema.@prefiXetcohort c on e.person_id=c.person_id {@daysBeforeIndexDate == Inf} ? {} : { AND DATEADD(day,@daysBeforeIndexDate,e.condition_start_date)>=c.cohort_start_date } AND CAST(e.death_datetime AS DATE)>=c.cohort_start_date AND CAST(e.death_datetime AS DATE)<=c.cohort_end_date
+    INNER JOIN @resultsSchema.@prefiXetcohort c on e.person_id=c.person_id {@daysBeforeIndexDate == Inf} ? {} : { AND DATEADD(day,@daysBeforeIndexDate,e.condition_start_date)>=c.cohort_start_date } AND CAST(e.death_date AS DATE)>=c.cohort_start_date AND CAST(e.death_date AS DATE)<=c.cohort_end_date
     WHERE
       1=@addDeaths -- if addDeaths is TRUE, then this UNION is ADDED, otherwise this query give 0 rows as result
       AND
-      e.death_datetime IS NOT NULL
+      e.death_date IS NOT NULL
     GROUP BY c.cohort_id
 
     ) SSS
