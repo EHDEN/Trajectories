@@ -23,7 +23,7 @@ plotIgraph<-function(g,layout=layout_nicely(g),outputPdfFullpath=F,nodesizes=V(g
   }
 
   if(length(E(g))==0) {
-    print('There are 0 edges on that graph. Nothing to plot.')
+    log_info('There are 0 edges on that graph. Nothing to plot.')
     return()
   }
 
@@ -87,7 +87,7 @@ plotIgraph<-function(g,layout=layout_nicely(g),outputPdfFullpath=F,nodesizes=V(g
 
   if(outputPdfFullpath!=F) {
     dev.off()
-    print(paste0('PDF graph was written to ',outputPdfFullpath))
+    log_info(paste0('PDF graph was written to ',outputPdfFullpath))
   }
 
 }

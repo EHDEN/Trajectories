@@ -3,7 +3,7 @@
 %   R/filterIgraphRemoveLowEffectLinksAndOrphanNodes.R
 \name{filterIgraphRemoveLowEffectLinksAndOrphanNodes}
 \alias{filterIgraphRemoveLowEffectLinksAndOrphanNodes}
-\title{Title}
+\title{Reduces trajectories igraph object by removing low effect links and orphan nodes}
 \usage{
 filterIgraphRemoveLowEffectLinksAndOrphanNodes(
   g,
@@ -23,5 +23,5 @@ filterIgraphRemoveLowEffectLinksAndOrphanNodes(
 
 }
 \description{
-Title
+Reduces trajectories igraph object by removing low effect links and orphan nodes
 }

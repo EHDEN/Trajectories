@@ -28,14 +28,15 @@ alignActualTrajectoriesToGraph <- function(connection,
 
   #check that eventname is present in g
   if(!eventname %in% V(g)$name) {
-    print(paste0('Cannot align trajectories through ',eventname,' as the graph does not contain any links with that event. Return unaligned graph.'))
+    log_warn(paste0('Cannot align trajectories through {eventname} as the graph does not contain any links with that event. Return unaligned graph.'))
     return(g)
   }
 
   eventid=V(g)[V(g)$name==eventname]$concept_id
 
   #First, put event pairs of the graph into table
-  print(paste0('Putting ',length(E(g)),' event pairs of the graph into database to align to ',eventname,'...'))
+
+  log_info(paste0('Putting ',length(E(g)),' event pairs of the graph into database to align to: {eventname}...'))
 
   e<-igraph::as_data_frame(g,what="edges")
   edges<- e %>% select(e1_concept_id,e2_concept_id)
@@ -48,7 +49,7 @@ alignActualTrajectoriesToGraph <- function(connection,
   #insertTable(connection, tablename, edges, tempTable=F, progressBar=T)
 
   #Create empty table manually
-  RenderedSql <- SqlRender::loadRenderTranslateSql("create_mylinks_table.sql",
+  RenderedSql <- Trajectories::loadRenderTranslateSql("create_mylinks_table.sql",
                                                    packageName=trajectoryAnalysisArgs$packageName,
                                                    dbms=attr(connection, "dbms"),
                                                    resultsSchema =  trajectoryLocalArgs$resultsSchema,
@@ -74,8 +75,9 @@ alignActualTrajectoriesToGraph <- function(connection,
 
 
   #align trajectories to graph (to get the exact E1->E2 counts with no intermediate events)
-  print('Extracting actual sequences of these events...')
-  RenderedSql <- SqlRender::loadRenderTranslateSql("map_actual_trajs_to_graph2.sql",
+  #Takes all trajectories that pass the event-pairs of that graph. Leaves out intermediate events that are not given in the graph.
+  logger::log_info('Extracting actual sequences of these events from database...')
+  RenderedSql <- Trajectories::loadRenderTranslateSql("map_actual_trajs_to_graph2.sql",
                                                    packageName=trajectoryAnalysisArgs$packageName,
                                                    dbms=attr(connection, "dbms"),
                                                    resultsSchema =  trajectoryLocalArgs$resultsSchema,
@@ -84,12 +86,12 @@ alignActualTrajectoriesToGraph <- function(connection,
                                                    limit=limit
   )
   DatabaseConnector::executeSql(connection, RenderedSql)
-  print('... done.')
+  log_info('... done.')
 
   #Read in counts between E1->E2
-  print('Reading actual event trajectories (getting cohort_id-s)...')
+  log_info('Reading cohort-ids of these sequences...')
 
-  RenderedSql <- SqlRender::loadRenderTranslateSql("get_actual_trajs_to_graph_persons.sql",
+  RenderedSql <- Trajectories::loadRenderTranslateSql("get_actual_trajs_to_graph_persons.sql",
                                                    packageName=trajectoryAnalysisArgs$packageName,
                                                    dbms=attr(connection, "dbms"),
                                                    resultsSchema =  trajectoryLocalArgs$resultsSchema,
@@ -101,13 +103,15 @@ alignActualTrajectoriesToGraph <- function(connection,
   E(g)$alignedTrajsCount<-0
   V(g)$alignedTrajsCount<-0
 
+  log_info("Aligning trajectories to graph of '{eventname}'...")
+
   #create chunks - in each chunk, 100 persons
   chunks<-split(res$COHORT_ID, ceiling(seq_along(res$COHORT_ID)/100))
   for(i in 1:length(chunks)) {
     chunk<-chunks[[i]]
-    print(paste0('Aligning ',length(chunk),' trajectories to graph (',i,'/',length(chunks),')...'))
+    log_debug(paste0('Aligning ',length(chunk),' trajectories to graph (',i,'/',length(chunks),')...'))
 
-    RenderedSql <- SqlRender::loadRenderTranslateSql("get_actual_trajs_to_graph2.sql",
+    RenderedSql <- Trajectories::loadRenderTranslateSql("get_actual_trajs_to_graph2.sql",
                                                      packageName=trajectoryAnalysisArgs$packageName,
                                                      dbms=attr(connection, "dbms"),
                                                      resultsSchema =  trajectoryLocalArgs$resultsSchema,
@@ -115,7 +119,7 @@ alignActualTrajectoriesToGraph <- function(connection,
                                                      cohortids=paste(chunk,collapse=",")
     )
     res<-DatabaseConnector::querySql(connection, RenderedSql)
-    #print(paste0('DB query done, executing R...'))
+    #log_info(paste0('DB query done, executing R...'))
 
     for(cohort_id in unique(res$COHORT_ID)) {
       d<-res[res$COHORT_ID==cohort_id,]
@@ -165,18 +169,18 @@ alignActualTrajectoriesToGraph <- function(connection,
               visitednodes<-c(visitednodes,r$E1_CONCEPT_ID)
             }
 
-            if(DEBUG) print(paste0('Added ',r$E1_CONCEPT_ID,':',V(g)[V(g)$concept_id==r$E1_CONCEPT_ID]$name,'->',r$E2_CONCEPT_ID,':',V(g)[V(g)$concept_id==r$E2_CONCEPT_ID]$name,' (cohort ',cohort_id,') to graph (current count of edge: ',E(g)[eid]$alignedTrajsCount,')'))
+            if(DEBUG) log_debug(paste0('Added ',r$E1_CONCEPT_ID,':',V(g)[V(g)$concept_id==r$E1_CONCEPT_ID]$name,'->',r$E2_CONCEPT_ID,':',V(g)[V(g)$concept_id==r$E2_CONCEPT_ID]$name,' (cohort ',cohort_id,') to graph (current count of edge: ',E(g)[eid]$alignedTrajsCount,')'))
           } else {
-            if(DEBUG) print(paste0('Cannot add ',r$E1_CONCEPT_ID,':',V(g)[V(g)$concept_id==r$E1_CONCEPT_ID]$name,'->',r$E2_CONCEPT_ID,':',V(g)[V(g)$concept_id==r$E2_CONCEPT_ID]$name,' (cohort ',cohort_id,') as this edge is not part of the graph'))
+            if(DEBUG) log_debug(paste0('Cannot add ',r$E1_CONCEPT_ID,':',V(g)[V(g)$concept_id==r$E1_CONCEPT_ID]$name,'->',r$E2_CONCEPT_ID,':',V(g)[V(g)$concept_id==r$E2_CONCEPT_ID]$name,' (cohort ',cohort_id,') as this edge is not part of the graph'))
           }
         } else {
-          if(DEBUG) print(paste0('Cannot add ',r$E1_CONCEPT_ID,':',V(g)[V(g)$concept_id==r$E1_CONCEPT_ID]$name,'->',r$E2_CONCEPT_ID,':',V(g)[V(g)$concept_id==r$E2_CONCEPT_ID]$name,' as ',r$E1_CONCEPT_ID,' is not in visitednodes of cohort ',cohort_id))
+          if(DEBUG) log_debug(paste0('Cannot add ',r$E1_CONCEPT_ID,':',V(g)[V(g)$concept_id==r$E1_CONCEPT_ID]$name,'->',r$E2_CONCEPT_ID,':',V(g)[V(g)$concept_id==r$E2_CONCEPT_ID]$name,' as ',r$E1_CONCEPT_ID,' is not in visitednodes of cohort ',cohort_id))
         }
 
       } #for j
       # add +1 to all visited nodes
       if(length(visitednodes)>0) V(g)[V(g)$concept_id %in% visitednodes]$alignedTrajsCount<- V(g)[V(g)$concept_id %in% visitednodes]$alignedTrajsCount+1
-      if(DEBUG) print(paste0('alignedTrajsCount of ',eventname,' after cohort ',cohort_id,': ',V(g)[V(g)$name==eventname]$alignedTrajsCount))
+      if(DEBUG) log_debug(paste0('alignedTrajsCount of {eventname} after cohort ',cohort_id,': ',V(g)[V(g)$name==eventname]$alignedTrajsCount))
     } #for cohort_id
 
   } #for i

@@ -1,6 +1,3 @@
----------------------------------------------------------------------------------------
--- Create a temporary table for debugging
----------------------------------------------------------------------------------------
 IF OBJECT_ID('@resultsSchema.@prefiXgraph_events', 'U') IS NOT NULL
   DROP TABLE @resultsSchema.@prefiXgraph_events;
 

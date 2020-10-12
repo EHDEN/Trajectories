@@ -1,6 +1,6 @@
 library(igraph)
 library(dplyr)
-library(stringi)
+
 #' Creates igraph plots for the analysis results
 #'
 #' Analysis results have to exist in output folder, set by Trajectories::GetOutputFolder(trajectoryLocalArgs,trajectoryAnalysisArgs).
@@ -20,6 +20,8 @@ createIgraph<-function(connection,
                        trajectoryLocalArgs,
                        eventName=NA) {
 
+  library(stringi)
+
   outputFolder<-Trajectories::GetOutputFolder(trajectoryLocalArgs,trajectoryAnalysisArgs)
   eventPairResultsFilename = file.path(outputFolder,'event_pairs.tsv')
 
@@ -34,7 +36,7 @@ createIgraph<-function(connection,
 
 
 
-  # create plot of all event pairs (no filtering)
+  # create a plot of all event pairs (no filtering)
   title=paste0('All significant directional event pairs among ',cohortName,' patients')
   #Truncate the title for file name if it is too long
   truncated_title=ifelse(stri_length(title)<=200,title,paste(substr(title,1,200)))
@@ -64,6 +66,8 @@ createIgraph<-function(connection,
 
   #build graphs for the selected events
   for(EVENTNAME in top5events) {
+
+    log_info(paste0('Building graph for: {EVENTNAME}'))
 
     #check that eventname is present in g
     if(EVENTNAME %in% V(g)$name) {
@@ -130,127 +134,14 @@ createIgraph<-function(connection,
 
 
     } else {
-      print(paste0('Cannot filter trajectories through ',EVENTNAME,' as the graph does not contain any links with that event. Return unfiltered graph.'))
+      log_warn(paste0('Cannot filter trajectories through {EVENTNAME} as the graph does not contain any links with that event. Return unfiltered graph.'))
     }
 
   } #for top5events
 
-print('All graphs saved.')
+  log_info('All graphs saved.')
 
 }
-
-
-#' Title
-#'
-#' @param g
-#'
-#' @return
-#' @export
-#'
-#' @examples
-filterIgraphRemoveLowEffectLinks<-function(g, edge_param_to_sort_by=c('effect','numcohortExact','numcohortCustom')) {
-  print('Filtering graph by removing links with small effect size so that all events are still kept connected.')
-
-  #there is something to filter when there is at least 3 edges in the cluster
-  if(length(E(g))<=2) return(g)
-
-  orig_num_nodes=length(V(g))
-
-  newgraph<-g
-  #sort edges by effect size (increasing)
-
-
-  #The initial graph might be not connected (it may contain several unconnected clusters)
-  #We anayze the graph cluster-by-cluster
-  #Within each cluster (cluster is a part of a graph which is (weakly) connected), we try to remove edges (starting with smallest effect size) so that the cluster is still connected
-  #the following command assigns a cluster for each element
-  clu <- components(g,mode="weak")
-  #if there are more than 1 cluster
-  for(cluster in 1:clu$no) {
-    subgraph<-induced_subgraph(g,vids=V(g)[clu$membership==cluster])
-    if(length(E(g))>3) { #there is something to filter/optimize when there is at least 3 edges in the cluster
-      new.subgraph<-subgraph
-      if(edge_param_to_sort_by=='numcohortExact') {
-        print('Sort by numcohortExact')
-        filtered_edges<-E(subgraph)[order(E(subgraph)$numcohortExact, decreasing=F)]
-      } else if(edge_param_to_sort_by=='numcohortCustom') {
-        print('Sort by numcohortCustom')
-        filtered_edges<-E(subgraph)[order(E(subgraph)$numcohortCustom, decreasing=F)]
-      } else {
-        print('Sort by effect')
-        filtered_edges<-E(subgraph)[order(E(subgraph)$effect, decreasing=F)]
-      }
-      for(e in filtered_edges) {
-        #rint(paste0('Analyzing ',tail_of(subgraph,e)$name,'->',head_of(subgraph,e)$name,' (effect=',round(E(subgraph)[e]$effect,3),', numcohortExact=',round(E(subgraph)[e]$numcohortExact,3),')...'))
-        new.subgraph.candidate<-new.subgraph - edge(paste0(tail_of(subgraph,e)$name,'|',head_of(subgraph,e)$name))
-        if(is_connected(new.subgraph.candidate, mode="weak")) {
-          #print(paste0('Removing ',tail_of(subgraph,e)$name,'->',head_of(subgraph,e)$name,' (effect=',round(E(subgraph)[e]$effect,3),', numcohortExact=',round(E(subgraph)[e]$numcohortExact,3),') as the graph is still weakly connected'))
-          new.subgraph<-new.subgraph.candidate
-          newgraph<-newgraph - edge(paste0(tail_of(subgraph,e)$name,'|',head_of(subgraph,e)$name))
-        }
-        if(length(V(newgraph))<orig_num_nodes) {
-          stop('SOMETHING IS WRONG IN FUNCTION filterIgraphRemoveLowEffectLinks')
-        }
-      }
-    }
-    #plot(newgraph)
-
-
-  }
-
-
-  print(paste0('...done. The resulting graph contains ',length(V(newgraph)),' events and ',length(E(newgraph)),' links between them.'))
-  return(newgraph)
-}
-
-
-
-
-
-
-
-#' Adds numcohortCustom value to graph edges - actual number of people (out of all people who have EVENTNAME) on that edge
-#'
-#' @param g
-#' @param eventname
-#' @param actualTrajs
-#'
-#' @return
-#' @export
-#'
-#' @examples
-addNumcohortCustom <- function(g, eventname, actualTrajs) {
-
-
-
-  print(paste0('Aligning actual event trajectories (of people who have actually had <',eventname,'>) to the graph (',length(E(g)),' edges in total)...'))
-
-
-  #concept_id of eventid
-  concept_id<-V(g)[eventname]$concept_id
-
-
-  #find cohorts that go through eventname (these are the cohorts that we use for each pair)
-  cohorts<-unique(actualTrajs[actualTrajs$EVENT1_CONCEPT_ID==concept_id | actualTrajs$EVENT2_CONCEPT_ID==concept_id,'COHORT_ID'])[]
-
-      ##remove all other cohorts from actualTrajs
-  tt<-actualTrajs[actualTrajs$COHORT_ID[] %in% cohorts,]
-
-
-  for(i in 1:length(E(g))) {
-    e<-ends(g,E(g)[i],names=F)
-    all_cohorts_in_this_pair<- tt[    tt$EVENT1_CONCEPT_ID==V(g)$concept_id[e[1,1]] & tt$EVENT2_CONCEPT_ID==V(g)$concept_id[e[1,2]] ,'COHORT_ID']
-    num_actual_cohorts<-length(all_cohorts_in_this_pair)
-    E(g)[i]$numcohortCustom=num_actual_cohorts
-  }
-  print('...done. Actual counts saved to numcohortCustom element of the graph edges.')
-
-
-  return(g)
-}
-
-
-
 
 #' Creates a subgraph of edges that go through EVETNAME. Starts building it from EVENTNAME, adds most probable edge. Then takes both events together, adds most probable edge out from these two etc. Limits to limitOfNodes nodes.
 #'
@@ -264,12 +155,12 @@ addNumcohortCustom <- function(g, eventname, actualTrajs) {
 #' @examples
 filterIgraphCrossingEvent <-function(g, eventname='clopidogrel',limitOfNodes=F, edge_param_to_sort_by=c('effect','numcohortExact','numcohortCustom','effectCount','prob')) {
 
-  print(paste0('Filtering trajectories from the graph that occur before or after ',eventname,' (sorted by ',edge_param_to_sort_by,')...'))
-  if(limitOfNodes!=F) {print(paste0('  (also limiting to ',limitOfNodes,' nodes)'))}
+  logger::log_info(paste0("Filtering trajectories from the graph that occur before or after {eventname} (sorted by ",edge_param_to_sort_by,')...'))
+  if(limitOfNodes!=F) {log_info(paste0('  (also limiting to ',limitOfNodes,' nodes)'))}
 
   #check that eventname is present in g
   if(!eventname %in% V(g)$name) {
-    print(paste0('Cannot filter trajectories through ',eventname,' as the graph does not contain any links with that event. Return unfiltered graph.'))
+    logger::log_warn(paste0('Cannot filter trajectories through {eventname} as the graph does not contain any links with that event. Return unfiltered graph.'))
     return(g)
   }
 
@@ -289,13 +180,15 @@ filterIgraphCrossingEvent <-function(g, eventname='clopidogrel',limitOfNodes=F, 
                     stringsAsFactors=FALSE)
   edge.ids<-c()
   i=1
+  #logger::log_level(logger:::DEBUG)
+  nodelist=data.frame()
   while(i<=nrow(stack) & i<limitOfNodes) {
-    print(paste0('Stack size: ',i,'. Total probability of last element: ',round(100*tail(stack,n=1)$totalprob),'%'))
+    logger::log_debug(paste0('Stack size: ',i,'. Total probability of last element: ',round(100*tail(stack,n=1)$totalprob),'%'))
     #print(stack)
     #print(paste('i=',i))
     #if(i==30) stop()
     #for the analyzable node, find its incoming and/or outgoing edges
-    nodelist=data.frame()
+
     if (i==1 | stack[i,'direction']=='ancestor') {
       #find incoming edges for node
       x<-incident_edges(g, v = V(g)[stack[stack$direction %in% c('both','ancestor'),'event']], mode = c("in"))
@@ -359,9 +252,10 @@ filterIgraphCrossingEvent <-function(g, eventname='clopidogrel',limitOfNodes=F, 
           n<-nodelist[j,]
           #add edge (even if the node already exists)
           if(!n$edgeid %in% edge.ids) edge.ids<-c(edge.ids,n$edgeid)
-          #add node to the stack if it does not exist in the stack and break the loop
+          #add node to the stack if it does not exist in the stack, remove from nodelist and break the loop
           if(!n$event %in% stack$event) {
             stack<-rbind(stack,n)
+            nodelist<-nodelist[-j,]
             break;
           }
         }
@@ -383,14 +277,14 @@ filterIgraphCrossingEvent <-function(g, eventname='clopidogrel',limitOfNodes=F, 
   #create a new graph of selected edges
   g2 <- subgraph.edges(g, edge.ids[edge.ids>0], delete.vertices = T)
 
-  print(paste0('...done. The resulting graph contains ',length(V(g2)),' events and ',length(E(g2)),' links between them.'))
+  log_info(paste0('...done. The resulting graph contains ',length(V(g2)),' events and ',length(E(g2)),' links between them.'))
 
   #the length of longest path is the diameter of the graph
   f<-farthest_vertices(g2, directed = TRUE, weights=NA)
   if(limitOfNodes==F) {
-    print(paste0('The longest trajectory has a length ',f$distance,' (between ',f$vertices[1]$name,' and ',f$vertices[2]$name,'):'))
+    logger::log_info(paste0('The longest trajectory has a length ',f$distance," (between '{f$vertices[1]$name}' and '{f$vertices[2]$name}')"))
   } else {
-    print(paste0('The longest trajectory (within the limit of ',limitOfNodes,' edges) has a length ',f$distance,' (between ',f$vertices[1]$name,' and ',f$vertices[2]$name,'):'))
+    logger::log_info(paste0('The longest trajectory (within the limit of ',limitOfNodes,' edges) has a length ',f$distance," (between '{f$vertices[1]$name}' and '{f$vertices[2]$name}')"))
   }
   #print(paste(shortest_paths(g2,from=V(g2)[f$vertices[1]],to=V(g2)[f$vertices[2]])$vpath))
 
@@ -413,4 +307,53 @@ getTop5Events<-function(g) {
   conceptorder<-conceptorder[seq(1,min(length(conceptorder),5))]
   return(V(g)[conceptorder])
 
+}
+
+
+#' Title
+#'
+#' @param connection
+#' @param trajectoryAnalysisArgs
+#' @param trajectoryLocalArgs
+#'
+#' @return
+#' @export
+#'
+#' @examples
+createFilteredFullgraphs<-function(connection,
+                                   trajectoryAnalysisArgs,
+                                   trajectoryLocalArgs) {
+  library(stringi)
+
+  logger:log_info('Creating a plot of full graph (built from all event pairs)...')
+
+  outputFolder<-Trajectories::GetOutputFolder(trajectoryLocalArgs,trajectoryAnalysisArgs)
+  eventPairResultsFilename = file.path(outputFolder,'event_pairs.tsv')
+
+  # create igraph object from event pairs
+  g<-Trajectories::createGraph(eventPairResultsFilename)
+
+  cohortName=trajectoryAnalysisArgs$cohortName
+
+
+  # create a plot of all event pairs (no filtering)
+  title=paste0('All significant directional event pairs among ',cohortName,' patients')
+  #Truncate the title for file name if it is too long
+  truncated_title=ifelse(stri_length(title)<=200,title,paste(substr(title,1,200)))
+  Trajectories::plotIgraph(g,layout=layout_with_fr,linknumbers=round(100*E(g)$prob),outputPdfFullpath=file.path(outputFolder,paste0(make.names(truncated_title),'.pdf')),title=paste0(title,"\n",format(Sys.time(), '%d %B %Y %H:%M')))
+
+  # Remove low-probability event pairs (keep 20, 50, 100 event pairs with highest probability)
+  s=c(20,50,100)
+
+  graphcounter=1
+  for(limitOfLinks in s) {
+    logger:log_info('Creating a plot of the same graph, but filtered to {limitOfLinks} high-probability pairs only...')
+    graphcounter=graphcounter+1
+    #limitOfLinks=50
+    title=paste0(limitOfLinks,' high-probability event pairs among ',cohortName,' patients')
+    h<-Trajectories::filterIgraphRemoveLowEffectLinksAndOrphanNodes(g, limitOfLinks=limitOfLinks,edge_param_to_sort_by='prob')
+    #Truncate the title for file name if it is too long
+    truncated_title=ifelse(stri_length(title)<=200,title,paste(substr(title,1,200)))
+    Trajectories::plotIgraph(h,layout=layout_with_fr,linknumbers=round(100*E(h)$prob),outputPdfFullpath=file.path(outputFolder,paste0(make.names(truncated_title),'.pdf')),title=paste0(title,"\n",format(Sys.time(), '%d %B %Y %H:%M')))
+  }
 }

@@ -14,7 +14,7 @@ dbCleanup<-function(connection,
                     trajectoryAnalysisArgs,
                     trajectoryLocalArgs) {
 
-  print(paste0("Cleanup: dropping all analysis tables with prefix '",trajectoryLocalArgs$prefixForResultTableNames,"' from database..."))
+  log_info(paste0("Cleanup: dropping all analysis tables with prefix '",trajectoryLocalArgs$prefixForResultTableNames,"' from database..."))
 
   #Set SQL role of the database session
   Trajectories::setRole(connection,trajectoryLocalArgs$sqlRole)
@@ -26,5 +26,5 @@ dbCleanup<-function(connection,
                                                    prefiX = trajectoryLocalArgs$prefixForResultTableNames
   )
   DatabaseConnector::executeSql(connection, RenderedSql)
-  print('...done.')
+  log_info('...done.')
 }

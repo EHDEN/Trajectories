@@ -19,7 +19,7 @@ setRole <- function(connection,
   } else {
     RenderedSql=SqlRender::translate(sql =ifelse(connection@dbms=="sql server",statement_sqlserver,statement_other) , targetDialect=attr(connection, "dbms"))
     DatabaseConnector::executeSql(connection, RenderedSql)
-    print(paste0('Database role set to ',sqlRole))
+    log_info(paste0('Database role set to ',sqlRole))
   }
   invisible() #return NULL, but do not print it to console
 }

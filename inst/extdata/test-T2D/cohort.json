@@ -1,24 +1,23 @@
 {
   "ConceptSets": [
     {
-      "id": 3,
-      "name": "[C2Q]atopicdermatitis",
+      "id": 0,
+      "name": "Test-T2D",
       "expression": {
         "items": [
           {
             "concept": {
               "CONCEPT_CLASS_ID": "Clinical Finding",
-              "CONCEPT_CODE": "24079001",
-              "CONCEPT_ID": 133834,
-              "CONCEPT_NAME": "Atopic dermatitis",
+              "CONCEPT_CODE": "427089005",
+              "CONCEPT_ID": 4144583,
+              "CONCEPT_NAME": "Diabetes mellitus due to cystic fibrosis",
               "DOMAIN_ID": "Condition",
               "INVALID_REASON": "V",
               "INVALID_REASON_CAPTION": "Valid",
               "STANDARD_CONCEPT": "S",
               "STANDARD_CONCEPT_CAPTION": "Standard",
               "VOCABULARY_ID": "SNOMED"
-            },
-            "includeDescendants": true
+            }
           }
         ]
       }
@@ -28,13 +27,13 @@
     "CriteriaList": [
       {
         "ConditionOccurrence": {
-          "CodesetId": 3
+          "CodesetId": 0
         }
       }
     ],
     "ObservationWindow": {
-      "PriorDays": 180,
-      "PostDays": 0
+      "PriorDays": 30,
+      "PostDays": 30
     },
     "PrimaryCriteriaLimit": {
       "Type": "First"
@@ -47,17 +46,10 @@
     "Type": "First"
   },
   "InclusionRules": [],
-  "EndStrategy": {
-    "DateOffset": {
-      "DateField": "StartDate",
-      "Offset": 365
-    }
-  },
   "CensoringCriteria": [],
   "CollapseSettings": {
     "CollapseType": "ERA",
     "EraPad": 0
   },
-  "CensorWindow": {},
-  "cdmVersionRange": ">=5.0.0"
+  "CensorWindow": {}
 }

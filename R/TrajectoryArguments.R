@@ -132,7 +132,7 @@ is.TrajectoryAnalysisArgs <- function(x) {
 #'
 #' @examples
 TrajectoryAnalysisArgsToJson<-function(trajectoryAnalysisArgs, filepath) {
-  print(paste0("Saving 'trajectoryAnalysisArgs' data in JSON format to ",filepath,"..."))
+  log_info(paste0("Saving 'trajectoryAnalysisArgs' data in JSON format to ",filepath,"..."))
 
   if(!Trajectories::is.TrajectoryAnalysisArgs(trajectoryAnalysisArgs)) stop("Something is not right. 'trajectoryAnalysisArgs' is not an object from class 'TrajectoryAnalysisArgs'")
 
@@ -143,7 +143,7 @@ TrajectoryAnalysisArgsToJson<-function(trajectoryAnalysisArgs, filepath) {
   writeLines(json, fileConn)
   close(fileConn)
 
-  print("...done.")
+  log_info("...done.")
 }
 
 #' Reads trajectoryAnalysisArgs object from JSON file
@@ -157,7 +157,7 @@ TrajectoryAnalysisArgsToJson<-function(trajectoryAnalysisArgs, filepath) {
 TrajectoryAnalysisArgsFromJson<-function(filepath) {
   library(jsonlite)
 
-  print(paste0("Loading 'trajectoryAnalysisArgs' object from JSON file ",filepath,"..."))
+  log_info(paste0("Loading 'trajectoryAnalysisArgs' object from JSON file ",filepath,"..."))
   r.obj<-fromJSON(filepath)
   trajectoryAnalysisArgs<-Trajectories::createTrajectoryAnalysisArgs(minimumDaysBetweenEvents=r.obj$minimumDaysBetweenEvents,
                                maximumDaysBetweenEvents=r.obj$maximumDaysBetweenEvents,
@@ -173,7 +173,7 @@ TrajectoryAnalysisArgsFromJson<-function(filepath) {
                                packageName=r.obj$packageName,
                                cohortName=r.obj$cohortName,
                                description=r.obj$description)
-  print('...done.')
+  log_info('...done.')
   return(trajectoryAnalysisArgs)
 }
 
@@ -215,7 +215,7 @@ GetOutputFolder<-function(trajectoryLocalArgs,trajectoryAnalysisArgs,createIfMis
   if (!dir.exists(outputFolder)){
     if(createIfMissing==F) stop(paste0("ERROR in GetOutputFolder(): There is no '",subFolder1,"' subfolder in '",outputFolderPrev,"' folder. Cannot create the folder either as parameter 'createIfMissing=F'."))
     dir.create(outputFolder)
-    print(paste0('Created folder for database results: ',outputFolder))
+    log_info(paste0('Created folder for database results: ',outputFolder))
   } else {
     #print(paste0('Folder for database results already exists: ',outputFolder))
   }
@@ -225,12 +225,12 @@ GetOutputFolder<-function(trajectoryLocalArgs,trajectoryAnalysisArgs,createIfMis
   if (!dir.exists(outputFolder)){
     if(createIfMissing==F) stop(paste0("ERROR in GetOutputFolder(): There is no '",subFolder1,"' subfolder in '",outputFolderPrev,"' folder. Cannot create the folder either as parameter 'createIfMissing=F'."))
     dir.create(outputFolder)
-    print(paste0('Created folder for analysis results: ',outputFolder))
+    log_info(paste0('Created folder for analysis results: ',outputFolder))
   } else {
     #print(paste0('Folder for analysis results already exists: ',outputFolder))
   }
 
-  if(createIfMissing==T) print(paste0("Output folder set to ",outputFolder))
+  if(createIfMissing==T) log_info(paste0("Output folder set to ",outputFolder))
   return(outputFolder)
 
 }

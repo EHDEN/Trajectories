@@ -10,7 +10,7 @@ library(dplyr)
 #' @examples
 createGraph<-function(eventPairResultsFilename) {
 
-  print(paste0('Creating igraph object based on event pairs data in the following file: ',eventPairResultsFilename,'...'))
+  log_info(paste0('Creating igraph object based on event pairs data in the following file: ',eventPairResultsFilename,'...'))
 
   # Links are coming from eventPairResultsFilename (event1->event2 pairs)
   e = read.csv2(file = eventPairResultsFilename, sep = '\t', header = TRUE, as.is=T)
@@ -95,7 +95,7 @@ createGraph<-function(eventPairResultsFilename) {
     }
   }
 
-  print(paste('Full graph contains',gsize(g),'links between',gorder(g),'events'))
+  log_info(paste('Full graph contains',gsize(g),'links between',gorder(g),'events'))
 
   #Normalized numcohortExact
   E(g)$normalizedNumcohortExact = (E(g)$numcohortExact-min(E(g)$numcohortExact))/(max(E(g)$numcohortExact)-min(E(g)$numcohortExact))

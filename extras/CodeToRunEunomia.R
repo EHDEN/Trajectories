@@ -35,24 +35,27 @@ trajectoryLocalArgs <- Trajectories::createTrajectoryLocalArgs(oracleTempSchema 
 
 
 trajectoryAnalysisArgs<-Trajectories::TrajectoryAnalysisArgsFromInputFolder(trajectoryLocalArgs)
-
+trajectoryAnalysisArgs$minPatientsPerEventPair=0.05
 
 connection <- DatabaseConnector::connect(connectionDetails)
 on.exit(DatabaseConnector::disconnect(connection)) #Close db connection on error or exit
 
-
-
+#test
+#querySql(connection, "SELECT COUNT(*) FROM person;")
 
 #Create output folder for this analysis
 outputFolder<-Trajectories::GetOutputFolder(trajectoryLocalArgs,trajectoryAnalysisArgs,createIfMissing=T)
+
+# Set up logger
+Trajectories::InitLogger(logfile = file.path(outputFolder,'log.txt'), threshold = logger:::INFO)
 
 # Store used analysis arguments to JSON file
 Trajectories::TrajectoryAnalysisArgsToJson(trajectoryAnalysisArgs, file.path(outputFolder,"trajectoryAnalysisArgs_used.json"))
 
 # Create new cohort table
-#Trajectories::createCohortTable(connection=connection,
-#                                trajectoryAnalysisArgs=trajectoryAnalysisArgs,
-#                                trajectoryLocalArgs=trajectoryLocalArgs)
+Trajectories::createCohortTable(connection=connection,
+                                trajectoryAnalysisArgs=trajectoryAnalysisArgs,
+                                trajectoryLocalArgs=trajectoryLocalArgs)
 
 # Fill cohort table with example cohort data
 Trajectories::fillCohortTable(connection=connection,

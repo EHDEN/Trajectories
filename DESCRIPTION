@@ -19,10 +19,11 @@ Depends:
     DatabaseConnector (>= 2.2.0),
     dplyr (>= 0.8.5),
     SqlRender (>= 1.5.2),
-    igraph (>= 1.2.5)
-Imports:
-    jsonlite (>= 1.7.1),
+    igraph (>= 1.2.5),
+    logger (>= 0.1),
     stringi (>= 1.4.5)
+Imports:
+    jsonlite (>= 1.7.1)
 Encoding: UTF-8
 RoxygenNote: 7.1.1
 Suggests: 

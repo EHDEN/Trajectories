@@ -16,7 +16,7 @@ dropCohortTable<-function(connection,
                           trajectoryAnalysisArgs,
                           trajectoryLocalArgs) {
 
-  print(paste0('Dropping cohort table <',trajectoryLocalArgs$cohortTable,'> from <',trajectoryLocalArgs$cohortTableSchema,'> schema...'))
+  log_info(paste0('Dropping cohort table <',trajectoryLocalArgs$cohortTable,'> from <',trajectoryLocalArgs$cohortTableSchema,'> schema...'))
 
   #Set SQL role of the database session
   Trajectories::setRole(connection,trajectoryLocalArgs$sqlRole)
@@ -29,5 +29,5 @@ dropCohortTable<-function(connection,
   )
   DatabaseConnector::executeSql(connection, RenderedSql)
 
-  print('...done.')
+  log_info('...done.')
 }

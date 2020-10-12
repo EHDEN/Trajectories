@@ -1,0 +1,47 @@
+context("Filling in cohor table")
+
+test_that("Filling in cohort table with fulldb buit-in study", {
+
+  eunomia <-setUpEunomia() #also fills in trajectoryLocalArgs
+  connection<-eunomia$connection
+  trajectoryLocalArgs<-eunomia$trajectoryLocalArgs
+  clearConditionsTable(connection)
+  limitToNumPatients(connection,n=100) #in analysis, use 100 patients
+  limitToConcepts(connection)
+  setObservationPeriodForAll(connection,startdate='2010-01-01',enddate='2012-12-31')
+  person_ids<-addConditionEventPair(connection,event1_concept_id=317009,event2_concept_id=255848,n=20) #The only data is 20x asthma->pneumonia pair
+
+
+  trajectoryAnalysisArgs <- Trajectories::createTrajectoryAnalysisArgs(minimumDaysBetweenEvents = 1,
+                                                                       maximumDaysBetweenEvents = 365*120,
+                                                                       minPatientsPerEventPair = 10,
+                                                                       addConditions=T,
+                                                                       addObservations=F,
+                                                                       addProcedures=F,
+                                                                       addDrugExposures=F, # NB! DO NOT USE BOTH addDrugEras=T and addDrugExposures=T (not both) as it leads to analysis duplication and breaks some code... (same "drug" event may occur several times which is not allowed)
+                                                                       addDrugEras=F, # NB! DO NOT USE BOTH addDrugEras=T and addDrugExposures=T (not both) as it leads to analysis duplication and breaks some code... (same "drug" event may occur several times which is not allowed)
+                                                                       addBirths=F,
+                                                                       addDeaths=F,
+                                                                       daysBeforeIndexDate=Inf,
+                                                                       packageName='Trajectories',
+                                                                       cohortName="test")
+
+
+  #Create output folder for this analysis
+  outputFolder<-Trajectories::GetOutputFolder(trajectoryLocalArgs,trajectoryAnalysisArgs,createIfMissing=T)
+
+  Trajectories::InitLogger(logfile = file.path(outputFolder,'log.txt'), threshold = logger:::WARN)
+
+  # Fill cohort table with example cohort data
+  Trajectories::fillCohortTable(connection=connection,
+                                trajectoryAnalysisArgs,
+                                trajectoryLocalArgs)
+
+
+  #First check: is cohort table filled in correctly (should be 100 rows)
+  res<-querySql(connection, paste0('SELECT COUNT(*) as TOTAL FROM cohort where cohort_definition_id=',trajectoryLocalArgs$cohortId,';'))
+  expect_equal(res$TOTAL, 100)
+
+
+
+})

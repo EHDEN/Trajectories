@@ -17,7 +17,7 @@ fillCohortTable<-function(connection,
                           trajectoryLocalArgs) {
 
     f<-paste0(trajectoryLocalArgs$inputFolder,'/cohort.sql')
-    print(paste0('Filling cohort table <',trajectoryLocalArgs$cohortTable,'> in <',trajectoryLocalArgs$cohortTableSchema,'> schema based on cohort definition in <',f,'>...'))
+    log_info(paste0('Filling cohort table <',trajectoryLocalArgs$cohortTable,'> in <',trajectoryLocalArgs$cohortTableSchema,'> schema based on cohort definition in <',f,'>...'))
 
     if (!dir.exists(trajectoryLocalArgs$inputFolder)) stop(paste0("ERROR in fillCohortTable(): trajectoryLocalArgs$inputFolder '",inputFolder,"' does not exist."))
     if (!file.exists(f)) stop(paste0("ERROR in fillCohortTable(): there is no 'cohort.sql' file in inputFolder '",trajectoryLocalArgs$inputFolder,"'."))
@@ -35,7 +35,8 @@ fillCohortTable<-function(connection,
                              vocabulary_database_schema = trajectoryLocalArgs$vocabDatabaseSchema,
                              target_database_schema = trajectoryLocalArgs$cohortTableSchema,
                              target_cohort_table = trajectoryLocalArgs$cohortTable,
-                             target_cohort_id = trajectoryLocalArgs$cohortId)
+                             target_cohort_id = trajectoryLocalArgs$cohortId,
+                             warnOnMissingParameters=F)
 
     #translate into right dialect
     sql <- SqlRender::translate(sql = sql,
@@ -44,10 +45,11 @@ fillCohortTable<-function(connection,
     #execute translated SQL
     DatabaseConnector::executeSql(connection, sql)
 
-    print('...done filling cohort table.')
+
+    log_info('...done filling cohort table.')
 
     #check how many records are there in the cohort table
     count<-getCohortSize(connection, trajectoryLocalArgs)
-    print(paste0('There are ',count,' rows in this cohort (id=',trajectoryLocalArgs$cohortId,') in the cohort table.'))
+    log_info(paste0('There are ',count,' rows in this cohort (id=',trajectoryLocalArgs$cohortId,') in the cohort table.'))
 
 }
