@@ -12,5 +12,6 @@
   "daysBeforeIndexDate": ["Inf"],
   "packageName": ["Trajectories"],
   "cohortName": ["Ischemic heart disease"],
-  "description": ["Ischemic heart disease study, corresponds to ICD10 codes I20, I21, I22, I24, and I25."]
+  "description": ["Ischemic heart disease study, corresponds to ICD10 codes I20, I21, I22, I24, and I25."],
+  "eventIdsForGraphs": [1539403, 1510813, 1545958, 1307046]
 }

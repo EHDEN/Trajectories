@@ -16,6 +16,7 @@ runEventPairAnalysis<-function(connection,
                                trajectoryLocalArgs) {
 
   outputFolder<-Trajectories::GetOutputFolder(trajectoryLocalArgs,trajectoryAnalysisArgs)
+  d1d2ModelResultsFilename = file.path(outputFolder,'event_pairs_tested.tsv')
   eventPairResultsFilename = file.path(outputFolder,'event_pairs.tsv')
   eventPairResultsStatsFilename = file.path(outputFolder,'event_pairs_stats.txt')
 
@@ -271,6 +272,17 @@ runEventPairAnalysis<-function(connection,
   logger::log_info('Some of them may have very small effect. Therefore, we extract significant event pairs that have effect size > 1.1')
 
 
+  RenderedSql <- Trajectories::loadRenderTranslateSql('d1d2_model_reader.sql',
+                                                      packageName=trajectoryAnalysisArgs$packageName,
+                                                      dbms=connection@dbms,
+                                                      resultsSchema =   trajectoryLocalArgs$resultsSchema,
+                                                      prefix =  trajectoryLocalArgs$prefixForResultTableNames
+  )
+  d1d2_data = DatabaseConnector::querySql(connection, RenderedSql)
+  # Write result table into file
+  write.table(d1d2_data, file=d1d2ModelResultsFilename, quote=FALSE, sep='\t', col.names = NA)
+
+
   RenderedSql <- Trajectories::loadRenderTranslateSql("11ResultsReader.sql",
                                                    packageName=trajectoryAnalysisArgs$packageName,
                                                    dbms=connection@dbms,
@@ -284,6 +296,7 @@ runEventPairAnalysis<-function(connection,
   # Write result table into file
   write.table(selected_data, file=eventPairResultsFilename, quote=FALSE, sep='\t', col.names = NA)
 
+  logger::log_info(paste0(nrow(d1d2_data),' event pairs were tested. All test results are written to {d1d2ModelResultsFilename}.'))
   logger::log_info(paste0('Out of ',significant_pairs_count,' significant event pairs, ',significant_directional_pairs_count,' have significant direction. Out of these, ',nrow(selected_data),' have effect size > 1.1.'))
   logger::log_info(paste0('These ',nrow(selected_data),' event pairs were written to ',eventPairResultsFilename))
 
@@ -295,7 +308,7 @@ runEventPairAnalysis<-function(connection,
         paste(''),
         paste('Total number of event pairs analyzed:',nrow(dpairs)),
         paste('Bonferroni corrected p-value threshold for association test:',cutoff_pval),
-        paste('Bonferroni corrected p-value threshold for directionality test:',cutoff_pval),
+        paste('Bonferroni corrected p-value threshold for directionality test:',cutoff_pval_direction),
         paste('Number of significant event pairs:',significant_pairs_count),
         paste('Number of significant event pairs with significant direction:',significant_directional_pairs_count),
         paste('Number of significant event pairs with significant direction having effect size > 1.1:',nrow(selected_data)),

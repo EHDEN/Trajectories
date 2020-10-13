@@ -15,25 +15,27 @@
 #' @param packageName Do not use/edit, this is required by SqlRender::loadRenderTranslateSql
 #' @param cohortName Reader-friendly short description of the cohort. Used in graph titles and file names (can contain spaces)
 #' @param description This is a placeholder for any description of the study/cohort/analysis. For instance, it would be wise to descibe here what kind of cohort is that and what the analysis does.
+#' @param eventIdsForGraph List of exact concept ID-s of the events that are used to align actual trajectories in the end of analysis. Can be left not defined (NA)
 #'
 #' @return TrajectoryAnalysisArgs object
 #' @export
 #'
 #' @examples
-createTrajectoryAnalysisArgs <- function(minimumDaysBetweenEvents,
-                                         maximumDaysBetweenEvents,
-                                         minPatientsPerEventPair,
-                                         addConditions,
-                                         addObservations,
-                                         addProcedures,
-                                         addDrugExposures,
-                                         addDrugEras,
-                                         addBirths,
-                                         addDeaths,
-                                         daysBeforeIndexDate,
+createTrajectoryAnalysisArgs <- function(minimumDaysBetweenEvents=1,
+                                         maximumDaysBetweenEvents=3650,
+                                         minPatientsPerEventPair=10,
+                                         addConditions=T,
+                                         addObservations=F,
+                                         addProcedures=F,
+                                         addDrugExposures=F,
+                                         addDrugEras=F,
+                                         addBirths=F,
+                                         addDeaths=T,
+                                         daysBeforeIndexDate=Inf,
                                          packageName = 'Trajectories',
-                                         cohortName,
-                                         description = '') {
+                                         cohortName = 'My sample cohort',
+                                         description = '',
+                                         eventIdsForGraphs=NA) {
 
 
   if(addDrugExposures==T & addDrugEras==T) stop("Error in createTrajectoryAnalysisArgs(): parameters values for 'addDrugExposures' and 'addDrugEras' are TRUE but both of them cannot be TRUE at the same time (choose one of them or set both to FALSE)")
@@ -41,7 +43,7 @@ createTrajectoryAnalysisArgs <- function(minimumDaysBetweenEvents,
   value <- list(minimumDaysBetweenEvents=minimumDaysBetweenEvents,maximumDaysBetweenEvents=maximumDaysBetweenEvents, minPatientsPerEventPair=minPatientsPerEventPair,
                 addConditions=addConditions,addObservations=addObservations,addProcedures=addProcedures,addDrugExposures=addDrugExposures,
                 addDrugEras=addDrugEras,addBirths=addBirths,addDeaths=addDeaths,
-                daysBeforeIndexDate=daysBeforeIndexDate,packageName=packageName,cohortName=cohortName,description=description)
+                daysBeforeIndexDate=daysBeforeIndexDate,packageName=packageName,cohortName=cohortName,description=description,eventIdsForGraphs=eventIdsForGraphs)
   class(value) <- 'TrajectoryAnalysisArgs'
   return(value)
 
@@ -132,7 +134,7 @@ is.TrajectoryAnalysisArgs <- function(x) {
 #'
 #' @examples
 TrajectoryAnalysisArgsToJson<-function(trajectoryAnalysisArgs, filepath) {
-  log_info(paste0("Saving 'trajectoryAnalysisArgs' data in JSON format to ",filepath,"..."))
+  logger::log_info(paste0("Saving 'trajectoryAnalysisArgs' data in JSON format to ",filepath,"..."))
 
   if(!Trajectories::is.TrajectoryAnalysisArgs(trajectoryAnalysisArgs)) stop("Something is not right. 'trajectoryAnalysisArgs' is not an object from class 'TrajectoryAnalysisArgs'")
 
@@ -157,22 +159,53 @@ TrajectoryAnalysisArgsToJson<-function(trajectoryAnalysisArgs, filepath) {
 TrajectoryAnalysisArgsFromJson<-function(filepath) {
   library(jsonlite)
 
-  log_info(paste0("Loading 'trajectoryAnalysisArgs' object from JSON file ",filepath,"..."))
+  logger::log_info(paste0("Loading 'trajectoryAnalysisArgs' object from JSON file ",filepath,"..."))
   r.obj<-fromJSON(filepath)
-  trajectoryAnalysisArgs<-Trajectories::createTrajectoryAnalysisArgs(minimumDaysBetweenEvents=r.obj$minimumDaysBetweenEvents,
-                               maximumDaysBetweenEvents=r.obj$maximumDaysBetweenEvents,
-                               minPatientsPerEventPair=r.obj$minPatientsPerEventPair,
-                               addConditions=r.obj$addConditions,
-                               addObservations=r.obj$addObservations,
-                               addProcedures=r.obj$addProcedures,
-                               addDrugExposures=r.obj$addDrugExposures,
-                               addDrugEras=r.obj$addDrugEras,
-                               addBirths=r.obj$addBirths,
-                               addDeaths=r.obj$addDeaths,
-                               daysBeforeIndexDate=r.obj$daysBeforeIndexDate,
-                               packageName=r.obj$packageName,
-                               cohortName=r.obj$cohortName,
-                               description=r.obj$description)
+
+  #defaulting parameters if missing from JSON
+  defaults=list(
+    minimumDaysBetweenEvents=1,
+    maximumDaysBetweenEvents=3650,
+    minPatientsPerEventPair=10,
+    addConditions=T,
+    addObservations=F,
+    addProcedures=F,
+    addDrugExposures=F,
+    addDrugEras=F,
+    addBirths=F,
+    addDeaths=T,
+    daysBeforeIndexDate=Inf,
+    packageName = 'Trajectories',
+    cohortName = 'My sample cohort',
+    description = '',
+    eventIdsForGraphs=NA
+  )
+
+  vals_for_obj=list()
+  for(param in names(defaults)) {
+    if(!param %in% names(r.obj)) {
+      logger::log_warn("'{param}' parameter not given in JSON. Defaulting its value to {defaults[param]}")
+      vals_for_obj[[param]]=defaults[[param]]
+    } else {
+      vals_for_obj[[param]]=r.obj[[param]]
+    }
+  }
+
+  trajectoryAnalysisArgs<-Trajectories::createTrajectoryAnalysisArgs(minimumDaysBetweenEvents=vals_for_obj[['minimumDaysBetweenEvents']],
+                               maximumDaysBetweenEvents=vals_for_obj[['maximumDaysBetweenEvents']],
+                               minPatientsPerEventPair=vals_for_obj[['minPatientsPerEventPair']],
+                               addConditions=vals_for_obj[['addConditions']],
+                               addObservations=vals_for_obj[['addObservations']],
+                               addProcedures=vals_for_obj[['addProcedures']],
+                               addDrugExposures=vals_for_obj[['addDrugExposures']],
+                               addDrugEras=vals_for_obj[['addDrugEras']],
+                               addBirths=vals_for_obj[['addBirths']],
+                               addDeaths=vals_for_obj[['addDeaths']],
+                               daysBeforeIndexDate=vals_for_obj[['daysBeforeIndexDate']],
+                               packageName=vals_for_obj[['packageName']],
+                               cohortName=vals_for_obj[['cohortName']],
+                               description=vals_for_obj[['description']],
+                               eventIdsForGraphs=vals_for_obj[['eventIdsForGraphs']])
   log_info('...done.')
   return(trajectoryAnalysisArgs)
 }

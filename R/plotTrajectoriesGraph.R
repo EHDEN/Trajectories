@@ -1,18 +1,19 @@
-#' Title
+#' Plot TrajectoriesGraph object to PDF file
 #'
-#' @param g igraph object
-#' @param layout layout of igraph object
+#' @param g TrajectoriesGraph object
+#' @param layout layout of an igraph object
 #' @param outputPdfFullpath Full path to output PDF file
+#' @param nodesizes Which values to use for node sizes. By default, uses count values of the nodes from TrajectoriesGraph object
+#' @param linknumbers Which numbers to show on edges. By default, uses numcohortExact values of the edges from TrajectoriesGraph object
+#' @param title Title of the graph
 #'
 #' @return
 #' @export
 #'
 #' @examples
-plotIgraph<-function(g,layout=layout_nicely(g),outputPdfFullpath=F,nodesizes=V(g)$count,linknumbers=E(g)$numcohortExact, title="") {
+plotTrajectoriesGraph<-function(g,layout=layout_nicely(g),outputPdfFullpath=F,nodesizes=V(g)$count,linknumbers=E(g)$numcohortExact, title="") {
 
-
-
-  #layout<-layout_as_tree(g, flip.y=T)
+  if(!'TrajectoriesGraph' %in% class(g)) stop('Error in plotTrajectoriesGraph(): object class of g must be TrajectoriesGraph.')
 
 
   if(outputPdfFullpath!=F) {
@@ -23,7 +24,7 @@ plotIgraph<-function(g,layout=layout_nicely(g),outputPdfFullpath=F,nodesizes=V(g
   }
 
   if(length(E(g))==0) {
-    log_info('There are 0 edges on that graph. Nothing to plot.')
+    logger::log_warn('There are 0 edges on that graph. Nothing to plot.')
     return()
   }
 
@@ -87,7 +88,7 @@ plotIgraph<-function(g,layout=layout_nicely(g),outputPdfFullpath=F,nodesizes=V(g
 
   if(outputPdfFullpath!=F) {
     dev.off()
-    log_info(paste0('PDF graph was written to ',outputPdfFullpath))
+    logger::log_info(paste0('PDF graph was written to ',outputPdfFullpath))
   }
 
 }

@@ -1,6 +1,12 @@
-library(igraph)
-library(dplyr)
-#' Builds an igraph object based on event pairs data in "eventPairResultsFilename" file
+#' Builds a TrajectoriesGraph object based on event pairs data in "eventPairResultsFilename" file
+#'
+#' It is actually an igraph object but has some specific attributes (counts, colors) necessary for Trajectories package
+#'
+#' Vertex attributes:
+#' (ID=concept_name), concept_id, count, color, labelcolor
+#'
+#' Edge attributes:
+#' e1 (name), e1_concept_id, e2 (name), e2_concept_id, e1_count, effect, prob, numcohortExact. numcohortExact is a number of event periods that had E1->E2 as immediate order (no intermediate events).
 #'
 #' @param eventPairResultsFilename Full path to event pairs file
 #'
@@ -8,15 +14,12 @@ library(dplyr)
 #' @export
 #'
 #' @examples
-createGraph<-function(eventPairResultsFilename) {
+createTrajectoriesGraph<-function(eventPairResultsFilename) {
 
-  log_info(paste0('Creating igraph object based on event pairs data in the following file: ',eventPairResultsFilename,'...'))
+  logger::log_info('Creating TrajectoriesGraph object based on event pairs data from the following file: {eventPairResultsFilename}...')
 
   # Links are coming from eventPairResultsFilename (event1->event2 pairs)
   e = read.csv2(file = eventPairResultsFilename, sep = '\t', header = TRUE, as.is=T)
-
-  #remove everything with births (remove from here later, just for debugging)
-  #e<-e[e$EVENT1_NAME!='Pneumonia',]
 
   # convert chr columns to numeric
   e$EVENT_PAIR_EFFECT<-as.numeric(e$EVENT_PAIR_EFFECT)
@@ -52,14 +55,14 @@ createGraph<-function(eventPairResultsFilename) {
 
   # BUILD A GRAPH!
   # create empty graph
-  g <- make_empty_graph(directed = TRUE)
+  g <- igraph::make_empty_graph(directed = TRUE)
   #add edges between these nodes
   if(nrow(e)>0) {
     for(i in seq(1,nrow(e))) {
       e1<-e[i,'EVENT1_NAME']
       e2<-e[i,'EVENT2_NAME']
       # add vertexes if not exist already
-      if(!e1 %in% V(g)$name) {g <- g + vertices(e1,
+      if(!e1 %in% V(g)$name) {g <- g + igraph::vertices(e1,
                                                 concept_id=e[i,'EVENT1_CONCEPT_ID'],
                                                 count=e[i,'EVENT1_COUNT'],
                                                 #size=e[i,'EVENT1_COUNT']/max_event_count,
@@ -68,7 +71,7 @@ createGraph<-function(eventPairResultsFilename) {
                                                 #, age=AGES[AGES$event==e1,'AGE_FOR_GRAPH']
                                                 )
       }
-      if(!e2 %in% V(g)$name) {g <- g + vertices(e2,
+      if(!e2 %in% V(g)$name) {g <- g + igraph::vertices(e2,
                                                 concept_id=e[i,'EVENT2_CONCEPT_ID'],
                                                 count=e[i,'EVENT2_COUNT'],
                                                 #size=e[i,'EVENT2_COUNT']/max_event_count,
@@ -78,7 +81,7 @@ createGraph<-function(eventPairResultsFilename) {
                                                 )
       }
       # add edge
-      g <- g + edge(e1,
+      g <- g + igraph::edge(e1,
                     e2,
                     e1=e1,
                     e1_concept_id=e[i,'EVENT1_CONCEPT_ID'],
@@ -88,14 +91,14 @@ createGraph<-function(eventPairResultsFilename) {
                     effect=e[i,'EVENT_PAIR_EFFECT'],
                     prob=e[i,'EVENT1_EVENT2_COHORT_COUNT']/e[i,'EVENT1_COUNT'],
                     #weight=1/e[i,'EVENT_PAIR_EFFECT'], #opposite to the effect size. Do not use weight attribute, as it has a special meaning in igraph and we do not want to use this automatically
-                    numcohortExact=e[i,'COHORT_COUNT_HAVING_E2_RIGHT_AFTER_E1'] #number of cohorts that had E1->E2 as immediate order (no intermediate events)
+                    numcohortExact=e[i,'COHORT_COUNT_HAVING_E2_RIGHT_AFTER_E1'] #number of event periods that had E1->E2 as immediate order (no intermediate events)
                     #numcohort=e[i,'EVENT1_EVENT2_COHORT_COUNT']/e[i,'EVENT1_COUNT']*e[i,'EVENT1_COUNT']/max_event_count #number of cohorts that had E1->E2, adjusted to but may have had intermediate events also
                     #numcohort=e[i,'EVENT1_EVENT2_COHORT_COUNT']/e[i,'EVENT1_COUNT']*e[i,'EVENT1_COUNT']/max_event_count #number of cohorts that had E1->E2, but may have had intermediate events also
       )
     }
   }
 
-  log_info(paste('Full graph contains',gsize(g),'links between',gorder(g),'events'))
+  logger::log_info(paste('Full graph contains',gsize(g),'links between',gorder(g),'events'))
 
   #Normalized numcohortExact
   E(g)$normalizedNumcohortExact = (E(g)$numcohortExact-min(E(g)$numcohortExact))/(max(E(g)$numcohortExact)-min(E(g)$numcohortExact))
@@ -114,6 +117,9 @@ createGraph<-function(eventPairResultsFilename) {
 
   rgb2<-rgb(rgb1[1,],rgb1[2,],rgb1[3,],alpha=1,maxColorValue=255)
   E(g)$color <- rgb2
+
+  # make it of the class TrajectoriesGraph which is derived from the class igraph
+  class(g) <- c("TrajectoriesGraph","igraph")
 
   return(g)
 

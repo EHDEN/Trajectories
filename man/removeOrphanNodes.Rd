@@ -2,7 +2,7 @@
 % Please edit documentation in R/removeOrphanNodes.R
 \name{removeOrphanNodes}
 \alias{removeOrphanNodes}
-\title{Creates force network graph from the event pairs}
+\title{Removes orphan nodes from igraph/TrajectoriesGraph object}
 \usage{
 removeOrphanNodes(g)
 }
@@ -13,5 +13,5 @@ removeOrphanNodes(g)
 
 }
 \description{
-Creates force network graph from the event pairs
+Removes orphan nodes from igraph/TrajectoriesGraph object
 }

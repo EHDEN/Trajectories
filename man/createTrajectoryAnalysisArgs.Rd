@@ -5,20 +5,21 @@
 \title{Creates an object to hold analysis-specific data}
 \usage{
 createTrajectoryAnalysisArgs(
-  minimumDaysBetweenEvents,
-  maximumDaysBetweenEvents,
-  minPatientsPerEventPair,
-  addConditions,
-  addObservations,
-  addProcedures,
-  addDrugExposures,
-  addDrugEras,
-  addBirths,
-  addDeaths,
-  daysBeforeIndexDate,
+  minimumDaysBetweenEvents = 1,
+  maximumDaysBetweenEvents = 3650,
+  minPatientsPerEventPair = 10,
+  addConditions = T,
+  addObservations = F,
+  addProcedures = F,
+  addDrugExposures = F,
+  addDrugEras = F,
+  addBirths = F,
+  addDeaths = T,
+  daysBeforeIndexDate = Inf,
   packageName = "Trajectories",
-  cohortName,
-  description = ""
+  cohortName = "My sample cohort",
+  description = "",
+  eventIdsForGraphs = NA
 )
 }
 \arguments{
@@ -49,6 +50,8 @@ createTrajectoryAnalysisArgs(
 \item{cohortName}{Reader-friendly short description of the cohort. Used in graph titles and file names (can contain spaces)}
 
 \item{description}{This is a placeholder for any description of the study/cohort/analysis. For instance, it would be wise to descibe here what kind of cohort is that and what the analysis does.}
+
+\item{eventIdsForGraph}{List of exact concept ID-s of the events that are used to align actual trajectories in the end of analysis. Can be left not defined (NA)}
 }
 \value{
 TrajectoryAnalysisArgs object

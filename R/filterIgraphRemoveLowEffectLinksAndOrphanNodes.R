@@ -11,6 +11,8 @@
 filterIgraphRemoveLowEffectLinksAndOrphanNodes<-function(g, limitOfLinks=20,edge_param_to_sort_by=c('effect','numcohortExact','numcohortCustom','effectCount','prob')) {
   logger::log_info('Filtering graph by removing links with small effect/people size and orphan nodes...')
 
+  if(!inherits(g, 'TrajectoriesGraph')) stop('Error in filterIgraphRemoveLowEffectLinksAndOrphanNodes(): object g is not class TrajectoriesGraph object')
+
   #there is something to filter when there is at least 3 edges in the cluster
   if(length(E(g))<=2) return(g)
 
@@ -50,6 +52,8 @@ filterIgraphRemoveLowEffectLinksAndOrphanNodes<-function(g, limitOfLinks=20,edge
   g <- g - V(g)[which(degrees==0)]
 
   logger::log_info(paste0('...done. The resulting graph contains ',length(V(g)),' events and ',length(E(g)),' links between them.'))
+
+  class(g)<-c('TrajectoriesGraph','igraph')
   return(g)
 }
 

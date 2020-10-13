@@ -25,7 +25,7 @@ trajectoryLocalArgs <- Trajectories::createTrajectoryLocalArgs(oracleTempSchema 
                                                                 cohortTableSchema= 'ohdsi_temp',
                                                                 cohortTable='cohort',
                                                                 cohortId=1,
-                                                                inputFolder=system.file("extdata", "ischemic_heart_disease", package = "Trajectories"), # Full path to input folder that contains SQL file for cohort definition and optionally also trajectoryAnalysisArgs.json. You can use built-in folders of this package such as: inputFolder=system.file("extdata", "T2D", package = "Trajectories")
+                                                                inputFolder=system.file("extdata", "T2D", package = "Trajectories"), # Full path to input folder that contains SQL file for cohort definition and optionally also trajectoryAnalysisArgs.json. You can use built-in folders of this package such as: inputFolder=system.file("extdata", "T2D", package = "Trajectories")
                                                                 mainOutputFolder='/Users/sulevr/temp', #Subfolders to this will be created automatically
                                                                 databaseHumanReadableName='TEST') #Use something short. It will be added to the titles of the graph.
 
@@ -69,10 +69,14 @@ outputFolder<-Trajectories::GetOutputFolder(trajectoryLocalArgs,trajectoryAnalys
 # Set up logger
 Trajectories::InitLogger(logfile = file.path(outputFolder,'log.txt'), threshold = logger:::INFO)
 
-?# Store used analysis arguments to JSON file
+# Store used analysis arguments to JSON file
 Trajectories::TrajectoryAnalysisArgsToJson(trajectoryAnalysisArgs, file.path(outputFolder,"trajectoryAnalysisArgs_used.json"))
 
-# Create new cohort table
+
+
+
+
+# Create new cohort table (comment out if not needed)
 Trajectories::createCohortTable(connection=connection,
                                 trajectoryAnalysisArgs=trajectoryAnalysisArgs,
                                 trajectoryLocalArgs=trajectoryLocalArgs)
@@ -81,6 +85,9 @@ Trajectories::createCohortTable(connection=connection,
 Trajectories::fillCohortTable(connection=connection,
                               trajectoryAnalysisArgs,
                               trajectoryLocalArgs)
+
+
+
 
 # Create database tables of all event pairs (patient level data + summary statistics)
 Trajectories::createEventPairsTable(connection=connection,
@@ -93,31 +100,29 @@ Trajectories::runEventPairAnalysis(connection=connection,
                                    trajectoryAnalysisArgs=trajectoryAnalysisArgs,
                                    trajectoryLocalArgs=trajectoryLocalArgs)
 
-#Create full (and somewhat limited) graphs of all event pairs
-Trajectories::createFilteredFullgraphs(connection=connection,
-                                       trajectoryAnalysisArgs=trajectoryAnalysisArgs,
-                                       trajectoryLocalArgs=trajectoryLocalArgs)
 
-#creates graph from eventPairResultsFilename, also alignes the a
-Trajectories::createIgraph(connection=connection,
-                           trajectoryAnalysisArgs=trajectoryAnalysisArgs,
-                           trajectoryLocalArgs=trajectoryLocalArgs,
-                           eventName=NA) #we use NA here to draw graphs for top5 events
 
-Trajectories::createIgraph(connection=connection,
-                           trajectoryAnalysisArgs=trajectoryAnalysisArgs,
-                           trajectoryLocalArgs=trajectoryLocalArgs,
-                           eventName="rosuvastatin") #we use NA here to draw graphs for top5 events
+# Draw unfiltered graphs (not limited to specific concept_id-s)
+Trajectories::createFilteredFullgraphs(connection,
+                                   trajectoryAnalysisArgs,
+                                   trajectoryLocalArgs)
 
-Trajectories::createIgraph(connection=connection,
-                           trajectoryAnalysisArgs=trajectoryAnalysisArgs,
-                           trajectoryLocalArgs=trajectoryLocalArgs,
-                           eventName="simvastatin") #we use NA here to draw graphs for top5 events
 
-Trajectories::createIgraph(connection=connection,
-                           trajectoryAnalysisArgs=trajectoryAnalysisArgs,
-                           trajectoryLocalArgs=trajectoryLocalArgs,
-                           eventName="atorvastatin") #we use NA here to draw graphs for top5 events
+# Draw plots for 5 most prevalent events (uses database connection and result tables in the database for trajectory alignments)
+Trajectories::PlotTrajectoriesGraphForEvents(connection,
+                                             trajectoryAnalysisArgs,
+                                             trajectoryLocalArgs,
+                                             eventIds=NA)
+
+# Draw plots for specific events (uses database connection and result tables in the database for trajectory alignments)
+Trajectories::PlotTrajectoriesGraphForEvents(connection,
+                                             trajectoryAnalysisArgs,
+                                             trajectoryLocalArgs,
+                                             eventIds=trajectoryAnalysisArgs$eventIdsForGraphs)
+
+
+
+########### CLEANUP: DROP ANALYSIS TABLES IF THERE IS NO NEED FOR THESE RESULTS ANYMORE ###########
 
 # Drop created cohort table
 Trajectories::dropCohortTable(connection=connection,

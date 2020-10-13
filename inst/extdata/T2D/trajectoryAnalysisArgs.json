@@ -12,5 +12,6 @@
   "daysBeforeIndexDate": ["Inf"],
   "packageName": ["Trajectories"],
   "cohortName": ["Type 2 diabetes"],
-  "description": ["Type 2 diabetes study"]
+  "description": ["Type 2 diabetes study"],
+  "eventIdsForGraphs": [4193704, 201826, 443732, 1503297]
 }
