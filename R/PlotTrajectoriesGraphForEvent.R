@@ -69,7 +69,6 @@ PlotTrajectoriesGraphForEvent<-function(connection,
   #Update 15 Oct 2020: do not remove them, we need them to draw out as gray (otherwise it is not clear which events and trajectories were analyzed)
   #h<-h-E(h)[E(h)$alignedTrajsCount==0]
   #h<-h-V(h)[V(h)$alignedTrajsCount==0]
-
   #previous actions "take away" TrajectoriesGraph class. Put it back
   class(h)<-c("TrajectoriesGraph","igraph")
 
@@ -84,7 +83,9 @@ PlotTrajectoriesGraphForEvent<-function(connection,
 
 
   logger::log_info(' Step 4: Printing aligned graph 1/2 (counts): ')
-  title=paste0(ifelse(is.na(limitOfTrajs),'All ',''),V(h)[V(h)$concept_id==eventId]$alignedTrajsCount," actual trajectories of ",cohortName," patients having/passing\n",EVENTNAME," (EVENT),\naligned to ",aligned_to_title," (trajectory count on edge)")
+  #One difficult thing to understand now is that V(h)$alignedTrajsCount for the EVENTNAME holds the number of trajectories that go through the EVENETNAME, not the prevalence of EVENTNAME
+  #We've found that this is difficult to understand and for EVENTNAME it is better to show the actual prevalence/count instead (and calculate all frequencies based on that)
+  title=paste0(ifelse(is.na(limitOfTrajs),'All ',''),V(h)[V(h)$concept_id==eventId]$count," actual trajectories of ",cohortName," patients having/passing\n",EVENTNAME," (EVENT),\naligned to ",aligned_to_title," (trajectory count on edge)")
   #Truncate the title for file name if it is too long
   #truncated_title=ifelse(stri_length(title)<=200,title,paste(substr(title,1,200)))
   filename_template=paste0(filename_template,".aligned.counts")
@@ -95,22 +96,19 @@ PlotTrajectoriesGraphForEvent<-function(connection,
 
   logger::log_info(' Step 4: Printing aligned graph 2/2 (frequencies): ')
   #E(h)$alignedTrajsProb=E(h)$alignedTrajsCount/V(h)[ends(h,E(h),names=F)[,1]]$alignedTrajsCount
-  E(h)$alignedTrajsProb=E(h)$alignedTrajsCount/V(h)[V(h)$concept_id==eventId]$alignedTrajsCount #probability relative to EVENTNAME
-  #remove edges with frequency<0.5 & orphan nodes
-  #Update 15 Oct 2020: do not remove them, we need them to draw out as gray (otherwise it is not clear which events and trajectories were analyzed)
-  #h<-h-E(h)[E(h)$alignedTrajsProb<0.005]
-  #h<-Trajectories::removeOrphanNodes(h)
+  E(h)$alignedTrajsProb=E(h)$alignedTrajsCount/V(h)[V(h)$concept_id==eventId]$count #probability relative to EVENTNAME COUNT (it is challenging to understand if we take it relative to EVENTNAME alignedTrajsCount because some trajectories are not being analyzed at all as it was the constructec graph)
+  #set edges and nodes with frequency<0.5% to 0 (to get displayed as gray)
+  nodesizes=V(h)$alignedTrajsCount
+  nodesizes[V(h)$alignedTrajsCount/V(h)[V(h)$concept_id==eventId]$count<0.005]<-0
   E(h)[E(h)$alignedTrajsProb<0.005]$alignedTrajsProb=0
-
-
   #previous actions "take away" TrajectoriesGraph class. Put it back
   class(h)<-c("TrajectoriesGraph","igraph")
 
-  title=paste0(ifelse(is.na(limitOfTrajs),'All ',''),V(h)[V(h)$concept_id==eventId]$alignedTrajsCount," actual trajectories of ",cohortName," patients having/passing\n",EVENTNAME," (EVENT),\naligned to ",aligned_to_title," (frequency relative to EVENT given on edges)")
+  title=paste0(ifelse(is.na(limitOfTrajs),'All ',''),V(h)[V(h)$concept_id==eventId]$count," actual trajectories of ",cohortName," patients having/passing\n",EVENTNAME," (EVENT),\naligned to ",aligned_to_title," (frequency relative to EVENT given on edges)")
   #Truncate the title for file name if it is too long
   filename_template=paste0(filename_template,".aligned.freq")
   filename=file.path(outputFolder,paste0(make.names(filename_template),'.pdf'))
-  Trajectories::plotTrajectoriesGraph(h,layout=layout_with_fr,nodesizes=V(h)$alignedTrajsCount,linknumbers=round(E(h)$alignedTrajsProb*100),outputPdfFullpath=filename,title=paste0(title,"\n",format(Sys.time(), '%d %B %Y %H:%M')))
+  Trajectories::plotTrajectoriesGraph(h,layout=layout_with_fr,nodesizes=nodesizes,linknumbers=round(E(h)$alignedTrajsProb*100),outputPdfFullpath=filename,title=paste0(title,"\n",format(Sys.time(), '%d %B %Y %H:%M')))
   logger::log_info(' ...done. File saved to {filename}.')
 
 

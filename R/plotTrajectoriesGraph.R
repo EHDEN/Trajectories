@@ -53,7 +53,7 @@ plotTrajectoriesGraph<-function(g,layout=layout_nicely(g),outputPdfFullpath=F,no
   edgelabelcolor<-rgb(round(rgb1[1,]/2),round(rgb1[2,]/2),round(rgb1[3,]/2),alpha=255*(0.2+0.8*sqrt(normalizedLinknumbers)),maxColorValue=255)
 
   #Update 15 Oct 2020: always turn 0-count edges to lightgray, font size 0 to suppress "0" label
-  edgecolor[linknumbers==0]<-rgb(196,196,196,alpha=128,maxColorValue=255)
+  edgecolor[linknumbers==0]<-rgb(220,220,220,alpha=128,maxColorValue=255)
   edgewidth[linknumbers==0]<-1
   edgelabel_cex[linknumbers==0]<-0.5
 
