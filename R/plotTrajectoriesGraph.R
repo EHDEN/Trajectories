@@ -43,6 +43,8 @@ plotTrajectoriesGraph<-function(g,layout=layout_nicely(g),outputPdfFullpath=F,no
       #}
     }
   }
+  edgewidth=sqrt(normalizedLinknumbers)*5
+  edgelabel_cex=0.5+0.8*sqrt(normalizedLinknumbers) #font size
 
   #edge alpha depends on linknumbers
   rgb1<-sapply(E(g)$color ,col2rgb)
@@ -50,9 +52,19 @@ plotTrajectoriesGraph<-function(g,layout=layout_nicely(g),outputPdfFullpath=F,no
   #edge text color is darker
   edgelabelcolor<-rgb(round(rgb1[1,]/2),round(rgb1[2,]/2),round(rgb1[3,]/2),alpha=255*(0.2+0.8*sqrt(normalizedLinknumbers)),maxColorValue=255)
 
+  #Update 15 Oct 2020: always turn 0-count edges to lightgray, font size 0 to suppress "0" label
+  edgecolor[linknumbers==0]<-rgb(196,196,196,alpha=128,maxColorValue=255)
+  edgewidth[linknumbers==0]<-1
+  edgelabel_cex[linknumbers==0]<-0.5
 
   #normalized Event count
   V(g)$size<-nodesizes/max(nodesizes)
+
+  #Update 15 Oct 2020: always turn 0-count nodes to lightgray
+  vertexcolor=V(g)$color
+  vertexcolor[nodesizes==0]<-rgb(196,196,196,alpha=128,maxColorValue=255)
+  vertexlabelcolor=V(g)$labelcolor
+  vertexlabelcolor[V(g)$size==0]<-rgb(196,196,196,alpha=128,maxColorValue=255)
 
   #E(g)$normalizedNumcohortCustom = (E(g)$numcohortCustom - min(E(g)$numcohortCustom))/(max(E(g)$numcohortCustom)-min(E(g)$numcohortCustom))
 
@@ -60,12 +72,12 @@ plotTrajectoriesGraph<-function(g,layout=layout_nicely(g),outputPdfFullpath=F,no
        layout=layout,
        margin=0,
        #layout[,2]<-layout[,2]*2, #y-telje peal rohkem laiali
-       vertex.color = V(g)$color,
-       vertex.frame.color= V(g)$color,
+       vertex.color = vertexcolor,
+       vertex.frame.color= vertexcolor,
        vertex.size=sqrt(V(g)$size)*10,
        vertex.label.font=1,
        vertex.label.cex = sqrt(1+V(g)$size),
-       vertex.label.color = V(g)$labelcolor,
+       vertex.label.color = vertexlabelcolor,
 
        #vertex.label = paste(node_labels$dgn,node_labels$name),
        #edge.label=NA, #round(100*links$width),
@@ -74,8 +86,8 @@ plotTrajectoriesGraph<-function(g,layout=layout_nicely(g),outputPdfFullpath=F,no
        edge.color=edgecolor,# E(g)$color,
        edge.label.font =1,
        edge.label.color=edgelabelcolor,
-       edge.label.cex = 0.5+0.8*sqrt(normalizedLinknumbers),
-       edge.width=sqrt(normalizedLinknumbers)*5,#round(20*E(g)$weight),
+       edge.label.cex = edgelabel_cex,
+       edge.width=edgewidth,
        edge.arrow.size=1, #sqrt(normalizedLinknumbers)*4,#iGraph currently always takes only the first value.
        #edge.arrow.width=round(E(g)$weight*1),
        edge.curved=0.1,

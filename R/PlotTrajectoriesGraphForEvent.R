@@ -66,8 +66,10 @@ PlotTrajectoriesGraphForEvent<-function(connection,
                                                    eventname=EVENTNAME,
                                                    limit=limitOfTrajs)
   #remove edges and nodes with count=0
-  h<-h-E(h)[E(h)$alignedTrajsCount==0]
-  h<-h-V(h)[V(h)$alignedTrajsCount==0]
+  #Update 15 Oct 2020: do not remove them, we need them to draw out as gray (otherwise it is not clear which events and trajectories were analyzed)
+  #h<-h-E(h)[E(h)$alignedTrajsCount==0]
+  #h<-h-V(h)[V(h)$alignedTrajsCount==0]
+
   #previous actions "take away" TrajectoriesGraph class. Put it back
   class(h)<-c("TrajectoriesGraph","igraph")
 
@@ -95,8 +97,12 @@ PlotTrajectoriesGraphForEvent<-function(connection,
   #E(h)$alignedTrajsProb=E(h)$alignedTrajsCount/V(h)[ends(h,E(h),names=F)[,1]]$alignedTrajsCount
   E(h)$alignedTrajsProb=E(h)$alignedTrajsCount/V(h)[V(h)$concept_id==eventId]$alignedTrajsCount #probability relative to EVENTNAME
   #remove edges with frequency<0.5 & orphan nodes
-  h<-h-E(h)[E(h)$alignedTrajsProb<0.005]
-  h<-Trajectories::removeOrphanNodes(h)
+  #Update 15 Oct 2020: do not remove them, we need them to draw out as gray (otherwise it is not clear which events and trajectories were analyzed)
+  #h<-h-E(h)[E(h)$alignedTrajsProb<0.005]
+  #h<-Trajectories::removeOrphanNodes(h)
+  E(h)[E(h)$alignedTrajsProb<0.005]$alignedTrajsProb=0
+
+
   #previous actions "take away" TrajectoriesGraph class. Put it back
   class(h)<-c("TrajectoriesGraph","igraph")
 
