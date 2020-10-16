@@ -88,8 +88,8 @@ PlotTrajectoriesGraphForEvent<-function(connection,
   title=paste0(ifelse(is.na(limitOfTrajs),'All ',''),V(h)[V(h)$concept_id==eventId]$count," actual trajectories of ",cohortName," patients having/passing\n",EVENTNAME," (EVENT),\naligned to ",aligned_to_title," (trajectory count on edge)")
   #Truncate the title for file name if it is too long
   #truncated_title=ifelse(stri_length(title)<=200,title,paste(substr(title,1,200)))
-  filename_template=paste0(filename_template,".aligned.counts")
-  filename=file.path(outputFolder,paste0(make.names(filename_template),'.pdf'))
+  filename=paste0(filename_template,".aligned.counts")
+  filename=file.path(outputFolder,paste0(make.names(filename),'.pdf'))
   Trajectories::plotTrajectoriesGraph(h,layout=layout_with_fr,nodesizes=V(h)$alignedTrajsCount,linknumbers=round(E(h)$alignedTrajsCount),outputPdfFullpath=filename,title=paste0(title,"\n",format(Sys.time(), '%d %B %Y %H:%M')))
   logger::log_info(' ...done. File saved to {filename}.')
 
@@ -106,8 +106,8 @@ PlotTrajectoriesGraphForEvent<-function(connection,
 
   title=paste0(ifelse(is.na(limitOfTrajs),'All ',''),V(h)[V(h)$concept_id==eventId]$count," actual trajectories of ",cohortName," patients having/passing\n",EVENTNAME," (EVENT),\naligned to ",aligned_to_title," (frequency relative to EVENT given on edges)")
   #Truncate the title for file name if it is too long
-  filename_template=paste0(filename_template,".aligned.freq")
-  filename=file.path(outputFolder,paste0(make.names(filename_template),'.pdf'))
+  filename=paste0(filename_template,".aligned.freqs")
+  filename=file.path(outputFolder,paste0(make.names(filename),'.pdf'))
   Trajectories::plotTrajectoriesGraph(h,layout=layout_with_fr,nodesizes=nodesizes,linknumbers=round(E(h)$alignedTrajsProb*100),outputPdfFullpath=filename,title=paste0(title,"\n",format(Sys.time(), '%d %B %Y %H:%M')))
   logger::log_info(' ...done. File saved to {filename}.')
 
