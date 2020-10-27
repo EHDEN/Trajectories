@@ -53,6 +53,31 @@ runEventPairAnalysis<-function(connection,
     {
       diagnosis1 = dpairs[i,'EVENT1_CONCEPT_ID']
       diagnosis2 = dpairs[i,'EVENT2_CONCEPT_ID']
+      pairCheckingSql <- Trajectories::loadRenderTranslateSql("pvalueChecker.sql",
+                                                              packageName=trajectoryAnalysisArgs$packageName,
+                                                              dbms=connection@dbms,
+                                                              resultsSchema =  trajectoryLocalArgs$resultsSchema,
+                                                              prefix =  trajectoryLocalArgs$prefixForResultTableNames,
+                                                              diag1 = diagnosis1,
+                                                              diag2 = diagnosis2)
+
+
+      pvalueCheck = DatabaseConnector::querySql(connection, pairCheckingSql)
+      pvalueMissing = is.na(pvalueCheck$EVENT_PAIR_PVALUE)
+
+      if(pvalueMissing==FALSE) {
+        if (pvalueCheck$EVENT_PAIR_PVALUE <= cutoff_pval) {
+          significant_pairs_count <- significant_pairs_count + 1
+
+          if (pvalueCheck$DIRECTIONAL_EVENT_PAIR_PVALUE <= cutoff_pval) {
+            significant_directional_pairs_count <- significant_directional_pairs_count + 1
+          }
+        }
+        print(paste("pvalue already calculated for ",diagnosis1,diagnosis2))
+        next
+      }
+
+
       logger::log_info(paste0('Analyzing event pair ',diagnosis1,' -> ',diagnosis2,' (total progress ',
                                                                             round(100*i/nrow(dpairs)),
                                                                             '%, # sign pairs: ',
