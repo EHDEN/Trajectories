@@ -10,7 +10,8 @@ alignActualTrajectoriesToGraph(
   trajectoryLocalArgs,
   g,
   eventname,
-  limit = 1000
+  limit = 1000,
+  filename = file.path(getwd(), "trajectories.csv")
 )
 }
 \arguments{
@@ -25,6 +26,8 @@ alignActualTrajectoriesToGraph(
 \item{eventname}{Event name (concept name) through which the trajectories are analyzed}
 
 \item{limit}{Max number of trajectories to align (to limit the analysis). Set to NA if no limit.}
+
+\item{filename}{Full path tforoutput file for trajectory counts}
 }
 \value{
 

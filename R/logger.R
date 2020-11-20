@@ -7,9 +7,9 @@
 #' @export
 #'
 #' @examples
-InitLogger<-function(logfile, threshold=logger::INFO) {
+InitLogger<-function(logfile, threshold=logger:::INFO) {
   library(logger)
-  logger::log_threshold(INFO) #define the level of output log information (DEBUG, INFO, WARN, ERROR)
+  logger::log_threshold(threshold) #define the level of output log information (DEBUG, INFO, WARN, ERROR)
   logger::log_formatter(formatter_glue)
   logger::log_layout(layout_glue_colors) #colorful log messages
   logger::log_appender(appender_tee(logfile)) #log both to console and to file

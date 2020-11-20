@@ -66,6 +66,17 @@ createEventPairsTable<-function(connection,
 
   DatabaseConnector::executeSql(connection, sql=RenderedSql, profile=F, progressBar = TRUE, reportOverallTime = TRUE)
 
+  #During the execution of 1CohortCC.sql, the SQL scripts some debug information to table @resultsSchema.@prefiXdebug. Lets write this to log also.
+  sql<-"SELECT ENTRY FROM @resultsSchema.@prefiXdebug ORDER BY timestamp;"
+  RenderedSql <- SqlRender::render(sql, resultsSchema=trajectoryLocalArgs$resultsSchema, prefiX = trajectoryLocalArgs$prefixForResultTableNames)
+  RenderedSql <- SqlRender::translate(RenderedSql,targetDialect=attr(connection, "dbms"))
+  res<-c(DatabaseConnector::querySql(connection, RenderedSql))
+  logger::log_info('Debug info from database operations:')
+  for(row in res$ENTRY) {
+    #print(row)
+    logger::log_info(row)
+  }
+
 
   # Get all (frequent) event pairs from the database
   RenderedSql <- Trajectories::loadRenderTranslateSql("2GetPairs.sql",

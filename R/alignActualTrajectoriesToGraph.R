@@ -6,6 +6,7 @@
 #' @param trajectoryAnalysisArgs TrajectoryAnalysisArgs object that must be created by createTrajectoryAnalysisArgs() method
 #' @param trajectoryLocalArgs TrajectoryLocalArgs object that must be created by createTrajectoryLocalArgs() method
 #' @param eventname Event name (concept name) through which the trajectories are analyzed
+#' @param filename Full path tforoutput file for trajectory counts
 #'
 #' @return
 #' @export
@@ -16,7 +17,8 @@ alignActualTrajectoriesToGraph <- function(connection,
                                            trajectoryLocalArgs,
                                            g,
                                            eventname,
-                                           limit=1000) {
+                                           limit=1000,
+                                           filename=file.path(getwd(),'trajectories.csv')) {
 
   if(!inherits(g, 'TrajectoriesGraph')) stop('Error in filterIgraphRemoveLowEffectLinksAndOrphanNodes(): object g is not class TrajectoriesGraph object')
 
@@ -101,7 +103,11 @@ alignActualTrajectoriesToGraph <- function(connection,
   E(g)$alignedTrajsCount<-0
   V(g)$alignedTrajsCount<-0
 
+  #Create a list of concept names (for faster search later)
+  Node.names<-igraph::as_data_frame(g, what="vertices") %>% select(concept_id,name)
+
   log_info("Aligning trajectories to graph of '{eventname}'...")
+  all_trajs<-c()
 
   #create chunks - in each chunk, 100 persons
   chunks<-split(res$COHORT_ID, ceiling(seq_along(res$COHORT_ID)/100))
@@ -167,24 +173,40 @@ alignActualTrajectoriesToGraph <- function(connection,
               visitednodes<-c(visitednodes,r$E1_CONCEPT_ID)
             }
 
-            if(DEBUG) logger::log_debug(paste0('Added ',r$E1_CONCEPT_ID,':',V(g)[V(g)$concept_id==r$E1_CONCEPT_ID]$name,'->',r$E2_CONCEPT_ID,':',V(g)[V(g)$concept_id==r$E2_CONCEPT_ID]$name,' (cohort ',cohort_id,') to graph (current count of edge: ',E(g)[eid]$alignedTrajsCount,')'))
+            logger::log_debug(paste0('Added ',r$E1_CONCEPT_ID,':',V(g)[V(g)$concept_id==r$E1_CONCEPT_ID]$name,'->',r$E2_CONCEPT_ID,':',V(g)[V(g)$concept_id==r$E2_CONCEPT_ID]$name,' (cohort ',cohort_id,') to graph (current count of edge: ',E(g)[eid]$alignedTrajsCount,')'))
           } else {
-            if(DEBUG) logger::log_debug(paste0('Cannot add ',r$E1_CONCEPT_ID,':',V(g)[V(g)$concept_id==r$E1_CONCEPT_ID]$name,'->',r$E2_CONCEPT_ID,':',V(g)[V(g)$concept_id==r$E2_CONCEPT_ID]$name,' (cohort ',cohort_id,') as this edge is not part of the graph'))
+            logger::log_debug(paste0('Cannot add ',r$E1_CONCEPT_ID,':',V(g)[V(g)$concept_id==r$E1_CONCEPT_ID]$name,'->',r$E2_CONCEPT_ID,':',V(g)[V(g)$concept_id==r$E2_CONCEPT_ID]$name,' (cohort ',cohort_id,') as this edge is not part of the graph'))
           }
         } else {
-          if(DEBUG) logger::log_debug(paste0('Cannot add ',r$E1_CONCEPT_ID,':',V(g)[V(g)$concept_id==r$E1_CONCEPT_ID]$name,'->',r$E2_CONCEPT_ID,':',V(g)[V(g)$concept_id==r$E2_CONCEPT_ID]$name,' as ',r$E1_CONCEPT_ID,' is not in visitednodes of cohort ',cohort_id))
+          logger::log_debug(paste0('Cannot add ',r$E1_CONCEPT_ID,':',V(g)[V(g)$concept_id==r$E1_CONCEPT_ID]$name,'->',r$E2_CONCEPT_ID,':',V(g)[V(g)$concept_id==r$E2_CONCEPT_ID]$name,' as ',r$E1_CONCEPT_ID,' is not in visitednodes of cohort ',cohort_id))
         }
 
       } #for j
       # add +1 to all visited nodes
       if(length(visitednodes)>0) V(g)[V(g)$concept_id %in% visitednodes]$alignedTrajsCount<- V(g)[V(g)$concept_id %in% visitednodes]$alignedTrajsCount+1
-      if(DEBUG) logger::log_debug(paste0('alignedTrajsCount of {eventname} after cohort ',cohort_id,': ',V(g)[V(g)$name==eventname]$alignedTrajsCount))
+
+      visitednodes.names <- data.frame(concept_id=visitednodes) %>%
+        left_join(Node.names, by=c("concept_id"="concept_id")) %>% rename(concept_name=name) %>%
+        mutate(namelength=stri_length(concept_name)) %>%
+        mutate(node=paste0(concept_id,":\"",  ifelse(namelength<=20, concept_name, paste0(substr(concept_name,1,20), "...")),"\"")) %>%
+        select(node)
+
+
+      logger::log_debug(paste0('alignedTrajsCount of {eventname} after cohort ',cohort_id,': ',V(g)[V(g)$name==eventname]$alignedTrajsCount))
+      visitednodes.str<-paste0(c(visitednodes.names$node),collapse="\t")
+      logger::log_debug(visitednodes.str)
+      all_trajs<-rbind(all_trajs,c(visitednodes.str))
+
     } #for cohort_id
 
   } #for i
 
 
-
+  #Group trajs by count and output to file
+  logger::log_info(' Step 3: Saving counts of aligned trajectories to file: {filename}...')
+  d<-data.frame(trajectory=all_trajs) %>% group_by(trajectory) %>% mutate(n=n()) %>% arrange(desc(n)) %>% unique() %>% select(n=n, trajectory=trajectory)
+  write.table(d,file=filename,quote=FALSE, sep="\t", row.names=F, col.names=F)
+  logger::log_info(' ...done.')
 
   # make it of the class TrajectoriesGraph which is derived from the class igraph
   class(g) <- c("TrajectoriesGraph","igraph")

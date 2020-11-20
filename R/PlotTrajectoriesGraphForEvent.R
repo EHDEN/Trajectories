@@ -64,7 +64,8 @@ PlotTrajectoriesGraphForEvent<-function(connection,
                                                    trajectoryLocalArgs=trajectoryLocalArgs,
                                                    g=constructed.graph,
                                                    eventname=EVENTNAME,
-                                                   limit=limitOfTrajs)
+                                                   limit=limitOfTrajs,
+                                                   filename=file.path(outputFolder,paste0(make.names(filename_template),'.trajs.csv')))
   #remove edges and nodes with count=0
   #Update 15 Oct 2020: do not remove them, we need them to draw out as gray (otherwise it is not clear which events and trajectories were analyzed)
   #h<-h-E(h)[E(h)$alignedTrajsCount==0]
@@ -83,7 +84,7 @@ PlotTrajectoriesGraphForEvent<-function(connection,
 
 
   logger::log_info(' Step 4: Printing aligned graph 1/2 (counts): ')
-  #One difficult thing to understand now is that V(h)$alignedTrajsCount for the EVENTNAME holds the number of trajectories that go through the EVENETNAME, not the prevalence of EVENTNAME
+  #One difficult thing to understand now is that V(h)$alignedTrajsCount for the EVENTNAME holds the number of trajectories that go through the EVENTNAME, not the prevalence of EVENTNAME
   #We've found that this is difficult to understand and for EVENTNAME it is better to show the actual prevalence/count instead (and calculate all frequencies based on that)
   title=paste0(ifelse(is.na(limitOfTrajs),'All ',''),V(h)[V(h)$concept_id==eventId]$count," actual trajectories of ",cohortName," patients having/passing\n",EVENTNAME," (EVENT),\naligned to ",aligned_to_title," (trajectory count on edge)")
   #Truncate the title for file name if it is too long

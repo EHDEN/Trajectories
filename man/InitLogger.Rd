@@ -4,7 +4,7 @@
 \alias{InitLogger}
 \title{Initializes logger for Trajectories package}
 \usage{
-InitLogger(logfile, threshold = logger::INFO)
+InitLogger(logfile, threshold = logger:::INFO)
 }
 \arguments{
 \item{logfile}{Full path to log file}
