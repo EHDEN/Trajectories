@@ -1,4 +1,4 @@
-SELECT  DISTINCT(cohort_id) AS cohort_id
+SELECT  DISTINCT(eventperiod_id) AS eventperiod_id
 FROM
         @resultsSchema.@prefiXgraph_events
-ORDER BY cohort_id;
+ORDER BY eventperiod_id;

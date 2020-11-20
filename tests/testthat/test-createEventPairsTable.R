@@ -48,7 +48,7 @@ test_that("Filling in cohort table with fulldb buit-in study", {
 
 
   # There are no events in conditions table, all summary tables should be empty
-  res<-querySql(connection, glue::glue('SELECT COUNT(*) AS TOTAL FROM {trajectoryLocalArgs$resultsSchema}.{trajectoryLocalArgs$prefixForResultTableNames}d2_summary'))
+  res<-querySql(connection, glue::glue('SELECT COUNT(*) AS TOTAL FROM {trajectoryLocalArgs$resultsSchema}.{trajectoryLocalArgs$prefixForResultTableNames}E2_summary'))
   expect_equal(res$TOTAL, 0)
 
 

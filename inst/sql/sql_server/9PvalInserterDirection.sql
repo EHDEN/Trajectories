@@ -1,1 +1,1 @@
-UPDATE @resultsSchema.@prefixd1d2_model SET directional_event_pair_pvalue=@pval WHERE event1_concept_id = @diag1 AND event2_concept_id = @diag2;
+UPDATE @resultsSchema.@prefixE1E2_model SET directional_event_pair_pvalue=@pval WHERE E1_CONCEPT_ID = @diag1 AND E2_CONCEPT_ID = @diag2;

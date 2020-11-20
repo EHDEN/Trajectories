@@ -51,31 +51,8 @@ runEventPairAnalysis<-function(connection,
   # For each event pair, run the analysis
   for(i in 1:nrow(dpairs))
     {
-      diagnosis1 = dpairs[i,'EVENT1_CONCEPT_ID']
-      diagnosis2 = dpairs[i,'EVENT2_CONCEPT_ID']
-      pairCheckingSql <- Trajectories::loadRenderTranslateSql("pvalueChecker.sql",
-                                                              packageName=trajectoryAnalysisArgs$packageName,
-                                                              dbms=connection@dbms,
-                                                              resultsSchema =  trajectoryLocalArgs$resultsSchema,
-                                                              prefix =  trajectoryLocalArgs$prefixForResultTableNames,
-                                                              diag1 = diagnosis1,
-                                                              diag2 = diagnosis2)
-
-
-      pvalueCheck = DatabaseConnector::querySql(connection, pairCheckingSql)
-      pvalueMissing = is.na(pvalueCheck$EVENT_PAIR_PVALUE)
-
-      if(pvalueMissing==FALSE) {
-        if (pvalueCheck$EVENT_PAIR_PVALUE <= cutoff_pval) {
-          significant_pairs_count <- significant_pairs_count + 1
-
-          if (pvalueCheck$DIRECTIONAL_EVENT_PAIR_PVALUE <= cutoff_pval) {
-            significant_directional_pairs_count <- significant_directional_pairs_count + 1
-          }
-        }
-        print(paste("pvalue already calculated for ",diagnosis1,diagnosis2))
-        next
-      }
+      diagnosis1 = dpairs[i,'E1_CONCEPT_ID']
+      diagnosis2 = dpairs[i,'E2_CONCEPT_ID']
 
 
       logger::log_info(paste0('Analyzing event pair ',diagnosis1,' -> ',diagnosis2,' (total progress ',
@@ -86,6 +63,33 @@ runEventPairAnalysis<-function(connection,
                                                                             significant_directional_pairs_count,
                                                                             ' directional, estimated time left: ',Trajectories::estimatedTimeRemaining(progress_perc=(i-1)/nrow(dpairs),starttime=starttime),
                                                                             ')...'))
+
+      # Avoid recalculation if the data is already there (the analysis has already run up to some point)
+      pairCheckingSql <- Trajectories::loadRenderTranslateSql("pvalueChecker.sql",
+                                                              packageName=trajectoryAnalysisArgs$packageName,
+                                                              dbms=connection@dbms,
+                                                              resultsSchema =  trajectoryLocalArgs$resultsSchema,
+                                                              prefix =  trajectoryLocalArgs$prefixForResultTableNames,
+                                                              diag1 = diagnosis1,
+                                                              diag2 = diagnosis2)
+      pvalueCheck = DatabaseConnector::querySql(connection, pairCheckingSql)
+      if(!is.na(pvalueCheck$EVENT_PAIR_PVALUE) &
+          ((pvalueCheck$EVENT_PAIR_PVALUE > cutoff_pval) | (pvalueCheck$EVENT_PAIR_PVALUE <= cutoff_pval & !is.na(pvalueCheck$DIRECTIONAL_EVENT_PAIR_PVALUE)))
+         ) {
+
+        if (pvalueCheck$EVENT_PAIR_PVALUE <= cutoff_pval) {
+
+          significant_pairs_count <- significant_pairs_count + 1
+
+          if (pvalueCheck$DIRECTIONAL_EVENT_PAIR_PVALUE <= cutoff_pval) {
+            significant_directional_pairs_count <- significant_directional_pairs_count + 1
+          }
+        }
+        logger::log_info(paste0("P-value already calculated for event pair ",diagnosis1," -> ",diagnosis2," (skipping)"))
+        next #halts the processing of the current "for loop" iteration and continues with the next iteration
+
+      }
+
 
       # Extract necessary event1_concept_id->event2_concept_id data from table d1d2_analysistable
       RenderedSql <- Trajectories::loadRenderTranslateSql("5CaseControlStats.sql",
@@ -233,14 +237,14 @@ runEventPairAnalysis<-function(connection,
           #            what is the probability that we observe event1_concept_id as the first diagnosis more than 'direction_counts$people_count_event1_occurs_first-1' times?
           # This question can be easily answered by pbinom(..., lower.tail=FALSE) which gives cumulative density function (cdf) as a result
           # Using lower.tail=FALSE is necessary, because otherwise pbinom would give the probability that we observe event1_concept_id as first diagnosis  LESS than 'direction_counts$people_count_event1_occurs_first'
-          cohort_count_event1_occurs_first = direction_counts$COHORT_COUNT_EVENT1_OCCURS_FIRST
+          eventperiod_count_event1_occurs_first = direction_counts$EVENTPERIOD_COUNT_E1_OCCURS_FIRST
 
-          total_tests = direction_counts$COHORT_COUNT_EVENT1_OCCURS_FIRST + direction_counts$COHORT_COUNT_EVENT2_OCCURS_FIRST + direction_counts$COHORT_COUNT_EVENT1_EVENT2_OCCUR_ON_SAME_DAY #We also take into account the number of events on the same day to prevent problem, when 1000 events occur on same day, but 10 times E1 is before E2 and 1 times vice verca and this is significant.
+          total_tests = direction_counts$EVENTPERIOD_COUNT_E1_OCCURS_FIRST + direction_counts$EVENTPERIOD_COUNT_E2_OCCURS_FIRST + direction_counts$EVENTPERIOD_COUNT_E1_E2_OCCUR_ON_SAME_DAY #We also take into account the number of events on the same day to prevent problem, when 1000 events occur on same day, but 10 times E1 is before E2 and 1 times vice verca and this is significant.
           logger::log_debug('In case group, event1 occurs {direction_counts$COHORT_COUNT_EVENT1_OCCURS_FIRST} times as the first event and {direction_counts$COHORT_COUNT_EVENT2_OCCURS_FIRST} as the second event.')
           logger::log_debug('Both events occur on same day {direction_counts$COHORT_COUNT_EVENT1_EVENT2_OCCUR_ON_SAME_DAY} times.')
-          cohort_count_event1_occurs_first_for_test=direction_counts$COHORT_COUNT_EVENT1_OCCURS_FIRST + round(direction_counts$COHORT_COUNT_EVENT1_EVENT2_OCCUR_ON_SAME_DAY/2)
+          eventperiod_count_event1_occurs_first_for_test=direction_counts$EVENTPERIOD_COUNT_E1_OCCURS_FIRST + round(direction_counts$EVENTPERIOD_COUNT_E1_E2_OCCUR_ON_SAME_DAY/2)
           logger::log_debug('If the expected probability of event1 being the first diagnosis is 0.5, what is the probability that we observe event1 as the first event more than {direction_counts$COHORT_COUNT_EVENT1_OCCURS_FIRST}+{direction_counts$COHORT_COUNT_EVENT1_EVENT2_OCCUR_ON_SAME_DAY}/2-1={cohort_count_event1_occurs_first_for_test-1} times out of {total_tests} trials?')
-          event_pair_pvalue <- pbinom(q = ifelse(cohort_count_event1_occurs_first_for_test==0,0,cohort_count_event1_occurs_first_for_test-1), size = total_tests, prob = 0.5, lower.tail=FALSE)
+          event_pair_pvalue <- pbinom(q = ifelse(eventperiod_count_event1_occurs_first_for_test==0,0,eventperiod_count_event1_occurs_first_for_test-1), size = total_tests, prob = 0.5, lower.tail=FALSE)
           logger::log_debug('Answer: p-val={event_pair_pvalue}')
 
           # Store the pvalue to database

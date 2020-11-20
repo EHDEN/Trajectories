@@ -1,9 +1,9 @@
 SELECT  *
 FROM
         @resultsSchema.@prefiXgraph_event_pairs
-WHERE cohort_id IN ( @cohortids )
+WHERE eventperiod_id IN ( @eventperiodids )
 ORDER BY
-        cohort_id,
+        eventperiod_id,
         e1_cohort_day,
         e2_cohort_day,
         e1_concept_id,

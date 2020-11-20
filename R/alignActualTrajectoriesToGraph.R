@@ -42,7 +42,7 @@ alignActualTrajectoriesToGraph <- function(connection,
   edges<- e %>% select(e1_concept_id,e2_concept_id)
 
 
-    #but before actual TABLE CREATE there is an extra step: if sqlRole is given, set session to correct role before creating the table
+  #but before actual TABLE CREATE there is an extra step: if sqlRole is given, set session to correct role before creating the table
   Trajectories::setRole(connection,trajectoryLocalArgs$sqlRole)
 
   #26 Sep 2020: Can't use simply insertTable here because in Eunomia package it does not solve schema name correctly. That's why this is commented out and we manually create SQL here :(
@@ -71,11 +71,27 @@ alignActualTrajectoriesToGraph <- function(connection,
   #querySql(connection, paste0("SELECT COUNT(*) FROM main.mylinks"))
 
 
-  #querySql(connection, paste0("SELECT * FROM sqlite_master"))
+  #querySql(connection, paste0("SELECT COUNT(*) FROM sqlite_master"))
 
+  #For interpretation purposes (done later), we get some counts first (not actually used in the alignment, but required for better interpretation)
+  INTERPRETER=list()
+  sql<-"SELECT COUNT(*) AS COHORTSIZE FROM @resultsSchema.@prefiXmycohort;"
+  RenderedSql <- SqlRender::render(sql, resultsSchema=trajectoryLocalArgs$resultsSchema, prefiX = trajectoryLocalArgs$prefixForResultTableNames)
+  RenderedSql <- SqlRender::translate(RenderedSql,targetDialect=attr(connection, "dbms"))
+  res<-c(DatabaseConnector::querySql(connection, RenderedSql))
+  INTERPRETER[['cohortsize']]=res$COHORTSIZE
+
+  sql<-"SELECT E1_COUNT FROM @resultsSchema.@prefiXE1E2_model WHERE E1_CONCEPT_ID=@eventid LIMIT 1;"
+  RenderedSql <- SqlRender::render(sql, resultsSchema=trajectoryLocalArgs$resultsSchema, prefiX = trajectoryLocalArgs$prefixForResultTableNames, eventid=eventid)
+  RenderedSql <- SqlRender::translate(RenderedSql,targetDialect=attr(connection, "dbms"))
+  res<-c(DatabaseConnector::querySql(connection, RenderedSql))
+  INTERPRETER[['event_count_in_eventperiods']]=res$E1_COUNT
+
+
+  logger::log_info(paste0("Out of ",INTERPRETER[['cohortsize']]," event-periods in the analysis, event '",eventname,"' is present in ",INTERPRETER[['event_count_in_eventperiods']],' of them.'))
 
   #align trajectories to graph (to get the exact E1->E2 counts with no intermediate events)
-  #Takes all trajectories that pass the event-pairs of that graph. Leaves out intermediate events that are not given in the graph.
+  #Takes all trajectories that pass any event of that graph. Leaves out intermediate events that are not given in the graph.
   logger::log_info('Extracting actual sequences of these events from database...')
   RenderedSql <- Trajectories::loadRenderTranslateSql("map_actual_trajs_to_graph2.sql",
                                                    packageName=trajectoryAnalysisArgs$packageName,
@@ -110,7 +126,7 @@ alignActualTrajectoriesToGraph <- function(connection,
   all_trajs<-c()
 
   #create chunks - in each chunk, 100 persons
-  chunks<-split(res$COHORT_ID, ceiling(seq_along(res$COHORT_ID)/100))
+  chunks<-split(res$EVENTPERIOD_ID, ceiling(seq_along(res$EVENTPERIOD_ID)/100))
   for(i in 1:length(chunks)) {
     chunk<-chunks[[i]]
     logger::log_debug(paste0('Aligning ',length(chunk),' trajectories to graph (',i,'/',length(chunks),')...'))
@@ -120,13 +136,12 @@ alignActualTrajectoriesToGraph <- function(connection,
                                                      dbms=attr(connection, "dbms"),
                                                      resultsSchema =  trajectoryLocalArgs$resultsSchema,
                                                      prefiX = trajectoryLocalArgs$prefixForResultTableNames,
-                                                     cohortids=paste(chunk,collapse=",")
+                                                     eventperiodids=paste(chunk,collapse=",")
     )
     res<-DatabaseConnector::querySql(connection, RenderedSql)
-    #log_info(paste0('DB query done, executing R...'))
 
-    for(cohort_id in unique(res$COHORT_ID)) {
-      d<-res[res$COHORT_ID==cohort_id,]
+    for(cohort_id in unique(res$EVENTPERIOD_ID)) {
+      d<-res[res$EVENTPERIOD_ID==cohort_id,]
       #on which cohort day is the index event?
       indexevent_cohort_day<-unique(c(d[d$E1_IS_INDEXEVENT==1,'E1_COHORT_DAY'],d[d$E2_IS_INDEXEVENT==1,'E2_COHORT_DAY'])) #if the code breaks here, it may be because there are several records for the same concept_ids. It has happened when one used both addDrugEras=T AND addDrugExposures=T... One should not use it like this.
       d$cohort_day_relative_to_indexevent = d$E1_COHORT_DAY-indexevent_cohort_day
@@ -139,7 +154,7 @@ alignActualTrajectoriesToGraph <- function(connection,
         w<-w %>% left_join(v, by=c("E2_CONCEPT_ID"="concept_id")) %>% rename(E2=name)
         x<-graph_from_data_frame(w %>% select(E1,E2), directed = TRUE, vertices = NULL)
         #plot(x,layout=layout_)
-        plot(x,main=paste0("Actual trajectories of cohort ",cohort_id))
+        plot(x,main=paste0("Actual trajectories of eventperiod ",cohort_id))
       }
 
       visitednodes=c()
@@ -173,12 +188,12 @@ alignActualTrajectoriesToGraph <- function(connection,
               visitednodes<-c(visitednodes,r$E1_CONCEPT_ID)
             }
 
-            logger::log_debug(paste0('Added ',r$E1_CONCEPT_ID,':',V(g)[V(g)$concept_id==r$E1_CONCEPT_ID]$name,'->',r$E2_CONCEPT_ID,':',V(g)[V(g)$concept_id==r$E2_CONCEPT_ID]$name,' (cohort ',cohort_id,') to graph (current count of edge: ',E(g)[eid]$alignedTrajsCount,')'))
+            logger::log_debug(paste0('Added ',r$E1_CONCEPT_ID,':',V(g)[V(g)$concept_id==r$E1_CONCEPT_ID]$name,'->',r$E2_CONCEPT_ID,':',V(g)[V(g)$concept_id==r$E2_CONCEPT_ID]$name,' (eventperiod ',cohort_id,') to graph (current count of edge: ',E(g)[eid]$alignedTrajsCount,')'))
           } else {
-            logger::log_debug(paste0('Cannot add ',r$E1_CONCEPT_ID,':',V(g)[V(g)$concept_id==r$E1_CONCEPT_ID]$name,'->',r$E2_CONCEPT_ID,':',V(g)[V(g)$concept_id==r$E2_CONCEPT_ID]$name,' (cohort ',cohort_id,') as this edge is not part of the graph'))
+            logger::log_debug(paste0('Cannot add ',r$E1_CONCEPT_ID,':',V(g)[V(g)$concept_id==r$E1_CONCEPT_ID]$name,'->',r$E2_CONCEPT_ID,':',V(g)[V(g)$concept_id==r$E2_CONCEPT_ID]$name,' (eventperiod ',cohort_id,') as this edge is not part of the graph'))
           }
         } else {
-          logger::log_debug(paste0('Cannot add ',r$E1_CONCEPT_ID,':',V(g)[V(g)$concept_id==r$E1_CONCEPT_ID]$name,'->',r$E2_CONCEPT_ID,':',V(g)[V(g)$concept_id==r$E2_CONCEPT_ID]$name,' as ',r$E1_CONCEPT_ID,' is not in visitednodes of cohort ',cohort_id))
+          logger::log_debug(paste0('Cannot add ',r$E1_CONCEPT_ID,':',V(g)[V(g)$concept_id==r$E1_CONCEPT_ID]$name,'->',r$E2_CONCEPT_ID,':',V(g)[V(g)$concept_id==r$E2_CONCEPT_ID]$name,' as ',r$E1_CONCEPT_ID,' is not in visitednodes of eventperiod ',cohort_id))
         }
 
       } #for j
@@ -192,7 +207,7 @@ alignActualTrajectoriesToGraph <- function(connection,
         select(node)
 
 
-      logger::log_debug(paste0('alignedTrajsCount of {eventname} after cohort ',cohort_id,': ',V(g)[V(g)$name==eventname]$alignedTrajsCount))
+      logger::log_debug(paste0('alignedTrajsCount of {eventname} after eventperiod ',cohort_id,': ',V(g)[V(g)$name==eventname]$alignedTrajsCount))
       visitednodes.str<-paste0(c(visitednodes.names$node),collapse="\t")
       logger::log_debug(visitednodes.str)
       all_trajs<-rbind(all_trajs,c(visitednodes.str))

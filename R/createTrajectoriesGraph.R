@@ -40,7 +40,7 @@ createTrajectoriesGraph<-function(eventPairResultsFilename) {
   # End of age calculation
 
   # calculate max event count for scaling
-  max_event_count<-max(e$EVENT1_COUNT,e$EVENT2_COUNT)
+  max_event_count<-max(e$E1_COUNT,e$E2_COUNT)
 
   # predefined colors
   COLORS=list(Condition='#F1948A', #red
@@ -59,24 +59,24 @@ createTrajectoriesGraph<-function(eventPairResultsFilename) {
   #add edges between these nodes
   if(nrow(e)>0) {
     for(i in seq(1,nrow(e))) {
-      e1<-e[i,'EVENT1_NAME']
-      e2<-e[i,'EVENT2_NAME']
+      e1<-e[i,'E1_NAME']
+      e2<-e[i,'E2_NAME']
       # add vertexes if not exist already
       if(!e1 %in% V(g)$name) {g <- g + igraph::vertices(e1,
-                                                concept_id=e[i,'EVENT1_CONCEPT_ID'],
-                                                count=e[i,'EVENT1_COUNT'],
-                                                #size=e[i,'EVENT1_COUNT']/max_event_count,
-                                                color=COLORS[[e[i,'EVENT1_DOMAIN']]],
-                                                labelcolor=LABELCOLORS[[e[i,'EVENT1_DOMAIN']]]
+                                                concept_id=e[i,'E1_CONCEPT_ID'],
+                                                count=e[i,'E1_COUNT'],
+                                                #size=e[i,'E1_COUNT']/max_event_count,
+                                                color=COLORS[[e[i,'E1_DOMAIN']]],
+                                                labelcolor=LABELCOLORS[[e[i,'E1_DOMAIN']]]
                                                 #, age=AGES[AGES$event==e1,'AGE_FOR_GRAPH']
                                                 )
       }
       if(!e2 %in% V(g)$name) {g <- g + igraph::vertices(e2,
-                                                concept_id=e[i,'EVENT2_CONCEPT_ID'],
-                                                count=e[i,'EVENT2_COUNT'],
-                                                #size=e[i,'EVENT2_COUNT']/max_event_count,
-                                                color=COLORS[[e[i,'EVENT2_DOMAIN']]],
-                                                labelcolor=LABELCOLORS[[e[i,'EVENT2_DOMAIN']]]
+                                                concept_id=e[i,'E2_CONCEPT_ID'],
+                                                count=e[i,'E2_COUNT'],
+                                                #size=e[i,'E2_COUNT']/max_event_count,
+                                                color=COLORS[[e[i,'E2_DOMAIN']]],
+                                                labelcolor=LABELCOLORS[[e[i,'E2_DOMAIN']]]
                                                 #, age=AGES[AGES$event==e2,'AGE_FOR_GRAPH']
                                                 )
       }
@@ -84,14 +84,14 @@ createTrajectoriesGraph<-function(eventPairResultsFilename) {
       g <- g + igraph::edge(e1,
                     e2,
                     e1=e1,
-                    e1_concept_id=e[i,'EVENT1_CONCEPT_ID'],
-                    e2_concept_id=e[i,'EVENT2_CONCEPT_ID'],
+                    e1_concept_id=e[i,'E1_CONCEPT_ID'],
+                    e2_concept_id=e[i,'E2_CONCEPT_ID'],
                     e2=e2,
-                    e1_count=e[i,'EVENT1_COUNT'],
+                    e1_count=e[i,'E1_COUNT'],
                     effect=e[i,'EVENT_PAIR_EFFECT'],
-                    prob=e[i,'EVENT1_EVENT2_COHORT_COUNT']/e[i,'EVENT1_COUNT'],
+                    prob=e[i,'E1_E2_EVENTPERIOD_COUNT']/e[i,'E1_COUNT'],
                     #weight=1/e[i,'EVENT_PAIR_EFFECT'], #opposite to the effect size. Do not use weight attribute, as it has a special meaning in igraph and we do not want to use this automatically
-                    numcohortExact=e[i,'COHORT_COUNT_HAVING_E2_RIGHT_AFTER_E1'] #number of event periods that had E1->E2 as immediate order (no intermediate events)
+                    numcohortExact=e[i,'EVENTPERIOD_COUNT_HAVING_E2_RIGHT_AFTER_E1'] #number of event periods that had E1->E2 as immediate order (no intermediate events)
                     #numcohort=e[i,'EVENT1_EVENT2_COHORT_COUNT']/e[i,'EVENT1_COUNT']*e[i,'EVENT1_COUNT']/max_event_count #number of cohorts that had E1->E2, adjusted to but may have had intermediate events also
                     #numcohort=e[i,'EVENT1_EVENT2_COHORT_COUNT']/e[i,'EVENT1_COUNT']*e[i,'EVENT1_COUNT']/max_event_count #number of cohorts that had E1->E2, but may have had intermediate events also
       )

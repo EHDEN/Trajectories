@@ -1,1 +1,1 @@
-SELECT * FROM @resultsSchema.@prefixd1d2_model WHERE  event1_concept_id=@diag1 AND event2_concept_id=@diag2;
+SELECT * FROM @resultsSchema.@prefixE1E2_model WHERE  E1_CONCEPT_ID=@diag1 AND E2_CONCEPT_ID=@diag2;
