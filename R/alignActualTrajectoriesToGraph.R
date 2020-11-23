@@ -87,7 +87,6 @@ alignActualTrajectoriesToGraph <- function(connection,
   res<-c(DatabaseConnector::querySql(connection, RenderedSql))
   INTERPRETER[['event_count_in_eventperiods']]=res$E1_COUNT
 
-
   logger::log_info(paste0("Out of ",INTERPRETER[['cohortsize']]," event-periods in the analysis, event '",eventname,"' is present in ",INTERPRETER[['event_count_in_eventperiods']],' of them.'))
 
   #align trajectories to graph (to get the exact E1->E2 counts with no intermediate events)
@@ -113,7 +112,17 @@ alignActualTrajectoriesToGraph <- function(connection,
                                                    resultsSchema =  trajectoryLocalArgs$resultsSchema,
                                                    prefiX = trajectoryLocalArgs$prefixForResultTableNames
   )
-  res<-DatabaseConnector::querySql(connection, RenderedSql)
+  res2<-DatabaseConnector::querySql(connection, RenderedSql)
+
+  INTERPRETER[['event_count_in_eventperiods_of_selected_graph']]=length(res2$EVENTPERIOD_ID)
+  if(INTERPRETER[['event_count_in_eventperiods']] != INTERPRETER[['event_count_in_eventperiods_of_selected_graph']]) {
+    diff=INTERPRETER[['event_count_in_eventperiods']] - INTERPRETER[['event_count_in_eventperiods_of_selected_graph']]
+    diff_perc=round(diff/INTERPRETER[['event_count_in_eventperiods']]*100,1)
+    logger::log_warn("{diff} ({diff_perc}%) event-periods do not have any other event of a selected graph besides '{eventname}' (they do not produce any trajectory).")
+    if(diff_perc>25) logger::log_warn('This is quite a high proportion, indicating that the graph as a model might not reflect the actual trajectories.')
+  }
+
+
 
   #clear all numcohortCustom values
   E(g)$alignedTrajsCount<-0
@@ -122,12 +131,14 @@ alignActualTrajectoriesToGraph <- function(connection,
   #Create a list of concept names (for faster search later)
   Node.names<-igraph::as_data_frame(g, what="vertices") %>% select(concept_id,name)
 
-  log_info("Aligning trajectories to graph of '{eventname}'...")
-  all_trajs<-c()
+  logger::log_info("Aligning trajectories to graph of '{eventname}'...")
+  all_trajs<-data.frame()
+  number_of_single_node_trajs=0
 
   #create chunks - in each chunk, 100 persons
-  chunks<-split(res$EVENTPERIOD_ID, ceiling(seq_along(res$EVENTPERIOD_ID)/100))
+  chunks<-split(res2$EVENTPERIOD_ID, ceiling(seq_along(res2$EVENTPERIOD_ID)/100))
   for(i in 1:length(chunks)) {
+    print(paste('i=',i))
     chunk<-chunks[[i]]
     logger::log_debug(paste0('Aligning ',length(chunk),' trajectories to graph (',i,'/',length(chunks),')...'))
 
@@ -140,7 +151,10 @@ alignActualTrajectoriesToGraph <- function(connection,
     )
     res<-DatabaseConnector::querySql(connection, RenderedSql)
 
-    for(cohort_id in unique(res$EVENTPERIOD_ID)) {
+    k<-0
+    for(cohort_id in chunk) {
+      k<-k+1
+      print(paste0('Aligning event-period #',(i-1)*100+k,": ",cohort_id))
       d<-res[res$EVENTPERIOD_ID==cohort_id,]
       #on which cohort day is the index event?
       indexevent_cohort_day<-unique(c(d[d$E1_IS_INDEXEVENT==1,'E1_COHORT_DAY'],d[d$E2_IS_INDEXEVENT==1,'E2_COHORT_DAY'])) #if the code breaks here, it may be because there are several records for the same concept_ids. It has happened when one used both addDrugEras=T AND addDrugExposures=T... One should not use it like this.
@@ -200,28 +214,90 @@ alignActualTrajectoriesToGraph <- function(connection,
       # add +1 to all visited nodes
       if(length(visitednodes)>0) V(g)[V(g)$concept_id %in% visitednodes]$alignedTrajsCount<- V(g)[V(g)$concept_id %in% visitednodes]$alignedTrajsCount+1
 
-      visitednodes.names <- data.frame(concept_id=visitednodes) %>%
-        left_join(Node.names, by=c("concept_id"="concept_id")) %>% rename(concept_name=name) %>%
-        mutate(namelength=stri_length(concept_name)) %>%
-        mutate(node=paste0(concept_id,":\"",  ifelse(namelength<=20, concept_name, paste0(substr(concept_name,1,20), "...")),"\"")) %>%
-        select(node)
+
 
 
       logger::log_debug(paste0('alignedTrajsCount of {eventname} after eventperiod ',cohort_id,': ',V(g)[V(g)$name==eventname]$alignedTrajsCount))
-      visitednodes.str<-paste0(c(visitednodes.names$node),collapse="\t")
-      logger::log_debug(visitednodes.str)
-      all_trajs<-rbind(all_trajs,c(visitednodes.str))
+      #visitednodes.str<-paste0(c(visitednodes.names$node),collapse="\t")
+      #l<-length(visitednodes)
+      #logger::log_info("{i}:{cohort_id}:len={l}: {visitednodes.str}")
+      all_trajs<-rbind(all_trajs, data.frame( trajectory= I(list(visitednodes)))) #this I(list(...)) is here to prevent R to flatten the list. See https://stackoverflow.com/questions/51307970/how-to-store-vector-in-dataframe-in-r
+
+      if(length(visitednodes)<=1) {
+        number_of_single_node_trajs<-number_of_single_node_trajs+1
+      }
 
     } #for cohort_id
 
   } #for i
 
+  E(g)$alignedTrajsProb=E(g)$alignedTrajsCount/V(g)[V(g)$concept_id==eventId]$count
 
-  #Group trajs by count and output to file
+
+  INTERPRETER[['number_of_single_node_trajs']]=number_of_single_node_trajs
+  diff_perc=round(INTERPRETER[['number_of_single_node_trajs']]/INTERPRETER[['event_count_in_eventperiods']]*100,1)
+  logger::log_info("{number_of_single_node_trajs} event-periods ({diff_perc}%) had other events (in addition to '{eventname}') of a selected graph, but their trajectories do not match any edge of the graph, so they do not form any trajectories on that graph.")
+  if(diff_perc>25) logger::log_warn('This is quite a high proportion, indicating that the graph as a model might not reflect the actual trajectories.')
+  if(nrow(all_trajs)!=INTERPRETER[['event_count_in_eventperiods_of_selected_graph']]) logger::log_warn(paste0('Something is not right in alignActualTrajectoriesToGraph() method: nrow(all_trajs)=',nrow(all_trajs)," is not equal to INTERPRETER[['event_count_in_eventperiods_of_selected_graph']]=",INTERPRETER[['event_count_in_eventperiods_of_selected_graph']]," but it should"))
+
+  INTERPRETER[['number_of_trajs_on_graph']]=INTERPRETER[['event_count_in_eventperiods_of_selected_graph']]-INTERPRETER[['number_of_single_node_trajs']]
+  diff_perc=round(INTERPRETER[['number_of_trajs_on_graph']]/INTERPRETER[['event_count_in_eventperiods']]*100,1)
+  logger::log_info(paste0("Remaining ",INTERPRETER[['number_of_trajs_on_graph']]," ({diff_perc}%) trajectories through '{eventname}' are shown on the resulting graph."))
+
+  #Group trajs by count, add names
   logger::log_info(' Step 3: Saving counts of aligned trajectories to file: {filename}...')
-  d<-data.frame(trajectory=all_trajs) %>% group_by(trajectory) %>% mutate(n=n()) %>% arrange(desc(n)) %>% unique() %>% select(n=n, trajectory=trajectory)
+  all_trajs$trajectory.str=sapply(all_trajs$trajectory, paste, collapse="-")
+  d<-all_trajs %>% group_by(trajectory.str) %>% summarise(n=n()) %>% arrange(desc(n)) %>% select(n=n, trajectory=trajectory.str)
+  d$trajectory.str<-NA
+  d$length<-NA
+  d$index_of_eventname<-NA
+  d$num_events_before_eventname<-NA
+  d$num_events_after_eventname<-NA
+  idx_of_first_traj_having_one_event_after_eventname<-NA
+  idx_of_first_traj_having_two_events_after_eventname<-NA
+
+  #Find names for each event
+  n<-strsplit(d$trajectory,'-',fixed=T)
+  for(i in 1:length(n)) {
+    d[i,'length']<-length(n[[i]])
+
+    #which element is index event
+    d[i,'index_of_eventname']<-which(n[[i]]==eventId)
+
+    #how many elements before eventname
+    d[i,'num_events_before_eventname']<-1-d[i,'index_of_eventname']
+
+    #how many elements after eventname
+    d[i,'num_events_after_eventname']<- d[i,'length']-d[i,'index_of_eventname']
+    if(is.na(idx_of_first_traj_having_one_event_after_eventname) & d[i,'num_events_after_eventname']>=1) idx_of_first_traj_having_one_event_after_eventname=i
+    if(is.na(idx_of_first_traj_having_two_events_after_eventname) & d[i,'num_events_after_eventname']>=2) idx_of_first_traj_having_two_events_after_eventname=i
+
+
+    i.names <- data.frame(concept_id=as.numeric(n[[i]])) %>%
+      left_join(Node.names, by=c("concept_id"="concept_id")) %>% rename(concept_name=name) %>%
+      mutate(namelength=stri_length(concept_name)) %>%
+      mutate(node=paste0(concept_id,":\"",  ifelse(namelength<=20, concept_name, paste0(substr(concept_name,1,20), "...")),"\"")) %>%
+      select(node)
+    i.as.str<-paste0(c(i.names$node),collapse=" -> ")
+    d[i,'trajectory.str']<-i.as.str
+  }
   write.table(d,file=filename,quote=FALSE, sep="\t", row.names=F, col.names=F)
   logger::log_info(' ...done.')
+
+  if(!is.na(idx_of_first_traj_having_two_events_after_eventname)) {
+    node1=eventId
+    node2=n[[idx_of_first_traj_having_two_events_after_eventname]][as.numeric(d[idx_of_first_traj_having_two_events_after_eventname,'index_of_eventname']+1)]
+    node3=n[[idx_of_first_traj_having_two_events_after_eventname]][as.numeric(d[idx_of_first_traj_having_two_events_after_eventname,'index_of_eventname']+2)]
+
+    edge2<-E(g)[which(E(g)$e1_concept_id==node1 & E(g)$e2_concept_id==node2)]
+    print(paste0(edge2$alignedTrajsCount," event-periods (",round(edge2$alignedTrajsProb*100,1),"%) have '",V(g)[V(g)$concept_id==node2]$name,"' right after '",V(g)[V(g)$concept_id==eventid]$name,"'"))
+
+    edge3<-E(g)[which(E(g)$e1_concept_id==node2 & E(g)$e2_concept_id==node3)]
+    print(paste0(edge3$alignedTrajsCount," event-periods (",round(edge3$alignedTrajsProb*100,1),"%) have '",V(g)[V(g)$concept_id==node3]$name,"' right after '",V(g)[V(g)$concept_id==node2]$name,"'"))
+    TODO: should explain that not all of these node2->node3 patients had node1 somewhere in their path (but does not mean that all of them had... it right before...)
+
+  }
+
 
   # make it of the class TrajectoriesGraph which is derived from the class igraph
   class(g) <- c("TrajectoriesGraph","igraph")

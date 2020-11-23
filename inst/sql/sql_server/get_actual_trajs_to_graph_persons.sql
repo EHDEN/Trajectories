@@ -1,4 +1,4 @@
-SELECT  DISTINCT(eventperiod_id) AS eventperiod_id
+SELECT  DISTINCT(eventperiod_id) AS EVENTPERIOD_ID
 FROM
-        @resultsSchema.@prefiXgraph_events
+        @resultsSchema.@prefiXgraph_event_pairs
 ORDER BY eventperiod_id;
