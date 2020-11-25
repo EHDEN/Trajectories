@@ -10,11 +10,12 @@ PlotTrajectoriesGraphForEvent(
   trajectoryLocalArgs,
   g,
   eventId,
-  limitOfNodes = 50
+  limitOfNodes = 50,
+  skipOutputTables = T
 )
 }
 \arguments{
-\item{limitOfNodes}{}
+\item{skipOutputTables}{If set to T, no output data tables are made (the PDF graphs only).}
 }
 \value{
 

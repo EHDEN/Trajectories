@@ -4,14 +4,15 @@
 #' @param layout layout of an igraph object
 #' @param outputPdfFullpath Full path to output PDF file
 #' @param nodesizes Which values to use for node sizes. By default, uses count values of the nodes from TrajectoriesGraph object
-#' @param linknumbers Which numbers to show on edges. By default, uses numcohortExact values of the edges from TrajectoriesGraph object
+#' @param linknumbers Which numbers to use when calculating the width of on edges. By default, uses numcohortExact values of the edges from TrajectoriesGraph object
+#' @param linklabels Which numbers to show on edges. By default, uses linknumbers. Set to NA to use the default value.
 #' @param title Title of the graph
 #'
 #' @return
 #' @export
 #'
 #' @examples
-plotTrajectoriesGraph<-function(g,layout=layout_nicely(g),outputPdfFullpath=F,nodesizes=V(g)$count,linknumbers=E(g)$numcohortExact, title="") {
+plotTrajectoriesGraph<-function(g,layout=layout_nicely(g),outputPdfFullpath=F,nodesizes=V(g)$count,linknumbers=E(g)$numcohortExact, linklabels=NA, title="") {
 
   if(!'TrajectoriesGraph' %in% class(g)) stop('Error in plotTrajectoriesGraph(): object class of g must be TrajectoriesGraph.')
 
@@ -56,6 +57,7 @@ plotTrajectoriesGraph<-function(g,layout=layout_nicely(g),outputPdfFullpath=F,no
   edgecolor[linknumbers==0]<-rgb(220,220,220,alpha=128,maxColorValue=255)
   edgewidth[linknumbers==0]<-1
   edgelabel_cex[linknumbers==0]<-0.5
+  if(is.na(linklabels)) linklabels=linknumbers
 
   #normalized Event count
   V(g)$size<-nodesizes/max(nodesizes)
@@ -81,7 +83,7 @@ plotTrajectoriesGraph<-function(g,layout=layout_nicely(g),outputPdfFullpath=F,no
 
        #vertex.label = paste(node_labels$dgn,node_labels$name),
        #edge.label=NA, #round(100*links$width),
-       edge.label=linknumbers, #round(100*links$width),
+       edge.label=linklabels, #round(100*links$width),
        #edge.label=E(g)$numcohortCustom, #round(100*links$width),
        edge.color=edgecolor,# E(g)$color,
        edge.label.font =1,

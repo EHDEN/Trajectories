@@ -25,7 +25,7 @@ trajectoryLocalArgs <- Trajectories::createTrajectoryLocalArgs(oracleTempSchema 
                                                                 cohortTableSchema= 'ohdsi_temp',
                                                                 cohortTable='cohort',
                                                                 cohortId=1,
-                                                                inputFolder=system.file("extdata", "T2D", package = "Trajectories"), # Full path to input folder that contains SQL file for cohort definition and optionally also trajectoryAnalysisArgs.json. You can use built-in folders of this package such as: inputFolder=system.file("extdata", "T2D", package = "Trajectories")
+                                                                inputFolder=system.file("extdata", "RA", package = "Trajectories"), # Full path to input folder that contains SQL file for cohort definition and optionally also trajectoryAnalysisArgs.json. You can use built-in folders of this package such as: inputFolder=system.file("extdata", "T2D", package = "Trajectories")
                                                                 mainOutputFolder='/Users/sulevr/temp', #Subfolders to this will be created automatically
                                                                 databaseHumanReadableName='TEST') #Use something short. It will be added to the titles of the graph.
 
@@ -118,7 +118,8 @@ Trajectories::PlotTrajectoriesGraphForEvents(connection,
 Trajectories::PlotTrajectoriesGraphForEvents(connection,
                                              trajectoryAnalysisArgs,
                                              trajectoryLocalArgs,
-                                             eventIds=trajectoryAnalysisArgs$eventIdsForGraphs)
+                                             eventIds=trajectoryAnalysisArgs$eventIdsForGraphs,
+                                             skipOutputTables = T)
 
 
 

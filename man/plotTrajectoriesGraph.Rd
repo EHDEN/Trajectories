@@ -10,6 +10,7 @@ plotTrajectoriesGraph(
   outputPdfFullpath = F,
   nodesizes = V(g)$count,
   linknumbers = E(g)$numcohortExact,
+  linklabels = NA,
   title = ""
 )
 }
@@ -22,7 +23,9 @@ plotTrajectoriesGraph(
 
 \item{nodesizes}{Which values to use for node sizes. By default, uses count values of the nodes from TrajectoriesGraph object}
 
-\item{linknumbers}{Which numbers to show on edges. By default, uses numcohortExact values of the edges from TrajectoriesGraph object}
+\item{linknumbers}{Which numbers to use when calculating the width of on edges. By default, uses numcohortExact values of the edges from TrajectoriesGraph object}
+
+\item{linklabels}{Which numbers to show on edges. By default, uses linknumbers. Set to NA to use the default value.}
 
 \item{title}{Title of the graph}
 }

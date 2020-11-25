@@ -8,7 +8,8 @@ PlotTrajectoriesGraphForEvents(
   connection,
   trajectoryAnalysisArgs,
   trajectoryLocalArgs,
-  eventIds = NA
+  eventIds = NA,
+  skipOutputTables = T
 )
 }
 \arguments{
@@ -19,6 +20,8 @@ PlotTrajectoriesGraphForEvents(
 \item{trajectoryLocalArgs}{TrajectoryLocalArgs object that must be created by createTrajectoryLocalArgs() method}
 
 \item{eventIds}{Exact concept id-s as a list that is used for analyzing/plotting trajectories. If not specified (NA) (recommended) creates trajectories for top 5 events.}
+
+\item{skipOutputTables}{If set to TRUE, no output data tables are made (the PDF graphs only).}
 }
 \value{
 
