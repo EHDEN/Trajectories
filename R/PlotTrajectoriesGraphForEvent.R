@@ -54,7 +54,12 @@ PlotTrajectoriesGraphForEvent<-function(connection,
   #Truncate the title for file name if it is too long
   #truncated_title=ifelse(stri_length(title)<=200,title,paste(substr(title,1,200)))
   filename=file.path(outputFolder,paste0(make.names(filename_template),'.pdf'))
-  Trajectories::plotTrajectoriesGraph(constructed.graph,layout=layout_with_fr,linknumbers=round(E(constructed.graph)$prob*100),outputPdfFullpath=filename,title=paste0(title,"\n",format(Sys.time(), '%d %B %Y %H:%M')))
+  Trajectories::plotTrajectoriesGraph(constructed.graph,
+                                      layout=layout_with_fr,
+                                      linknumbers=round(E(constructed.graph)$prob*100),
+                                      linklabels=paste0(round(E(constructed.graph)$prob*100),"%"),
+                                      outputPdfFullpath=filename,
+                                      title=paste0(title,"\n",format(Sys.time(), '%d %B %Y %H:%M')))
   logger::log_info(' ...done. File saved to {filename}.')
 
 

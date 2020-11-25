@@ -12,7 +12,7 @@ library(SqlRender)
 addBirthsChecker <- function(connection,
                              trajectoryAnalysisArgs,
                              trajectoryLocalArgs) {
-  print('addBirths is True, checking data availability...')
+  logger::log_info('Parameter addBirths is set to TRUE Check whether person.birth_datetime is actually recorded in the data...')
   births_sql <- SqlRender::loadRenderTranslateSql("addBirthsChecker.sql",
                                                 packageName=trajectoryAnalysisArgs$packageName,
                                                 dbms=connection@dbms,
@@ -20,8 +20,9 @@ addBirthsChecker <- function(connection,
                                                 )
   birthDateTimeCount = DatabaseConnector::querySql(connection, births_sql)
   if(birthDateTimeCount$BIRTHCOUNTS<1) {
-    warning("the column person.birth_datetime is empty")
-    log_warn("The column person.birth_datetime is empty, setting addBirths to False")
+    logger::log_warn("The column person.birth_datetime is empty, setting addBirths to FALSE")
     trajectoryAnalysisArgs$addBirths=F
+  } else {
+    logger::log_info('...OK')
   }
 }

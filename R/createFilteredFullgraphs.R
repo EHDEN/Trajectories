@@ -40,6 +40,12 @@ createFilteredFullgraphs<-function(connection,
     h<-Trajectories::filterIgraphRemoveLowEffectLinksAndOrphanNodes(g, limitOfLinks=limitOfLinks,edge_param_to_sort_by='prob')
     #Truncate the title for file name if it is too long
     truncated_title=ifelse(stri_length(title)<=200,title,paste(substr(title,1,200)))
-    Trajectories::plotTrajectoriesGraph(h,layout=layout_with_fr,linknumbers=round(100*E(h)$prob),outputPdfFullpath=file.path(outputFolder,paste0(make.names(truncated_title),'.pdf')),title=paste0(title,"\n",format(Sys.time(), '%d %B %Y %H:%M')))
+    Trajectories::plotTrajectoriesGraph(h,
+                                        layout=layout_with_fr,
+                                        linknumbers=round(100*E(h)$prob),
+                                        linklabels=paste0(round(E(h)$prob*100),"%)"),
+                                        outputPdfFullpath=file.path(outputFolder,paste0(make.names(truncated_title),'.pdf')),
+                                        title=paste0(title,"\n",
+                                        format(Sys.time(), '%d %B %Y %H:%M')))
   }
 }

@@ -126,7 +126,11 @@ alignActualTrajectoriesToGraph <- function(connection,
     msg=paste0("Out of these ",INTERPRETER[['event_count_in_eventperiods']]," event-periods, ",diff," (",diff_perc,"%) event-periods do not have any other event of a selected graph besides '",eventname,"' (they do not produce any trajectory).")
     logger::log_info(msg)
     INTERPRETER.MSG=c(INTERPRETER.MSG,msg)
-    if(diff_perc>25) logger::log_warn('This is quite a high proportion, indicating that the graph as a model might not reflect the actual trajectories.')
+    if(diff_perc>25) {
+      msg='This is quite a high proportion, indicating that the graph as a model might not reflect the actual trajectories comprehensively.'
+      logger::log_warn(msg)
+      INTERPRETER.MSG=c(INTERPRETER.MSG,msg)
+    }
   }
 
 
@@ -262,8 +266,16 @@ alignActualTrajectoriesToGraph <- function(connection,
   msg=paste0(number_of_single_node_trajs," event-periods (",diff_perc,"%) had other events (in addition to '",eventname,"') of a selected graph but their trajectories do not match any edge of the graph, so they do not form any trajectories on that graph.")
   logger::log_info(msg)
   INTERPRETER.MSG=c(INTERPRETER.MSG,msg)
-  if(diff_perc>25) logger::log_warn('This is quite a high proportion, indicating that the graph as a model might not reflect the actual trajectories.')
-  if(sum(all_trajs$count)!=INTERPRETER[['event_count_in_eventperiods_of_selected_graph']]) logger::log_warn(paste0('Something is not right in alignActualTrajectoriesToGraph() method: sum(all_trajs$count)=',nrow(all_trajs)," is not equal to INTERPRETER[['event_count_in_eventperiods_of_selected_graph']]=",INTERPRETER[['event_count_in_eventperiods_of_selected_graph']]," but it should"))
+  if(diff_perc>25) {
+    msg='This is quite a high proportion, indicating that the graph as a model might not reflect the actual trajectories comprehensively.'
+    logger::log_warn(msg)
+    INTERPRETER.MSG=c(INTERPRETER.MSG,msg)
+  }
+  if(sum(all_trajs$count)!=INTERPRETER[['event_count_in_eventperiods_of_selected_graph']]) {
+    msg=paste0('Something is not right in alignActualTrajectoriesToGraph() method: sum(all_trajs$count)=',nrow(all_trajs)," is not equal to INTERPRETER[['event_count_in_eventperiods_of_selected_graph']]=",INTERPRETER[['event_count_in_eventperiods_of_selected_graph']]," but it should")
+    logger::log_warn(msg)
+    INTERPRETER.MSG=c(INTERPRETER.MSG,msg)
+  }
 
   INTERPRETER[['number_of_trajs_on_graph']]=INTERPRETER[['event_count_in_eventperiods_of_selected_graph']]-INTERPRETER[['number_of_single_node_trajs']]
   diff_perc=round(INTERPRETER[['number_of_trajs_on_graph']]/INTERPRETER[['event_count_in_eventperiods']]*100,1)
