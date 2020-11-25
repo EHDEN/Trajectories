@@ -43,7 +43,7 @@ createFilteredFullgraphs<-function(connection,
     Trajectories::plotTrajectoriesGraph(h,
                                         layout=layout_with_fr,
                                         linknumbers=round(100*E(h)$prob),
-                                        linklabels=paste0(round(E(h)$prob*100),"%)"),
+                                        linklabels=paste0(round(E(h)$prob*100),"%"),
                                         outputPdfFullpath=file.path(outputFolder,paste0(make.names(truncated_title),'.pdf')),
                                         title=paste0(title,"\n",
                                         format(Sys.time(), '%d %B %Y %H:%M')))
