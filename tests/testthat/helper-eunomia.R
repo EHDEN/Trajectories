@@ -83,6 +83,7 @@ addRandomEventForPeson<-function(connection,person_id=6,exclude_concept_ids=c(),
 }
 
 addRandomEvents<-function(connection,n_per_person_range=c(0,5),exclude_concept_ids=c(),include_concept_ids=c(),exclude_person_ids=c()) {
+  print(paste0('Adding ',n_per_person_range[1],'-',n_per_person_range[2],' random events for each patients to data (exceptions possible)'))
   person_ids<-getPatientIds(connection)
   person_ids<-setdiff(person_ids,exclude_person_ids)
   for(person_id in person_ids) {
@@ -97,6 +98,7 @@ addRandomEvents<-function(connection,n_per_person_range=c(0,5),exclude_concept_i
 
 
 addConditionEventPair<-function(connection,event1_concept_id,event2_concept_id,n) {
+  print(paste0('Adding ',n,'x ',event1_concept_id,'->',event2_concept_id,' event pair to te data'))
   if(n>2694) warning("Error in tests: n>2694 but there are 2694 people in Eunomia database")
   person_ids<-getPatientIds(connection, n)
   for(person_id in person_ids) {
@@ -133,7 +135,8 @@ setUpEunomia<-function() {
                                                                  cohortTable='cohort',
                                                                  cohortId=1,
                                                                  inputFolder=system.file("extdata", "fulldb", package = "Trajectories"), # Full path to input folder that contains SQL file for cohort definition and optionally also trajectoryAnalysisArgs.json. You can use built-in folders of this package such as: inputFolder=system.file("extdata", "T2D", package = "Trajectories")
-                                                                 mainOutputFolder=tempdir(),
+                                                                 #mainOutputFolder=tempdir(check=TRUE),
+                                                                 mainOutputFolder=getwd(),
                                                                  databaseHumanReadableName='TEST')
 
   return(list(connection=connection,trajectoryLocalArgs=trajectoryLocalArgs))
@@ -202,5 +205,32 @@ limitToConcepts<-function(connection,concept_ids=c(9201, #inpatient visit
              reportOverallTime=F)
   executeSql(connection, paste0("DELETE FROM DRUG_EXPOSURE WHERE DRUG_CONCEPT_ID NOT IN (",paste(concept_ids,collapse=","),");"), progressBar = F,
              reportOverallTime=F)
+
+}
+
+getEventPairsTableAsDataFrame<-function(trajectoryLocalArgs,trajectoryAnalysisArgs,filename='event_pairs.tsv') {
+  #Get output folder for this analysis
+  outputFolder<-Trajectories::GetOutputFolder(trajectoryLocalArgs,trajectoryAnalysisArgs,createIfMissing=F)
+  eventPairResultsFilename = file.path(outputFolder,filename)
+  #Get event_pairs.csv table
+  event_pairs_data = read.csv2(file = eventPairResultsFilename, sep = '\t', header = TRUE, as.is=T)
+  return(event_pairs_data)
+}
+
+getEventPairFromEventPairsTable<-function(event1_concept_id,event2_concept_id,trajectoryLocalArgs,trajectoryAnalysisArgs,filename='event_pairs.tsv') {
+  e<-getEventPairsTableAsDataFrame(trajectoryLocalArgs,trajectoryAnalysisArgs,filename=filename)
+  res<-e %>% filter(E1_CONCEPT_ID==event1_concept_id & E2_CONCEPT_ID==event2_concept_id)
+  return(res)
+}
+
+removeTestableOutputFiles<-function(trajectoryLocalArgs,trajectoryAnalysisArgs) {
+  #Get output folder for this analysis
+  outputFolder<-Trajectories::GetOutputFolder(trajectoryLocalArgs,trajectoryAnalysisArgs,createIfMissing=F)
+
+  filename="event_pairs.tsv"
+  if(file.exists(file.path(outputFolder,filename))) file.remove(file.path(outputFolder,filename))
+
+  filename="event_pairs_tested.tsv"
+  if(file.exists(file.path(outputFolder,filename))) file.remove(file.path(outputFolder,filename))
 
 }
