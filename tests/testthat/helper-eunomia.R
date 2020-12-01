@@ -23,32 +23,38 @@ getObservationPeriod<-function(connection,person_id) {
   return(res)
 }
 
-addConditionEventPairForPerson<-function(connection,event1_concept_id=133834,event2_concept_id=255848,person_id=6) {
+
+
+
+addConditionEventTrajectoryForPerson<-function(connection,event_concept_ids=c(133834,255848,4299128),person_id=6) {
   obsPeriod=getObservationPeriod(connection,person_id)
   startDate=obsPeriod$OBSERVATION_PERIOD_START_DATE
   endDate=obsPeriod$OBSERVATION_PERIOD_END_DATE
-  event1Date=sample(seq(as.Date(startDate), as.Date(endDate), by="day"), 1)
-  event2Date=sample(seq(as.Date(event1Date), as.Date(endDate), by="day"), 1)
 
-  #For SQLite, we must convert dates to real numbers (otherwise it does not work with other REAL dates in Eunomia package)
-  #Therefore, some magic is needed. First, convert to YYYYMMDD format and second, use SQL CONVERT(DATE,...) function.
-  #Another problem is SqlRender translation bug https://github.com/OHDSI/SqlRender/issues/232 So we hardcode SQLite translation here
-  event1Date<-str_replace_all(event1Date, "-", "")
-  event2Date<-str_replace_all(event2Date, "-", "")
+  prevDate=startDate
+  datecounter=0
+  for(concept_id in event_concept_ids) {
+    datecounter=datecounter+1
+    eventDate=sample(seq(as.Date(prevDate)+1, as.Date(endDate)-(length(event_concept_ids)-datecounter), by="day"), 1) #some magic here just to guarantee that no events occur on same date and there are enough free dates for the events
 
-  executeSql(connection, paste0("INSERT INTO CONDITION_OCCURRENCE (person_id,condition_concept_id,condition_start_date) VALUES (",
-                                person_id,",",
-                                event1_concept_id,
-                                ",",getSQLiteRealFromDateSQLstring(event1Date),");"),
-             progressBar = F,
-             reportOverallTime=F)
-  executeSql(connection, paste0("INSERT INTO CONDITION_OCCURRENCE (person_id,condition_concept_id,condition_start_date) VALUES (",
-                                person_id,",",
-                                event2_concept_id,
-                                ",",getSQLiteRealFromDateSQLstring(event2Date),");"),
-             progressBar = F,
-             reportOverallTime=F)
+    #For SQLite, we must convert dates to real numbers (otherwise it does not work with other REAL dates in Eunomia package)
+    #Therefore, some magic is needed. First, convert to YYYYMMDD format and second, use SQL CONVERT(DATE,...) function.
+    #Another problem is SqlRender translation bug https://github.com/OHDSI/SqlRender/issues/232 So we hardcode SQLite translation here
+    eventDate1<-str_replace_all(eventDate, "-", "")
+    eventDate1<-str_replace_all(eventDate1, "-", "")
+
+    executeSql(connection, paste0("INSERT INTO CONDITION_OCCURRENCE (person_id,condition_concept_id,condition_start_date) VALUES (",
+                                  person_id,",",
+                                  concept_id,
+                                  ",",getSQLiteRealFromDateSQLstring(eventDate1),");"),
+               progressBar = F,
+               reportOverallTime=F)
+
+    prevDate=eventDate
+
+  }
 }
+
 
 #For SQLite, we must convert dates to real numbers (otherwise it does not work with other REAL dates in Eunomia package)
 #Therefore, some magic is needed. First, convert to YYYYMMDD format and second, use SQL CONVERT(DATE,...) function.
@@ -101,13 +107,14 @@ addRandomEvents<-function(connection,n_per_person_range=c(0,5),exclude_concept_i
 }
 
 
-addConditionEventPair<-function(connection,event1_concept_id,event2_concept_id,n, excludePatientIds=c()) {
-  print(paste0('Adding ',n,'x ',event1_concept_id,'->',event2_concept_id,' event pair to te data'))
+addConditionEventTrajectory<-function(connection,event_concept_ids=c(133834,255848,4299128),n=n, excludePatientIds=c()) {
+  print(paste0('Adding ',n,'x ',paste0(event_concept_ids,collapse="->"),' event trajectory to data'))
   if(n>2694) warning("Error in tests: n>2694 but there are 2694 people in Eunomia database")
+  if(n>(2694-length(excludePatientIds))) stop('Error in addConditionEventTrajectory: cannot add that many trajectories')
   person_ids<-getPatientIds(connection, n, excludePatientIds=excludePatientIds)
   for(person_id in person_ids) {
     #print(person_id)
-    addConditionEventPairForPerson(connection,event1_concept_id,event2_concept_id,person_id)
+    addConditionEventTrajectoryForPerson(connection,event_concept_ids=event_concept_ids,person_id=person_id)
   }
   return(person_ids)
 }
@@ -143,6 +150,7 @@ setUpEunomia<-function() {
                                                                  mainOutputFolder=getwd(),
                                                                  databaseHumanReadableName='TEST')
 
+
   return(list(connection=connection,trajectoryLocalArgs=trajectoryLocalArgs))
 }
 
@@ -168,7 +176,7 @@ limitToConcepts<-function(connection,concept_ids=c(9201, #inpatient visit
                                                    255848, #Condition: Pneumonia
                                                    313217, #Condition: Atrial fibrillation
                                                    317009, #Condition: Asthma
-                                                   378419, #Condition: Alzheime
+                                                   378419, #Condition: Alzheimer
                                                    4144583, #Condition: Diabetes mellitus due to cystic fibrosis
                                                    4001336,	#Condition:Concussion injury of brain
                                                    192671,	#Condition:Gastrointestinal hemorrhage

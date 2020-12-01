@@ -244,7 +244,7 @@ runEventPairAnalysis<-function(connection,
           logger::log_debug('In case group, event1 occurs {direction_counts$COHORT_COUNT_EVENT1_OCCURS_FIRST} times as the first event and {direction_counts$COHORT_COUNT_EVENT2_OCCURS_FIRST} as the second event.')
           logger::log_debug('Both events occur on same day {direction_counts$COHORT_COUNT_EVENT1_EVENT2_OCCUR_ON_SAME_DAY} times.')
           eventperiod_count_event1_occurs_first_for_test=direction_counts$EVENTPERIOD_COUNT_E1_OCCURS_FIRST + round(direction_counts$EVENTPERIOD_COUNT_E1_E2_OCCUR_ON_SAME_DAY/2)
-          logger::log_debug('If the expected probability of event1 being the first diagnosis is 0.5, what is the probability that we observe event1 as the first event more than {direction_counts$COHORT_COUNT_EVENT1_OCCURS_FIRST}+{direction_counts$COHORT_COUNT_EVENT1_EVENT2_OCCUR_ON_SAME_DAY}/2-1={cohort_count_event1_occurs_first_for_test-1} times out of {total_tests} trials?')
+          logger::log_debug('If the expected probability of event1 being the first diagnosis is 0.5, what is the probability that we observe event1 as the first event more than {direction_counts$COHORT_COUNT_EVENT1_OCCURS_FIRST}+{direction_counts$COHORT_COUNT_EVENT1_EVENT2_OCCUR_ON_SAME_DAY}/2-1={eventperiod_count_event1_occurs_first_for_test-1} times out of {total_tests} trials?')
           event_pair_pvalue <- pbinom(q = ifelse(eventperiod_count_event1_occurs_first_for_test==0,0,eventperiod_count_event1_occurs_first_for_test-1), size = total_tests, prob = 0.5, lower.tail=FALSE)
           logger::log_debug('Answer: p-val={event_pair_pvalue}')
 

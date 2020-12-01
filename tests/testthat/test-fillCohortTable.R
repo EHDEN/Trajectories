@@ -9,7 +9,7 @@ test_that("Filling in cohort table with fulldb buit-in study", {
   limitToNumPatients(connection,n=100) #in analysis, use 100 patients
   limitToConcepts(connection)
   setObservationPeriodForAll(connection,startdate='2010-01-01',enddate='2012-12-31')
-  person_ids<-addConditionEventPair(connection,event1_concept_id=317009,event2_concept_id=255848,n=20) #The only data is 20x asthma->pneumonia pair
+  person_ids<-addConditionEventTrajectory(connection,event_concept_ids=c(317009,255848),n=20) #The only data is 20x asthma->pneumonia pair
 
 
   trajectoryAnalysisArgs <- Trajectories::createTrajectoryAnalysisArgs(minimumDaysBetweenEvents = 1,
