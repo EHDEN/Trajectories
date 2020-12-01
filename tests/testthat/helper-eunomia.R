@@ -9,8 +9,12 @@ clearConditionsTable<-function(connection) {
   executeSql(connection, "DELETE FROM CONDITION_OCCURRENCE;")
 }
 
-getPatientIds<-function(connection,n=2694) {
-  res<-querySql(connection, paste0('SELECT person_id FROM PERSON LIMIT ',as.numeric(n),';'))
+getPatientIds<-function(connection,n=2694,excludePatientIds=c()) {
+  if(length(excludePatientIds)>0) {
+    res<-querySql(connection, paste0('SELECT person_id FROM PERSON WHERE person_id NOT IN (',paste0(excludePatientIds,collapse=","),') ORDER BY random() LIMIT ',as.numeric(n),';'))
+  } else {
+    res<-querySql(connection, paste0('SELECT person_id FROM PERSON ORDER BY random() LIMIT ',as.numeric(n),';'))
+  }
   return(res$PERSON_ID)
 }
 
@@ -97,10 +101,10 @@ addRandomEvents<-function(connection,n_per_person_range=c(0,5),exclude_concept_i
 }
 
 
-addConditionEventPair<-function(connection,event1_concept_id,event2_concept_id,n) {
+addConditionEventPair<-function(connection,event1_concept_id,event2_concept_id,n, excludePatientIds=c()) {
   print(paste0('Adding ',n,'x ',event1_concept_id,'->',event2_concept_id,' event pair to te data'))
   if(n>2694) warning("Error in tests: n>2694 but there are 2694 people in Eunomia database")
-  person_ids<-getPatientIds(connection, n)
+  person_ids<-getPatientIds(connection, n, excludePatientIds=excludePatientIds)
   for(person_id in person_ids) {
     #print(person_id)
     addConditionEventPairForPerson(connection,event1_concept_id,event2_concept_id,person_id)

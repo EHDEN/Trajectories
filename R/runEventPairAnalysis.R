@@ -194,6 +194,7 @@ runEventPairAnalysis<-function(connection,
                                                          effect = event_pair_effect,
                                                          diag1 = diagnosis1,
                                                          diag2 = diagnosis2,
+                                                         E2_COUNT_IN_CONTROL_GROUP = round(observation_count*expected_prob),
                                                          prefix =  trajectoryLocalArgs$prefixForResultTableNames
         )
         DatabaseConnector::executeSql(connection, sql=RenderedSql, progressBar = FALSE, reportOverallTime = FALSE)

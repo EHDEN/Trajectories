@@ -382,6 +382,7 @@ ALTER TABLE @resultsSchema.@prefiXE1E2_model ADD EVENTPERIOD_COUNT_E1_E2_OCCUR_O
 ALTER TABLE @resultsSchema.@prefiXE1E2_model ADD DIRECTIONAL_EVENT_PAIR_PVALUE FLOAT NULL;
 ALTER TABLE @resultsSchema.@prefiXE1E2_model ADD E1_COUNT INT NULL;
 ALTER TABLE @resultsSchema.@prefiXE1E2_model ADD E2_COUNT INT NULL;
+ALTER TABLE @resultsSchema.@prefiXE1E2_model ADD E2_COUNT_IN_CONTROL_GROUP INT NULL;
 ALTER TABLE @resultsSchema.@prefiXE1E2_model ADD EVENTPERIOD_COUNT_HAVING_E2_RIGHT_AFTER_E1 INT NULL; --this field is filled after the analysis when we consider only trajectories and events that are significant
 
 
