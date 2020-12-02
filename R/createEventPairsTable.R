@@ -19,6 +19,7 @@ createEventPairsTable<-function(connection,
   if(trajectoryAnalysisArgs$minPatientsPerEventPair<1) {
     cohortCount<-getCohortSize(connection, trajectoryLocalArgs)
     minPatientsPerEventPair=round(cohortCount*trajectoryAnalysisArgs$minPatientsPerEventPair)
+    if(minPatientsPerEventPair==0) minPatientsPerEventPair=1
     logger::log_info(paste0('Parameter value of minPatientsPerEventPair=',trajectoryAnalysisArgs$minPatientsPerEventPair,' is less than 1. ',
                   'Therefore, it is handled as prevalence instead of an absolute number. ',
                   'The absolute number is calculated based on cohort size (n=',cohortCount,') as follows: ',

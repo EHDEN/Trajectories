@@ -101,7 +101,7 @@ IF OBJECT_ID('@resultsSchema.@prefiXevents', 'U') IS NOT NULL
       e.observation_concept_id  AS CONCEPT_ID,
       min(e.observation_date)   AS date
     FROM @cdmDatabaseSchema.observation e
-    INNER JOIN @resultsSchema.@prefiXmycohort c ON e.person_id=c.person_id {@daysBeforeIndexDate == Inf} ? {} : { AND DATEADD(day,@daysBeforeIndexDate,e.condition_start_date)>=c.eventperiod_start_date } AND e.observation_date>=c.eventperiod_start_date AND e.observation_date<=c.eventperiod_end_date
+    INNER JOIN @resultsSchema.@prefiXmycohort c ON e.person_id=c.person_id {@daysBeforeIndexDate == Inf} ? {} : { AND DATEADD(day,@daysBeforeIndexDate,e.observation_date)>=c.eventperiod_start_date } AND e.observation_date>=c.eventperiod_start_date AND e.observation_date<=c.eventperiod_end_date
     WHERE
       1=@addObservations -- if addObservations is TRUE, then this UNION is ADDED, otherwise this query give 0 rows as result
       AND
@@ -116,7 +116,7 @@ IF OBJECT_ID('@resultsSchema.@prefiXevents', 'U') IS NOT NULL
       e.procedure_concept_id  AS CONCEPT_ID,
       min(e.procedure_date)   AS date
     FROM @cdmDatabaseSchema.procedure_occurrence e
-    INNER JOIN @resultsSchema.@prefiXmycohort c ON e.person_id=c.person_id {@daysBeforeIndexDate == Inf} ? {} : { AND DATEADD(day,@daysBeforeIndexDate,e.condition_start_date)>=c.eventperiod_start_date } AND e.procedure_date>=c.eventperiod_start_date AND e.procedure_date<=c.eventperiod_end_date
+    INNER JOIN @resultsSchema.@prefiXmycohort c ON e.person_id=c.person_id {@daysBeforeIndexDate == Inf} ? {} : { AND DATEADD(day,@daysBeforeIndexDate,e.procedure_date)>=c.eventperiod_start_date } AND e.procedure_date>=c.eventperiod_start_date AND e.procedure_date<=c.eventperiod_end_date
     WHERE
       1=@addProcedures -- if addProcedures is TRUE, then this UNION is ADDED, otherwise this query give 0 rows as result
       AND
@@ -131,7 +131,7 @@ IF OBJECT_ID('@resultsSchema.@prefiXevents', 'U') IS NOT NULL
       e.drug_concept_id                 AS CONCEPT_ID,
       min(e.drug_exposure_start_date)   AS date
     FROM @cdmDatabaseSchema.drug_exposure e
-    INNER JOIN @resultsSchema.@prefiXmycohort c ON e.person_id=c.person_id {@daysBeforeIndexDate == Inf} ? {} : { AND DATEADD(day,@daysBeforeIndexDate,e.condition_start_date)>=c.eventperiod_start_date } AND e.drug_exposure_start_date>=c.eventperiod_start_date AND e.drug_exposure_start_date<=c.eventperiod_end_date
+    INNER JOIN @resultsSchema.@prefiXmycohort c ON e.person_id=c.person_id {@daysBeforeIndexDate == Inf} ? {} : { AND DATEADD(day,@daysBeforeIndexDate,e.drug_exposure_start_date)>=c.eventperiod_start_date } AND e.drug_exposure_start_date>=c.eventperiod_start_date AND e.drug_exposure_start_date<=c.eventperiod_end_date
     WHERE
       1=@addDrugExposures -- if addDrugExposures is TRUE, then this UNION is ADDED, otherwise this query give 0 rows as result
       AND
@@ -146,7 +146,7 @@ IF OBJECT_ID('@resultsSchema.@prefiXevents', 'U') IS NOT NULL
       e.drug_concept_id           AS CONCEPT_ID,
       min(e.drug_era_start_date)  AS date
     FROM @cdmDatabaseSchema.drug_era e
-    INNER JOIN @resultsSchema.@prefiXmycohort c ON e.person_id=c.person_id {@daysBeforeIndexDate == Inf} ? {} : { AND DATEADD(day,@daysBeforeIndexDate,e.condition_start_date)>=c.eventperiod_start_date } AND e.drug_era_start_date>=c.eventperiod_start_date AND e.drug_era_start_date<=c.eventperiod_end_date
+    INNER JOIN @resultsSchema.@prefiXmycohort c ON e.person_id=c.person_id {@daysBeforeIndexDate == Inf} ? {} : { AND DATEADD(day,@daysBeforeIndexDate,e.drug_era_start_date)>=c.eventperiod_start_date } AND e.drug_era_start_date>=c.eventperiod_start_date AND e.drug_era_start_date<=c.eventperiod_end_date
     WHERE
       1=@addDrugEras -- if addDrugEras is TRUE, then this UNION is ADDED, otherwise this query give 0 rows as result
       AND
@@ -161,7 +161,7 @@ IF OBJECT_ID('@resultsSchema.@prefiXevents', 'U') IS NOT NULL
       4216316                   AS CONCEPT_ID, -- this is a birth event
       MIN(CAST(e.birth_datetime AS DATE))   AS date
      FROM @cdmDatabaseSchema.person e
-     INNER JOIN @resultsSchema.@prefiXmycohort c ON e.person_id=c.person_id {@daysBeforeIndexDate == Inf} ? {} : { AND DATEADD(day,@daysBeforeIndexDate,e.condition_start_date)>=c.eventperiod_start_date } AND CAST(e.birth_datetime AS DATE)>=c.eventperiod_start_date AND CAST(e.birth_datetime AS DATE)<=c.eventperiod_end_date
+     INNER JOIN @resultsSchema.@prefiXmycohort c ON e.person_id=c.person_id {@daysBeforeIndexDate == Inf} ? {} : { AND DATEADD(day,@daysBeforeIndexDate,CAST(e.birth_datetime AS DATE))>=c.eventperiod_start_date } AND CAST(e.birth_datetime AS DATE)>=c.eventperiod_start_date AND CAST(e.birth_datetime AS DATE)<=c.eventperiod_end_date
      WHERE
       1=@addBirths -- if addBirths is TRUE, then this UNION is ADDED, otherwise this query give 0 rows as result
       AND
@@ -176,7 +176,7 @@ IF OBJECT_ID('@resultsSchema.@prefiXevents', 'U') IS NOT NULL
       40566982              AS CONCEPT_ID, -- this is a death event
       MIN(CAST(e.death_date AS DATE)) AS date --death.death_datetime not required in CDM 5.1, death.death_date used instead
     FROM @cdmDatabaseSchema.death e
-    INNER JOIN @resultsSchema.@prefiXmycohort c on e.person_id=c.person_id {@daysBeforeIndexDate == Inf} ? {} : { AND DATEADD(day,@daysBeforeIndexDate,e.condition_start_date)>=c.eventperiod_start_date } AND CAST(e.death_date AS DATE)>=c.eventperiod_start_date AND CAST(e.death_date AS DATE)<=c.eventperiod_end_date
+    INNER JOIN @resultsSchema.@prefiXmycohort c on e.person_id=c.person_id {@daysBeforeIndexDate == Inf} ? {} : { AND DATEADD(day,@daysBeforeIndexDate,CAST(e.death_date AS DATE))>=c.eventperiod_start_date } AND CAST(e.death_date AS DATE)>=c.eventperiod_start_date AND CAST(e.death_date AS DATE)<=c.eventperiod_end_date
     WHERE
       1=@addDeaths -- if addDeaths is TRUE, then this UNION is ADDED, otherwise this query give 0 rows as result
       AND

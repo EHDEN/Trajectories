@@ -21,6 +21,11 @@ createFilteredFullgraphs<-function(connection,
   # create igraph object from event pairs
   g<-Trajectories::createTrajectoriesGraph(eventPairResultsFilename)
 
+  if(length(V(g))==0) {
+    logger::log_warn('The graph contains 0 events, skip plotting figures.')
+    return()
+  }
+
   cohortName=trajectoryAnalysisArgs$cohortName
 
 
