@@ -31,12 +31,12 @@ addConditionEventTrajectoryForPerson<-function(connection,event_concept_ids=c(13
   startDate=obsPeriod$OBSERVATION_PERIOD_START_DATE
   endDate=obsPeriod$OBSERVATION_PERIOD_END_DATE
 
-  prevDate=startDate
+  prevDate=as.Date(startDate)-1
   datecounter=0
   for(concept_id in event_concept_ids) {
     datecounter=datecounter+1
     eventDate=sample(seq(as.Date(prevDate)+1, as.Date(endDate)-(length(event_concept_ids)-datecounter), by="day"), 1) #some magic here just to guarantee that no events occur on same date and there are enough free dates for the events
-
+    if(eventDate==prevDate) stop(paste0('Error in helper-eunomia: addConditionEventTrajectoryForPerson(): eventDate is the same as prevDate (',eventDate,')'))
     #For SQLite, we must convert dates to real numbers (otherwise it does not work with other REAL dates in Eunomia package)
     #Therefore, some magic is needed. First, convert to YYYYMMDD format and second, use SQL CONVERT(DATE,...) function.
     #Another problem is SqlRender translation bug https://github.com/OHDSI/SqlRender/issues/232 So we hardcode SQLite translation here
@@ -233,6 +233,21 @@ getEventPairFromEventPairsTable<-function(event1_concept_id,event2_concept_id,tr
   e<-getEventPairsTableAsDataFrame(trajectoryLocalArgs,trajectoryAnalysisArgs,filename=filename)
   res<-e %>% filter(E1_CONCEPT_ID==event1_concept_id & E2_CONCEPT_ID==event2_concept_id)
   return(res)
+}
+
+getTrajectoryFileAsDataFrame<-function(trajectoryLocalArgs,trajectoryAnalysisArgs,concept_id,concept_name) {
+  #Get output folder for this analysis
+  outputFolder<-Trajectories::GetOutputFolder(trajectoryLocalArgs,trajectoryAnalysisArgs,createIfMissing=F)
+  filename = file.path(outputFolder,paste0(concept_name,concept_id,'.constructed.limit50.events.trajs.csv'))
+  #Get event_pairs.csv table
+  d = read.csv2(file = filename, sep = '\t', header = TRUE, as.is=T)
+  return(d)
+}
+
+getTrajectoryFromTrajectoryFile<-function(trajectoryLocalArgs,trajectoryAnalysisArgs,concept_id,concept_name,trajectory_concept_ids=c()) {
+  d<-getTrajectoryFileAsDataFrame(trajectoryLocalArgs,trajectoryAnalysisArgs,concept_id,concept_name)
+  d<-d %>% filter(trajectory.str==paste0(trajectory_concept_ids,collapse="-") )
+  return(d)
 }
 
 removeTestableOutputFiles<-function(trajectoryLocalArgs,trajectoryAnalysisArgs) {

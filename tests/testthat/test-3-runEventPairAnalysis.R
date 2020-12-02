@@ -275,8 +275,8 @@ test_that("Test ability to detect a longer trajectory (consisting of 2 pairs)", 
   #Create output folder for this analysis
   outputFolder<-Trajectories::GetOutputFolder(trajectoryLocalArgs,trajectoryAnalysisArgs,createIfMissing=T)
 
-  # Set up logger
-  Trajectories::InitLogger(logfile = file.path(outputFolder,'log.txt'), threshold = logger:::DEBUG)
+  # Set up logger (when debugging only)
+  #Trajectories::InitLogger(logfile = file.path(outputFolder,'log.txt'), threshold = logger:::DEBUG)
 
   #Remove output files (if exist from previous run)
   removeTestableOutputFiles(trajectoryLocalArgs,trajectoryAnalysisArgs)

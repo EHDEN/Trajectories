@@ -338,7 +338,7 @@ alignActualTrajectoriesToGraph <- function(connection,
   if(!is.na(filename_interpretation)) {
     logger::log_info(' Step 4: Saving graph interpretation to file: {filename_interpretation}...')
     #most frequent event pair
-    most_frequent_edge<-E(g)[which(E(g)$alignedTrajsCount==max(E(g)$alignedTrajsCount))]
+    most_frequent_edge<-E(g)[which(E(g)$alignedTrajsCount==max(E(g)$alignedTrajsCount))][1] # [1] here to take the first in case there are several equally frequent edges
     msg=paste0("For example, ",most_frequent_edge$alignedTrajsCount," event-periods (",round(most_frequent_edge$alignedTrajsProb*100,1),"%) have '",V(g)[V(g)$concept_id==most_frequent_edge$e2_concept_id]$name,"' right after '",V(g)[V(g)$concept_id==most_frequent_edge$e1_concept_id]$name,"'")
     INTERPRETER.MSG=c(INTERPRETER.MSG,msg)
 

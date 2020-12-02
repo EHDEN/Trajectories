@@ -57,7 +57,7 @@ plotTrajectoriesGraph<-function(g,layout=layout_nicely(g),outputPdfFullpath=F,no
   edgecolor[linknumbers==0]<-rgb(220,220,220,alpha=128,maxColorValue=255)
   edgewidth[linknumbers==0]<-1
   edgelabel_cex[linknumbers==0]<-0.5
-  if(is.na(linklabels)) linklabels=linknumbers
+  if(is.na(linklabels[1])) linklabels=linknumbers
 
   #normalized Event count
   V(g)$size<-nodesizes/max(nodesizes)
