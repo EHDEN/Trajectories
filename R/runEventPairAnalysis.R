@@ -6,6 +6,7 @@ library(logger)
 #' @param connection DatabaseConnectorConnection object that is used to connect with database
 #' @param trajectoryAnalysisArgs TrajectoryAnalysisArgs object that must be created by createTrajectoryAnalysisArgs() method
 #' @param trajectoryLocalArgs TrajectoryLocalArgs object that must be created by createTrajectoryLocalArgs() method
+#' @param forceRecalculation Set to TRUE if you wish to recalculate p-values for all pairs again. If it is set to FALSE, it avoids overcalculating p-values for pairs that have been analyzed already.
 #'
 #' @return
 #' @export
@@ -13,7 +14,8 @@ library(logger)
 #' @examples
 runEventPairAnalysis<-function(connection,
                                trajectoryAnalysisArgs,
-                               trajectoryLocalArgs) {
+                               trajectoryLocalArgs,
+                               forceRecalculation=F) {
 
   outputFolder<-Trajectories::GetOutputFolder(trajectoryLocalArgs,trajectoryAnalysisArgs)
   d1d2ModelResultsFilename = file.path(outputFolder,'event_pairs_tested.tsv')
@@ -34,14 +36,21 @@ runEventPairAnalysis<-function(connection,
   )
   dpairs = DatabaseConnector::querySql(connection, RenderedSql)
 
+  #Leave out pairs that have E1_E2_EVENTPERIOD_COUNT==0 (some counts might be 0 in case of validation mode). Skip them from the analysis to not affect Bonferroni correction
+  dpairs_for_analysis<-dpairs %>% filter(E1_E2_EVENTPERIOD_COUNT>0)
+
+  if(nrow(dpairs)!=nrow(dpairs_for_analysis)) {
+    logger::log_info(paste0('There are ',nrow(dpairs),' event pairs in the original event pairs tabel. However, ',nrow(dpairs)-nrow(dpairs_for_analysis),' have count=0 and are therefore skipped from the remaining analysis.'))
+  }
+
   # Determine p-value threshold of Bonferroni correction
-  cutoff_pval = 0.05/nrow(dpairs)
-  logger::log_info(paste0('There are ',nrow(dpairs),' event pairs that are going to be analyzed.'))
-  if(nrow(dpairs)==0) {
+  cutoff_pval = 0.05/nrow(dpairs_for_analysis)
+  logger::log_info(paste0('There are ',nrow(dpairs_for_analysis),' event pairs that are going to be analyzed.'))
+  if(nrow(dpairs_for_analysis)==0) {
     logger::log_info('Nothing to analyze, exit analysis function.')
     return(1);
   }
-  logger::log_info(paste0('We use Bonferroni multiple test correction, therefore p-value threshold 0.05/',nrow(dpairs),'=',cutoff_pval,' is used in association analysis.'))
+  logger::log_info(paste0('We use Bonferroni multiple test correction, therefore p-value threshold 0.05/',nrow(dpairs_for_analysis),'=',cutoff_pval,' is used in association analysis.'))
   logger::log_info(paste0('For directionality tests, a different p-value threshold is used. It depends on the actual number of significant associactions and will be calculated in the end of analysis.'))
   logger::log_info(paste0('To indicate the estimated number of significant event pairs while the anaylsis is running, we use the same (very conservative) p-value threshold as for association analysis.'))
 
@@ -49,46 +58,48 @@ runEventPairAnalysis<-function(connection,
   significant_directional_pairs_count=0
   starttime=Sys.time()
   # For each event pair, run the analysis
-  for(i in 1:nrow(dpairs))
+  for(i in 1:nrow(dpairs_for_analysis))
     {
-      diagnosis1 = dpairs[i,'E1_CONCEPT_ID']
-      diagnosis2 = dpairs[i,'E2_CONCEPT_ID']
-
+      diagnosis1 = dpairs_for_analysis[i,'E1_CONCEPT_ID']
+      diagnosis2 = dpairs_for_analysis[i,'E2_CONCEPT_ID']
+      event_pair_pvalue=1
 
       logger::log_info(paste0('Analyzing event pair ',diagnosis1,' -> ',diagnosis2,' (total progress ',
-                                                                            round(100*i/nrow(dpairs)),
+                                                                            round(100*i/nrow(dpairs_for_analysis)),
                                                                             '%, # sign pairs: ',
                                                                             significant_pairs_count,
                                                                             ', at least ',
                                                                             significant_directional_pairs_count,
-                                                                            ' directional, estimated time left: ',Trajectories::estimatedTimeRemaining(progress_perc=(i-1)/nrow(dpairs),starttime=starttime),
+                                                                            ' directional, estimated time left: ',Trajectories::estimatedTimeRemaining(progress_perc=(i-1)/nrow(dpairs_for_analysis),starttime=starttime),
                                                                             ')...'))
 
       # Avoid recalculation if the data is already there (the analysis has already run up to some point)
-      pairCheckingSql <- Trajectories::loadRenderTranslateSql("pvalueChecker.sql",
-                                                              packageName=trajectoryAnalysisArgs$packageName,
-                                                              dbms=connection@dbms,
-                                                              resultsSchema =  trajectoryLocalArgs$resultsSchema,
-                                                              prefix =  trajectoryLocalArgs$prefixForResultTableNames,
-                                                              diag1 = diagnosis1,
-                                                              diag2 = diagnosis2)
-      pvalueCheck = DatabaseConnector::querySql(connection, pairCheckingSql)
-      if(!is.na(pvalueCheck$EVENT_PAIR_PVALUE) &
-          ((pvalueCheck$EVENT_PAIR_PVALUE > cutoff_pval) | (pvalueCheck$EVENT_PAIR_PVALUE <= cutoff_pval & !is.na(pvalueCheck$DIRECTIONAL_EVENT_PAIR_PVALUE)))
-         ) {
+      if(forceRecalculation==F) {
+        pairCheckingSql <- Trajectories::loadRenderTranslateSql("pvalueChecker.sql",
+                                                                packageName=trajectoryAnalysisArgs$packageName,
+                                                                dbms=connection@dbms,
+                                                                resultsSchema =  trajectoryLocalArgs$resultsSchema,
+                                                                prefix =  trajectoryLocalArgs$prefixForResultTableNames,
+                                                                diag1 = diagnosis1,
+                                                                diag2 = diagnosis2)
+        pvalueCheck = DatabaseConnector::querySql(connection, pairCheckingSql)
+        if(!is.na(pvalueCheck$EVENT_PAIR_PVALUE) &
+            ((pvalueCheck$EVENT_PAIR_PVALUE > cutoff_pval) | (pvalueCheck$EVENT_PAIR_PVALUE <= cutoff_pval & !is.na(pvalueCheck$DIRECTIONAL_EVENT_PAIR_PVALUE)))
+           ) {
 
-        if (pvalueCheck$EVENT_PAIR_PVALUE <= cutoff_pval) {
+          if (pvalueCheck$EVENT_PAIR_PVALUE <= cutoff_pval) {
 
-          significant_pairs_count <- significant_pairs_count + 1
+            significant_pairs_count <- significant_pairs_count + 1
 
-          if (pvalueCheck$DIRECTIONAL_EVENT_PAIR_PVALUE <= cutoff_pval) {
-            significant_directional_pairs_count <- significant_directional_pairs_count + 1
+            if (pvalueCheck$DIRECTIONAL_EVENT_PAIR_PVALUE <= cutoff_pval) {
+              significant_directional_pairs_count <- significant_directional_pairs_count + 1
+            }
           }
-        }
-        logger::log_info(paste0("P-value already calculated for event pair ",diagnosis1," -> ",diagnosis2," (skipping)"))
-        next #halts the processing of the current "for loop" iteration and continues with the next iteration
+          logger::log_info(paste0("P-value already calculated for event pair ",diagnosis1," -> ",diagnosis2," (skipping)"))
+          next #halts the processing of the current "for loop" iteration and continues with the next iteration
 
-      }
+        }
+      } #if(forceRecalculation==F)
 
 
       # Extract necessary event1_concept_id->event2_concept_id data from table d1d2_analysistable
@@ -101,6 +112,8 @@ runEventPairAnalysis<-function(connection,
                                                        prefix =  trajectoryLocalArgs$prefixForResultTableNames
       )
       case_control = DatabaseConnector::querySql(connection, RenderedSql)
+
+
 
       # The code below is going to answer the following question:
       #       If there is no difference in event2_concept_id prevalence between case group (people having event1_concept_id) and control group
@@ -153,125 +166,128 @@ runEventPairAnalysis<-function(connection,
       #} else {
 
 
-        # Find "adjusted" expected prevalence of event2_concept_id in case group based on event1_concept_id distribution in case group:
-        expected_prob <- sum(case_control$group_prob * case_control$match_prob)
-        # Sometimes the arithmetics above gives a result (probability) slighlty greater than 1. Lets fix this.
-        if (expected_prob > 1){
-          expected_prob = 1
-        }
+      # Find "adjusted" expected prevalence of event2_concept_id in case group based on event1_concept_id distribution in case group:
+      expected_prob <- sum(case_control$group_prob * case_control$match_prob)
+      # Sometimes the arithmetics above gives a result (probability) slighlty greater than 1. Lets fix this.
+      if (expected_prob > 1){
+        expected_prob = 1
+      }
 
-        # In general population event2_concept_id occurs with probability p=expected_prob
-        # Assume (null hypothesis) that in our case group, the probability is the same as in general population.
-        # That is, in case group, declare prob=expected_prob
-        # We are going to check whether the event2_concept_id prevalence in case group is different from this.
-        # In our case group, we have 'observation_count=sum(case_control$CASE_COUNT)' diagnosis pairs. That is, we run 'observation_count' tests.
-        # And we actually see event2_concept_id happening within case group 'observed_matches=sum(case_control$CASE_D2)' times.
-        # Therefore:  If the expected prevalence of event2_concept_id in case group is 'expected_prob',
-        #             what is the probability that we observe event2_concept_id in case group more than 'observed_matches-1'?
-        # This question can be easily answered by pbinom(..., lower.tail=FALSE) which gives cumulative density function (cdf) as a result
-        # Using lower.tail=FALSE is necessary, because otherwise pbinom would give the probability that we observe event2_concept_id in case group LESS than 'observed_matches'
+      # In general population event2_concept_id occurs with probability p=expected_prob
+      # Assume (null hypothesis) that in our case group, the probability is the same as in general population.
+      # That is, in case group, declare prob=expected_prob
+      # We are going to check whether the event2_concept_id prevalence in case group is different from this.
+      # In our case group, we have 'observation_count=sum(case_control$CASE_COUNT)' diagnosis pairs. That is, we run 'observation_count' tests.
+      # And we actually see event2_concept_id happening within case group 'observed_matches=sum(case_control$CASE_D2)' times.
+      # Therefore:  If the expected prevalence of event2_concept_id in case group is 'expected_prob',
+      #             what is the probability that we observe event2_concept_id in case group more than 'observed_matches-1'?
+      # This question can be easily answered by pbinom(..., lower.tail=FALSE) which gives cumulative density function (cdf) as a result
+      # Using lower.tail=FALSE is necessary, because otherwise pbinom would give the probability that we observe event2_concept_id in case group LESS than 'observed_matches'
 
 
-        observed_matches <- sum(case_control$CASE_D2)
-        logger::log_debug('Actual prevalence of D2 in (adjusted) control group is {round(expected_prob*100)}% (and in case group {round(observed_matches*100/sum(case_control$CASE_COUNT))}%). If the expected prevalence of event2_concept_id in case group is {expected_prob}, what is the probability that we observe event2_concept_id in case group more than {observed_matches-1} (we actually did {observed_matches})?')
-        logger::log_debug('If the expected prevalence of event2_concept_id in case group is {round(expected_prob*100)}%, what is the probability that we observe event2_concept_id in case group more than {observed_matches-1}?')
-        observation_count <- sum(case_control$CASE_COUNT)
-        event_pair_pvalue <- pbinom(q = ifelse(observed_matches==0,0,observed_matches-1), size = observation_count, prob = expected_prob, lower.tail=FALSE)
+      observed_matches <- sum(case_control$CASE_D2)
+      logger::log_debug('Actual prevalence of D2 in (adjusted) control group is {round(expected_prob*100)}% (and in case group {round(observed_matches*100/sum(case_control$CASE_COUNT))}%). If the expected prevalence of event2_concept_id in case group is {expected_prob}, what is the probability that we observe event2_concept_id in case group more than {observed_matches-1} (we actually did {observed_matches})?')
+      logger::log_debug('If the expected prevalence of event2_concept_id in case group is {round(expected_prob*100)}%, what is the probability that we observe event2_concept_id in case group more than {observed_matches-1}?')
+      observation_count <- sum(case_control$CASE_COUNT)
+      event_pair_pvalue <- pbinom(q = ifelse(observed_matches==0,0,observed_matches-1), size = observation_count, prob = expected_prob, lower.tail=FALSE)
 
-        #In case event_pair_pvalue <= cutoff_pval, the null hypothesis can be rejected and the prevalence of event2_concept_id among event1_concept_id patients
-        #is significantly larger than in general population.
-        #This means that we have found a significant event1_concept_id-event2_concept_id event pair!
+      #In case event_pair_pvalue <= cutoff_pval, the null hypothesis can be rejected and the prevalence of event2_concept_id among event1_concept_id patients
+      #is significantly larger than in general population.
+      #This means that we have found a significant event1_concept_id-event2_concept_id event pair!
 
-        #What is the "effect" (how many times the event2_concept_id prevalence in case group is higher than in control group)
-        event_pair_effect <- observed_matches / (observation_count*expected_prob)
+      #What is the "effect" (how many times the event2_concept_id prevalence in case group is higher than in control group)
+      event_pair_effect <- observed_matches / (observation_count*expected_prob)
 
-        # Writing the results back to database
-        RenderedSql <- Trajectories::loadRenderTranslateSql("6PvalInserter.sql",
+      E2_COUNT_IN_CONTROL_GROUP = round(observation_count*expected_prob)
+
+
+      # Writing the results back to database
+      RenderedSql <- Trajectories::loadRenderTranslateSql("6PvalInserter.sql",
+                                                       packageName=trajectoryAnalysisArgs$packageName,
+                                                       dbms=connection@dbms,
+                                                       resultsSchema =   trajectoryLocalArgs$resultsSchema,
+                                                       pval = event_pair_pvalue,
+                                                       effect = event_pair_effect,
+                                                       diag1 = diagnosis1,
+                                                       diag2 = diagnosis2,
+                                                       E2_COUNT_IN_CONTROL_GROUP = E2_COUNT_IN_CONTROL_GROUP,
+                                                       prefix =  trajectoryLocalArgs$prefixForResultTableNames
+      )
+      DatabaseConnector::executeSql(connection, sql=RenderedSql, progressBar = FALSE, reportOverallTime = FALSE)
+
+
+      # In case the event1_concept_id-event2_concept_id event pair is significant, let's investigate whether the order of the events is also important
+      if (event_pair_pvalue > cutoff_pval){
+
+        logger::log_debug(paste0('Event pair ',diagnosis1,' -> ',diagnosis2,' is not significant.'))
+
+      } else {
+        significant_pairs_count <- significant_pairs_count + 1
+        logger::log_debug(paste0('Event pair ',diagnosis1,' -> ',diagnosis2,' is significant. Testing its directionality...'))
+
+        #Calculate in database: among people that have event1_concept_id and event2_concept_id pair, how many have date1<date2, date1=date2, date1>date2
+        RenderedSql <- Trajectories::loadRenderTranslateSql("7DirectionCounts.sql",
                                                          packageName=trajectoryAnalysisArgs$packageName,
                                                          dbms=connection@dbms,
                                                          resultsSchema =   trajectoryLocalArgs$resultsSchema,
-                                                         pval = event_pair_pvalue,
-                                                         effect = event_pair_effect,
                                                          diag1 = diagnosis1,
                                                          diag2 = diagnosis2,
-                                                         E2_COUNT_IN_CONTROL_GROUP = round(observation_count*expected_prob),
                                                          prefix =  trajectoryLocalArgs$prefixForResultTableNames
         )
         DatabaseConnector::executeSql(connection, sql=RenderedSql, progressBar = FALSE, reportOverallTime = FALSE)
 
+        # Get calculation results from database
+        RenderedSql <- Trajectories::loadRenderTranslateSql("8DpairReader.sql",
+                                                         packageName=trajectoryAnalysisArgs$packageName,
+                                                         dbms=connection@dbms,
+                                                         resultsSchema =   trajectoryLocalArgs$resultsSchema,
+                                                         diag1=diagnosis1,
+                                                         diag2=diagnosis2,
+                                                         prefix =  trajectoryLocalArgs$prefixForResultTableNames
+        )
+        direction_counts = DatabaseConnector::querySql(connection, RenderedSql)
 
-        # In case the event1_concept_id-event2_concept_id event pair is significant, let's investigate whether the order of the events is also important
+
+        # If there is no significant direction in event pair event1_concept_id and event2_concept_id, then we expect to see event1_concept_id->event2_concept_id and event2_concept_id->event1_concept_id sequences
+        # with the same frequency. Say, we would expect that event1_concept_id is the first diagnosis in 50% cases (prob=0.5).
+        # Therefore: If the expected probability of seeing event1_concept_id as the first diagnosis is 0.5,
+        #            what is the probability that we observe event1_concept_id as the first diagnosis more than 'direction_counts$people_count_event1_occurs_first-1' times?
+        # This question can be easily answered by pbinom(..., lower.tail=FALSE) which gives cumulative density function (cdf) as a result
+        # Using lower.tail=FALSE is necessary, because otherwise pbinom would give the probability that we observe event1_concept_id as first diagnosis  LESS than 'direction_counts$people_count_event1_occurs_first'
+        eventperiod_count_event1_occurs_first = direction_counts$EVENTPERIOD_COUNT_E1_OCCURS_FIRST
+
+        total_tests = direction_counts$EVENTPERIOD_COUNT_E1_OCCURS_FIRST + direction_counts$EVENTPERIOD_COUNT_E2_OCCURS_FIRST + direction_counts$EVENTPERIOD_COUNT_E1_E2_OCCUR_ON_SAME_DAY #We also take into account the number of events on the same day to prevent problem, when 1000 events occur on same day, but 10 times E1 is before E2 and 1 times vice verca and this is significant.
+        logger::log_debug('In case group, event1 occurs {direction_counts$COHORT_COUNT_EVENT1_OCCURS_FIRST} times as the first event and {direction_counts$COHORT_COUNT_EVENT2_OCCURS_FIRST} as the second event.')
+        logger::log_debug('Both events occur on same day {direction_counts$COHORT_COUNT_EVENT1_EVENT2_OCCUR_ON_SAME_DAY} times.')
+        eventperiod_count_event1_occurs_first_for_test=direction_counts$EVENTPERIOD_COUNT_E1_OCCURS_FIRST + round(direction_counts$EVENTPERIOD_COUNT_E1_E2_OCCUR_ON_SAME_DAY/2)
+        logger::log_debug('If the expected probability of event1 being the first diagnosis is 0.5, what is the probability that we observe event1 as the first event more than {direction_counts$COHORT_COUNT_EVENT1_OCCURS_FIRST}+{direction_counts$COHORT_COUNT_EVENT1_EVENT2_OCCUR_ON_SAME_DAY}/2-1={eventperiod_count_event1_occurs_first_for_test-1} times out of {total_tests} trials?')
+        event_pair_pvalue <- pbinom(q = ifelse(eventperiod_count_event1_occurs_first_for_test==0,0,eventperiod_count_event1_occurs_first_for_test-1), size = total_tests, prob = 0.5, lower.tail=FALSE)
+        logger::log_debug('Answer: p-val={event_pair_pvalue}')
+
+        # Store the pvalue to database
+        RenderedSql <- Trajectories::loadRenderTranslateSql("9PvalInserterDirection.sql",
+                                                         packageName=trajectoryAnalysisArgs$packageName,
+                                                         dbms=connection@dbms,
+                                                         resultsSchema =   trajectoryLocalArgs$resultsSchema,
+                                                         pval = event_pair_pvalue,
+                                                         diag1 = diagnosis1,
+                                                         diag2 = diagnosis2,
+                                                         prefix =  trajectoryLocalArgs$prefixForResultTableNames
+        )
+        DatabaseConnector::executeSql(connection, sql=RenderedSql, progressBar = FALSE, reportOverallTime = FALSE)
+
         if (event_pair_pvalue > cutoff_pval){
 
-          logger::log_debug(paste0('Event pair ',diagnosis1,' -> ',diagnosis2,' is not significant.'))
+          logger::log_debug(paste0('The direction of event pair ',diagnosis1,' -> ',diagnosis2,' is not significant (might become significant after threshold adjustment).'))
 
         } else {
-          significant_pairs_count <- significant_pairs_count + 1
-          logger::log_debug(paste0('Event pair ',diagnosis1,' -> ',diagnosis2,' is significant. Testing its directionality...'))
 
-          #Calculate in database: among people that have event1_concept_id and event2_concept_id pair, how many have date1<date2, date1=date2, date1>date2
-          RenderedSql <- Trajectories::loadRenderTranslateSql("7DirectionCounts.sql",
-                                                           packageName=trajectoryAnalysisArgs$packageName,
-                                                           dbms=connection@dbms,
-                                                           resultsSchema =   trajectoryLocalArgs$resultsSchema,
-                                                           diag1 = diagnosis1,
-                                                           diag2 = diagnosis2,
-                                                           prefix =  trajectoryLocalArgs$prefixForResultTableNames
-          )
-          DatabaseConnector::executeSql(connection, sql=RenderedSql, progressBar = FALSE, reportOverallTime = FALSE)
-
-          # Get calculation results from database
-          RenderedSql <- Trajectories::loadRenderTranslateSql("8DpairReader.sql",
-                                                           packageName=trajectoryAnalysisArgs$packageName,
-                                                           dbms=connection@dbms,
-                                                           resultsSchema =   trajectoryLocalArgs$resultsSchema,
-                                                           diag1=diagnosis1,
-                                                           diag2=diagnosis2,
-                                                           prefix =  trajectoryLocalArgs$prefixForResultTableNames
-          )
-          direction_counts = DatabaseConnector::querySql(connection, RenderedSql)
-
-
-          # If there is no significant direction in event pair event1_concept_id and event2_concept_id, then we expect to see event1_concept_id->event2_concept_id and event2_concept_id->event1_concept_id sequences
-          # with the same frequency. Say, we would expect that event1_concept_id is the first diagnosis in 50% cases (prob=0.5).
-          # Therefore: If the expected probability of seeing event1_concept_id as the first diagnosis is 0.5,
-          #            what is the probability that we observe event1_concept_id as the first diagnosis more than 'direction_counts$people_count_event1_occurs_first-1' times?
-          # This question can be easily answered by pbinom(..., lower.tail=FALSE) which gives cumulative density function (cdf) as a result
-          # Using lower.tail=FALSE is necessary, because otherwise pbinom would give the probability that we observe event1_concept_id as first diagnosis  LESS than 'direction_counts$people_count_event1_occurs_first'
-          eventperiod_count_event1_occurs_first = direction_counts$EVENTPERIOD_COUNT_E1_OCCURS_FIRST
-
-          total_tests = direction_counts$EVENTPERIOD_COUNT_E1_OCCURS_FIRST + direction_counts$EVENTPERIOD_COUNT_E2_OCCURS_FIRST + direction_counts$EVENTPERIOD_COUNT_E1_E2_OCCUR_ON_SAME_DAY #We also take into account the number of events on the same day to prevent problem, when 1000 events occur on same day, but 10 times E1 is before E2 and 1 times vice verca and this is significant.
-          logger::log_debug('In case group, event1 occurs {direction_counts$COHORT_COUNT_EVENT1_OCCURS_FIRST} times as the first event and {direction_counts$COHORT_COUNT_EVENT2_OCCURS_FIRST} as the second event.')
-          logger::log_debug('Both events occur on same day {direction_counts$COHORT_COUNT_EVENT1_EVENT2_OCCUR_ON_SAME_DAY} times.')
-          eventperiod_count_event1_occurs_first_for_test=direction_counts$EVENTPERIOD_COUNT_E1_OCCURS_FIRST + round(direction_counts$EVENTPERIOD_COUNT_E1_E2_OCCUR_ON_SAME_DAY/2)
-          logger::log_debug('If the expected probability of event1 being the first diagnosis is 0.5, what is the probability that we observe event1 as the first event more than {direction_counts$COHORT_COUNT_EVENT1_OCCURS_FIRST}+{direction_counts$COHORT_COUNT_EVENT1_EVENT2_OCCUR_ON_SAME_DAY}/2-1={eventperiod_count_event1_occurs_first_for_test-1} times out of {total_tests} trials?')
-          event_pair_pvalue <- pbinom(q = ifelse(eventperiod_count_event1_occurs_first_for_test==0,0,eventperiod_count_event1_occurs_first_for_test-1), size = total_tests, prob = 0.5, lower.tail=FALSE)
-          logger::log_debug('Answer: p-val={event_pair_pvalue}')
-
-          # Store the pvalue to database
-          RenderedSql <- Trajectories::loadRenderTranslateSql("9PvalInserterDirection.sql",
-                                                           packageName=trajectoryAnalysisArgs$packageName,
-                                                           dbms=connection@dbms,
-                                                           resultsSchema =   trajectoryLocalArgs$resultsSchema,
-                                                           pval = event_pair_pvalue,
-                                                           diag1 = diagnosis1,
-                                                           diag2 = diagnosis2,
-                                                           prefix =  trajectoryLocalArgs$prefixForResultTableNames
-          )
-          DatabaseConnector::executeSql(connection, sql=RenderedSql, progressBar = FALSE, reportOverallTime = FALSE)
-
-          if (event_pair_pvalue > cutoff_pval){
-
-            logger::log_debug(paste0('The direction of event pair ',diagnosis1,' -> ',diagnosis2,' is not significant (might become significant after threshold adjustment).'))
-
-          } else {
-
-            significant_directional_pairs_count <- significant_directional_pairs_count + 1
-            logger::log_debug(paste0('The direction of event pair ',diagnosis1,' -> ',diagnosis2,' is significant.'))
-
-          }
+          significant_directional_pairs_count <- significant_directional_pairs_count + 1
+          logger::log_debug(paste0('The direction of event pair ',diagnosis1,' -> ',diagnosis2,' is significant.'))
 
         }
+
+      }
 
       #} #if
 
@@ -286,6 +302,17 @@ runEventPairAnalysis<-function(connection,
     cutoff_pval_direction=0.05
   }
   logger::log_info(paste0('... Therefore, Bonferroni corrected p-value threshold for directionality tests is 0.05/',significant_pairs_count,'=',cutoff_pval_direction))
+
+  # Update significance flag info in database
+  RenderedSql <- Trajectories::loadRenderTranslateSql("updateSignificanceFlag.sql",
+                                                      packageName=trajectoryAnalysisArgs$packageName,
+                                                      dbms=connection@dbms,
+                                                      resultsSchema =   trajectoryLocalArgs$resultsSchema,
+                                                      prefix =  trajectoryLocalArgs$prefixForResultTableNames,
+                                                      cutoff_pval=cutoff_pval,
+                                                      cutoff_pval_direction=cutoff_pval_direction
+  )
+  DatabaseConnector::executeSql(connection, sql=RenderedSql, progressBar = FALSE, reportOverallTime = FALSE)
 
   # Read in results
   RenderedSql <- Trajectories::loadRenderTranslateSql("11ResultsReader.sql",
@@ -336,7 +363,8 @@ runEventPairAnalysis<-function(connection,
         paste('========================='),
         paste(format(Sys.time(), '%d %B %Y %H:%M')),
         paste(''),
-        paste('Total number of event pairs analyzed:',nrow(dpairs)),
+        paste('Total number of event pairs in initial table:',nrow(dpairs)),
+        paste('Total number of event pairs analyzed (having non-zero count):',nrow(dpairs_for_analysis)),
         paste('Bonferroni corrected p-value threshold for association test:',cutoff_pval),
         paste('Bonferroni corrected p-value threshold for directionality test:',cutoff_pval_direction),
         paste('Number of significant event pairs:',significant_pairs_count),

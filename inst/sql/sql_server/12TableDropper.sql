@@ -6,6 +6,10 @@ IF OBJECT_ID('@resultsSchema.@prefiXE1_summary', 'U') IS NOT NULL
   DROP TABLE @resultsSchema.@prefiXE1_summary;
 IF OBJECT_ID('@resultsSchema.@prefiXE1E2_model', 'U') IS NOT NULL
   DROP TABLE @resultsSchema.@prefiXE1E2_model;
+IF OBJECT_ID('@resultsSchema.@prefiXE1E2_model_input', 'U') IS NOT NULL
+  DROP TABLE @resultsSchema.@prefiXE1E2_model_input;
+IF OBJECT_ID('@resultsSchema.@prefiXE1E2_model_temp', 'U') IS NOT NULL
+  DROP TABLE @resultsSchema.@prefiXE1E2_model_temp;
 IF OBJECT_ID('@resultsSchema.@prefiXE1E2_summary', 'U') IS NOT NULL
   DROP TABLE @resultsSchema.@prefiXE1E2_summary;
 IF OBJECT_ID('@resultsSchema.@prefiXE2_summary', 'U') IS NOT NULL

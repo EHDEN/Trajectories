@@ -4,7 +4,12 @@
 \alias{runEventPairAnalysis}
 \title{Runs the analysis that detects statistically significant directional event pairs and writes the results to file. Data is taken from database and it is expected that the tables are created by function createEventPairsTable()}
 \usage{
-runEventPairAnalysis(connection, trajectoryAnalysisArgs, trajectoryLocalArgs)
+runEventPairAnalysis(
+  connection,
+  trajectoryAnalysisArgs,
+  trajectoryLocalArgs,
+  forceRecalculation = F
+)
 }
 \arguments{
 \item{connection}{DatabaseConnectorConnection object that is used to connect with database}
@@ -12,6 +17,8 @@ runEventPairAnalysis(connection, trajectoryAnalysisArgs, trajectoryLocalArgs)
 \item{trajectoryAnalysisArgs}{TrajectoryAnalysisArgs object that must be created by createTrajectoryAnalysisArgs() method}
 
 \item{trajectoryLocalArgs}{TrajectoryLocalArgs object that must be created by createTrajectoryLocalArgs() method}
+
+\item{forceRecalculation}{Set to TRUE if you wish to recalculate p-values for all pairs again. If it is set to FALSE, it avoids overcalculating p-values for pairs that have been analyzed already.}
 }
 \value{
 

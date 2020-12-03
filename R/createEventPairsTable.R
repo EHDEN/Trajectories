@@ -40,16 +40,16 @@ createEventPairsTable<-function(connection,
   #Set SQL role of the database session
   Trajectories::setRole(connection,trajectoryLocalArgs$sqlRole)
 
-  RenderedSql = Trajectories::loadRenderTranslateSql(sqlFilename='1CohortCC.sql',
+  # Create everything up to E1E2_model table
+  logger::log_info("Creating event pairs in data...")
+  RenderedSql = Trajectories::loadRenderTranslateSql(sqlFilename='createEventPairsTable-part1.sql',
                                                   packageName=trajectoryAnalysisArgs$packageName,
                                                   dbms = connection@dbms,
                                                   oracleTempSchema = NULL,
                                                   resultsSchema = trajectoryLocalArgs$resultsSchema,
                                                   cdmDatabaseSchema = trajectoryLocalArgs$cdmDatabaseSchema,
-                                                  vocabDatabaseSchema = trajectoryLocalArgs$vocabDatabaseSchema,
                                                   minimumDaysBetweenEvents = trajectoryAnalysisArgs$minimumDaysBetweenEvents,
                                                   maximumDaysBetweenEvents = trajectoryAnalysisArgs$maximumDaysBetweenEvents,
-                                                  minPatientsPerEventPair = minPatientsPerEventPair,
                                                   daysBeforeIndexDate = trajectoryAnalysisArgs$daysBeforeIndexDate,
                                                   prefiX = trajectoryLocalArgs$prefixForResultTableNames,
                                                   cohortTableSchema = trajectoryLocalArgs$cohortTableSchema,
@@ -63,9 +63,88 @@ createEventPairsTable<-function(connection,
                                                   addBirths = ifelse(trajectoryAnalysisArgs$addBirths==T,1,0),
                                                   addDeaths = ifelse(trajectoryAnalysisArgs$addDeaths==T,1,0)
   )
-
-
   DatabaseConnector::executeSql(connection, sql=RenderedSql, profile=F, progressBar = TRUE, reportOverallTime = TRUE)
+  logger::log_info("...done.")
+
+  # Create and fill E1E2_model_input table
+  # There are two options here - either to build it from the actual data OR (in validation mode) build it from given event-pairs
+  #Check whether to run the method in validation mode
+  f=file.path(trajectoryLocalArgs$inputFolder,'event_pairs_for_validation.tsv')
+  if(file.exists(f)) {
+    logger::log_info(paste0("File 'event_pairs_for_validation.tsv' exists in input folder ",trajectoryLocalArgs$inputFolder))
+    logger::log_info("This means that the package is run in VALIDATION MODE")
+
+    logger::log_info("Data to E1E2_MODEL is taken from file 'event_pairs_for_validation.tsv'...")
+
+    #2Can't use simply insertTable here because in Eunomia package it does not solve schema name correctly. That's why this is commented out and we manually create SQL here :(
+    #insertTable(connection, tablename, edges, tempTable=F, progressBar=T)
+
+    e = read.csv2(file = f, sep = '\t', header = TRUE, as.is=T)
+
+    if(nrow(e)==0) logger::log_error("Package is run in validation mode, but file 'event_pairs_for_validation.tsv' is empty")
+
+    #Create empty table manually
+    RenderedSql <- Trajectories::loadRenderTranslateSql(sqlFilename='createEventPairsTable-part2b.sql',
+                                                        packageName=trajectoryAnalysisArgs$packageName,
+                                                        dbms = connection@dbms,
+                                                        oracleTempSchema = NULL,
+                                                        resultsSchema = trajectoryLocalArgs$resultsSchema,
+                                                        prefiX = trajectoryLocalArgs$prefixForResultTableNames
+    )
+    DatabaseConnector::executeSql(connection, sql=RenderedSql, profile=F, progressBar = TRUE, reportOverallTime = TRUE)
+
+    #Fill with data
+    logger::log_info("Filling {tablename} with data from 'event_pairs_for_validation.tsv'...")
+    tablename<-paste0(trajectoryLocalArgs$resultsSchema,'.',trajectoryLocalArgs$prefixForResultTableNames,'E1E2_MODEL_INPUT')
+    e$sql <- paste0("INSERT INTO ",
+                   tablename,
+                   " (E1_CONCEPT_ID,E2_CONCEPT_ID,E1_NAME,E1_DOMAIN,E2_NAME,E2_DOMAIN) VALUES (",
+                   e$E1_CONCEPT_ID,
+                   ",",
+                   e$E2_CONCEPT_ID,
+                   ",'",
+                   e$E1_NAME,
+                   "','",
+                   e$E1_DOMAIN,
+                   "','",
+                   e$E2_NAME,
+                   "','",
+                   e$E2_DOMAIN,
+                   "');")
+    for(insertSql in e$sql) {
+      RenderedSql <- SqlRender::translate(insertSql,targetDialect=attr(connection, "dbms"))
+      DatabaseConnector::executeSql(connection, RenderedSql)
+    }
+    logger::log_info("...done.")
+
+  } else {
+    logger::log_info("Running package in EXPLORATORY mode (not validating someone's results)")
+    RenderedSql = Trajectories::loadRenderTranslateSql(sqlFilename='createEventPairsTable-part2a.sql',
+                                                       packageName=trajectoryAnalysisArgs$packageName,
+                                                       dbms = connection@dbms,
+                                                       oracleTempSchema = NULL,
+                                                       resultsSchema = trajectoryLocalArgs$resultsSchema,
+                                                       vocabDatabaseSchema = trajectoryLocalArgs$vocabDatabaseSchema,
+                                                       minPatientsPerEventPair=minPatientsPerEventPair,
+                                                       prefiX = trajectoryLocalArgs$prefixForResultTableNames
+    )
+    DatabaseConnector::executeSql(connection, sql=RenderedSql, profile=F, progressBar = TRUE, reportOverallTime = TRUE)
+
+  }
+
+
+
+  # Create everything E1E2_model table and all that is inherited from that
+  logger::log_info("Creating statistics for events pairs that are going to be analyzed...")
+  RenderedSql = Trajectories::loadRenderTranslateSql(sqlFilename='createEventPairsTable-part3.sql',
+                                                     packageName=trajectoryAnalysisArgs$packageName,
+                                                     dbms = connection@dbms,
+                                                     oracleTempSchema = NULL,
+                                                     resultsSchema = trajectoryLocalArgs$resultsSchema,
+                                                     prefiX = trajectoryLocalArgs$prefixForResultTableNames
+  )
+  DatabaseConnector::executeSql(connection, sql=RenderedSql, profile=F, progressBar = TRUE, reportOverallTime = TRUE)
+  logger::log_info("...done.")
 
   #During the execution of 1CohortCC.sql, the SQL scripts some debug information to table @resultsSchema.@prefiXdebug. Lets write this to log also.
   sql<-"SELECT ENTRY FROM @resultsSchema.@prefiXdebug ORDER BY timestamp;"
