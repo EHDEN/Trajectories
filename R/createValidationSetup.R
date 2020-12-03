@@ -33,6 +33,9 @@ createValidationSetup<-function(trajectoryAnalysisArgs,
   file.copy(from=f, to=to)
   logger::log_debug("{f} copied to {to}")
 
+  # Save trajectoryAnalysisArgs into it
+  Trajectories::TrajectoryAnalysisArgsToJson(trajectoryAnalysisArgs, file.path(outputFolderForValidationSetup,"trajectoryAnalysisArgs.json"))
+
   # Copy event pairs into it
   eventPairResultsFilename = file.path(outputFolder,'event_pairs.tsv')
   eventPairResultsFilenameNew = file.path(outputFolderForValidationSetup,'event_pairs_for_validation.tsv')
