@@ -25,13 +25,17 @@ trajectoryLocalArgs <- Trajectories::createTrajectoryLocalArgs(oracleTempSchema 
                                                                 cohortTableSchema= 'ohdsi_temp',
                                                                 cohortTable='cohort',
                                                                 cohortId=1,
-                                                                inputFolder=system.file("extdata", "ADR", package = "Trajectories"), # Full path to input folder that contains SQL file for cohort definition and optionally also trajectoryAnalysisArgs.json. You can use built-in folders of this package such as: inputFolder=system.file("extdata", "T2D", package = "Trajectories")
+                                                                inputFolder=system.file("extdata", "T2D", package = "Trajectories"), # Full path to input folder that contains SQL file for cohort definition and optionally also trajectoryAnalysisArgs.json. You can use built-in folders of this package such as: inputFolder=system.file("extdata", "T2D", package = "Trajectories")
                                                                 mainOutputFolder='/Users/sulevr/temp', #Subfolders to this will be created automatically
                                                                 databaseHumanReadableName='TEST') #Use something short. It will be added to the titles of the graph.
 
 
 # Setting analysis parameters. Two options here:
 # a) either to to load them automatically from inputFolder via:
+
+     #Comment the following line in if you are running the package in validation mode. Comment it out if you are running the package in exploratory mode.
+     #trajectoryLocalArgs$inputFolder<-'/here/your/path/to/validation_setup'
+
      trajectoryAnalysisArgs<-Trajectories::TrajectoryAnalysisArgsFromInputFolder(trajectoryLocalArgs)
      # and note that you can still make changes to the parameters after loading it from file like this:
      # trajectoryAnalysisArgs$minPatientsPerEventPair=1000
