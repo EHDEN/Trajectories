@@ -94,8 +94,8 @@ createEventPairsTable<-function(connection,
     DatabaseConnector::executeSql(connection, sql=RenderedSql, profile=F, progressBar = TRUE, reportOverallTime = TRUE)
 
     #Fill with data
-    logger::log_info("Filling {tablename} with data from 'event_pairs_for_validation.tsv'...")
     tablename<-paste0(trajectoryLocalArgs$resultsSchema,'.',trajectoryLocalArgs$prefixForResultTableNames,'E1E2_MODEL_INPUT')
+    logger::log_info("Filling {tablename} with data from 'event_pairs_for_validation.tsv'...")
     e$sql <- paste0("INSERT INTO ",
                    tablename,
                    " (E1_CONCEPT_ID,E2_CONCEPT_ID,E1_NAME,E1_DOMAIN,E2_NAME,E2_DOMAIN) VALUES (",
