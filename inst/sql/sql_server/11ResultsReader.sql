@@ -7,4 +7,4 @@ WHERE
   AND
   EVENT_PAIR_EFFECT >= @effectSize
 
-ORDER BY EVENT_PAIR_EFFECT DESC;
+ORDER BY E1_CONCEPT_ID, E2_CONCEPT_ID; -- order by concept_ids as it provides consistent (similar) orderding both from exploratory mode and validation mode

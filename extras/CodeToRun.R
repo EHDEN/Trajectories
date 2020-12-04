@@ -55,9 +55,7 @@ trajectoryLocalArgs <- Trajectories::createTrajectoryLocalArgs(oracleTempSchema 
 #                                                                     packageName='Trajectories',
 #                                                                     cohortName="Rheumatoid.arthritis")
 
-     trajectoryAnalysisArgs$addObservations=F
-     trajectoryAnalysisArgs$addProcedures=F
-     #trajectoryAnalysisArgs$addDrugEras=F
+#trajectoryAnalysisArgs$addDrugEras=F
 
 # ##################################################
 # End of setting parameters. The actual code follows.
