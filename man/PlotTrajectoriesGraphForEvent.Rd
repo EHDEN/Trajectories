@@ -10,7 +10,7 @@ PlotTrajectoriesGraphForEvent(
   trajectoryLocalArgs,
   g,
   eventId,
-  limitOfNodes = 50,
+  limitOfNodes = 30,
   skipOutputTables = T
 )
 }

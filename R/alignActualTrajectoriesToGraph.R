@@ -64,7 +64,7 @@ alignActualTrajectoriesToGraph <- function(connection,
   insertSql <- paste("INSERT INTO ",
                      tablename,
                      " (e1_concept_id, e2_concept_id) VALUES ",
-                     paste(paste("(",paste(edges$e1_concept_id, edges$e2_concept_id, sep=","),")") , collapse=","),
+                     paste(paste0("(",paste(edges$e1_concept_id,  edges$e2_concept_id, sep=","),")") , collapse=","),
                      ";",
                      sep = "")
   RenderedSql <- SqlRender::translate(insertSql,targetDialect=attr(connection, "dbms"))
@@ -142,7 +142,7 @@ alignActualTrajectoriesToGraph <- function(connection,
   #Create a list of concept names (for faster search later)
   Node.names<-igraph::as_data_frame(g, what="vertices") %>% select(concept_id,name)
 
-  logger::log_info("Aligning trajectories to graph of '{eventname}'...")
+  logger::log_info("Aligning trajectories to the graph of '{eventname}'...")
   all_trajs<-data.frame()
   number_of_single_node_trajs=0
 
@@ -151,7 +151,7 @@ alignActualTrajectoriesToGraph <- function(connection,
   for(i in 1:length(chunks)) {
     #print(paste('i=',i))
     chunk<-chunks[[i]]
-    logger::log_info(paste0('Aligning ',length(chunk),' event-periods to graph (',i,'/',length(chunks),')...'))
+    logger::log_info(paste0('Aligning ',length(chunk),' event-periods to the graph (',i,'/',length(chunks),')...'))
 
     RenderedSql <- Trajectories::loadRenderTranslateSql("get_actual_trajs_to_graph2.sql",
                                                      packageName=trajectoryAnalysisArgs$packageName,
@@ -239,15 +239,15 @@ alignActualTrajectoriesToGraph <- function(connection,
                                 filter(E1_CONCEPT_ID %in% visitednodes & E2_CONCEPT_ID %in% visitednodes)
       e1_days<-visited_edges_ordered %>% select(DAYNO=E1_COHORT_DAY,CONCEPT_ID=E1_CONCEPT_ID)
       e2_days<-visited_edges_ordered %>% select(DAYNO=E2_COHORT_DAY,CONCEPT_ID=E2_CONCEPT_ID)
-      visited_nodes_ordered<-rbind(e1_days,e2_days) %>% unique() %>% arrange(DAYNO,CONCEPT_ID) %>% group_by(DAYNO) %>% summarise(CONCEPT_GROUPED=paste(CONCEPT_ID,collapse="/")) %>% pull(CONCEPT_GROUPED)
+      visited_nodes_ordered<-rbind(e1_days,e2_days) %>% unique() %>% arrange(DAYNO,CONCEPT_ID) %>% group_by(DAYNO) %>% summarise(CONCEPT_GROUPED=paste(CONCEPT_ID,collapse="&")) %>% pull(CONCEPT_GROUPED)
       #for 0-length trajectories, add eventid manually to visitednodes (do not come automatically as there is no event pair in that case)
       if(length(visited_nodes_ordered)==0) visited_nodes_ordered=c(eventid)
       trajectory.str=paste(visited_nodes_ordered,collapse="-")
       if(nrow(all_trajs)>0 & trajectory.str %in% all_trajs$trajectory.str) {
         idx<-which(all_trajs$trajectory.str==trajectory.str)
-        all_trajs[idx,'count'] <- all_trajs[idx,'count'] + 1
+        all_trajs[idx,'exact_count'] <- all_trajs[idx,'exact_count'] + 1
       } else {
-        all_trajs<-rbind(all_trajs, data.frame( trajectory= I(list(visited_nodes_ordered)), trajectory.str=trajectory.str, count=1)) #this I(list(...)) is here to prevent R to flatten the list. See https://stackoverflow.com/questions/51307970/how-to-store-vector-in-dataframe-in-r
+        all_trajs<-rbind(all_trajs, data.frame( trajectory= I(list(visited_nodes_ordered)), trajectory.str=trajectory.str, exact_count=1)) #this I(list(...)) is here to prevent R to flatten the list. See https://stackoverflow.com/questions/51307970/how-to-store-vector-in-dataframe-in-r
       }
 
       if(length(visitednodes)<=1) {
@@ -271,8 +271,8 @@ alignActualTrajectoriesToGraph <- function(connection,
     logger::log_warn(msg)
     INTERPRETER.MSG=c(INTERPRETER.MSG,msg)
   }
-  if(sum(all_trajs$count)!=INTERPRETER[['event_count_in_eventperiods_of_selected_graph']]) {
-    msg=paste0('Something is not right in alignActualTrajectoriesToGraph() method: sum(all_trajs$count)=',nrow(all_trajs)," is not equal to INTERPRETER[['event_count_in_eventperiods_of_selected_graph']]=",INTERPRETER[['event_count_in_eventperiods_of_selected_graph']]," but it should")
+  if(sum(all_trajs$exact_count)!=INTERPRETER[['event_count_in_eventperiods_of_selected_graph']]) {
+    msg=paste0('Something is not right in alignActualTrajectoriesToGraph() method: sum(all_trajs$exact_count)=',nrow(all_trajs)," is not equal to INTERPRETER[['event_count_in_eventperiods_of_selected_graph']]=",INTERPRETER[['event_count_in_eventperiods_of_selected_graph']]," but it should")
     logger::log_warn(msg)
     INTERPRETER.MSG=c(INTERPRETER.MSG,msg)
   }
@@ -284,18 +284,21 @@ alignActualTrajectoriesToGraph <- function(connection,
   INTERPRETER.MSG=c(INTERPRETER.MSG,msg)
 
   #add names to trajectories
-  all_trajs<-all_trajs %>% arrange(-count)
+  all_trajs<-all_trajs %>% arrange(-exact_count)
   all_trajs$trajectory.str<-as.character(all_trajs$trajectory.str)
   d<-all_trajs
-  d$length<-NA
-  d$index_of_eventname<-NA
-  d$num_events_before_eventname<-NA
-  d$num_events_after_eventname<-NA
-  idx_of_first_traj_having_one_event_after_eventname<-NA
+  d$total_count<-d$exact_count
+  d$length<-as.numeric(lapply(d$trajectory,length))
+  d$is_subtrajectory_of<-NA
+  #d$index_of_eventname<-NA
+  #d$num_events_before_eventname<-NA
+  #d$num_events_after_eventname<-NA
+  #idx_of_first_traj_having_one_event_after_eventname<-NA
   idx_of_first_traj_having_two_events_after_eventname<-NA
   d$trajectory.names.str<-""
 
   #Find names for each event
+  Node.names$concept_id=as.character(Node.names$concept_id)
   for(i in 1:nrow(d)) {
     # print(i)
     n<-d[i,'trajectory']
@@ -305,29 +308,71 @@ alignActualTrajectoriesToGraph <- function(connection,
     elem_eventnames_as_str=c()
     for(e in 1:length(n[[1]])) {
       elem=n[[1]][e]
-      elem_events=as.numeric(strsplit(as.character(elem),"/",fixed=TRUE)[[1]])
+      elem_events=strsplit(as.character(elem),"&",fixed=TRUE)[[1]]
       if(eventid %in% elem_events) d[i,'index_of_eventname']<-e
 
-      elem_eventnames <- data.frame(concept_id=as.numeric(elem_events)) %>%
+      elem_eventnames <- data.frame(concept_id=as.character(elem_events), stringsAsFactors=FALSE) %>%
         left_join(Node.names, by=c("concept_id"="concept_id")) %>% rename(concept_name=name) %>%
         mutate(namelength=stri_length(concept_name)) %>%
         mutate(node=paste0(concept_id,":\"",  ifelse(namelength<=20, concept_name, paste0(substr(concept_name,1,20), "...")),"\"")) %>%
         pull(node)
-      elem_eventnames_as_str=c(elem_eventnames_as_str, paste(elem_eventnames,collapse="/"))
+      elem_eventnames_as_str=c(elem_eventnames_as_str, paste(elem_eventnames,collapse="&"))
     }
     d[i,'trajectory.names.str']<-paste0(elem_eventnames_as_str,collapse=" -> ")
+  }
 
 
+  #some trajectories are sub-trajectories of the others. Find the actual count of them
+  #make sure that trajectories are still ordered by count desc (trajectories with larger count cannot be sub-trajectories of smaller count)
+  logger::log_info('Finding actual counts of each trajectory by considering also sub-trajectories...')
+  d<-d %>% arrange(-exact_count,-length)
+  d <- d %>% mutate(id=row_number())
+  d <- d %>% select(id,trajectory,trajectory.str,exact_count,total_count,length,is_subtrajectory_of,trajectory.names.str)
+  if(nrow(d)>1) {
+    for(i in 1:(nrow(d)-1)) {
+      #print(i)
 
-    #how many elements before eventname
-    d[i,'num_events_before_eventname']<-1-d[i,'index_of_eventname']
+      subtraj_ids=c()
 
-    #how many elements after eventname
-    d[i,'num_events_after_eventname']<- d[i,'length']-d[i,'index_of_eventname']
-    if(is.na(idx_of_first_traj_having_one_event_after_eventname) & d[i,'num_events_after_eventname']>=1) idx_of_first_traj_having_one_event_after_eventname=i
-    if(is.na(idx_of_first_traj_having_two_events_after_eventname) & d[i,'num_events_after_eventname']>=2) idx_of_first_traj_having_two_events_after_eventname=i
+      #print(length(d$trajectory[[i]]))
+      logger::log_debug(paste0('Counting ',d$trajectory.str[[i]]),'...')
+      for(j in (1+i):nrow(d)) {
+        logger::log_debug(paste0('...Checking whether ',d$trajectory.str[[i]]),' (count=',d$total_count[i],') is a sub-trajectory of ',d$trajectory.str[[j]],' (count=',d$total_count[j],')...')
 
-  } #for i
+        if(length(d$trajectory[[j]])>=length(d$trajectory[[i]])) {
+
+          #regex/state-machine logic here
+          state = 1
+          for (event in d$trajectory[[j]]) {
+            eventsplitted<-stri_split_fixed(event,"&")[[1]] #split_fixed here because some event might be given as "evevn1/event2" occurring on same day
+            if(state == 1) {
+              if(all(stri_split_fixed(d$trajectory[[i]][1],"&")[[1]] %in% eventsplitted)) {
+                state = state+1
+              }
+            } else if(state > 1) {
+              if(all(stri_split_fixed(d$trajectory[[i]][state],"&")[[1]] %in% eventsplitted)) {
+                state = state+1
+              } else {
+                state=1
+              }
+            }
+            if(state>length(d$trajectory[[i]])) {
+              logger::log_debug('...yes, it is.')
+              subtraj_ids<-c(subtraj_ids,j)
+              #print(subtraj_ids)
+              d$total_count[i]<-d$total_count[i]+d$total_count[j]
+              logger::log_debug(paste0('New count of ',d$trajectory.str[[i]],' is ',d$total_count[i]))
+              break
+            }
+          }
+        } # if(length(d$trajectory.str[[j]])>d$trajectory.str[[i]])
+
+      } # for j
+
+      d$is_subtrajectory_of[i]<-paste(subtraj_ids,collapse=",")
+    } #for i
+  }
+
   if(!is.na(filename)) {
     logger::log_info(' Step 3: Saving counts of aligned trajectories to file: {filename}...')
     write.table(d,file=filename,quote=FALSE, sep="\t", row.names=F, col.names=T)

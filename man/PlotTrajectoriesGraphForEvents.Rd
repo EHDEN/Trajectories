@@ -9,6 +9,7 @@ PlotTrajectoriesGraphForEvents(
   trajectoryAnalysisArgs,
   trajectoryLocalArgs,
   eventIds = NA,
+  limitOfNodes = 30,
   skipOutputTables = T
 )
 }
@@ -20,6 +21,8 @@ PlotTrajectoriesGraphForEvents(
 \item{trajectoryLocalArgs}{TrajectoryLocalArgs object that must be created by createTrajectoryLocalArgs() method}
 
 \item{eventIds}{Exact concept id-s as a list that is used for analyzing/plotting trajectories. If not specified (NA) (recommended) creates trajectories for top 5 events.}
+
+\item{limitOfNodes}{Max number of events in the consrtructed graph. Used to limit the analysis to most important events only.}
 
 \item{skipOutputTables}{If set to TRUE, no output data tables are made (the PDF graphs only).}
 }

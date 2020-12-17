@@ -18,12 +18,12 @@ PlotTrajectoriesGraphForEvent<-function(connection,
                        trajectoryLocalArgs,
                        g,
                        eventId,
-                       limitOfNodes=50,
+                       limitOfNodes=30,
                        skipOutputTables=T) {
 
-  if(!is.numeric(eventId)) {
-    stop('Error: Event ID is not numeric')
-  }
+  #if(!is.numeric(eventId)) {
+  #  stop('Error: Event ID is not numeric')
+  #}
   if(!eventId %in% V(g)$concept_id) {
     msg=glue::glue('Event with concept_id={eventId} is missing from TrajectoriesGraph object. The plot for this is not created (skipping).')
     logger::log_warn(msg)

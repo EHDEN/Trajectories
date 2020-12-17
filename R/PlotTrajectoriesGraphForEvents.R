@@ -9,6 +9,7 @@
 #' @param eventIds Exact concept id-s as a list that is used for analyzing/plotting trajectories. If not specified (NA) (recommended) creates trajectories for top 5 events.
 #' @param trajectoryAnalysisArgs TrajectoryAnalysisArgs object that must be created by createTrajectoryAnalysisArgs() method
 #' @param trajectoryLocalArgs TrajectoryLocalArgs object that must be created by createTrajectoryLocalArgs() method
+#' @param limitOfNodes Max number of events in the consrtructed graph. Used to limit the analysis to most important events only.
 #' @param skipOutputTables If set to TRUE, no output data tables are made (the PDF graphs only).
 #'
 #' @return
@@ -19,6 +20,7 @@ PlotTrajectoriesGraphForEvents<-function(connection,
                        trajectoryAnalysisArgs,
                        trajectoryLocalArgs,
                        eventIds=NA,
+                       limitOfNodes=30,
                        skipOutputTables=T
                        ) {
 
@@ -50,9 +52,9 @@ PlotTrajectoriesGraphForEvents<-function(connection,
       Trajectories::PlotTrajectoriesGraphForEvent(connection,
                                                   trajectoryAnalysisArgs,
                                                   trajectoryLocalArgs,
-                                                  g,
+                                                  g=g,
                                                   eventId=eventId,
-                                                  limitOfNodes=50,
+                                                  limitOfNodes=30,
                                                   skipOutputTables=skipOutputTables)
 
     } else {

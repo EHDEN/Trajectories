@@ -41,6 +41,7 @@ test_that("Test alignments to graph", {
 
   #Remove output files (if exist from previous run)
   removeTestableOutputFiles(trajectoryLocalArgs,trajectoryAnalysisArgs)
+  removeTrajectoryFile(trajectoryLocalArgs,trajectoryAnalysisArgs,concept_id=317009,concept_name='Asthma')
 
   # Fill cohort table with example cohort data
   Trajectories::fillCohortTable(connection=connection,
@@ -67,6 +68,7 @@ test_that("Test alignments to graph", {
   #Test that the trajectory comes out from the trajectory file
   expect_equal(nrow(row),1)
   #Test that the trajectory count is 20
-  expect_equal(row$count,20)
+  expect_equal(row$exact_count,20)
+  expect_equal(row$total_count,20)
 
 })

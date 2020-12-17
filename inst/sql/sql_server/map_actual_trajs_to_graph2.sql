@@ -38,8 +38,8 @@ IF OBJECT_ID('@resultsSchema.@prefiXgraph_event_pairs', 'U') IS NOT NULL
             b.cohort_day as e2_cohort_day,
             a.e as e1_concept_id,
             b.e as e2_concept_id,
-            CASE WHEN (a.e=@eventid) THEN 1 ELSE 0 END AS E1_IS_INDEXEVENT,
-            CASE WHEN (b.e=@eventid) THEN 1 ELSE 0 END AS E2_IS_INDEXEVENT
+            CASE WHEN a.e=@eventid THEN 1 ELSE 0 END AS E1_IS_INDEXEVENT,
+            CASE WHEN b.e=@eventid THEN 1 ELSE 0 END AS E2_IS_INDEXEVENT
     INTO @resultsSchema.@prefiXgraph_event_pairs
     FROM
            @resultsSchema.@prefiXgraph_events a

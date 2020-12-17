@@ -238,10 +238,16 @@ getEventPairFromEventPairsTable<-function(event1_concept_id,event2_concept_id,tr
 getTrajectoryFileAsDataFrame<-function(trajectoryLocalArgs,trajectoryAnalysisArgs,concept_id,concept_name) {
   #Get output folder for this analysis
   outputFolder<-Trajectories::GetOutputFolder(trajectoryLocalArgs,trajectoryAnalysisArgs,createIfMissing=F)
-  filename = file.path(outputFolder,paste0(concept_name,concept_id,'.constructed.limit50.events.trajs.csv'))
+  filename = file.path(outputFolder,paste0(concept_name,concept_id,'.constructed.limit30.events.trajs.csv'))
   #Get event_pairs.csv table
   d = read.csv2(file = filename, sep = '\t', header = TRUE, as.is=T)
   return(d)
+}
+
+removeTrajectoryFile<-function(trajectoryLocalArgs,trajectoryAnalysisArgs,concept_id,concept_name) {
+  outputFolder<-Trajectories::GetOutputFolder(trajectoryLocalArgs,trajectoryAnalysisArgs,createIfMissing=F)
+  filename = file.path(outputFolder,paste0(concept_name,concept_id,'.constructed.limit30.events.trajs.csv'))
+  file.remove(filename)
 }
 
 getTrajectoryFromTrajectoryFile<-function(trajectoryLocalArgs,trajectoryAnalysisArgs,concept_id,concept_name,trajectory_concept_ids=c()) {
@@ -255,6 +261,9 @@ removeTestableOutputFiles<-function(trajectoryLocalArgs,trajectoryAnalysisArgs) 
   outputFolder<-Trajectories::GetOutputFolder(trajectoryLocalArgs,trajectoryAnalysisArgs,createIfMissing=F)
 
   filename="event_pairs.tsv"
+  if(file.exists(file.path(outputFolder,filename))) file.remove(file.path(outputFolder,filename))
+
+  filename="event_pairs_tested.tsv"
   if(file.exists(file.path(outputFolder,filename))) file.remove(file.path(outputFolder,filename))
 
   filename="event_pairs_tested.tsv"
