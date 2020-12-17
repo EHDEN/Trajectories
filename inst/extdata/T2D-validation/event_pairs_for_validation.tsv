@@ -1,0 +1,72 @@
+	E1_CONCEPT_ID	E2_CONCEPT_ID	E1_NAME	E1_DOMAIN	E2_NAME	E2_DOMAIN
+1	316139	942350	Heart failure	Condition	torsemide	Drug
+2	316139	319835	Heart failure	Condition	Congestive heart failure	Condition
+3	4068155	1307046	Atrial arrhythmia	Condition	metoprolol	Drug
+4	4193704	19059796	Type 2 diabetes mellitus without complication	Condition	gliclazide	Drug
+5	201826	19059796	Type 2 diabetes mellitus	Condition	gliclazide	Drug
+6	443732	40566982	Disorder due to type 2 diabetes mellitus	Condition	Death	Condition
+7	443732	40480694	Disorder due to type 2 diabetes mellitus	Condition	High hemoglobin A1c level	Condition
+8	314378	942350	Hypertensive heart disease with congestive heart failure	Condition	torsemide	Drug
+9	321318	1307046	Angina pectoris	Condition	metoprolol	Drug
+10	201826	40480694	Type 2 diabetes mellitus	Condition	High hemoglobin A1c level	Condition
+11	4193704	40480694	Type 2 diabetes mellitus without complication	Condition	High hemoglobin A1c level	Condition
+12	4193704	1503297	Type 2 diabetes mellitus without complication	Condition	metformin	Drug
+13	314378	40566982	Hypertensive heart disease with congestive heart failure	Condition	Death	Condition
+14	443732	1334456	Disorder due to type 2 diabetes mellitus	Condition	ramipril	Drug
+15	4193704	1510813	Type 2 diabetes mellitus without complication	Condition	rosuvastatin	Drug
+16	4041554	1510813	Serum cholesterol raised	Condition	rosuvastatin	Drug
+17	319034	314378	Hypertensive heart disease without congestive heart failure	Condition	Hypertensive heart disease with congestive heart failure	Condition
+18	314378	319835	Hypertensive heart disease with congestive heart failure	Condition	Congestive heart failure	Condition
+19	4193704	1314577	Type 2 diabetes mellitus without complication	Condition	nebivolol	Drug
+20	442604	201826	Hypertensive heart disease	Condition	Type 2 diabetes mellitus	Condition
+21	4217557	1503297	Simple obesity	Condition	metformin	Drug
+22	442604	314378	Hypertensive heart disease	Condition	Hypertensive heart disease with congestive heart failure	Condition
+23	201826	1503297	Type 2 diabetes mellitus	Condition	metformin	Drug
+24	4193704	1545958	Type 2 diabetes mellitus without complication	Condition	atorvastatin	Drug
+25	4041554	1545958	Serum cholesterol raised	Condition	atorvastatin	Drug
+26	443732	942350	Disorder due to type 2 diabetes mellitus	Condition	torsemide	Drug
+27	4193704	1317640	Type 2 diabetes mellitus without complication	Condition	telmisartan	Drug
+28	316139	1307046	Heart failure	Condition	metoprolol	Drug
+29	314378	316139	Hypertensive heart disease with congestive heart failure	Condition	Heart failure	Condition
+30	319034	978555	Hypertensive heart disease without congestive heart failure	Condition	indapamide	Drug
+31	314378	1307046	Hypertensive heart disease with congestive heart failure	Condition	metoprolol	Drug
+32	443732	1545958	Disorder due to type 2 diabetes mellitus	Condition	atorvastatin	Drug
+33	320128	319034	Essential hypertension	Condition	Hypertensive heart disease without congestive heart failure	Condition
+34	319034	1332418	Hypertensive heart disease without congestive heart failure	Condition	amlodipine	Drug
+35	4193704	1332418	Type 2 diabetes mellitus without complication	Condition	amlodipine	Drug
+36	319034	1317640	Hypertensive heart disease without congestive heart failure	Condition	telmisartan	Drug
+37	1503297	40480694	metformin	Drug	High hemoglobin A1c level	Condition
+38	314378	1373225	Hypertensive heart disease with congestive heart failure	Condition	perindopril	Drug
+39	4193704	443732	Type 2 diabetes mellitus without complication	Condition	Disorder due to type 2 diabetes mellitus	Condition
+40	201826	443732	Type 2 diabetes mellitus	Condition	Disorder due to type 2 diabetes mellitus	Condition
+41	319034	1373225	Hypertensive heart disease without congestive heart failure	Condition	perindopril	Drug
+42	314378	1332418	Hypertensive heart disease with congestive heart failure	Condition	amlodipine	Drug
+43	442604	1332418	Hypertensive heart disease	Condition	amlodipine	Drug
+44	4193704	1124300	Type 2 diabetes mellitus without complication	Condition	diclofenac	Drug
+45	4041554	1503297	Serum cholesterol raised	Condition	metformin	Drug
+46	319034	1314577	Hypertensive heart disease without congestive heart failure	Condition	nebivolol	Drug
+47	438720	1503297	Mixed hyperlipidemia	Condition	metformin	Drug
+48	4193704	1334456	Type 2 diabetes mellitus without complication	Condition	ramipril	Drug
+49	201826	1334456	Type 2 diabetes mellitus	Condition	ramipril	Drug
+50	4193704	1307046	Type 2 diabetes mellitus without complication	Condition	metoprolol	Drug
+51	4193704	1373225	Type 2 diabetes mellitus without complication	Condition	perindopril	Drug
+52	257011	1503297	Acute upper respiratory infection	Condition	metformin	Drug
+53	319034	1545958	Hypertensive heart disease without congestive heart failure	Condition	atorvastatin	Drug
+54	443732	1307046	Disorder due to type 2 diabetes mellitus	Condition	metoprolol	Drug
+55	320128	4041554	Essential hypertension	Condition	Serum cholesterol raised	Condition
+56	443732	1510813	Disorder due to type 2 diabetes mellitus	Condition	rosuvastatin	Drug
+57	319034	1307046	Hypertensive heart disease without congestive heart failure	Condition	metoprolol	Drug
+58	1503297	1124300	metformin	Drug	diclofenac	Drug
+59	201826	1317640	Type 2 diabetes mellitus	Condition	telmisartan	Drug
+60	320128	1503297	Essential hypertension	Condition	metformin	Drug
+61	201826	1332418	Type 2 diabetes mellitus	Condition	amlodipine	Drug
+62	319034	437530	Hypertensive heart disease without congestive heart failure	Condition	Disorder of lipid metabolism	Condition
+63	442604	316139	Hypertensive heart disease	Condition	Heart failure	Condition
+64	260139	1503297	Acute bronchitis	Condition	metformin	Drug
+65	201826	1307046	Type 2 diabetes mellitus	Condition	metoprolol	Drug
+66	4079750	1503297	Osteoarthritis of knee	Condition	metformin	Drug
+67	437530	1503297	Disorder of lipid metabolism	Condition	metformin	Drug
+68	1503297	1332418	metformin	Drug	amlodipine	Drug
+69	319034	1510813	Hypertensive heart disease without congestive heart failure	Condition	rosuvastatin	Drug
+70	201826	1124300	Type 2 diabetes mellitus	Condition	diclofenac	Drug
+71	319034	438720	Hypertensive heart disease without congestive heart failure	Condition	Mixed hyperlipidemia	Condition
