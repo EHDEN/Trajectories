@@ -84,11 +84,16 @@ alignActualTrajectoriesToGraph <- function(connection,
   res<-c(DatabaseConnector::querySql(connection, RenderedSql))
   INTERPRETER[['cohortsize']]=res$COHORTSIZE
 
-  sql<-"SELECT E1_COUNT FROM @resultsSchema.@prefiXE1E2_model WHERE E1_CONCEPT_ID=@eventid LIMIT 1;"
+  #event1 might be given as E1 and E2 (or both) in pairs
+  sql<-"SELECT
+          CASE WHEN E1_CONCEPT_ID=@eventid THEN E1_COUNT ELSE E2_COUNT END AS E_COUNT
+        FROM @resultsSchema.@prefiXE1E2_model WHERE E1_CONCEPT_ID=@eventid OR E2_CONCEPT_ID=@eventid
+  LIMIT 1;"
   RenderedSql <- SqlRender::render(sql, resultsSchema=trajectoryLocalArgs$resultsSchema, prefiX = trajectoryLocalArgs$prefixForResultTableNames, eventid=eventid)
   RenderedSql <- SqlRender::translate(RenderedSql,targetDialect=attr(connection, "dbms"))
   res<-c(DatabaseConnector::querySql(connection, RenderedSql))
-  INTERPRETER[['event_count_in_eventperiods']]=res$E1_COUNT
+
+  INTERPRETER[['event_count_in_eventperiods']]=res$E_COUNT
 
   msg=paste0("Out of ",INTERPRETER[['cohortsize']]," event-periods in the analysis, event '",eventname,"' is present in ",INTERPRETER[['event_count_in_eventperiods']],' of them.')
   logger::log_info(msg)
