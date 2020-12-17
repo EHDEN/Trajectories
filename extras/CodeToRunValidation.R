@@ -25,17 +25,17 @@ trajectoryLocalArgs <- Trajectories::createTrajectoryLocalArgs(oracleTempSchema 
                                                                 cohortTableSchema= 'ohdsi_temp',
                                                                 cohortTable='cohort',
                                                                 cohortId=1,
-                                                                inputFolder='/Users/sulevr/temp/TEST/Rheumatoid.arthritis/validation_setup', # Full path to input folder that contains SQL file for cohort definition and optionally also trajectoryAnalysisArgs.json. You can use built-in folders of this package such as: inputFolder=system.file("extdata", "T2D", package = "Trajectories")
+                                                                inputFolder=system.file("extdata", "T2D-validation", package = "Trajectories"), #'/Users/sulevr/temp/TEST/Rheumatoid.arthritis/validation_setup', # Full path to input folder that contains validation setup. You can use built-in test folders of this package such as: inputFolder=system.file("extdata", "T2D-validation", package = "Trajectories")
                                                                 mainOutputFolder='/Users/sulevr/temp', #Subfolders to this will be created automatically
                                                                 databaseHumanReadableName='TEST') #Use something short. It will be added to the titles of the graph.
 
 
-# UPDATE THE PATH TO THE VALIDATION SETUP FOLDER
-#trajectoryLocalArgs$inputFolder<-'/here/your/path/to/validation_setup'
-
 
 # ##################################################
 # End of setting parameters. The actual code follows.
+
+#Load analysis settings from input folder
+trajectoryAnalysisArgs<-Trajectories::TrajectoryAnalysisArgsFromInputFolder(trajectoryLocalArgs)
 
 # ##################################################
 # Connect to database
@@ -103,7 +103,7 @@ Trajectories::PlotTrajectoriesGraphForEvents(connection,
                                              trajectoryAnalysisArgs,
                                              trajectoryLocalArgs,
                                              eventIds=trajectoryAnalysisArgs$eventIdsForGraphs,
-                                             skipOutputTables = T)
+                                             skipOutputTables = F)
 
 
 ########### CLEANUP: DROP ANALYSIS TABLES IF THERE IS NO NEED FOR THESE RESULTS ANYMORE ###########
