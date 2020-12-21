@@ -159,14 +159,14 @@ createEventPairsTable<-function(connection,
 
 
   # Get all (frequent) event pairs from the database
-  RenderedSql <- Trajectories::loadRenderTranslateSql("2GetPairs.sql",
+  RenderedSql <- Trajectories::loadRenderTranslateSql("GetNumPairs.sql",
                                                    packageName=trajectoryAnalysisArgs$packageName,
                                                    dbms=connection@dbms,
                                                    resultsSchema = trajectoryLocalArgs$resultsSchema,
                                                    prefix = trajectoryLocalArgs$prefixForResultTableNames
   )
   dpairs = DatabaseConnector::querySql(connection, RenderedSql)
-  logger::log_info(paste0('There are ',nrow(dpairs),' event pairs that are going to be analyzed.'))
+  logger::log_info(paste0('There are ',dpairs$TOTAL,' event pairs that are going to be analyzed.'))
 
   logger::log_info('TASK COMPLETED: Creating event pairs data completed successfully.')
 }

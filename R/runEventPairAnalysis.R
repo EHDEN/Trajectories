@@ -27,35 +27,87 @@ runEventPairAnalysis<-function(connection,
   #Set SQL role of the database session
   Trajectories::setRole(connection, trajectoryLocalArgs$sqlRole)
 
-  # Get all (frequent) event pairs from the database
-  RenderedSql <- Trajectories::loadRenderTranslateSql("2GetPairs.sql",
+  # Get number of all (frequent) event pairs from the database
+  RenderedSql <- Trajectories::loadRenderTranslateSql("GetNumPairs.sql",
                                                    packageName=trajectoryAnalysisArgs$packageName,
                                                    dbms=connection@dbms,
                                                    resultsSchema =  trajectoryLocalArgs$resultsSchema,
                                                    prefix =  trajectoryLocalArgs$prefixForResultTableNames
   )
-  dpairs = DatabaseConnector::querySql(connection, RenderedSql)
+  num.dpairs = DatabaseConnector::querySql(connection, RenderedSql)
+  num.dpairs <- num.dpairs$TOTAL
 
-  #Leave out pairs that have E1_E2_EVENTPERIOD_COUNT==0 (some counts might be 0 in case of validation mode). Skip them from the analysis to not affect Bonferroni correction
-  dpairs_for_analysis<-dpairs %>% filter(E1_E2_EVENTPERIOD_COUNT>0)
+  #Leave out pairs that have E1_E2_EVENTPERIOD_COUNT==0 (some counts might be 0 in case of validation mode). Skipping them from the analysis also affects Bonferroni correction
+  # Get number of all non-zero-count event pairs from the database
+  RenderedSql <- Trajectories::loadRenderTranslateSql("GetNumPairsForAnalysis.sql",
+                                                      packageName=trajectoryAnalysisArgs$packageName,
+                                                      dbms=connection@dbms,
+                                                      resultsSchema =  trajectoryLocalArgs$resultsSchema,
+                                                      prefix =  trajectoryLocalArgs$prefixForResultTableNames
+  )
+  num.nonzero.dpairs = DatabaseConnector::querySql(connection, RenderedSql)
+  num.nonzero.dpairs <- num.nonzero.dpairs$TOTAL
 
-  if(nrow(dpairs)!=nrow(dpairs_for_analysis)) {
-    logger::log_info(paste0('There are ',nrow(dpairs),' event pairs in the original event pairs tabel. However, ',nrow(dpairs)-nrow(dpairs_for_analysis),' have count=0 and are therefore skipped from the remaining analysis.'))
+  if(num.dpairs!=num.nonzero.dpairs) {
+    logger::log_info(paste0('There are ',num.dpairs,' event pairs in the original event pairs tabel. However, ',num.dpairs-num.nonzero.dpairs,' of them have count=0 and are therefore skipped from the remaining analysis.'))
   }
 
   # Determine p-value threshold of Bonferroni correction
-  cutoff_pval = 0.05/nrow(dpairs_for_analysis)
-  logger::log_info(paste0('There are ',nrow(dpairs_for_analysis),' event pairs that are going to be analyzed.'))
-  if(nrow(dpairs_for_analysis)==0) {
+  cutoff_pval = 0.05/num.nonzero.dpairs
+  logger::log_info(paste0('There are ',num.nonzero.dpairs,' event pairs that are going to be analyzed.'))
+  if(num.nonzero.dpairs==0) {
     logger::log_info('Nothing to analyze, exit analysis function.')
     return(1);
   }
-  logger::log_info(paste0('We use Bonferroni multiple test correction, therefore p-value threshold 0.05/',nrow(dpairs_for_analysis),'=',cutoff_pval,' is used in association analysis.'))
+  logger::log_info(paste0('We use Bonferroni multiple test correction, therefore p-value threshold 0.05/',num.nonzero.dpairs,'=',cutoff_pval,' is used in association analysis.'))
   logger::log_info(paste0('For directionality tests, a different p-value threshold is used. It depends on the actual number of significant associactions and will be calculated in the end of analysis.'))
   logger::log_info(paste0('To indicate the estimated number of significant event pairs while the anaylsis is running, we use the same (very conservative) p-value threshold as for association analysis.'))
 
-  significant_pairs_count=0
-  significant_directional_pairs_count=0
+
+  #Load all event pairs for the analysis
+  # (also) Avoid recalculation if forceRecalculation=T and the data is already there (the analysis has already run up to some point)
+  RenderedSql <- Trajectories::loadRenderTranslateSql("GetPairsForCalculation.sql",
+                                                      packageName=trajectoryAnalysisArgs$packageName,
+                                                      dbms=connection@dbms,
+                                                      resultsSchema =  trajectoryLocalArgs$resultsSchema,
+                                                      prefix =  trajectoryLocalArgs$prefixForResultTableNames,
+                                                      cutoffPval = cutoff_pval, #this is used only when forceRecalculation=T
+                                                      forceRecalculation = ifelse(forceRecalculation==T,1,0)
+  )
+  dpairs_for_analysis = DatabaseConnector::querySql(connection, RenderedSql)
+
+  if(forceRecalculation==T) {
+    significant_pairs_count=0
+    significant_directional_pairs_count=0
+  } else {
+
+    if(nrow(dpairs_for_analysis)<num.nonzero.dpairs) {
+      logger::log_info(paste0("For ",num.nonzero.dpairs-nrow(dpairs_for_analysis))," event pairs, p-value is already calculated. They are skipped in this analysis run (skipping them do not affect Bonferroni corrected p-value threshold).")
+    }
+    RenderedSql <- Trajectories::loadRenderTranslateSql("GetNumPairsAssociated.sql",
+                                                        packageName=trajectoryAnalysisArgs$packageName,
+                                                        dbms=connection@dbms,
+                                                        resultsSchema =  trajectoryLocalArgs$resultsSchema,
+                                                        prefix =  trajectoryLocalArgs$prefixForResultTableNames,
+                                                        cutoffPval = cutoff_pval
+    )
+    significant_pairs_count = DatabaseConnector::querySql(connection, RenderedSql)
+    significant_pairs_count<-significant_pairs_count$TOTAL
+
+    RenderedSql <- Trajectories::loadRenderTranslateSql("GetNumPairsDirectional.sql",
+                                                        packageName=trajectoryAnalysisArgs$packageName,
+                                                        dbms=connection@dbms,
+                                                        resultsSchema =  trajectoryLocalArgs$resultsSchema,
+                                                        prefix =  trajectoryLocalArgs$prefixForResultTableNames,
+                                                        cutoffPval = cutoff_pval
+    )
+    significant_directional_pairs_count = DatabaseConnector::querySql(connection, RenderedSql)
+    significant_directional_pairs_count<-significant_directional_pairs_count$TOTAL
+    if(nrow(dpairs_for_analysis)<num.nonzero.dpairs) {
+      logger::log_info(paste0("Among ",num.nonzero.dpairs-nrow(dpairs_for_analysis))," event pairs that have p-value already calculated, ",significant_pairs_count," are significantly associated and ",significant_directional_pairs_count," are directional.")
+    }
+  }
+
   starttime=Sys.time()
   # For each event pair, run the analysis
   for(i in 1:nrow(dpairs_for_analysis))
@@ -73,33 +125,7 @@ runEventPairAnalysis<-function(connection,
                                                                             ' directional, estimated time left: ',Trajectories::estimatedTimeRemaining(progress_perc=(i-1)/nrow(dpairs_for_analysis),starttime=starttime),
                                                                             ')...'))
 
-      # Avoid recalculation if the data is already there (the analysis has already run up to some point)
-      if(forceRecalculation==F) {
-        pairCheckingSql <- Trajectories::loadRenderTranslateSql("pvalueChecker.sql",
-                                                                packageName=trajectoryAnalysisArgs$packageName,
-                                                                dbms=connection@dbms,
-                                                                resultsSchema =  trajectoryLocalArgs$resultsSchema,
-                                                                prefix =  trajectoryLocalArgs$prefixForResultTableNames,
-                                                                diag1 = diagnosis1,
-                                                                diag2 = diagnosis2)
-        pvalueCheck = DatabaseConnector::querySql(connection, pairCheckingSql)
-        if(!is.na(pvalueCheck$EVENT_PAIR_PVALUE) &
-            ((pvalueCheck$EVENT_PAIR_PVALUE > cutoff_pval) | (pvalueCheck$EVENT_PAIR_PVALUE <= cutoff_pval & !is.na(pvalueCheck$DIRECTIONAL_EVENT_PAIR_PVALUE)))
-           ) {
 
-          if (pvalueCheck$EVENT_PAIR_PVALUE <= cutoff_pval) {
-
-            significant_pairs_count <- significant_pairs_count + 1
-
-            if (pvalueCheck$DIRECTIONAL_EVENT_PAIR_PVALUE <= cutoff_pval) {
-              significant_directional_pairs_count <- significant_directional_pairs_count + 1
-            }
-          }
-          logger::log_info(paste0("P-value already calculated for event pair ",diagnosis1," -> ",diagnosis2," (skipping)"))
-          next #halts the processing of the current "for loop" iteration and continues with the next iteration
-
-        }
-      } #if(forceRecalculation==F)
 
 
       # Extract necessary event1_concept_id->event2_concept_id data from table d1d2_analysistable
