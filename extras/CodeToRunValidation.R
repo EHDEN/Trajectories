@@ -50,7 +50,7 @@ on.exit(DatabaseConnector::disconnect(connection)) #Close db connection on error
 outputFolder<-Trajectories::GetOutputFolder(trajectoryLocalArgs,trajectoryAnalysisArgs,createIfMissing=T)
 
 # Set up logger
-Trajectories::InitLogger(logfile = file.path(outputFolder,'log.txt'), threshold = logger:::INFO)
+Trajectories::InitLogger(logfile = file.path(outputFolder,paste0(format(Sys.time(), "%Y%m%d-%H%M%S"),"-log.txt")), threshold = logger:::INFO)
 
 # Store used analysis arguments to JSON file
 Trajectories::TrajectoryAnalysisArgsToJson(trajectoryAnalysisArgs, file.path(outputFolder,"trajectoryAnalysisArgs_used.json"))
