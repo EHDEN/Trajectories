@@ -15,7 +15,8 @@ In order to run the package, you need:
 ## Installation
 
 1. Clone this repository
-2. Open the project (file ***Trajectories.Rproj***) in RStudio and install the package via top-right menu: ***Build*** ***Install and Restart***
+2. Open the project (file ***Trajectories.Rproj***) in RStudio
+3. Install the package via top-right menu: ***Build*** -> ***Install and Restart***
 
 ## Setup & running
 
