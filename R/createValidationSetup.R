@@ -1,7 +1,10 @@
 library(SqlRender)
-#' Creats setup file for the validation of the results in a separate database
+
+#' Creates setup file for the validation of the results in a separate database
 #'
-#' @inheritParams GetOutputFolder
+#' @param trajectoryAnalysisArgs TrajectoryAnalysisArgs object that must be created by createTrajectoryAnalysisArgs() method
+#' @param trajectoryLocalArgs TrajectoryLocalArgs object that must be created by createTrajectoryLocalArgs() method
+#'
 #' @return
 #' @export
 #'

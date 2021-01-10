@@ -2,8 +2,8 @@
 #'
 #' Returns estimated time remaining in a textual manner, based on the current progress percentage
 #'
-#' @param progress_perc
-#' @param starttime
+#' @param progress_perc The percentage of task progress
+#' @param starttime Time when current task was started
 #'
 #' @return
 #' @export

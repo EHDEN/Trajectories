@@ -1,6 +1,6 @@
 #' Takes most prevalent top5 nodes from the graph (by count) and returns the corresponding node list
 #'
-#' @param g
+#' @param g igraph object
 #'
 #' @return
 #' @export

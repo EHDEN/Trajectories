@@ -1,9 +1,9 @@
 library(SqlRender)
-#' Title
+#' Checks whether person.birth_datetime is recorded in the data if addBirths is set to TRUE
 #'
-#' @param connection
-#' @param trajectoryAnalysisArgs
-#' @param trajectoryLocalArgs
+#' @param connection Database connection object created by createConnectionDetails() method in DatabaseConnector package
+#' @param trajectoryAnalysisArgs TrajectoryAnalysisArgs object that must be created by createTrajectoryAnalysisArgs() method
+#' @param trajectoryLocalArgs TrajectoryLocalArgs object that must be created by createTrajectoryLocalArgs() method
 #'
 #' @return
 #' @export

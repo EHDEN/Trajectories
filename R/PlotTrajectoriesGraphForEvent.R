@@ -1,12 +1,12 @@
 
 #' Plots graph for a specific event
 #'
-#' @param connection
-#' @param trajectoryAnalysisArgs
-#' @param trajectoryLocalArgs
-#' @param g
-#' @param eventId
-#' @param limitOfNodes
+#' @param connection Database connection object created by createConnectionDetails() method in DatabaseConnector package
+#' @param trajectoryAnalysisArgs TrajectoryAnalysisArgs object that must be created by createTrajectoryAnalysisArgs() method
+#' @param trajectoryLocalArgs TrajectoryLocalArgs object that must be created by createTrajectoryLocalArgs() method
+#' @param g igraph object
+#' @param eventId ID of the event in the event pair
+#' @param limitOfNodes limit of the number of nodes to include on the graph
 #' @param skipOutputTables If set to T, no output data tables are made (the PDF graphs only).
 #'
 #' @return

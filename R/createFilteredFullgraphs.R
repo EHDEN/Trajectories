@@ -1,8 +1,8 @@
 #' Creates full graph plots from event pairs (not filtered to specific concept id-s)
 #'
-#' @param connection
-#' @param trajectoryAnalysisArgs
-#' @param trajectoryLocalArgs
+#' @param connection Database connection object created by createConnectionDetails() method in DatabaseConnector package
+#' @param trajectoryAnalysisArgs TrajectoryAnalysisArgs object that must be created by createTrajectoryAnalysisArgs() method
+#' @param trajectoryLocalArgs TrajectoryLocalArgs object that must be created by createTrajectoryLocalArgs() method
 #'
 #' @return
 #' @export

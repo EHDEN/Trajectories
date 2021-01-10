@@ -1,7 +1,8 @@
+
 #' Gets cohort size (number of rows in cohort table of that particluar cohort ID)
 #'
-#' @param connection Database connection object
-#' @inheritParams GetOutputFolder
+#' @param connection Database connection object created by createConnectionDetails() method in DatabaseConnector package
+#' @param trajectoryLocalArgs TrajectoryLocalArgs object that must be created by createTrajectoryLocalArgs() method
 #'
 #' @return
 #' @export

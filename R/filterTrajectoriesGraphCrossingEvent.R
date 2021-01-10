@@ -1,9 +1,10 @@
 
 #' Creates a subgraph of edges that go through EVETNAME. Starts building it from EVENTNAME, adds most probable edge. Then takes both events together, adds most probable edge out from these two etc. Limits to limitOfNodes nodes.
 #'
-#' @param g
-#' @param eventname
-#' @param limitOfNodes
+#' @param g igraph object
+#' @param eventname name of the event
+#' @param limitOfNodes limitOfNodes
+#' @param edge_param_to_sort_by edge_param_to_sort_by
 #'
 #' @return
 #' @export

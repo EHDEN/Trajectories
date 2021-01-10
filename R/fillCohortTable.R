@@ -3,10 +3,11 @@ library(DatabaseConnector)
 
 #####
 
-#' Function to fill the cohort table.
+#' Title
 #'
-#' @inheritParams GetOutputFolder
-#' @param connection DatabaseConnectorConnection object that is used to connect with database
+#' @param connection Database connection object created by createConnectionDetails() method in DatabaseConnector package
+#' @param trajectoryAnalysisArgs TrajectoryAnalysisArgs object that must be created by createTrajectoryAnalysisArgs() method
+#' @param trajectoryLocalArgs TrajectoryLocalArgs object that must be created by createTrajectoryLocalArgs() method
 #'
 #' @return
 #' @export

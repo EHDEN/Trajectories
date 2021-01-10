@@ -6,7 +6,7 @@ library(DatabaseConnector)
 #'
 #' @param trajectoryAnalysisArgs TrajectoryAnalysisArgs object that must be created by createTrajectoryAnalysisArgs() method
 #' @param trajectoryLocalArgs TrajectoryLocalArgs object that must be created by createTrajectoryLocalArgs() method
-#' @param connection DatabaseConnectorConnection object that is used to connect with database
+#' @param connection Database connection object created by createConnectionDetails() method in DatabaseConnector package
 #'
 #' @return
 #' @export

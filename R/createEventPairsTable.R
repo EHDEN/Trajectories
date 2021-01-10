@@ -1,8 +1,11 @@
 library(SqlRender)
+
 #' Creates event pairs table and populates it with the data
 #'
-#' @param connection DatabaseConnectorConnection object that is used to connect with database
-#' @inheritParams GetOutputFolder
+#' @param connection Database connection object created by createConnectionDetails() method in DatabaseConnector package
+#' @param trajectoryAnalysisArgs TrajectoryAnalysisArgs object that must be created by createTrajectoryAnalysisArgs() method
+#' @param trajectoryLocalArgs TrajectoryLocalArgs object that must be created by createTrajectoryLocalArgs() method
+#'
 #' @return
 #' @export
 #'

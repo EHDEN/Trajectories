@@ -1,4 +1,4 @@
-#' Title
+#' Filtering edges by lift
 #'
 #' @param g igraph object
 #' @param lift.threshold lift.threshold
