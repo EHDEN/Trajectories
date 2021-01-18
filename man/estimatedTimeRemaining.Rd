@@ -7,7 +7,9 @@
 estimatedTimeRemaining(progress_perc = 0.25, starttime = Sys.time())
 }
 \arguments{
-\item{starttime}{}
+\item{progress_perc}{The percentage of task progress}
+
+\item{starttime}{Time when current task was started}
 }
 \value{
 

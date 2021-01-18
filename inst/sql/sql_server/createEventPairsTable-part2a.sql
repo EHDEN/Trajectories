@@ -27,6 +27,7 @@ ALTER TABLE @resultsSchema.@prefiXE1E2_model_input ADD E1_NAME VARCHAR(255) NULL
 ALTER TABLE @resultsSchema.@prefiXE1E2_model_input ADD E1_DOMAIN VARCHAR(20) NULL;
 ALTER TABLE @resultsSchema.@prefiXE1E2_model_input ADD E2_NAME VARCHAR(255) NULL;
 ALTER TABLE @resultsSchema.@prefiXE1E2_model_input ADD E2_DOMAIN VARCHAR(20) NULL;
+ALTER TABLE @resultsSchema.@prefiXE1E2_model_input ADD RR_IN_PREVIOUS_STUDY DECIMAL NULL;
 
 --- Instead of using concept id-s, add concept names + concept domains
 UPDATE @resultsSchema.@prefiXE1E2_model_input

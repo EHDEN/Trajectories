@@ -2,18 +2,18 @@
 % Please edit documentation in R/createValidationSetup.R
 \name{createValidationSetup}
 \alias{createValidationSetup}
-\title{Creats setup file for the validation of the results in a separate database}
+\title{Creates setup file for the validation of the results in a separate database}
 \usage{
 createValidationSetup(trajectoryAnalysisArgs, trajectoryLocalArgs)
 }
 \arguments{
-\item{trajectoryAnalysisArgs}{Object created by Trajectories::createTrajectoryAnalysisArgs() method}
+\item{trajectoryAnalysisArgs}{TrajectoryAnalysisArgs object that must be created by createTrajectoryAnalysisArgs() method}
 
-\item{trajectoryLocalArgs}{Object created by Trajectories::createTrajectoryLocalArgs() method}
+\item{trajectoryLocalArgs}{TrajectoryLocalArgs object that must be created by createTrajectoryLocalArgs() method}
 }
 \value{
 
 }
 \description{
-Creats setup file for the validation of the results in a separate database
+Creates setup file for the validation of the results in a separate database
 }

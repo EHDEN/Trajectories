@@ -2,7 +2,7 @@
 % Please edit documentation in R/filterByLift.R
 \name{filterByLift}
 \alias{filterByLift}
-\title{Title}
+\title{Filtering edges by lift}
 \usage{
 filterByLift(g, lift.threshold = 2)
 }
@@ -15,5 +15,5 @@ filterByLift(g, lift.threshold = 2)
 
 }
 \description{
-Title
+Filtering edges by lift
 }

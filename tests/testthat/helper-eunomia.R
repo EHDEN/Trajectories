@@ -1,8 +1,9 @@
 context("Tests with Eunomia package")
 library(Trajectories)
 library(DatabaseConnector)
-library(stringr)
+require(stringr)
 library(SqlRender)
+library(Eunomia)
 
 #helper functions
 clearConditionsTable<-function(connection) {
@@ -40,8 +41,8 @@ addConditionEventTrajectoryForPerson<-function(connection,event_concept_ids=c(13
     #For SQLite, we must convert dates to real numbers (otherwise it does not work with other REAL dates in Eunomia package)
     #Therefore, some magic is needed. First, convert to YYYYMMDD format and second, use SQL CONVERT(DATE,...) function.
     #Another problem is SqlRender translation bug https://github.com/OHDSI/SqlRender/issues/232 So we hardcode SQLite translation here
-    eventDate1<-str_replace_all(eventDate, "-", "")
-    eventDate1<-str_replace_all(eventDate1, "-", "")
+    eventDate1<-stringr::str_replace_all(eventDate, "-", "")
+    eventDate1<-stringr::str_replace_all(eventDate1, "-", "")
 
     executeSql(connection, paste0("INSERT INTO CONDITION_OCCURRENCE (person_id,condition_concept_id,condition_start_date) VALUES (",
                                   person_id,",",
@@ -60,7 +61,7 @@ addConditionEventTrajectoryForPerson<-function(connection,event_concept_ids=c(13
 #Therefore, some magic is needed. First, convert to YYYYMMDD format and second, use SQL CONVERT(DATE,...) function.
 #Another problem is SqlRender translation bug https://github.com/OHDSI/SqlRender/issues/232 So we hardcode SQLite translation here
 getSQLiteRealFromDateSQLstring<-function(dateAsString='2010-01-01') {
-  dateAsString<-str_replace_all(dateAsString, "-", "")
+  dateAsString<-stringr::str_replace_all(dateAsString, "-", "")
   sql=paste0(" CAST(
              STRFTIME('%s',
              SUBSTR('",dateAsString,"', 1, 4) || '-' || SUBSTR('",dateAsString,"', 5, 2) || '-' || SUBSTR('",dateAsString,"', 7)
@@ -129,7 +130,7 @@ setUpEunomia<-function() {
     install.packages("Eunomia")
     library(Eunomia)
   }
-  connectionDetails <- getEunomiaConnectionDetails()
+  connectionDetails <- Eunomia::getEunomiaConnectionDetails()
   Eunomia::createCohorts(connectionDetails)
 
   connection <- DatabaseConnector::connect(connectionDetails)

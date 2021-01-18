@@ -22,7 +22,7 @@ createTrajectoriesGraph<-function(eventPairResultsFilename) {
   e = read.csv2(file = eventPairResultsFilename, sep = '\t', header = TRUE, as.is=T)
 
   # convert chr columns to numeric
-  e$EVENT_PAIR_EFFECT<-as.numeric(e$EVENT_PAIR_EFFECT)
+  e$EVENT_PAIR_RR<-as.numeric(e$EVENT_PAIR_RR)
   e$AVG_NUMBER_OF_DAYS_BETWEEN_EVENTS<-as.numeric(e$AVG_NUMBER_OF_DAYS_BETWEEN_EVENTS)
 
 
@@ -88,7 +88,7 @@ createTrajectoriesGraph<-function(eventPairResultsFilename) {
                     e2_concept_id=e[i,'E2_CONCEPT_ID'],
                     e2=e2,
                     e1_count=e[i,'E1_COUNT'],
-                    effect=e[i,'EVENT_PAIR_EFFECT'],
+                    effect=e[i,'EVENT_PAIR_RR'],
                     prob=e[i,'E1_E2_EVENTPERIOD_COUNT']/e[i,'E1_COUNT'],
                     #weight=1/e[i,'EVENT_PAIR_EFFECT'], #opposite to the effect size. Do not use weight attribute, as it has a special meaning in igraph and we do not want to use this automatically
                     numcohortExact=e[i,'EVENTPERIOD_COUNT_HAVING_E2_RIGHT_AFTER_E1'] #number of event periods that had E1->E2 as immediate order (no intermediate events)

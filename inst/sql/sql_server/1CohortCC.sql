@@ -339,7 +339,7 @@ INSERT INTO @resultsSchema.@prefiXdebug (entry) VALUES (CONCAT('..done. There ar
 
 ---------------------------------------------------------------------
 -- Create separate table for event pairs that are going to be analysed
--- and empty slots for p and effect values
+-- and empty slots for p and relative risk values
 ----------------------------------------------------------------------
 
 INSERT INTO @resultsSchema.@prefiXdebug (entry) VALUES ('Creating @resultsSchema.@prefiXE1E2_model...');
@@ -374,7 +374,7 @@ ALTER TABLE @resultsSchema.@prefiXE1E2_model ADD E1_DOMAIN VARCHAR(20) NULL;
 ALTER TABLE @resultsSchema.@prefiXE1E2_model ADD E2_NAME VARCHAR(255) NULL;
 ALTER TABLE @resultsSchema.@prefiXE1E2_model ADD E2_DOMAIN VARCHAR(20) NULL;
 ALTER TABLE @resultsSchema.@prefiXE1E2_model ADD EVENT_PAIR_PVALUE FLOAT NULL;
-ALTER TABLE @resultsSchema.@prefiXE1E2_model ADD EVENT_PAIR_EFFECT DECIMAL NULL;
+ALTER TABLE @resultsSchema.@prefiXE1E2_model ADD EVENT_PAIR_RR DECIMAL NULL;
 ALTER TABLE @resultsSchema.@prefiXE1E2_model ADD EVENTPERIOD_COUNT_E1_OCCURS_FIRST INT NULL;
 ALTER TABLE @resultsSchema.@prefiXE1E2_model ADD AVG_AGE_OF_EVENTPERIOD_E1_OCCURS_FIRST FLOAT NULL;
 ALTER TABLE @resultsSchema.@prefiXE1E2_model ADD EVENTPERIOD_COUNT_E2_OCCURS_FIRST INT NULL;

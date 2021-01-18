@@ -11,7 +11,11 @@ createFilteredFullgraphs(
 )
 }
 \arguments{
-\item{trajectoryLocalArgs}{}
+\item{connection}{Database connection object created by createConnectionDetails() method in DatabaseConnector package}
+
+\item{trajectoryAnalysisArgs}{TrajectoryAnalysisArgs object that must be created by createTrajectoryAnalysisArgs() method}
+
+\item{trajectoryLocalArgs}{TrajectoryLocalArgs object that must be created by createTrajectoryLocalArgs() method}
 }
 \value{
 

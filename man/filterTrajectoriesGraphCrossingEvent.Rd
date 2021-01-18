@@ -13,7 +13,13 @@ filterTrajectoriesGraphCrossingEvent(
 )
 }
 \arguments{
-\item{limitOfNodes}{}
+\item{g}{igraph object}
+
+\item{eventname}{name of the event}
+
+\item{limitOfNodes}{limitOfNodes}
+
+\item{edge_param_to_sort_by}{edge_param_to_sort_by}
 }
 \value{
 

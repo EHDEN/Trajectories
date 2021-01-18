@@ -2,20 +2,20 @@
 % Please edit documentation in R/fillCohortTable.R
 \name{fillCohortTable}
 \alias{fillCohortTable}
-\title{Function to fill the cohort table.}
+\title{Title}
 \usage{
 fillCohortTable(connection, trajectoryAnalysisArgs, trajectoryLocalArgs)
 }
 \arguments{
-\item{connection}{DatabaseConnectorConnection object that is used to connect with database}
+\item{connection}{Database connection object created by createConnectionDetails() method in DatabaseConnector package}
 
-\item{trajectoryAnalysisArgs}{Object created by Trajectories::createTrajectoryAnalysisArgs() method}
+\item{trajectoryAnalysisArgs}{TrajectoryAnalysisArgs object that must be created by createTrajectoryAnalysisArgs() method}
 
-\item{trajectoryLocalArgs}{Object created by Trajectories::createTrajectoryLocalArgs() method}
+\item{trajectoryLocalArgs}{TrajectoryLocalArgs object that must be created by createTrajectoryLocalArgs() method}
 }
 \value{
 
 }
 \description{
-Function to fill the cohort table.
+Title
 }

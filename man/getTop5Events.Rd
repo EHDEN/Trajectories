@@ -7,7 +7,7 @@
 getTop5Events(g)
 }
 \arguments{
-\item{g}{}
+\item{g}{igraph object}
 }
 \value{
 

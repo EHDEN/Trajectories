@@ -1,7 +1,8 @@
 SELECT
   E1_CONCEPT_ID,
   E2_CONCEPT_ID,
-  E1_E2_EVENTPERIOD_COUNT
+  E1_E2_EVENTPERIOD_COUNT,
+  RR_IN_PREVIOUS_STUDY
 FROM @resultsSchema.@prefixE1E2_model
   WHERE
   ( 1=@forceRecalculation -- if forceRecalculation is TRUE, then this condition is added
@@ -13,4 +14,6 @@ FROM @resultsSchema.@prefixE1E2_model
     AND
     EVENT_PAIR_PVALUE IS NULL OR (EVENT_PAIR_PVALUE<=@cutoffPval AND DIRECTIONAL_EVENT_PAIR_PVALUE IS NULL)
   )
-ORDER BY E1_E2_EVENTPERIOD_COUNT DESC;
+ORDER BY
+  E1_E2_EVENTPERIOD_COUNT
+DESC;

@@ -3,6 +3,7 @@ library(Trajectories)
 library(DatabaseConnector)
 library(stringr)
 library(SqlRender)
+library(Eunomia)
 
 #querySql(connection, paste0('SELECT COUNT(*) FROM PERSON;'))
 #querySql(connection, paste0('SELECT COUNT(*) FROM OBSERVATION_PERIOD;'))

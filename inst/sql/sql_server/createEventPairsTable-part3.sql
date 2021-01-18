@@ -1,6 +1,6 @@
 ---------------------------------------------------------------------
 -- Create separate table for event pairs that are going to be analysed
--- and empty slots for p and effect values
+-- and empty slots for p and relative risk values
 ----------------------------------------------------------------------
 
 INSERT INTO @resultsSchema.@prefiXdebug (entry) VALUES ('Creating @resultsSchema.@prefiXE1E2_model...');
@@ -36,6 +36,7 @@ SELECT
         i.E1_DOMAIN AS E1_DOMAIN,
         i.E2_NAME AS E2_NAME,
         i.E2_DOMAIN AS E2_DOMAIN,
+        i.RR_IN_PREVIOUS_STUDY AS RR_IN_PREVIOUS_STUDY,
         CASE WHEN t.avg_number_of_days_between_events IS NULL THEN 0 ELSE t.avg_number_of_days_between_events END AS avg_number_of_days_between_events,
         CASE WHEN t.E1_E2_EVENTPERIOD_COUNT IS NULL THEN 0 ELSE t.E1_E2_EVENTPERIOD_COUNT END AS E1_E2_EVENTPERIOD_COUNT
 INTO @resultsSchema.@prefiXE1E2_model
@@ -54,7 +55,7 @@ INSERT INTO @resultsSchema.@prefiXdebug (entry) VALUES (CONCAT('..done. There ar
 
 ALTER TABLE @resultsSchema.@prefiXE1E2_model ADD EVENT_PAIR_PVALUE FLOAT NULL;
 ALTER TABLE @resultsSchema.@prefiXE1E2_model ADD EVENT_PAIR_PVALUE_SIGNIFICANT VARCHAR(1) NULL;
-ALTER TABLE @resultsSchema.@prefiXE1E2_model ADD EVENT_PAIR_EFFECT DECIMAL NULL;
+ALTER TABLE @resultsSchema.@prefiXE1E2_model ADD EVENT_PAIR_RR DECIMAL NULL;
 ALTER TABLE @resultsSchema.@prefiXE1E2_model ADD EVENTPERIOD_COUNT_E1_OCCURS_FIRST INT NULL;
 ALTER TABLE @resultsSchema.@prefiXE1E2_model ADD AVG_AGE_OF_EVENTPERIOD_E1_OCCURS_FIRST FLOAT NULL;
 ALTER TABLE @resultsSchema.@prefiXE1E2_model ADD EVENTPERIOD_COUNT_E2_OCCURS_FIRST INT NULL;
@@ -65,7 +66,8 @@ ALTER TABLE @resultsSchema.@prefiXE1E2_model ADD E1_COUNT INT NULL;
 ALTER TABLE @resultsSchema.@prefiXE1E2_model ADD E2_COUNT INT NULL;
 ALTER TABLE @resultsSchema.@prefiXE1E2_model ADD E2_COUNT_IN_CONTROL_GROUP INT NULL;
 ALTER TABLE @resultsSchema.@prefiXE1E2_model ADD EVENTPERIOD_COUNT_HAVING_E2_RIGHT_AFTER_E1 INT NULL; --this field is filled after the analysis when we consider only trajectories and events that are significant
-
+ALTER TABLE @resultsSchema.@prefiXE1E2_model ADD POWER_ASSOCIATION DECIMAL NULL;
+ALTER TABLE @resultsSchema.@prefiXE1E2_model ADD POWER_DIRECTION DECIMAL NULL;
 
 CREATE INDEX @prefiXE1E2_model_E1_idx ON @resultsSchema.@prefiXE1E2_model(E1_CONCEPT_ID);
 CREATE INDEX @prefiXE1E2_model_E2_idx ON @resultsSchema.@prefiXE1E2_model(E2_CONCEPT_ID);

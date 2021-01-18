@@ -2,16 +2,20 @@
 % Please edit documentation in R/addBirthsChecker.R
 \name{addBirthsChecker}
 \alias{addBirthsChecker}
-\title{Title}
+\title{Checks whether person.birth_datetime is recorded in the data if addBirths is set to TRUE}
 \usage{
 addBirthsChecker(connection, trajectoryAnalysisArgs, trajectoryLocalArgs)
 }
 \arguments{
-\item{trajectoryLocalArgs}{}
+\item{connection}{Database connection object created by createConnectionDetails() method in DatabaseConnector package}
+
+\item{trajectoryAnalysisArgs}{TrajectoryAnalysisArgs object that must be created by createTrajectoryAnalysisArgs() method}
+
+\item{trajectoryLocalArgs}{TrajectoryLocalArgs object that must be created by createTrajectoryLocalArgs() method}
 }
 \value{
 
 }
 \description{
-Title
+Checks whether person.birth_datetime is recorded in the data if addBirths is set to TRUE
 }
