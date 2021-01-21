@@ -17,7 +17,7 @@ connectionDetails = createConnectionDetails(dbms = 'postgresql',#  e.g. oracle, 
 
 # Setting local system & database parameters - CHANGE ACCORDING TO YOUR SYSTEM & DATABASE:
 trajectoryLocalArgs <- Trajectories::createTrajectoryLocalArgs(oracleTempSchema = "temp_schema",
-                                                                prefixForResultTableNames = "sr_", # Alternatively, you could use this to randomly generate the prefix (requires library(stringi) to be loaded): paste0(  if(!is.null(attr(connectionDetails,'user'))) substr(USER,1,2), stri_rand_strings(1, 2, pattern = "[A-Za-z]"), sep="_")
+                                                                prefixForResultTableNames = "sr_t2d_", # Alternatively, you could use this to randomly generate the prefix (requires library(stringi) to be loaded): paste0(  if(!is.null(attr(connectionDetails,'user'))) substr(USER,1,2), stri_rand_strings(1, 2, pattern = "[A-Za-z]"), sep="_")
                                                                 cdmDatabaseSchema = 'ohdsi_cdm',
                                                                 vocabDatabaseSchema = 'ohdsi_vocab',
                                                                 resultsSchema = 'ohdsi_temp',
@@ -104,7 +104,9 @@ Trajectories::createEventPairsTable(connection=connection,
 # Detect statistically significant directional event pairs and write the results to eventPairResultsFilename
 Trajectories::runEventPairAnalysis(connection=connection,
                                    trajectoryAnalysisArgs=trajectoryAnalysisArgs,
-                                   trajectoryLocalArgs=trajectoryLocalArgs)
+                                   trajectoryLocalArgs=trajectoryLocalArgs,
+                                   forceRecalculation=F,
+                                   relativeRiskForPowerCalculations=1.2)
 
 
 
@@ -119,6 +121,7 @@ Trajectories::PlotTrajectoriesGraphForEvents(connection,
                                              trajectoryAnalysisArgs,
                                              trajectoryLocalArgs,
                                              eventIds=NA,
+                                             minRelativeRisk=1.2,
                                              skipOutputTables = F)
 
 # Draw plots for specific events (uses database connection and result tables in the database for trajectory alignments)
@@ -126,6 +129,7 @@ Trajectories::PlotTrajectoriesGraphForEvents(connection,
                                              trajectoryAnalysisArgs,
                                              trajectoryLocalArgs,
                                              eventIds=trajectoryAnalysisArgs$eventIdsForGraphs,
+                                             minRelativeRisk=1.2,
                                              skipOutputTables = T)
 
 

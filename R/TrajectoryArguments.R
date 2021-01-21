@@ -3,7 +3,7 @@
 #'
 #' @param minimumDaysBetweenEvents The smallest number of days between 2 events of the patient that can be considered as event pair. Usually we have used 1.
 #' @param maximumDaysBetweenEvents The maximum number of days between 2 events of the patient that can be considered as event pair. Ususally we have not really limited it so we have used 3650 (10 years)
-#' @param minPatientsPerEventPair Minimum number of people having event1 -> event2 (directional) progression (satisfying minimumDaysBetweenEvents and maximumDaysBetweenEvents requirements) to be included in analysis. If the value is >=1, it is considered as the absolute count of event pairs. If the value is less than 1, the value is considered as prevalence among the cohort size. For instance, if you have 1000 persons in the cohort and the value is 0.05, each event pair must occur at least 1000x0.05=50 times. Can be used for limiting analysis to frequent event pairs only. However, it does not throw less frequent diagnosis pairs out of the (control group) data and therefore, does not affect the statistical significance. NB! This parameter is ignored in VALIDATIOn mode.
+#' @param minPatientsPerEventPair Minimum number of people having event1 -> event2 (directional) progression (satisfying minimumDaysBetweenEvents and maximumDaysBetweenEvents requirements) to be included in analysis. If the value is >=1, it is considered as the absolute count of event pairs. If the value is less than 1, the value is considered as prevalence among the cohort size. For instance, if you have 1000 persons in the cohort and the value is 0.05, each event pair must occur at least 1000x0.05=50 times. Can be used for limiting analysis to frequent event pairs only. However, it does not throw less frequent diagnosis pairs out of the (control group) data and therefore, does not affect the statistical significance.
 #' @param addConditions TRUE/FALSE parameter to indicate whether events from Condition_occurrence table should be included in the analysis
 #' @param addObservations TRUE/FALSE parameter to indicate whether events from Condition_occurrence table should be included in the analysis
 #' @param addProcedures TRUE/FALSE parameter to indicate whether events from Procedure_occurrence table should be included in the analysis
@@ -266,4 +266,30 @@ GetOutputFolder<-function(trajectoryLocalArgs,trajectoryAnalysisArgs,createIfMis
   if(createIfMissing==T) log_info(paste0("Output folder set to ",outputFolder))
   return(outputFolder)
 
+}
+
+#' Returns TRUE if event_pairs_for_validation.tsv exists in input folder - means that the package is run in validation mode.
+#'
+#' @param trajectoryLocalArgs Object created by Trajectories::createTrajectoryLocalArgs() method
+#' @param verbose If TRUE, outputs some info in INFO/DEBUG log level. Otherwise, returns the results silently.
+#'
+#' @return
+#' @export
+#'
+#' @examples
+IsValidationMode<-function(trajectoryLocalArgs, verbose=F) {
+  f=file.path(trajectoryLocalArgs$inputFolder,'event_pairs_for_validation.tsv')
+  if(file.exists(f)) {
+    if(verbose) {
+      logger::log_debug(paste0("File 'event_pairs_for_validation.tsv' exists in input folder ",trajectoryLocalArgs$inputFolder,". This means that:"))
+      logger::log_info("The package is run in VALIDATION MODE")
+    }
+    return(TRUE)
+  } else {
+    if(verbose) {
+      logger::log_debug(paste0("File 'event_pairs_for_validation.tsv' does not exist in input folder ",trajectoryLocalArgs$inputFolder,". This means that:"))
+      logger::log_info("The package is run in DISCOVERY MODE")
+    }
+    return(FALSE)
+  }
 }

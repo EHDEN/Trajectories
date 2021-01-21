@@ -1,11 +1,8 @@
 library(SqlRender)
-
 #' Creates event pairs table and populates it with the data
 #'
-#' @param connection Database connection object created by createConnectionDetails() method in DatabaseConnector package
-#' @param trajectoryAnalysisArgs TrajectoryAnalysisArgs object that must be created by createTrajectoryAnalysisArgs() method
-#' @param trajectoryLocalArgs TrajectoryLocalArgs object that must be created by createTrajectoryLocalArgs() method
-#'
+#' @param connection DatabaseConnectorConnection object that is used to connect with database
+#' @inheritParams GetOutputFolder
 #' @return
 #' @export
 #'
@@ -72,17 +69,17 @@ createEventPairsTable<-function(connection,
   # Create and fill E1E2_model_input table
   # There are two options here - either to build it from the actual data OR (in validation mode) build it from given event-pairs
   #Check whether to run the method in validation mode
-  f=file.path(trajectoryLocalArgs$inputFolder,'event_pairs_for_validation.tsv')
-  if(file.exists(f)) {
-    logger::log_info(paste0("File 'event_pairs_for_validation.tsv' exists in input folder ",trajectoryLocalArgs$inputFolder))
-    logger::log_info("This means that the package is run in VALIDATION MODE")
+  isValidationMode=Trajectories::IsValidationMode(trajectoryLocalArgs, verbose=T)
+  if(isValidationMode) {
 
-    logger::log_info("Data to E1E2_MODEL is taken from file 'event_pairs_for_validation.tsv'...")
+    f=file.path(trajectoryLocalArgs$inputFolder,'event_pairs_for_validation.tsv')
+    logger::log_info("Data to E1E2_MODEL is taken from file '{f}'...")
 
     #2Can't use simply insertTable here because in Eunomia package it does not solve schema name correctly. That's why this is commented out and we manually create SQL here :(
     #insertTable(connection, tablename, edges, tempTable=F, progressBar=T)
 
     e = read.csv2(file = f, sep = '\t', header = TRUE, as.is=T)
+    e$RR_IN_PREVIOUS_STUDY<-as.numeric(e$RR_IN_PREVIOUS_STUDY)
 
     if(nrow(e)==0) logger::log_error("Package is run in validation mode, but file 'event_pairs_for_validation.tsv' is empty")
 
@@ -101,7 +98,7 @@ createEventPairsTable<-function(connection,
     logger::log_info("Filling {tablename} with data from 'event_pairs_for_validation.tsv'...")
     e$sql <- paste0("INSERT INTO ",
                    tablename,
-                   " (E1_CONCEPT_ID,E2_CONCEPT_ID,E1_NAME,E1_DOMAIN,E2_NAME,E2_DOMAIN) VALUES (",
+                   " (E1_CONCEPT_ID,E2_CONCEPT_ID,E1_NAME,E1_DOMAIN,E2_NAME,E2_DOMAIN,RR_IN_PREVIOUS_STUDY) VALUES (",
                    e$E1_CONCEPT_ID,
                    ",",
                    e$E2_CONCEPT_ID,
@@ -113,15 +110,19 @@ createEventPairsTable<-function(connection,
                    e$E2_NAME,
                    "','",
                    e$E2_DOMAIN,
-                   "');")
+                   "',",
+                   ifelse(is.na(e$RR_IN_PREVIOUS_STUDY),'NULL',e$RR_IN_PREVIOUS_STUDY),
+                   ");")
+    e <- e %>% arrange(-RR_IN_PREVIOUS_STUDY)
     for(insertSql in e$sql) {
       RenderedSql <- SqlRender::translate(insertSql,targetDialect=attr(connection, "dbms"))
+      #print(RenderedSql)
       DatabaseConnector::executeSql(connection, RenderedSql)
     }
     logger::log_info("...done.")
 
   } else {
-    logger::log_info("Running package in EXPLORATORY mode (not validating someone's results)")
+    logger::log_info("Running package in DISCOVERY mode (not validating someone's results)")
     RenderedSql = Trajectories::loadRenderTranslateSql(sqlFilename='createEventPairsTable-part2a.sql',
                                                        packageName=trajectoryAnalysisArgs$packageName,
                                                        dbms = connection@dbms,
@@ -137,7 +138,7 @@ createEventPairsTable<-function(connection,
 
 
 
-  # Create everything E1E2_model table and all that is inherited from that
+  # Create E1E2_model table and all that is inherited from that
   logger::log_info("Creating statistics for events pairs that are going to be analyzed...")
   RenderedSql = Trajectories::loadRenderTranslateSql(sqlFilename='createEventPairsTable-part3.sql',
                                                      packageName=trajectoryAnalysisArgs$packageName,
@@ -149,7 +150,7 @@ createEventPairsTable<-function(connection,
   DatabaseConnector::executeSql(connection, sql=RenderedSql, profile=F, progressBar = TRUE, reportOverallTime = TRUE)
   logger::log_info("...done.")
 
-  #During the execution of 1CohortCC.sql, the SQL scripts some debug information to table @resultsSchema.@prefiXdebug. Lets write this to log also.
+  #During the execution of previous scripts, SQL writes some debug information to table @resultsSchema.@prefiXdebug. Lets write this to log also.
   sql<-"SELECT ENTRY FROM @resultsSchema.@prefiXdebug ORDER BY timestamp;"
   RenderedSql <- SqlRender::render(sql, resultsSchema=trajectoryLocalArgs$resultsSchema, prefiX = trajectoryLocalArgs$prefixForResultTableNames)
   RenderedSql <- SqlRender::translate(RenderedSql,targetDialect=attr(connection, "dbms"))

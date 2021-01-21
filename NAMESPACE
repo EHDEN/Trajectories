@@ -2,6 +2,7 @@
 
 export(GetOutputFolder)
 export(InitLogger)
+export(IsValidationMode)
 export(PlotTrajectoriesGraphForEvent)
 export(PlotTrajectoriesGraphForEvents)
 export(TrajectoryAnalysisArgsFromInputFolder)

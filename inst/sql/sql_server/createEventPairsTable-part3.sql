@@ -56,17 +56,23 @@ INSERT INTO @resultsSchema.@prefiXdebug (entry) VALUES (CONCAT('..done. There ar
 ALTER TABLE @resultsSchema.@prefiXE1E2_model ADD EVENT_PAIR_PVALUE FLOAT NULL;
 ALTER TABLE @resultsSchema.@prefiXE1E2_model ADD EVENT_PAIR_PVALUE_SIGNIFICANT VARCHAR(1) NULL;
 ALTER TABLE @resultsSchema.@prefiXE1E2_model ADD EVENT_PAIR_RR DECIMAL NULL;
+ALTER TABLE @resultsSchema.@prefiXE1E2_model ADD EVENT_PAIR_RR_CI_LOWER DECIMAL NULL;
+ALTER TABLE @resultsSchema.@prefiXE1E2_model ADD EVENT_PAIR_RR_CI_UPPER DECIMAL NULL;
 ALTER TABLE @resultsSchema.@prefiXE1E2_model ADD EVENTPERIOD_COUNT_E1_OCCURS_FIRST INT NULL;
 ALTER TABLE @resultsSchema.@prefiXE1E2_model ADD AVG_AGE_OF_EVENTPERIOD_E1_OCCURS_FIRST FLOAT NULL;
 ALTER TABLE @resultsSchema.@prefiXE1E2_model ADD EVENTPERIOD_COUNT_E2_OCCURS_FIRST INT NULL;
 ALTER TABLE @resultsSchema.@prefiXE1E2_model ADD EVENTPERIOD_COUNT_E1_E2_OCCUR_ON_SAME_DAY INT NULL;
 ALTER TABLE @resultsSchema.@prefiXE1E2_model ADD DIRECTIONAL_EVENT_PAIR_PVALUE FLOAT NULL;
 ALTER TABLE @resultsSchema.@prefiXE1E2_model ADD DIRECTIONAL_EVENT_PAIR_PVALUE_SIGNIFICANT VARCHAR(1) NULL;
-ALTER TABLE @resultsSchema.@prefiXE1E2_model ADD E1_COUNT INT NULL;
-ALTER TABLE @resultsSchema.@prefiXE1E2_model ADD E2_COUNT INT NULL;
-ALTER TABLE @resultsSchema.@prefiXE1E2_model ADD E2_COUNT_IN_CONTROL_GROUP INT NULL;
+ALTER TABLE @resultsSchema.@prefiXE1E2_model ADD E1_COUNT INT NULL; -- this is the total number of eventperiods where E1 is present (does not equal to event pairs with E1 as single-event eventperiods do not form any pair). Singe-event-eventperiods are not counted.
+ALTER TABLE @resultsSchema.@prefiXE1E2_model ADD E1_COUNT_AS_FIRST_EVENT INT NULL; -- this is the number of eventperiods with event pairs where E1 is the first event
+ALTER TABLE @resultsSchema.@prefiXE1E2_model ADD E2_COUNT INT NULL; -- this is the total number of eventperiods where E2 is present (does not equal to event pairs with E2 as single-event eventperiods do not form any pair). Singe-event-eventperiods are not counted.
+ALTER TABLE @resultsSchema.@prefiXE1E2_model ADD E2_COUNT_AS_SECOND_EVENT INT NULL; -- this is the number of eventperiods with event pairs where E2 is the second event
+ALTER TABLE @resultsSchema.@prefiXE1E2_model ADD E1_AND_E2_TOGETHER_COUNT INT NULL; -- this is the number of eventperiods where E1 and E2 are both present (in both directions). Singe-event-eventperiods are not counted.
+ALTER TABLE @resultsSchema.@prefiXE1E2_model ADD E2_PREVALENCE_IN_CONTROL_GROUP DECIMAL NULL;
+ALTER TABLE @resultsSchema.@prefiXE1E2_model ADD APPROX_E2_COUNT_IN_CONTROL_GROUP INT NULL; -- Approximate prevalence of E2 in control group, calculated from E2_PREVALENCE_IN_CONTROL_GROUP x case_group_size
 ALTER TABLE @resultsSchema.@prefiXE1E2_model ADD EVENTPERIOD_COUNT_HAVING_E2_RIGHT_AFTER_E1 INT NULL; --this field is filled after the analysis when we consider only trajectories and events that are significant
-ALTER TABLE @resultsSchema.@prefiXE1E2_model ADD POWER_ASSOCIATION DECIMAL NULL;
+ALTER TABLE @resultsSchema.@prefiXE1E2_model ADD POWER_PREFILTERING DECIMAL NULL;
 ALTER TABLE @resultsSchema.@prefiXE1E2_model ADD POWER_DIRECTION DECIMAL NULL;
 
 CREATE INDEX @prefiXE1E2_model_E1_idx ON @resultsSchema.@prefiXE1E2_model(E1_CONCEPT_ID);
@@ -81,13 +87,70 @@ UPDATE @resultsSchema.@prefiXE1E2_model
 SET E1_COUNT = 0
 WHERE E1_COUNT IS NULL;
 
-
 UPDATE @resultsSchema.@prefiXE1E2_model
 SET E2_COUNT = (SELECT event_counts_in_eventperiods FROM @resultsSchema.@prefiXevent_counts_in_eventperiods WHERE CONCEPT_ID = E2_CONCEPT_ID);
 -- in validation mode E2 might be not present in data, force these counts to 0
 UPDATE @resultsSchema.@prefiXE1E2_model
 SET E2_COUNT = 0
 WHERE E2_COUNT IS NULL;
+
+
+--- to speed up, create statistics table  before calculating E1_COUNT_AS_FIRST_EVENT
+IF OBJECT_ID('@resultsSchema.@prefiXpairs_stat', 'U') IS NOT NULL
+  DROP TABLE @resultsSchema.@prefiXpairs_stat;
+
+SELECT
+        e1_concept_id,
+        COUNT(DISTINCT eventperiod_id) as ccc
+INTO @resultsSchema.@prefiXpairs_stat
+FROM @resultsSchema.@prefiXpairs
+GROUP BY e1_concept_id;
+
+UPDATE @resultsSchema.@prefiXE1E2_model
+SET E1_COUNT_AS_FIRST_EVENT = (SELECT ccc FROM @resultsSchema.@prefiXpairs_stat p WHERE p.E1_CONCEPT_ID = @prefiXE1E2_model.E1_CONCEPT_ID);
+-- in validation mode E1 might be not present in data, force these counts to 0
+UPDATE @resultsSchema.@prefiXE1E2_model
+SET E1_COUNT_AS_FIRST_EVENT = 0
+WHERE E1_COUNT_AS_FIRST_EVENT IS NULL;
+
+IF OBJECT_ID('@resultsSchema.@prefiXpairs_stat', 'U') IS NOT NULL
+  DROP TABLE @resultsSchema.@prefiXpairs_stat;
+
+
+
+
+--- to speed up, create statistics table  before calculating E1_COUNT_AS_FIRST_EVENT
+IF OBJECT_ID('@resultsSchema.@prefiXpairs_stat', 'U') IS NOT NULL
+  DROP TABLE @resultsSchema.@prefiXpairs_stat;
+
+SELECT
+        e2_concept_id,
+        COUNT(DISTINCT eventperiod_id) as ccc
+INTO @resultsSchema.@prefiXpairs_stat
+FROM @resultsSchema.@prefiXpairs
+GROUP BY e2_concept_id;
+
+
+UPDATE @resultsSchema.@prefiXE1E2_model
+SET E2_COUNT_AS_SECOND_EVENT = (SELECT ccc FROM @resultsSchema.@prefiXpairs_stat p WHERE p.E2_CONCEPT_ID = @prefiXE1E2_model.E2_CONCEPT_ID);
+-- in validation mode E2 might be not present in data, force these counts to 0
+UPDATE @resultsSchema.@prefiXE1E2_model
+SET E2_COUNT_AS_SECOND_EVENT = 0
+WHERE E2_COUNT_AS_SECOND_EVENT IS NULL;
+
+IF OBJECT_ID('@resultsSchema.@prefiXpairs_stat', 'U') IS NOT NULL
+  DROP TABLE @resultsSchema.@prefiXpairs_stat;
+
+
+
+
+UPDATE @resultsSchema.@prefiXE1E2_model
+SET E1_AND_E2_TOGETHER_COUNT = (
+    SELECT count(*)
+    FROM (SELECT DISTINCT eventperiod_id FROM @resultsSchema.@prefiXevents where concept_id = @prefiXE1E2_model.e1_concept_id) e1
+         INNER JOIN
+         (SELECT DISTINCT eventperiod_id FROM @resultsSchema.@prefiXevents where concept_id = @prefiXE1E2_model.e2_concept_id) e2
+         ON e1.eventperiod_id=e2.eventperiod_id);
 
 ---------------------------------------------------------------------
 -- Create gender,age,discharge-time summary table for each E1_CONCEPT_ID->E2_CONCEPT_ID pairs

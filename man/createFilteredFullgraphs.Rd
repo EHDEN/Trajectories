@@ -7,7 +7,8 @@
 createFilteredFullgraphs(
   connection,
   trajectoryAnalysisArgs,
-  trajectoryLocalArgs
+  trajectoryLocalArgs,
+  minRelativeRisk = 1.2
 )
 }
 \arguments{
@@ -16,6 +17,8 @@ createFilteredFullgraphs(
 \item{trajectoryAnalysisArgs}{TrajectoryAnalysisArgs object that must be created by createTrajectoryAnalysisArgs() method}
 
 \item{trajectoryLocalArgs}{TrajectoryLocalArgs object that must be created by createTrajectoryLocalArgs() method}
+
+\item{minRelativeRisk}{Minimum threshold for relative risk of an event pair. Used to filter out event pairs with small relative risk.}
 }
 \value{
 

@@ -3,7 +3,7 @@ SELECT
 FROM @resultsSchema.@prefixE1E2_model
 
 WHERE
-  directional_event_pair_pvalue <= @cutoff_val
+  DIRECTIONAL_EVENT_PAIR_PVALUE_SIGNIFICANT='*'
   AND
   EVENT_PAIR_RR >= @rr
 

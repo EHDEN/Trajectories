@@ -9,12 +9,13 @@
 #' e1 (name), e1_concept_id, e2 (name), e2_concept_id, e1_count, effect, prob, numcohortExact. numcohortExact is a number of event periods that had E1->E2 as immediate order (no intermediate events).
 #'
 #' @param eventPairResultsFilename Full path to event pairs file
+#' @param minRelativeRisk Minimum threshold for relative risk of an event pair. Used to filter out event pairs with small relative risk.
 #'
 #' @return
 #' @export
 #'
 #' @examples
-createTrajectoriesGraph<-function(eventPairResultsFilename) {
+createTrajectoriesGraph<-function(eventPairResultsFilename, minRelativeRisk=1.2) {
 
   logger::log_info('Creating TrajectoriesGraph object based on event pairs data from the following file: {eventPairResultsFilename}...')
 
@@ -25,19 +26,9 @@ createTrajectoriesGraph<-function(eventPairResultsFilename) {
   e$EVENT_PAIR_RR<-as.numeric(e$EVENT_PAIR_RR)
   e$AVG_NUMBER_OF_DAYS_BETWEEN_EVENTS<-as.numeric(e$AVG_NUMBER_OF_DAYS_BETWEEN_EVENTS)
 
-
-  # An approximate age for each event is calculated
-  # -----
-  #In each event pair the age of event1 might be different
-  #For a graph, we use the minimum date of the following: MIN( min(25% quantile if given), min (event2_estimated_age if given))
-  # first, find out what is the lowest age_q25 for that event, if the event is among event1
-  #x<-e %>% group_by(EVENT1_NAME) %>% mutate(min_q25_age_of_event1=quantile(Q25_AGE_OF_COHORT_EVENT1_OCCURS_FIRST,c(0.25))) %>% ungroup() %>% select (event=EVENT1_NAME,age=min_q25_age_of_event1)
-  # second, find out what is the expected age for that event, if the event is among event2 (calculated from event1 age)
-  #e$event2_estimated_age <- e$Q25_AGE_OF_COHORT_EVENT1_OCCURS_FIRST+round(e$AVG_NUMBER_OF_DAYS_BETWEEN_EVENTS/365.25)
-  #y<-e %>% group_by(EVENT2_NAME) %>% mutate(min_estimated_age=quantile(event2_estimated_age,c(0.25))) %>% ungroup() %>% select (event=EVENT2_NAME,age=min_estimated_age)
-  # Finally, take the minimum value of those 2
-  #AGES<-as.data.frame(rbind(x,y) %>% group_by(event) %>% mutate(AGE_FOR_GRAPH=min(age)) %>% ungroup() %>% select (event,AGE_FOR_GRAPH) %>% unique())
-  # End of age calculation
+  #apply minimum RR threshold
+  e <- e %>% filter(EVENT_PAIR_RR > minRelativeRisk)
+  logger::log_info('Applying relative risk filter: only pairs having relative risk >= {minRelativeRisk} are used for building the trajectories graph.')
 
   # calculate max event count for scaling
   max_event_count<-max(e$E1_COUNT,e$E2_COUNT)

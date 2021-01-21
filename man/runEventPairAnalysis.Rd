@@ -8,7 +8,8 @@ runEventPairAnalysis(
   connection,
   trajectoryAnalysisArgs,
   trajectoryLocalArgs,
-  forceRecalculation = F
+  forceRecalculation = F,
+  relativeRiskForPowerCalculations = 1.2
 )
 }
 \arguments{
@@ -19,6 +20,8 @@ runEventPairAnalysis(
 \item{trajectoryLocalArgs}{TrajectoryLocalArgs object that must be created by createTrajectoryLocalArgs() method}
 
 \item{forceRecalculation}{Set to TRUE if you wish to recalculate p-values for all pairs again. If it is set to FALSE, it avoids overcalculating p-values for pairs that have been analyzed already.}
+
+\item{relativeRiskForPowerCalculations}{Relative risk that is used for power calculations (what is the power to detect that relative risk in these data). When run in validation mode, this parameter is ignored.}
 }
 \value{
 

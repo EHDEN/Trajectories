@@ -1,6 +1,7 @@
 UPDATE @resultsSchema.@prefixE1E2_model
 SET
-  directional_event_pair_pvalue=@pval,
+  DIRECTIONAL_EVENT_PAIR_PVALUE=@pval,
+  DIRECTIONAL_EVENT_PAIR_PVALUE_SIGNIFICANT=@pvalSignificant,
   POWER_DIRECTION=@powerDirection
 WHERE
   E1_CONCEPT_ID = '@diag1'

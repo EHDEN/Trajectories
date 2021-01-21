@@ -9,6 +9,7 @@ PlotTrajectoriesGraphForEvents(
   trajectoryAnalysisArgs,
   trajectoryLocalArgs,
   eventIds = NA,
+  minRelativeRisk = 1.2,
   limitOfNodes = 30,
   skipOutputTables = T
 )
@@ -21,6 +22,8 @@ PlotTrajectoriesGraphForEvents(
 \item{trajectoryLocalArgs}{TrajectoryLocalArgs object that must be created by createTrajectoryLocalArgs() method}
 
 \item{eventIds}{Exact concept id-s as a list that is used for analyzing/plotting trajectories. If not specified (NA) (recommended) creates trajectories for top 5 events.}
+
+\item{minRelativeRisk}{Minimum threshold for relative risk of an event pair. Used to filter out event pairs with small relative risk.}
 
 \item{limitOfNodes}{Max number of events in the consrtructed graph. Used to limit the analysis to most important events only.}
 

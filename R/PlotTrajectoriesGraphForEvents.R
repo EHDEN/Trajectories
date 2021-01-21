@@ -11,6 +11,7 @@
 #' @param trajectoryLocalArgs TrajectoryLocalArgs object that must be created by createTrajectoryLocalArgs() method
 #' @param limitOfNodes Max number of events in the consrtructed graph. Used to limit the analysis to most important events only.
 #' @param skipOutputTables If set to TRUE, no output data tables are made (the PDF graphs only).
+#' @inheritParams createTrajectoriesGraph
 #'
 #' @return
 #' @export
@@ -20,6 +21,7 @@ PlotTrajectoriesGraphForEvents<-function(connection,
                        trajectoryAnalysisArgs,
                        trajectoryLocalArgs,
                        eventIds=NA,
+                       minRelativeRisk=1.2,
                        limitOfNodes=30,
                        skipOutputTables=T
                        ) {
@@ -30,7 +32,7 @@ PlotTrajectoriesGraphForEvents<-function(connection,
   eventPairResultsFilename = file.path(outputFolder,'event_pairs.tsv')
 
   # create TrajectoriesGraph object from event pairs
-  g<-Trajectories::createTrajectoriesGraph(eventPairResultsFilename)
+  g<-Trajectories::createTrajectoriesGraph(eventPairResultsFilename=eventPairResultsFilename, minRelativeRisk=minRelativeRisk)
 
   cohortName=trajectoryAnalysisArgs$cohortName
 

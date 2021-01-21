@@ -4,10 +4,12 @@
 \alias{createTrajectoriesGraph}
 \title{Builds a TrajectoriesGraph object based on event pairs data in "eventPairResultsFilename" file}
 \usage{
-createTrajectoriesGraph(eventPairResultsFilename)
+createTrajectoriesGraph(eventPairResultsFilename, minRelativeRisk = 1.2)
 }
 \arguments{
 \item{eventPairResultsFilename}{Full path to event pairs file}
+
+\item{minRelativeRisk}{Minimum threshold for relative risk of an event pair. Used to filter out event pairs with small relative risk.}
 }
 \value{
 

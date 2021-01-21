@@ -73,10 +73,12 @@ test_that("No significant event pairs in random data", {
   #print('Files in directory:')
   #list.files(outputFolder)
 
-  #test that no output file (event_pairs.csv) was created
+  #test that output file was created, but it has header row only
   eventPairResultsFilename = file.path(outputFolder,'event_pairs.tsv')
   print(paste0('Test that ',eventPairResultsFilename,' exists...'))
-  expect_equal(file.exists(eventPairResultsFilename), FALSE)
+  expect_equal(file.exists(eventPairResultsFilename), TRUE)
+  directional_event_pairs<-getEventPairsTableAsDataFrame(trajectoryLocalArgs,trajectoryAnalysisArgs,filename='event_pairs.tsv')
+  expect_equal(nrow(directional_event_pairs),0)
 
 })
 

@@ -3,6 +3,7 @@
 #' @param connection Database connection object created by createConnectionDetails() method in DatabaseConnector package
 #' @param trajectoryAnalysisArgs TrajectoryAnalysisArgs object that must be created by createTrajectoryAnalysisArgs() method
 #' @param trajectoryLocalArgs TrajectoryLocalArgs object that must be created by createTrajectoryLocalArgs() method
+#' @inheritParams createTrajectoriesGraph
 #'
 #' @return
 #' @export
@@ -10,7 +11,8 @@
 #' @examples
 createFilteredFullgraphs<-function(connection,
                                    trajectoryAnalysisArgs,
-                                   trajectoryLocalArgs) {
+                                   trajectoryLocalArgs,
+                                   minRelativeRisk=1.2) {
   library(stringi)
 
   logger::log_info('Creating a plot of full graph (built from all event pairs)...')
@@ -19,7 +21,8 @@ createFilteredFullgraphs<-function(connection,
   eventPairResultsFilename = file.path(outputFolder,'event_pairs.tsv')
 
   # create igraph object from event pairs
-  g<-Trajectories::createTrajectoriesGraph(eventPairResultsFilename)
+  g<-Trajectories::createTrajectoriesGraph(eventPairResultsFilename=eventPairResultsFilename,
+                                           minRelativeRisk=minRelativeRisk)
 
   if(length(V(g))==0) {
     logger::log_warn('The graph contains 0 events, skip plotting figures.')
