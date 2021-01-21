@@ -1,72 +1,169 @@
-	E1_CONCEPT_ID	E2_CONCEPT_ID	E1_NAME	E1_DOMAIN	E2_NAME	E2_DOMAIN
-1	316139	942350	Heart failure	Condition	torsemide	Drug
-2	316139	319835	Heart failure	Condition	Congestive heart failure	Condition
-3	4068155	1307046	Atrial arrhythmia	Condition	metoprolol	Drug
-4	4193704	19059796	Type 2 diabetes mellitus without complication	Condition	gliclazide	Drug
-5	201826	19059796	Type 2 diabetes mellitus	Condition	gliclazide	Drug
-6	443732	40566982	Disorder due to type 2 diabetes mellitus	Condition	Death	Condition
-7	443732	40480694	Disorder due to type 2 diabetes mellitus	Condition	High hemoglobin A1c level	Condition
-8	314378	942350	Hypertensive heart disease with congestive heart failure	Condition	torsemide	Drug
-9	321318	1307046	Angina pectoris	Condition	metoprolol	Drug
-10	201826	40480694	Type 2 diabetes mellitus	Condition	High hemoglobin A1c level	Condition
-11	4193704	40480694	Type 2 diabetes mellitus without complication	Condition	High hemoglobin A1c level	Condition
-12	4193704	1503297	Type 2 diabetes mellitus without complication	Condition	metformin	Drug
-13	314378	40566982	Hypertensive heart disease with congestive heart failure	Condition	Death	Condition
-14	443732	1334456	Disorder due to type 2 diabetes mellitus	Condition	ramipril	Drug
-15	4193704	1510813	Type 2 diabetes mellitus without complication	Condition	rosuvastatin	Drug
-16	4041554	1510813	Serum cholesterol raised	Condition	rosuvastatin	Drug
-17	319034	314378	Hypertensive heart disease without congestive heart failure	Condition	Hypertensive heart disease with congestive heart failure	Condition
-18	314378	319835	Hypertensive heart disease with congestive heart failure	Condition	Congestive heart failure	Condition
-19	4193704	1314577	Type 2 diabetes mellitus without complication	Condition	nebivolol	Drug
-20	442604	201826	Hypertensive heart disease	Condition	Type 2 diabetes mellitus	Condition
-21	4217557	1503297	Simple obesity	Condition	metformin	Drug
-22	442604	314378	Hypertensive heart disease	Condition	Hypertensive heart disease with congestive heart failure	Condition
-23	201826	1503297	Type 2 diabetes mellitus	Condition	metformin	Drug
-24	4193704	1545958	Type 2 diabetes mellitus without complication	Condition	atorvastatin	Drug
-25	4041554	1545958	Serum cholesterol raised	Condition	atorvastatin	Drug
-26	443732	942350	Disorder due to type 2 diabetes mellitus	Condition	torsemide	Drug
-27	4193704	1317640	Type 2 diabetes mellitus without complication	Condition	telmisartan	Drug
-28	316139	1307046	Heart failure	Condition	metoprolol	Drug
-29	314378	316139	Hypertensive heart disease with congestive heart failure	Condition	Heart failure	Condition
-30	319034	978555	Hypertensive heart disease without congestive heart failure	Condition	indapamide	Drug
-31	314378	1307046	Hypertensive heart disease with congestive heart failure	Condition	metoprolol	Drug
-32	443732	1545958	Disorder due to type 2 diabetes mellitus	Condition	atorvastatin	Drug
-33	320128	319034	Essential hypertension	Condition	Hypertensive heart disease without congestive heart failure	Condition
-34	319034	1332418	Hypertensive heart disease without congestive heart failure	Condition	amlodipine	Drug
-35	4193704	1332418	Type 2 diabetes mellitus without complication	Condition	amlodipine	Drug
-36	319034	1317640	Hypertensive heart disease without congestive heart failure	Condition	telmisartan	Drug
-37	1503297	40480694	metformin	Drug	High hemoglobin A1c level	Condition
-38	314378	1373225	Hypertensive heart disease with congestive heart failure	Condition	perindopril	Drug
-39	4193704	443732	Type 2 diabetes mellitus without complication	Condition	Disorder due to type 2 diabetes mellitus	Condition
-40	201826	443732	Type 2 diabetes mellitus	Condition	Disorder due to type 2 diabetes mellitus	Condition
-41	319034	1373225	Hypertensive heart disease without congestive heart failure	Condition	perindopril	Drug
-42	314378	1332418	Hypertensive heart disease with congestive heart failure	Condition	amlodipine	Drug
-43	442604	1332418	Hypertensive heart disease	Condition	amlodipine	Drug
-44	4193704	1124300	Type 2 diabetes mellitus without complication	Condition	diclofenac	Drug
-45	4041554	1503297	Serum cholesterol raised	Condition	metformin	Drug
-46	319034	1314577	Hypertensive heart disease without congestive heart failure	Condition	nebivolol	Drug
-47	438720	1503297	Mixed hyperlipidemia	Condition	metformin	Drug
-48	4193704	1334456	Type 2 diabetes mellitus without complication	Condition	ramipril	Drug
-49	201826	1334456	Type 2 diabetes mellitus	Condition	ramipril	Drug
-50	4193704	1307046	Type 2 diabetes mellitus without complication	Condition	metoprolol	Drug
-51	4193704	1373225	Type 2 diabetes mellitus without complication	Condition	perindopril	Drug
-52	257011	1503297	Acute upper respiratory infection	Condition	metformin	Drug
-53	319034	1545958	Hypertensive heart disease without congestive heart failure	Condition	atorvastatin	Drug
-54	443732	1307046	Disorder due to type 2 diabetes mellitus	Condition	metoprolol	Drug
-55	320128	4041554	Essential hypertension	Condition	Serum cholesterol raised	Condition
-56	443732	1510813	Disorder due to type 2 diabetes mellitus	Condition	rosuvastatin	Drug
-57	319034	1307046	Hypertensive heart disease without congestive heart failure	Condition	metoprolol	Drug
-58	1503297	1124300	metformin	Drug	diclofenac	Drug
-59	201826	1317640	Type 2 diabetes mellitus	Condition	telmisartan	Drug
-60	320128	1503297	Essential hypertension	Condition	metformin	Drug
-61	201826	1332418	Type 2 diabetes mellitus	Condition	amlodipine	Drug
-62	319034	437530	Hypertensive heart disease without congestive heart failure	Condition	Disorder of lipid metabolism	Condition
-63	442604	316139	Hypertensive heart disease	Condition	Heart failure	Condition
-64	260139	1503297	Acute bronchitis	Condition	metformin	Drug
-65	201826	1307046	Type 2 diabetes mellitus	Condition	metoprolol	Drug
-66	4079750	1503297	Osteoarthritis of knee	Condition	metformin	Drug
-67	437530	1503297	Disorder of lipid metabolism	Condition	metformin	Drug
-68	1503297	1332418	metformin	Drug	amlodipine	Drug
-69	319034	1510813	Hypertensive heart disease without congestive heart failure	Condition	rosuvastatin	Drug
-70	201826	1124300	Type 2 diabetes mellitus	Condition	diclofenac	Drug
-71	319034	438720	Hypertensive heart disease without congestive heart failure	Condition	Mixed hyperlipidemia	Condition
+	E1_CONCEPT_ID	E2_CONCEPT_ID	E1_NAME	E1_DOMAIN	E2_NAME	E2_DOMAIN	RR_IN_PREVIOUS_STUDY
+1	201826	443732	Type 2 diabetes mellitus	Condition	Disorder due to type 2 diabetes mellitus	Condition	1.179
+2	201826	1124300	Type 2 diabetes mellitus	Condition	diclofenac	Drug	1.11
+3	201826	1307046	Type 2 diabetes mellitus	Condition	metoprolol	Drug	1.12
+4	201826	1317640	Type 2 diabetes mellitus	Condition	telmisartan	Drug	1.128
+5	201826	1332418	Type 2 diabetes mellitus	Condition	amlodipine	Drug	1.126
+6	201826	1334456	Type 2 diabetes mellitus	Condition	ramipril	Drug	1.149
+7	201826	1503297	Type 2 diabetes mellitus	Condition	metformin	Drug	1.221
+8	201826	4063398	Type 2 diabetes mellitus	Condition	Driver license medical examination	Procedure	1.186
+9	201826	4187078	Type 2 diabetes mellitus	Condition	Electrocardiographic monitoring	Procedure	1.116
+10	201826	4259495	Type 2 diabetes mellitus	Condition	Slit lamp fundus examination	Procedure	1.101
+11	201826	19059796	Type 2 diabetes mellitus	Condition	gliclazide	Drug	1.393
+12	201826	40480694	Type 2 diabetes mellitus	Condition	High hemoglobin A1c level	Condition	1.308
+13	260139	1503297	Acute bronchitis	Condition	metformin	Drug	1.139
+14	314378	316139	Hypertensive heart disease with congestive heart failure	Condition	Heart failure	Condition	1.206
+15	314378	319835	Hypertensive heart disease with congestive heart failure	Condition	Congestive heart failure	Condition	1.227
+16	314378	942350	Hypertensive heart disease with congestive heart failure	Condition	torsemide	Drug	1.329
+17	314378	1307046	Hypertensive heart disease with congestive heart failure	Condition	metoprolol	Drug	1.205
+18	314378	1332418	Hypertensive heart disease with congestive heart failure	Condition	amlodipine	Drug	1.17
+19	314378	1373225	Hypertensive heart disease with congestive heart failure	Condition	perindopril	Drug	1.181
+20	314378	4140473	Hypertensive heart disease with congestive heart failure	Condition	Holter extended electrocardiographic recording	Procedure	1.21
+21	314378	4230911	Hypertensive heart disease with congestive heart failure	Condition	Echocardiography	Procedure	1.296
+22	314378	40566982	Hypertensive heart disease with congestive heart failure	Condition	Death	Condition	1.288
+23	316139	319835	Heart failure	Condition	Congestive heart failure	Condition	1.537
+24	316139	942350	Heart failure	Condition	torsemide	Drug	1.562
+25	316139	1307046	Heart failure	Condition	metoprolol	Drug	1.211
+26	316139	4230911	Heart failure	Condition	Echocardiography	Procedure	1.229
+27	319034	314378	Hypertensive heart disease without congestive heart failure	Condition	Hypertensive heart disease with congestive heart failure	Condition	1.226
+28	319034	437530	Hypertensive heart disease without congestive heart failure	Condition	Disorder of lipid metabolism	Condition	1.121
+29	319034	438720	Hypertensive heart disease without congestive heart failure	Condition	Mixed hyperlipidemia	Condition	1.106
+30	319034	978555	Hypertensive heart disease without congestive heart failure	Condition	indapamide	Drug	1.202
+31	319034	1307046	Hypertensive heart disease without congestive heart failure	Condition	metoprolol	Drug	1.133
+32	319034	1314577	Hypertensive heart disease without congestive heart failure	Condition	nebivolol	Drug	1.149
+33	319034	1317640	Hypertensive heart disease without congestive heart failure	Condition	telmisartan	Drug	1.185
+34	319034	1332418	Hypertensive heart disease without congestive heart failure	Condition	amlodipine	Drug	1.188
+35	319034	1334456	Hypertensive heart disease without congestive heart failure	Condition	ramipril	Drug	1.101
+36	319034	1373225	Hypertensive heart disease without congestive heart failure	Condition	perindopril	Drug	1.169
+37	319034	1510813	Hypertensive heart disease without congestive heart failure	Condition	rosuvastatin	Drug	1.112
+38	319034	1545958	Hypertensive heart disease without congestive heart failure	Condition	atorvastatin	Drug	1.138
+39	319034	4140473	Hypertensive heart disease without congestive heart failure	Condition	Holter extended electrocardiographic recording	Procedure	1.124
+40	319034	4230911	Hypertensive heart disease without congestive heart failure	Condition	Echocardiography	Procedure	1.138
+41	319835	4230911	Congestive heart failure	Condition	Echocardiography	Procedure	1.475
+42	320128	319034	Essential hypertension	Condition	Hypertensive heart disease without congestive heart failure	Condition	1.187
+43	320128	1503297	Essential hypertension	Condition	metformin	Drug	1.131
+44	320128	4041554	Essential hypertension	Condition	Serum cholesterol raised	Condition	1.137
+45	321318	1307046	Angina pectoris	Condition	metoprolol	Drug	1.327
+46	321318	4230911	Angina pectoris	Condition	Echocardiography	Procedure	1.422
+47	437530	1503297	Disorder of lipid metabolism	Condition	metformin	Drug	1.123
+48	438720	1503297	Mixed hyperlipidemia	Condition	metformin	Drug	1.167
+49	439297	4288992	Nuclear senile cataract	Condition	Insertion of intraocular lens	Procedure	2.723
+50	442604	201826	Hypertensive heart disease	Condition	Type 2 diabetes mellitus	Condition	1.226
+51	442604	314378	Hypertensive heart disease	Condition	Hypertensive heart disease with congestive heart failure	Condition	1.212
+52	442604	316139	Hypertensive heart disease	Condition	Heart failure	Condition	1.122
+53	442604	1332418	Hypertensive heart disease	Condition	amlodipine	Drug	1.167
+54	443732	942350	Disorder due to type 2 diabetes mellitus	Condition	torsemide	Drug	1.212
+55	443732	1307046	Disorder due to type 2 diabetes mellitus	Condition	metoprolol	Drug	1.144
+56	443732	1334456	Disorder due to type 2 diabetes mellitus	Condition	ramipril	Drug	1.265
+57	443732	1510813	Disorder due to type 2 diabetes mellitus	Condition	rosuvastatin	Drug	1.139
+58	443732	1545958	Disorder due to type 2 diabetes mellitus	Condition	atorvastatin	Drug	1.195
+59	443732	4140473	Disorder due to type 2 diabetes mellitus	Condition	Holter extended electrocardiographic recording	Procedure	1.109
+60	443732	4178367	Disorder due to type 2 diabetes mellitus	Condition	Radiographic imaging procedure	Procedure	1.2
+61	443732	4230911	Disorder due to type 2 diabetes mellitus	Condition	Echocardiography	Procedure	1.228
+62	443732	4259495	Disorder due to type 2 diabetes mellitus	Condition	Slit lamp fundus examination	Procedure	1.118
+63	443732	4294382	Disorder due to type 2 diabetes mellitus	Condition	Esophagogastroduodenoscopy	Procedure	1.108
+64	443732	4305221	Disorder due to type 2 diabetes mellitus	Condition	US scan of abdomen and pelvis	Procedure	1.108
+65	443732	4328969	Disorder due to type 2 diabetes mellitus	Condition	Ultrasonography of artery	Procedure	1.193
+66	443732	40480694	Disorder due to type 2 diabetes mellitus	Condition	High hemoglobin A1c level	Condition	1.337
+67	443732	40488365	Disorder due to type 2 diabetes mellitus	Condition	Insertion of indwelling catheter into urinary bladder	Procedure	1.182
+68	443732	40566982	Disorder due to type 2 diabetes mellitus	Condition	Death	Condition	1.347
+69	1124300	46272790	diclofenac	Drug	X-ray of limb	Procedure	1.181
+70	1307046	4230911	metoprolol	Drug	Echocardiography	Procedure	1.114
+71	1332418	4098814	amlodipine	Drug	Refraction assessment	Procedure	1.123
+72	1332418	4230911	amlodipine	Drug	Echocardiography	Procedure	1.149
+73	1503297	1124300	metformin	Drug	diclofenac	Drug	1.126
+74	1503297	1332418	metformin	Drug	amlodipine	Drug	1.116
+75	1503297	4063398	metformin	Drug	Driver license medical examination	Procedure	1.13
+76	1503297	4098814	metformin	Drug	Refraction assessment	Procedure	1.146
+77	1503297	4187078	metformin	Drug	Electrocardiographic monitoring	Procedure	1.147
+78	1503297	4259495	metformin	Drug	Slit lamp fundus examination	Procedure	1.167
+79	4041554	1503297	Serum cholesterol raised	Condition	metformin	Drug	1.163
+80	4041554	1510813	Serum cholesterol raised	Condition	rosuvastatin	Drug	1.236
+81	4041554	1545958	Serum cholesterol raised	Condition	atorvastatin	Drug	1.208
+82	4068155	1307046	Atrial arrhythmia	Condition	metoprolol	Drug	1.448
+83	4068155	4230911	Atrial arrhythmia	Condition	Echocardiography	Procedure	1.523
+84	4079750	1503297	Osteoarthritis of knee	Condition	metformin	Drug	1.129
+85	4079750	46272790	Osteoarthritis of knee	Condition	X-ray of limb	Procedure	1.397
+86	4098814	4004517	Refraction assessment	Procedure	Ambulatory surgery	Procedure	1.551
+87	4098814	4026128	Refraction assessment	Procedure	Ultrasound study of eye	Procedure	1.691
+88	4098814	4144452	Refraction assessment	Procedure	Optical coherence tomography of eye region	Procedure	1.393
+89	4098814	4223363	Refraction assessment	Procedure	Aspiration of cataract by phacoemulsification	Procedure	1.831
+90	4098814	4288992	Refraction assessment	Procedure	Insertion of intraocular lens	Procedure	1.544
+91	4163872	942350	Plain chest X-ray	Procedure	torsemide	Drug	1.233
+92	4163872	948078	Plain chest X-ray	Procedure	pantoprazole	Drug	1.159
+93	4163872	4140473	Plain chest X-ray	Procedure	Holter extended electrocardiographic recording	Procedure	1.134
+94	4163872	4178367	Plain chest X-ray	Procedure	Radiographic imaging procedure	Procedure	1.187
+95	4163872	4230911	Plain chest X-ray	Procedure	Echocardiography	Procedure	1.296
+96	4163872	4238081	Plain chest X-ray	Procedure	Hematoxylin stain method	Procedure	1.142
+97	4163872	4249425	Plain chest X-ray	Procedure	Water soluble eosin stain method	Procedure	1.142
+98	4163872	4294382	Plain chest X-ray	Procedure	Esophagogastroduodenoscopy	Procedure	1.185
+99	4163872	4300757	Plain chest X-ray	Procedure	Computerized axial tomography	Procedure	1.235
+100	4163872	4303663	Plain chest X-ray	Procedure	CT angiography	Procedure	1.144
+101	4163872	4305221	Plain chest X-ray	Procedure	US scan of abdomen and pelvis	Procedure	1.155
+102	4163872	40480861	Plain chest X-ray	Procedure	Evaluation of biopsy specimen	Procedure	1.142
+103	4163872	40488365	Plain chest X-ray	Procedure	Insertion of indwelling catheter into urinary bladder	Procedure	1.239
+104	4163872	40566982	Plain chest X-ray	Procedure	Death	Condition	1.423
+105	4163903	4230911	CT without contrast	Procedure	Echocardiography	Procedure	1.164
+106	4163903	40488365	CT without contrast	Procedure	Insertion of indwelling catheter into urinary bladder	Procedure	1.314
+107	4163903	40566982	CT without contrast	Procedure	Death	Condition	1.758
+108	4187078	942350	Electrocardiographic monitoring	Procedure	torsemide	Drug	1.148
+109	4187078	1307046	Electrocardiographic monitoring	Procedure	metoprolol	Drug	1.185
+110	4187078	1332418	Electrocardiographic monitoring	Procedure	amlodipine	Drug	1.147
+111	4187078	1334456	Electrocardiographic monitoring	Procedure	ramipril	Drug	1.218
+112	4187078	1510813	Electrocardiographic monitoring	Procedure	rosuvastatin	Drug	1.121
+113	4187078	1545958	Electrocardiographic monitoring	Procedure	atorvastatin	Drug	1.157
+114	4187078	4140473	Electrocardiographic monitoring	Procedure	Holter extended electrocardiographic recording	Procedure	1.238
+115	4187078	4164385	Electrocardiographic monitoring	Procedure	Surgical biopsy	Procedure	1.154
+116	4187078	4178367	Electrocardiographic monitoring	Procedure	Radiographic imaging procedure	Procedure	1.131
+117	4187078	4230911	Electrocardiographic monitoring	Procedure	Echocardiography	Procedure	1.396
+118	4187078	4261794	Electrocardiographic monitoring	Procedure	Electrocardiogram with exercise test	Procedure	1.286
+119	4187078	4294382	Electrocardiographic monitoring	Procedure	Esophagogastroduodenoscopy	Procedure	1.113
+120	4187078	4300757	Electrocardiographic monitoring	Procedure	Computerized axial tomography	Procedure	1.106
+121	4187078	4303663	Electrocardiographic monitoring	Procedure	CT angiography	Procedure	1.105
+122	4187078	4305221	Electrocardiographic monitoring	Procedure	US scan of abdomen and pelvis	Procedure	1.163
+123	4187078	4328969	Electrocardiographic monitoring	Procedure	Ultrasonography of artery	Procedure	1.157
+124	4187078	40484883	Electrocardiographic monitoring	Procedure	Evaluation of surgical biopsy specimen	Procedure	1.154
+125	4187078	40488365	Electrocardiographic monitoring	Procedure	Insertion of indwelling catheter into urinary bladder	Procedure	1.177
+126	4187078	40566982	Electrocardiographic monitoring	Procedure	Death	Condition	1.195
+127	4193704	443732	Type 2 diabetes mellitus without complication	Condition	Disorder due to type 2 diabetes mellitus	Condition	1.182
+128	4193704	1124300	Type 2 diabetes mellitus without complication	Condition	diclofenac	Drug	1.157
+129	4193704	1307046	Type 2 diabetes mellitus without complication	Condition	metoprolol	Drug	1.15
+130	4193704	1314577	Type 2 diabetes mellitus without complication	Condition	nebivolol	Drug	1.228
+131	4193704	1317640	Type 2 diabetes mellitus without complication	Condition	telmisartan	Drug	1.21
+132	4193704	1332418	Type 2 diabetes mellitus without complication	Condition	amlodipine	Drug	1.189
+133	4193704	1334456	Type 2 diabetes mellitus without complication	Condition	ramipril	Drug	1.152
+134	4193704	1373225	Type 2 diabetes mellitus without complication	Condition	perindopril	Drug	1.144
+135	4193704	1503297	Type 2 diabetes mellitus without complication	Condition	metformin	Drug	1.308
+136	4193704	1510813	Type 2 diabetes mellitus without complication	Condition	rosuvastatin	Drug	1.262
+137	4193704	1545958	Type 2 diabetes mellitus without complication	Condition	atorvastatin	Drug	1.211
+138	4193704	4063398	Type 2 diabetes mellitus without complication	Condition	Driver license medical examination	Procedure	1.147
+139	4193704	4098814	Type 2 diabetes mellitus without complication	Condition	Refraction assessment	Procedure	1.152
+140	4193704	4178367	Type 2 diabetes mellitus without complication	Condition	Radiographic imaging procedure	Procedure	1.117
+141	4193704	4187078	Type 2 diabetes mellitus without complication	Condition	Electrocardiographic monitoring	Procedure	1.127
+142	4193704	4259495	Type 2 diabetes mellitus without complication	Condition	Slit lamp fundus examination	Procedure	1.162
+143	4193704	4305221	Type 2 diabetes mellitus without complication	Condition	US scan of abdomen and pelvis	Procedure	1.12
+144	4193704	4322820	Type 2 diabetes mellitus without complication	Condition	Supply of spectacles	Procedure	1.11
+145	4193704	4324693	Type 2 diabetes mellitus without complication	Condition	Mammography	Procedure	1.135
+146	4193704	19059796	Type 2 diabetes mellitus without complication	Condition	gliclazide	Drug	1.433
+147	4193704	40480694	Type 2 diabetes mellitus without complication	Condition	High hemoglobin A1c level	Condition	1.302
+148	4216397	1503297	Nerve root disorder	Condition	metformin	Drug	1.111
+149	4216397	4098814	Nerve root disorder	Condition	Refraction assessment	Procedure	1.101
+150	4216397	4163903	Nerve root disorder	Condition	CT without contrast	Procedure	1.147
+151	4216397	4259495	Nerve root disorder	Condition	Slit lamp fundus examination	Procedure	1.126
+152	4217557	1503297	Simple obesity	Condition	metformin	Drug	1.241
+153	4259495	4004517	Slit lamp fundus examination	Procedure	Ambulatory surgery	Procedure	1.554
+154	4259495	4026128	Slit lamp fundus examination	Procedure	Ultrasound study of eye	Procedure	1.692
+155	4259495	4144452	Slit lamp fundus examination	Procedure	Optical coherence tomography of eye region	Procedure	1.409
+156	4259495	4196341	Slit lamp fundus examination	Procedure	Radiography of spine	Procedure	1.108
+157	4259495	4223363	Slit lamp fundus examination	Procedure	Aspiration of cataract by phacoemulsification	Procedure	1.843
+158	4259495	4288992	Slit lamp fundus examination	Procedure	Insertion of intraocular lens	Procedure	1.463
+159	4259495	37016877	Slit lamp fundus examination	Procedure	Plain x-ray of upper limb	Procedure	1.111
+160	4305221	4163903	US scan of abdomen and pelvis	Procedure	CT without contrast	Procedure	1.148
+161	4305221	4230911	US scan of abdomen and pelvis	Procedure	Echocardiography	Procedure	1.103
+162	4305221	4238081	US scan of abdomen and pelvis	Procedure	Hematoxylin stain method	Procedure	1.388
+163	4305221	4249425	US scan of abdomen and pelvis	Procedure	Water soluble eosin stain method	Procedure	1.388
+164	4305221	4294382	US scan of abdomen and pelvis	Procedure	Esophagogastroduodenoscopy	Procedure	1.42
+165	4305221	4300757	US scan of abdomen and pelvis	Procedure	Computerized axial tomography	Procedure	1.306
+166	4305221	40480861	US scan of abdomen and pelvis	Procedure	Evaluation of biopsy specimen	Procedure	1.388
+167	40480694	4259495	High hemoglobin A1c level	Condition	Slit lamp fundus examination	Procedure	1.156
+168	40482507	4144452	Incipient senile cataract	Condition	Optical coherence tomography of eye region	Procedure	1.379

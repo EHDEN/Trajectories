@@ -47,7 +47,8 @@ runEventPairAnalysis<-function(connection,
   logger::log_info("Running direction tests for pre-filtered event pairs...")
   Trajectories:::runDirectionTests(connection,
                                      trajectoryAnalysisArgs,
-                                     trajectoryLocalArgs)
+                                     trajectoryLocalArgs,
+                                   forceRecalculation = forceRecalculation)
 
 
 
@@ -73,6 +74,9 @@ runEventPairAnalysis<-function(connection,
   )
   d1d2_data = DatabaseConnector::querySql(connection, RenderedSql)
   significant_pairs_count=sum(d1d2_data$EVENT_PAIR_PVALUE_SIGNIFICANT=='*', na.rm=T)
+  #add extra column for textual representation in validation mode
+  if(Trajectories::IsValidationMode(trajectoryLocalArgs)) d1d2_data=Trajectories:::addAnnotationForResults(d1d2_data)
+
   # Write result table into file
   write.table(d1d2_data, file=d1d2ModelResultsFilename, quote=FALSE, sep='\t', col.names = NA)
 
@@ -85,6 +89,8 @@ runEventPairAnalysis<-function(connection,
                                                    rr = 1.1
   )
   selected_data = DatabaseConnector::querySql(connection, RenderedSql)
+  #add extra column for textual representation in validation mode
+  if(Trajectories::IsValidationMode(trajectoryLocalArgs)) selected_data=Trajectories:::addAnnotationForResults(selected_data)
 
   # Write result table into file
   write.table(selected_data, file=eventPairResultsFilename, quote=FALSE, sep='\t', col.names = NA)
@@ -498,6 +504,7 @@ runPrefilteringTests<-function(connection,
 
   logger::log_info('Running {num.tests} statistical pre-filtering tests...')
   associated_count=0
+  starttime=Sys.time()
   if(num.tests>0) {
     for(i in 1:num.tests){
 
@@ -507,7 +514,8 @@ runPrefilteringTests<-function(connection,
       observation_count <- pairs[i,'E1_COUNT_AS_FIRST_EVENT'] #case group size
       expected_prob     <- pairs[i,'E2_PREVALENCE_IN_CONTROL_GROUP']
 
-      logger::log_info('Running pre-filtering test {i}/{num.tests}: {diagnosis1}->{diagnosis2}...')
+      eta=Trajectories::estimatedTimeRemaining(progress_perc=(i-1)/num.tests,starttime=starttime)
+      logger::log_info('Running pre-filtering test {i}/{num.tests}: {diagnosis1}->{diagnosis2}... ETA: {eta}')
 
       event_pair_pvalue <- Trajectories:::getPValueForAccociation(expected_prob,observation_count,observed_matches)
 
@@ -544,19 +552,23 @@ runPrefilteringTests<-function(connection,
 
 runDirectionTests<-function(connection,
                               trajectoryAnalysisArgs,
-                              trajectoryLocalArgs) {
+                              trajectoryLocalArgs,
+                            forceRecalculation=F) {
 
   # Direction tests are conducted for all pairs that are significantly associated
+  # Find out how many tests need to be run in total
   RenderedSql <- Trajectories::loadRenderTranslateSql("GetPairsForDirectionTests.sql",
                                                       packageName=trajectoryAnalysisArgs$packageName,
                                                       dbms=connection@dbms,
                                                       resultsSchema =  trajectoryLocalArgs$resultsSchema,
-                                                      prefix =  trajectoryLocalArgs$prefixForResultTableNames
+                                                      prefix =  trajectoryLocalArgs$prefixForResultTableNames,
+                                                      forceRecalculation = 1
   )
   pairs = DatabaseConnector::querySql(connection, RenderedSql)
   num.tests <- nrow(pairs)
-  logger::log_info('Number of event pairs that are significantly associcated: {num.tests}')
+  logger::log_info('Number of event pairs that are significantly associated in pre-filtering tests: {num.tests}')
   logger::log_info('Total number of direction tests to conduct: {num.tests}')
+
 
   # Determine p-value threshold of Bonferroni correction
   cutoff_pval = 0.05/num.tests
@@ -566,15 +578,38 @@ runDirectionTests<-function(connection,
   }
   logger::log_info(paste0('We use Bonferroni multiple test correction, therefore p-value threshold 0.05/',num.tests,'=',cutoff_pval,' is used in direction tests.'))
 
+
+  # if forceRecalculation=F, then some pairs might be tested already
+  if(forceRecalculation==F) {
+    RenderedSql <- Trajectories::loadRenderTranslateSql("GetPairsForDirectionTests.sql",
+                                                        packageName=trajectoryAnalysisArgs$packageName,
+                                                        dbms=connection@dbms,
+                                                        resultsSchema =  trajectoryLocalArgs$resultsSchema,
+                                                        prefix =  trajectoryLocalArgs$prefixForResultTableNames,
+                                                        forceRecalculation = ifelse(forceRecalculation==T,1,0)
+    )
+    pairs = DatabaseConnector::querySql(connection, RenderedSql)
+    precalculated.num.tests=num.tests-nrow(pairs)
+    if(precalculated.num.tests>0) logger::log_info('For {precalculated.num.tests} pairs, directionality tests are already performed. These will be skipped from re-testing.')
+    num.tests <- nrow(pairs)
+  } else {
+    precalculated.num.tests=0
+  }
+
+
+
+
   logger::log_info('Running {num.tests} statistical direction tests...')
   directional_count=0
+  starttime=Sys.time()
   if(num.tests>0) {
     for(i in 1:num.tests){
 
       diagnosis1        <- pairs[i,'E1_CONCEPT_ID']
       diagnosis2        <- pairs[i,'E2_CONCEPT_ID']
 
-      logger::log_info('Running direction test {i}/{num.tests}: {diagnosis1}->{diagnosis2}...')
+      eta=Trajectories::estimatedTimeRemaining(progress_perc=(i-1)/num.tests,starttime=starttime)
+      logger::log_info('Running direction test {i}/{num.tests}: {diagnosis1}->{diagnosis2}... ETA: {eta}')
 
       #Calculate in database: among people that have event1_concept_id and event2_concept_id pair, how many have date1<date2, date1=date2, date1>date2
       RenderedSql <- Trajectories::loadRenderTranslateSql("7DirectionCounts.sql",
@@ -648,3 +683,15 @@ runDirectionTests<-function(connection,
 
 }
 
+addAnnotationForResults<-function(event_pairs) {
+  event_pairs$VALIDATION_RESULT=NA
+
+  event_pairs[(event_pairs$E1_COUNT==0 | event_pairs$E2_COUNT==0),'VALIDATION_RESULT']<-'Event count = 0'
+  event_pairs[(event_pairs$E1_E2_EVENTPERIOD_COUNT==0),'VALIDATION_RESULT']<-'Event pair count = 0'
+  event_pairs[(is.na(event_pairs$VALIDATION_RESULT) & event_pairs$POWER_PREFILTERING<0.80),'VALIDATION_RESULT']<-'Low power for detecting such a low relative risk'
+  event_pairs[(is.na(event_pairs$VALIDATION_RESULT) & !is.na(event_pairs$DIRECTIONAL_EVENT_PAIR_PVALUE_SIGNIFICANT) & (event_pairs$DIRECTIONAL_EVENT_PAIR_PVALUE_SIGNIFICANT=='*')),'VALIDATION_RESULT']<-'Directional (validation succeeded)'
+  event_pairs[(is.na(event_pairs$VALIDATION_RESULT) & is.na(event_pairs$DIRECTIONAL_EVENT_PAIR_PVALUE_SIGNIFICANT) & event_pairs$POWER_DIRECTION>=0.80),'VALIDATION_RESULT']<-'Not directional (validation failed)'
+  event_pairs[(is.na(event_pairs$VALIDATION_RESULT)),'VALIDATION_RESULT']<-'Associated but low power for directionality test' #nb! this is  powerfor 20% increase in signal. Actual increase might be larger!
+
+  return(event_pairs)
+}

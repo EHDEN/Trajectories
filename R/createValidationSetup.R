@@ -43,7 +43,8 @@ createValidationSetup<-function(trajectoryAnalysisArgs,
   eventPairResultsFilename = file.path(outputFolder,'event_pairs.tsv')
   eventPairResultsFilenameNew = file.path(outputFolderForValidationSetup,'event_pairs_for_validation.tsv')
   e = read.csv2(file = eventPairResultsFilename, sep = '\t', header = TRUE, as.is=T)
-  e2 <- e %>% select(E1_CONCEPT_ID,E2_CONCEPT_ID,E1_NAME,E1_DOMAIN,E2_NAME,E2_DOMAIN)
+  e2 <- e %>% select(E1_CONCEPT_ID,E2_CONCEPT_ID,E1_NAME,E1_DOMAIN,E2_NAME,E2_DOMAIN,RR_IN_PREVIOUS_STUDY=EVENT_PAIR_RR)
+  e2$RR_IN_PREVIOUS_STUDY=round(as.numeric(e2$RR_IN_PREVIOUS_STUDY),3)
   write.table(e2, file=eventPairResultsFilenameNew, quote=FALSE, sep='\t', col.names = NA)
   logger::log_debug("Selected columns of '{eventPairResultsFilename}' copied to '{eventPairResultsFilenameNew}'")
 

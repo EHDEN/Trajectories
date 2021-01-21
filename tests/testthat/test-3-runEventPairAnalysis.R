@@ -351,3 +351,71 @@ test_that("Test ability to detect a longer trajectory (consisting of 2 pairs)", 
 
 
 })
+
+
+
+test_that("Test that forceRecalculation=F does not cause any error", {
+
+  eunomia <-setUpEunomia()
+  connection<-eunomia$connection
+  trajectoryLocalArgs<-eunomia$trajectoryLocalArgs
+  clearConditionsTable(connection)
+  limitToNumPatients(connection,n=100) #in analysis, use 100 patients
+  limitToConcepts(connection)
+  setObservationPeriodForAll(connection,startdate='2010-01-01',enddate='2012-12-31')
+  person_ids<-addConditionEventTrajectory(connection,event_concept_ids=c(317009,255848),n=20) # Add asthma->pneumonia pair for 20 patients
+  addRandomEvents(connection,n_per_person_range=c(0,10),exclude_concept_ids=c(317009,255848)) # Add up to 10 random events per each patient, except events 317009 and 255848
+
+
+  trajectoryAnalysisArgs <- Trajectories::createTrajectoryAnalysisArgs(minimumDaysBetweenEvents = 1,
+                                                                       maximumDaysBetweenEvents = 365*120,
+                                                                       minPatientsPerEventPair = 10,
+                                                                       addConditions=T,
+                                                                       addObservations=F,
+                                                                       addProcedures=F,
+                                                                       addDrugExposures=F, # NB! DO NOT USE BOTH addDrugEras=T and addDrugExposures=T (not both) as it leads to analysis duplication and breaks some code... (same "drug" event may occur several times which is not allowed)
+                                                                       addDrugEras=F, # NB! DO NOT USE BOTH addDrugEras=T and addDrugExposures=T (not both) as it leads to analysis duplication and breaks some code... (same "drug" event may occur several times which is not allowed)
+                                                                       addBirths=F,
+                                                                       addDeaths=F,
+                                                                       daysBeforeIndexDate=Inf,
+                                                                       packageName='Trajectories',
+                                                                       cohortName="test")
+
+
+  #Create output folder for this analysis
+  outputFolder<-Trajectories::GetOutputFolder(trajectoryLocalArgs,trajectoryAnalysisArgs,createIfMissing=T)
+
+  #Remove output files (if exist from previous run)
+  removeTestableOutputFiles(trajectoryLocalArgs,trajectoryAnalysisArgs)
+
+  # Fill cohort table with example cohort data
+  Trajectories::fillCohortTable(connection=connection,
+                                trajectoryAnalysisArgs,
+                                trajectoryLocalArgs)
+
+  # Create database tables of all event pairs (patient level data + summary statistics)
+  Trajectories::createEventPairsTable(connection=connection,
+                                      trajectoryAnalysisArgs=trajectoryAnalysisArgs,
+                                      trajectoryLocalArgs=trajectoryLocalArgs)
+
+  #no previous results
+  Trajectories::runEventPairAnalysis(connection=connection,
+                                     trajectoryAnalysisArgs=trajectoryAnalysisArgs,
+                                     trajectoryLocalArgs=trajectoryLocalArgs,
+                                     forceRecalculation = F)
+
+  #create new results
+  Trajectories::runEventPairAnalysis(connection=connection,
+                                     trajectoryAnalysisArgs=trajectoryAnalysisArgs,
+                                     trajectoryLocalArgs=trajectoryLocalArgs,
+                                     forceRecalculation = T)
+
+  #overwrite results
+  Trajectories::runEventPairAnalysis(connection=connection,
+                                     trajectoryAnalysisArgs=trajectoryAnalysisArgs,
+                                     trajectoryLocalArgs=trajectoryLocalArgs,
+                                     forceRecalculation = F)
+
+
+
+})
