@@ -6,7 +6,7 @@ WHERE
   CASE
     WHEN (RR_IN_PREVIOUS_STUDY IS NULL OR RR_IN_PREVIOUS_STUDY=0) -- Power is always sufficient if RR in previous study is not given
       THEN TRUE
-    WHEN POWER_PREFILTERING>0.8 -- Power is sufficient if RR in previous study is given and it is >80%
+    WHEN POWER_PREFILTERING>=0.8 -- Power is sufficient if RR in previous study is given and it is >=80%
       THEN TRUE
     ELSE FALSE -- Otherwise the power is not sufficient
   END

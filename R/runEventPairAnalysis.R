@@ -688,7 +688,8 @@ addAnnotationForResults<-function(event_pairs) {
 
   event_pairs[(event_pairs$E1_COUNT==0 | event_pairs$E2_COUNT==0),'VALIDATION_RESULT']<-'Event count = 0'
   event_pairs[(event_pairs$E1_E2_EVENTPERIOD_COUNT==0),'VALIDATION_RESULT']<-'Event pair count = 0'
-  event_pairs[(is.na(event_pairs$VALIDATION_RESULT) & event_pairs$POWER_PREFILTERING<0.80),'VALIDATION_RESULT']<-'Low power for detecting such a low relative risk'
+  event_pairs[(is.na(event_pairs$VALIDATION_RESULT) & event_pairs$POWER_PREFILTERING<0.80),'VALIDATION_RESULT']<-'Low power for detecting such a low relative risk' # even association test was not performed
+  event_pairs[(is.na(event_pairs$VALIDATION_RESULT) & !is.na(event_pairs$EVENT_PAIR_PVALUE) & event_pairs$EVENT_PAIR_PVALUE_SIGNIFICANT==''),'VALIDATION_RESULT']<-'Not directional (validation failed)' #only association test was performed, but it was not found significant
   event_pairs[(is.na(event_pairs$VALIDATION_RESULT) & !is.na(event_pairs$DIRECTIONAL_EVENT_PAIR_PVALUE_SIGNIFICANT) & (event_pairs$DIRECTIONAL_EVENT_PAIR_PVALUE_SIGNIFICANT=='*')),'VALIDATION_RESULT']<-'Directional (validation succeeded)'
   event_pairs[(is.na(event_pairs$VALIDATION_RESULT) & is.na(event_pairs$DIRECTIONAL_EVENT_PAIR_PVALUE_SIGNIFICANT) & event_pairs$POWER_DIRECTION>=0.80),'VALIDATION_RESULT']<-'Not directional (validation failed)'
   event_pairs[(is.na(event_pairs$VALIDATION_RESULT)),'VALIDATION_RESULT']<-'Associated but low power for directionality test' #nb! this is  powerfor 20% increase in signal. Actual increase might be larger!
