@@ -18,10 +18,10 @@ createCohortTable<-function(connection,
   Trajectories::setRole(connection,trajectoryLocalArgs$sqlRole)
 
   RenderedSql <- Trajectories::loadRenderTranslateSql('createCohortTable.sql',
-                                                 packageName=trajectoryAnalysisArgs$packageName,
-                                                 dbms=connection@dbms,
-                                                 cohortTableSchema=trajectoryLocalArgs$cohortTableSchema,
-                                                 cohortTable=trajectoryLocalArgs$cohortTable
+                                                      packageName=trajectoryAnalysisArgs$packageName,
+                                                      dbms=connection@dbms,
+                                                      resultsSchema=trajectoryLocalArgs$resultsSchema,
+                                                      prefiX =  trajectoryLocalArgs$prefixForResultTableNames
   )
   DatabaseConnector::executeSql(connection, RenderedSql)
 

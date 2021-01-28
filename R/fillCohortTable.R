@@ -3,11 +3,10 @@ library(DatabaseConnector)
 
 #####
 
-#' Title
+#' Function to fill the cohort table.
 #'
-#' @param connection Database connection object created by createConnectionDetails() method in DatabaseConnector package
-#' @param trajectoryAnalysisArgs TrajectoryAnalysisArgs object that must be created by createTrajectoryAnalysisArgs() method
-#' @param trajectoryLocalArgs TrajectoryLocalArgs object that must be created by createTrajectoryLocalArgs() method
+#' @inheritParams GetOutputFolder
+#' @param connection DatabaseConnectorConnection object that is used to connect with database
 #'
 #' @return
 #' @export
@@ -18,7 +17,8 @@ fillCohortTable<-function(connection,
                           trajectoryLocalArgs) {
 
     f<-file.path(trajectoryLocalArgs$inputFolder,'cohort.sql')
-    logger::log_info(paste0('Filling cohort table <',trajectoryLocalArgs$cohortTable,'> in <',trajectoryLocalArgs$cohortTableSchema,'> schema based on cohort definition in <',f,'>...'))
+    cohortTableName<-paste0(trajectoryLocalArgs$prefixForResultTableNames,'cohort')
+    logger::log_info(paste0('Filling cohort table <{cohortTableName}> in <',trajectoryLocalArgs$resultsSchema,'> schema based on cohort definition in <',f,'>...'))
 
     if (!dir.exists(trajectoryLocalArgs$inputFolder)) stop(paste0("ERROR in fillCohortTable(): trajectoryLocalArgs$inputFolder '",inputFolder,"' does not exist."))
     if (!file.exists(f)) stop(paste0("ERROR in fillCohortTable(): there is no 'cohort.sql' file in inputFolder '",trajectoryLocalArgs$inputFolder,"'."))
@@ -34,9 +34,9 @@ fillCohortTable<-function(connection,
     sql <- SqlRender::render(sql = sql,
                              cdm_database_schema = trajectoryLocalArgs$cdmDatabaseSchema,
                              vocabulary_database_schema = trajectoryLocalArgs$vocabDatabaseSchema,
-                             target_database_schema = trajectoryLocalArgs$cohortTableSchema,
-                             target_cohort_table = trajectoryLocalArgs$cohortTable,
-                             target_cohort_id = trajectoryLocalArgs$cohortId,
+                             target_database_schema = trajectoryLocalArgs$resultsSchema,
+                             target_cohort_table = cohortTableName,
+                             target_cohort_id = 1,
                              warnOnMissingParameters=F)
 
     #translate into right dialect
@@ -50,7 +50,7 @@ fillCohortTable<-function(connection,
     logger::log_info('...done filling cohort table.')
 
     #check how many records are there in the cohort table
-    count<-getCohortSize(connection, trajectoryLocalArgs)
+    count<-Trajectories::getCohortSize(connection, trajectoryLocalArgs)
     logger::log_info(paste0('There are ',count,' rows in this cohort (id=',trajectoryLocalArgs$cohortId,') in the cohort table.'))
 
 }

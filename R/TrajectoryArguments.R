@@ -1,6 +1,7 @@
 
 #' Creates an object to hold analysis-specific data
 #'
+#' @param mode Indicates whether the analysis is run in DISCOVERY or VALIDATION mode. In VALIDATION mode, the package tries to validate predefined event pairs. In DISCOVERY mode, it tries to identify all directional event pairs from the data.
 #' @param minimumDaysBetweenEvents The smallest number of days between 2 events of the patient that can be considered as event pair. Usually we have used 1.
 #' @param maximumDaysBetweenEvents The maximum number of days between 2 events of the patient that can be considered as event pair. Ususally we have not really limited it so we have used 3650 (10 years)
 #' @param minPatientsPerEventPair Minimum number of people having event1 -> event2 (directional) progression (satisfying minimumDaysBetweenEvents and maximumDaysBetweenEvents requirements) to be included in analysis. If the value is >=1, it is considered as the absolute count of event pairs. If the value is less than 1, the value is considered as prevalence among the cohort size. For instance, if you have 1000 persons in the cohort and the value is 0.05, each event pair must occur at least 1000x0.05=50 times. Can be used for limiting analysis to frequent event pairs only. However, it does not throw less frequent diagnosis pairs out of the (control group) data and therefore, does not affect the statistical significance.
@@ -21,7 +22,8 @@
 #' @export
 #'
 #' @examples
-createTrajectoryAnalysisArgs <- function(minimumDaysBetweenEvents=1,
+createTrajectoryAnalysisArgs <- function(mode='DISCOVERY',
+                                         minimumDaysBetweenEvents=1,
                                          maximumDaysBetweenEvents=3650,
                                          minPatientsPerEventPair=10,
                                          addConditions=T,
@@ -38,9 +40,19 @@ createTrajectoryAnalysisArgs <- function(minimumDaysBetweenEvents=1,
                                          eventIdsForGraphs=NA) {
 
 
+  if(!mode %in% c('DISCOVERY','VALIDATION')) stop("Error in createTrajectoryAnalysisArgs(): unknown value for MODE parameter: {mode}")
+
   if(addDrugExposures==T & addDrugEras==T) stop("Error in createTrajectoryAnalysisArgs(): parameters values for 'addDrugExposures' and 'addDrugEras' are TRUE but both of them cannot be TRUE at the same time (choose one of them or set both to FALSE)")
 
-  value <- list(minimumDaysBetweenEvents=minimumDaysBetweenEvents,maximumDaysBetweenEvents=maximumDaysBetweenEvents, minPatientsPerEventPair=minPatientsPerEventPair,
+  if(mode=='VALIDATION') {
+    f=file.path(trajectoryLocalArgs$inputFolder,'event_pairs_for_validation.tsv')
+    if(!file.exists(f)) {
+      logger::log_error(paste0("The package is run in VALIDATION mode, but file 'event_pairs_for_validation.tsv' does not exist in input folder ",trajectoryLocalArgs$inputFolder,"."))
+      stop()
+    }
+  }
+
+  value <- list(mode=mode,minimumDaysBetweenEvents=minimumDaysBetweenEvents,maximumDaysBetweenEvents=maximumDaysBetweenEvents, minPatientsPerEventPair=minPatientsPerEventPair,
                 addConditions=addConditions,addObservations=addObservations,addProcedures=addProcedures,addDrugExposures=addDrugExposures,
                 addDrugEras=addDrugEras,addBirths=addBirths,addDeaths=addDeaths,
                 daysBeforeIndexDate=daysBeforeIndexDate,packageName=packageName,cohortName=cohortName,description=description,eventIdsForGraphs=eventIdsForGraphs)
@@ -74,9 +86,9 @@ createTrajectoryLocalArgs <- function(cdmDatabaseSchema,
                                       oracleTempSchema,
                                       sqlRole=F,
                                       prefixForResultTableNames='',
-                                      cohortTableSchema,
-                                      cohortTable,
-                                      cohortId=1,
+                                      #cohortTableSchema,
+                                      #cohortTable,
+                                      cohortId=1, #use 1 for discovery studies and 2 for validation studies
                                       inputFolder=system.file("extdata", "RA", package = "Trajectories"),
                                       mainOutputFolder=getwd(),
                                       databaseHumanReadableName='My database') {
@@ -91,8 +103,10 @@ createTrajectoryLocalArgs <- function(cdmDatabaseSchema,
 
   value <- list(cdmDatabaseSchema=cdmDatabaseSchema,vocabDatabaseSchema=vocabDatabaseSchema,
                 resultsSchema=resultsSchema,oracleTempSchema=oracleTempSchema,sqlRole=sqlRole,
-                prefixForResultTableNames=prefixForResultTableNames, cohortTableSchema=cohortTableSchema,
-                cohortTable=cohortTable,cohortId=cohortId,
+                prefixForResultTableNames=prefixForResultTableNames,
+                #cohortTableSchema=cohortTableSchema,
+                #cohortTable=cohortTable,
+                cohortId=cohortId,
                 inputFolder=inputFolder,
                 mainOutputFolder=mainOutputFolder, databaseHumanReadableName=databaseHumanReadableName)
   class(value) <- 'TrajectoryLocalArgs'
@@ -164,6 +178,7 @@ TrajectoryAnalysisArgsFromJson<-function(filepath) {
 
   #defaulting parameters if missing from JSON
   defaults=list(
+    mode='DISCOVERY', #allowed values: 'DISCOVERY' or 'VALIDATION'
     minimumDaysBetweenEvents=1,
     maximumDaysBetweenEvents=3650,
     minPatientsPerEventPair=10,
@@ -191,7 +206,9 @@ TrajectoryAnalysisArgsFromJson<-function(filepath) {
     }
   }
 
-  trajectoryAnalysisArgs<-Trajectories::createTrajectoryAnalysisArgs(minimumDaysBetweenEvents=vals_for_obj[['minimumDaysBetweenEvents']],
+  trajectoryAnalysisArgs<-Trajectories::createTrajectoryAnalysisArgs(
+                              mode=vals_for_obj[['mode']],
+                              minimumDaysBetweenEvents=vals_for_obj[['minimumDaysBetweenEvents']],
                                maximumDaysBetweenEvents=vals_for_obj[['maximumDaysBetweenEvents']],
                                minPatientsPerEventPair=vals_for_obj[['minPatientsPerEventPair']],
                                addConditions=vals_for_obj[['addConditions']],
@@ -220,6 +237,15 @@ TrajectoryAnalysisArgsFromJson<-function(filepath) {
 #' @examples
 TrajectoryAnalysisArgsFromInputFolder<-function(trajectoryLocalArgs) {
   trajectoryAnalysisArgs<-Trajectories::TrajectoryAnalysisArgsFromJson(file.path(trajectoryLocalArgs$inputFolder,"trajectoryAnalysisArgs.json"))
+
+  Trajectories::IsValidationMode(trajectoryAnalysisArgs,verbose=T)
+
+  #Create output folder for this analysis
+  outputFolder<-Trajectories::GetOutputFolder(trajectoryLocalArgs,trajectoryAnalysisArgs,createIfMissing=T)
+
+  # Set up logger
+  Trajectories::InitLogger(logfile = file.path(outputFolder,paste0(format(Sys.time(), "%Y%m%d-%H%M%S"),"-log.txt")), threshold = logger:::INFO)
+
   return(trajectoryAnalysisArgs)
 }
 
@@ -240,6 +266,7 @@ GetOutputFolder<-function(trajectoryLocalArgs,trajectoryAnalysisArgs,createIfMis
   outputFolder<-trajectoryLocalArgs$mainOutputFolder
   subFolder1=make.names(trajectoryLocalArgs$databaseHumanReadableName)
   subFolder2=make.names(trajectoryAnalysisArgs$cohortName)
+  subFolder3=trajectoryAnalysisArgs$mode
 
   if (!dir.exists(outputFolder)) stop(paste0("ERROR in GetOutputFolder(): trajectoryLocalArgs$mainOutputFolder='",mainOutputFolder,"' does not exist."))
 
@@ -256,7 +283,17 @@ GetOutputFolder<-function(trajectoryLocalArgs,trajectoryAnalysisArgs,createIfMis
   outputFolderPrev=outputFolder
   outputFolder <- file.path(outputFolder, subFolder2)
   if (!dir.exists(outputFolder)){
-    if(createIfMissing==F) stop(paste0("ERROR in GetOutputFolder(): There is no '",subFolder1,"' subfolder in '",outputFolderPrev,"' folder. Cannot create the folder either as parameter 'createIfMissing=F'."))
+    if(createIfMissing==F) stop(paste0("ERROR in GetOutputFolder(): There is no '",subFolder2,"' subfolder in '",outputFolderPrev,"' folder. Cannot create the folder either as parameter 'createIfMissing=F'."))
+    dir.create(outputFolder)
+    log_info(paste0('Created folder for analysis results: ',outputFolder))
+  } else {
+    #print(paste0('Folder for analysis results already exists: ',outputFolder))
+  }
+
+  outputFolderPrev=outputFolder
+  outputFolder <- file.path(outputFolder, subFolder3)
+  if (!dir.exists(outputFolder)){
+    if(createIfMissing==F) stop(paste0("ERROR in GetOutputFolder(): There is no '",subFolder3,"' subfolder in '",outputFolderPrev,"' folder. Cannot create the folder either as parameter 'createIfMissing=F'."))
     dir.create(outputFolder)
     log_info(paste0('Created folder for analysis results: ',outputFolder))
   } else {
@@ -268,28 +305,23 @@ GetOutputFolder<-function(trajectoryLocalArgs,trajectoryAnalysisArgs,createIfMis
 
 }
 
-#' Returns TRUE if event_pairs_for_validation.tsv exists in input folder - means that the package is run in validation mode.
+#' Returns TRUE if the package is run in validation mode.
 #'
-#' @param trajectoryLocalArgs Object created by Trajectories::createTrajectoryLocalArgs() method
+#' @param trajectoryAnalysisArgs Object created by Trajectories::createTrajectoryAnalysisArgs() method
 #' @param verbose If TRUE, outputs some info in INFO/DEBUG log level. Otherwise, returns the results silently.
 #'
 #' @return
 #' @export
 #'
 #' @examples
-IsValidationMode<-function(trajectoryLocalArgs, verbose=F) {
-  f=file.path(trajectoryLocalArgs$inputFolder,'event_pairs_for_validation.tsv')
-  if(file.exists(f)) {
-    if(verbose) {
-      logger::log_debug(paste0("File 'event_pairs_for_validation.tsv' exists in input folder ",trajectoryLocalArgs$inputFolder,". This means that:"))
+IsValidationMode<-function(trajectoryAnalysisArgs, verbose=F) {
+  if(verbose) {
+    if(trajectoryAnalysisArgs$mode=='VALIDATION') {
       logger::log_info("The package is run in VALIDATION MODE")
-    }
-    return(TRUE)
-  } else {
-    if(verbose) {
-      logger::log_debug(paste0("File 'event_pairs_for_validation.tsv' does not exist in input folder ",trajectoryLocalArgs$inputFolder,". This means that:"))
+    } else {
       logger::log_info("The package is run in DISCOVERY MODE")
     }
-    return(FALSE)
   }
+  return(trajectoryAnalysisArgs$mode=='VALIDATION')
 }
+

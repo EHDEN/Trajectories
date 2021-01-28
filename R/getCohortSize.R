@@ -2,7 +2,7 @@
 #' Gets cohort size (number of rows in cohort table of that particluar cohort ID)
 #'
 #' @param connection Database connection object created by createConnectionDetails() method in DatabaseConnector package
-#' @param trajectoryLocalArgs TrajectoryLocalArgs object that must be created by createTrajectoryLocalArgs() method
+#' @inheritParams GetOutputFolder
 #'
 #' @return
 #' @export
@@ -12,10 +12,10 @@ getCohortSize<-function(connection, trajectoryLocalArgs) {
 
 
   #replace parameter values in SQL
-  sql <- SqlRender::render("SELECT COUNT(*) AS CCC FROM @target_database_schema.@target_cohort_table WHERE cohort_definition_id = @target_cohort_id;",
-                                   target_database_schema = trajectoryLocalArgs$cohortTableSchema,
-                                   target_cohort_table = trajectoryLocalArgs$cohortTable,
-                                   target_cohort_id = trajectoryLocalArgs$cohortId)
+  sql <- SqlRender::render("SELECT COUNT(*) AS CCC FROM @resultsSchema.@prefiXcohort WHERE cohort_definition_id = @cohortId;",
+                           resultsSchema = trajectoryLocalArgs$resultsSchema,
+                           prefiX = trajectoryLocalArgs$prefixForResultTableNames,
+                           cohortId=trajectoryLocalArgs$cohortId)
 
   #translate SQL into right dialect
   sql <- SqlRender::translate(sql = sql,
@@ -26,4 +26,3 @@ getCohortSize<-function(connection, trajectoryLocalArgs) {
 
   return (result$CCC)
 }
-
