@@ -9,7 +9,7 @@ getCohortSize(connection, trajectoryLocalArgs)
 \arguments{
 \item{connection}{Database connection object created by createConnectionDetails() method in DatabaseConnector package}
 
-\item{trajectoryLocalArgs}{TrajectoryLocalArgs object that must be created by createTrajectoryLocalArgs() method}
+\item{trajectoryLocalArgs}{Object created by Trajectories::createTrajectoryLocalArgs() method}
 }
 \value{
 

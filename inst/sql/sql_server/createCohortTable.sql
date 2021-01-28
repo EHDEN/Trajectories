@@ -7,6 +7,5 @@ CREATE TABLE @resultsSchema.@prefiXcohort (
   cohort_definition_id INT,
   cohort_start_date DATE,
   cohort_end_date DATE,
-  subject_id BIGINT,
-  belongs_to_validation_set INT DEFAULT 0
+  subject_id BIGINT
 );

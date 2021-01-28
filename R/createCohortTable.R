@@ -12,7 +12,7 @@ createCohortTable<-function(connection,
                             trajectoryAnalysisArgs,
                             trajectoryLocalArgs) {
 
-  logger::log_info(paste0('Creating cohort table <',trajectoryLocalArgs$cohortTable,'> to <',trajectoryLocalArgs$cohortTableSchema,'> schema...'))
+  logger::log_info(paste0('Creating cohort table <',paste0(trajectoryLocalArgs$prefixForResultTableNames,'cohort'),'> to <',trajectoryLocalArgs$resultsSchema,'> schema...'))
 
   #Set SQL role of the database session
   Trajectories::setRole(connection,trajectoryLocalArgs$sqlRole)

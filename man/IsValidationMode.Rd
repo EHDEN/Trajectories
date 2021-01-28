@@ -2,12 +2,12 @@
 % Please edit documentation in R/TrajectoryArguments.R
 \name{IsValidationMode}
 \alias{IsValidationMode}
-\title{Returns TRUE if event_pairs_for_validation.tsv exists in input folder - means that the package is run in validation mode.}
+\title{Returns TRUE if the package is run in validation mode.}
 \usage{
-IsValidationMode(trajectoryLocalArgs, verbose = F)
+IsValidationMode(trajectoryAnalysisArgs, verbose = F)
 }
 \arguments{
-\item{trajectoryLocalArgs}{Object created by Trajectories::createTrajectoryLocalArgs() method}
+\item{trajectoryAnalysisArgs}{Object created by Trajectories::createTrajectoryAnalysisArgs() method}
 
 \item{verbose}{If TRUE, outputs some info in INFO/DEBUG log level. Otherwise, returns the results silently.}
 }
@@ -15,5 +15,5 @@ IsValidationMode(trajectoryLocalArgs, verbose = F)
 
 }
 \description{
-Returns TRUE if event_pairs_for_validation.tsv exists in input folder - means that the package is run in validation mode.
+Returns TRUE if the package is run in validation mode.
 }

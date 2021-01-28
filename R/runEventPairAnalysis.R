@@ -77,9 +77,11 @@ runEventPairAnalysis<-function(connection,
                                                       prefix =  trajectoryLocalArgs$prefixForResultTableNames
   )
   d1d2_data = DatabaseConnector::querySql(connection, RenderedSql)
-  significant_pairs_count=sum(d1d2_data$EVENT_PAIR_PVALUE_SIGNIFICANT=='*', na.rm=T)
+  significant_pairs_count=sum(d1d2_data$RR_SIGNIFICANT=='*', na.rm=T)
   #add extra column for textual representation
-  d1d2_data=Trajectories:::addAnnotationForResults(d1d2_data)
+  d1d2_data=Trajectories:::addAnnotationForResults(d1d2_data,verbose=T)
+  logger::log_info(paste0(nrow(d1d2_data),' event pairs were tested. All test results are written to {d1d2ModelResultsFilename}.'))
+  logger::log_info(paste0('Relative risk in ',significant_pairs_count,' pairs is significantly different from 1.'))
 
   # Write result table into file
   write.table(d1d2_data, file=d1d2ModelResultsFilename, quote=FALSE, sep='\t', col.names = NA)
@@ -94,13 +96,12 @@ runEventPairAnalysis<-function(connection,
   )
   selected_data = DatabaseConnector::querySql(connection, RenderedSql)
   #add extra column for textual representation
-  selected_data=Trajectories:::addAnnotationForResults(selected_data)
+  selected_data=Trajectories:::addAnnotationForResults(selected_data,verbose=F)
 
   # Write result table into file
   write.table(selected_data, file=eventPairResultsFilename, quote=FALSE, sep='\t', col.names = NA)
 
-  logger::log_info(paste0(nrow(d1d2_data),' event pairs were tested. All test results are written to {d1d2ModelResultsFilename}.'))
-  logger::log_info(paste0('Events out of ',significant_pairs_count,' pre-filtered pairs, ',significant_directional_pairs_count,' have also significant direction.'))
+  logger::log_info(paste0(nrow(selected_data),' event pairs have both significant RR and also significant direction.'))
   logger::log_info("These directional event pairs are written to {eventPairResultsFilename}.")
 
   logger::log_info('TASK COMPLETED: Detecting statistically significant directional event pairs completed successfully.')
@@ -739,7 +740,7 @@ runDirectionTests<-function(connection,
 }
 
 
-addAnnotationForResults<-function(event_pairs) {
+addAnnotationForResults<-function(event_pairs,verbose=F) {
 
   if(any(!is.na(event_pairs$RR_IN_PREVIOUS_STUDY) & event_pairs$RR_IN_PREVIOUS_STUDY>0)) {
     event_pairs$IS_PREVIOUS_RR_IN_OUR_RR_CI<-NA
@@ -751,27 +752,32 @@ addAnnotationForResults<-function(event_pairs) {
 
   event_pairs$TEXTUAL_RESULT=NA
 
-  event_pairs[(event_pairs$E1_COUNT_IN_EVENTS==0 | event_pairs$E2_COUNT_IN_EVENTS==0),'TEXTUAL_RESULT']<-'3.1 (step 1) Low power (count of any of these events is 0)'
-  event_pairs[(event_pairs$E1_BEFORE_E2_COUNT_IN_EVENTS==0),'TEXTUAL_RESULT']<-'3.2 (step 2) Low power (both events occur but never in given order)'
+  event_pairs[(event_pairs$E1_COUNT_IN_EVENTS==0 | event_pairs$E2_COUNT_IN_EVENTS==0),'TEXTUAL_RESULT']<-'3.1 Low power (count of any of these events is 0)'
+  event_pairs[(event_pairs$E1_BEFORE_E2_COUNT_IN_EVENTS==0),'TEXTUAL_RESULT']<-'3.2 Low power (both events occur but never in given order)'
 
-  event_pairs[is.na(event_pairs$TEXTUAL_RESULT) & !is.na(event_pairs$RR_IN_PREVIOUS_STUDY) & event_pairs$RR_POWER<0.8,'TEXTUAL_RESULT']<-'3.3 (step 3) Low power (for detecting RR that different from 1 as in previous study)'
+  event_pairs[is.na(event_pairs$TEXTUAL_RESULT) & !is.na(event_pairs$RR_IN_PREVIOUS_STUDY) & event_pairs$RR_POWER<0.8,'TEXTUAL_RESULT']<-'3.3 Low power (for detecting RR that different from 1 as in previous study)'
 
-  event_pairs[is.na(event_pairs$TEXTUAL_RESULT) & !is.na(event_pairs$RR_IN_PREVIOUS_STUDY) & !is.na(event_pairs$RR_SIGNIFICANT) & event_pairs$RR_SIGNIFICANT=='','TEXTUAL_RESULT']<-'2.1 (step 4) Validation failed (RR not statistically different from 1 despite having enough power for detecting RR as large as in previous study)' #only association test was performed, but it was not found significant
-  event_pairs[is.na(event_pairs$TEXTUAL_RESULT) & event_pairs$RR_SIGNIFICANT=='','TEXTUAL_RESULT']<-'2.1 (step 4) Validation failed (RR not significantly different from 1 despite having enough power for detecting RR>1.2)' #only association test was performed, but it was not found significant
+  event_pairs[is.na(event_pairs$TEXTUAL_RESULT) & !is.na(event_pairs$RR_IN_PREVIOUS_STUDY) & !is.na(event_pairs$RR_SIGNIFICANT) & event_pairs$RR_SIGNIFICANT=='','TEXTUAL_RESULT']<-'2.1 Validation failed (RR not statistically different from 1 despite having enough power for detecting RR as large as in previous study)' #only association test was performed, but it was not found significant
 
-  event_pairs[is.na(event_pairs$TEXTUAL_RESULT) & event_pairs$DIRECTIONAL_POWER<0.8,'TEXTUAL_RESULT']<-'3.4 (step 5) Low power (despite having significant RR, there is low power for detecting significant order of these events)'
-  event_pairs[is.na(event_pairs$TEXTUAL_RESULT) & !is.na(event_pairs$DIRECTIONAL_SIGNIFICANT) & event_pairs$DIRECTIONAL_SIGNIFICANT=='' & event_pairs$DIRECTIONAL_SIGNIFICANT_IF_SAME_DAY_EVENTS_ORDERED=='*','TEXTUAL_RESULT']<-'2.3 (step 6) Validation failed (despite having significant RR and having enough power for directionality test, there is no significant order between these events. However, if eventperiods where the events happened on the same day, were considered as directional, the validation would have succeeded)'
-  event_pairs[is.na(event_pairs$TEXTUAL_RESULT) & !is.na(event_pairs$DIRECTIONAL_SIGNIFICANT) & event_pairs$DIRECTIONAL_SIGNIFICANT=='','TEXTUAL_RESULT']<-'2.2 (step 7) Validation failed (despite having significant RR and having enough power for directionality test, there is no significant order between these events)'
+  event_pairs[is.na(event_pairs$TEXTUAL_RESULT) & event_pairs$RR_SIGNIFICANT=='' & event_pairs$RR_POWER<0.8,'TEXTUAL_RESULT']<-'2.1 Validation failed, possibly low power (RR not significantly different from 1. However, there is low power (<80%) for detecting RR=1.2)'
+  event_pairs[is.na(event_pairs$TEXTUAL_RESULT) & event_pairs$RR_SIGNIFICANT=='','TEXTUAL_RESULT']<-'2.1 Validation failed (RR not significantly different from 1 despite having enough power for detecting RR>1.2)' #only association test was performed, but it was not found significant
 
+  event_pairs[is.na(event_pairs$TEXTUAL_RESULT) & !is.na(event_pairs$DIRECTIONAL_SIGNIFICANT) & event_pairs$DIRECTIONAL_SIGNIFICANT=='' & event_pairs$DIRECTIONAL_SIGNIFICANT_IF_SAME_DAY_EVENTS_ORDERED=='*','TEXTUAL_RESULT']<-'2.3 Validation failed (despite having significant RR and having enough power for directionality test, there is no significant order between these events. However, if eventperiods where the events happened on the same day, were considered as directional, the validation would have succeeded)'
+  event_pairs[is.na(event_pairs$TEXTUAL_RESULT) & !is.na(event_pairs$DIRECTIONAL_SIGNIFICANT) & event_pairs$DIRECTIONAL_SIGNIFICANT=='','TEXTUAL_RESULT']<-'2.2 Validation failed (despite having significant RR and having enough power for directionality test, there is no significant order between these events)'
 
   if(Trajectories::IsValidationMode(trajectoryAnalysisArgs)) {
-    event_pairs[is.na(event_pairs$TEXTUAL_RESULT) & !is.na(event_pairs$DIRECTIONAL_SIGNIFICANT) & event_pairs$DIRECTIONAL_SIGNIFICANT=='*' & sign(event_pairs$RR_IN_PREVIOUS_STUDY-1)!=sign(event_pairs$RR-1),'TEXTUAL_RESULT']<-'2.4 (step 8) Validation failed (event pair has significant RR and direction but RR has the opposite direction as compared to previous study)'
+    event_pairs[is.na(event_pairs$TEXTUAL_RESULT) & !is.na(event_pairs$DIRECTIONAL_SIGNIFICANT) & event_pairs$DIRECTIONAL_SIGNIFICANT=='*' & sign(event_pairs$RR_IN_PREVIOUS_STUDY-1)!=sign(event_pairs$RR-1),'TEXTUAL_RESULT']<-'2.4 Validation failed (event pair has significant RR and direction but RR has the opposite direction as compared to previous study)'
   }
   if(Trajectories::IsValidationMode(trajectoryAnalysisArgs)) {
-    event_pairs[is.na(event_pairs$TEXTUAL_RESULT) & !is.na(event_pairs$DIRECTIONAL_SIGNIFICANT) & event_pairs$DIRECTIONAL_SIGNIFICANT=='*','TEXTUAL_RESULT']<-'1.1 (step 9) Validation succeeded (event pair has significant RR and direction and RR direction matches with direction in previous study)'
+    event_pairs[is.na(event_pairs$TEXTUAL_RESULT) & !is.na(event_pairs$DIRECTIONAL_SIGNIFICANT) & event_pairs$DIRECTIONAL_SIGNIFICANT=='*','TEXTUAL_RESULT']<-'1.1 Validation succeeded (event pair has significant RR and direction and RR direction matches with direction in previous study)'
   } else {
-    event_pairs[is.na(event_pairs$TEXTUAL_RESULT) & !is.na(event_pairs$DIRECTIONAL_SIGNIFICANT) & event_pairs$DIRECTIONAL_SIGNIFICANT=='*','TEXTUAL_RESULT']<-'1.1 (step 9) Validation succeeded (event pair has significant RR and direction)'
+    event_pairs[is.na(event_pairs$TEXTUAL_RESULT) & !is.na(event_pairs$DIRECTIONAL_SIGNIFICANT) & event_pairs$DIRECTIONAL_SIGNIFICANT=='*','TEXTUAL_RESULT']<-'1.1 Validation succeeded (event pair has significant RR and direction)'
   }
+
+  event_pairs[is.na(event_pairs$TEXTUAL_RESULT) & event_pairs$DIRECTIONAL_POWER<0.8,'TEXTUAL_RESULT']<-'2.5 Validation failed, possibly low power (despite having significant RR, no significant order of the events was detected. However, there is low power (<80%) for detecting small (20%) direction signal.'
+
+
+
 
   #event_pairs[(is.na(event_pairs$TEXTUAL_RESULT) & is.na(event_pairs$DIRECTIONAL_SIGNIFICANT) & event_pairs$POWER_DIRECTION>=0.80),'TEXTUAL_RESULT']<-'Not directional (validation failed despite having enough power)'
   event_pairs[is.na(event_pairs$TEXTUAL_RESULT),'TEXTUAL_RESULT']<-'Other (unkwown situation, not automatically labelled)'
@@ -780,7 +786,7 @@ addAnnotationForResults<-function(event_pairs) {
   df<-data.frame(res=names(table(event_pairs$TEXTUAL_RESULT)),
                  count=table(event_pairs$TEXTUAL_RESULT),
                  perc=round(prop.table(table(event_pairs$TEXTUAL_RESULT))*100,1)) %>% select(res,count=count.Freq,freq=perc.Freq) %>% arrange(-freq)
-  print(df)
+  if(verbose) print(df)
 
   return(event_pairs)
 

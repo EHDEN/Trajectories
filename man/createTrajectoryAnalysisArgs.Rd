@@ -5,6 +5,7 @@
 \title{Creates an object to hold analysis-specific data}
 \usage{
 createTrajectoryAnalysisArgs(
+  mode = "DISCOVERY",
   minimumDaysBetweenEvents = 1,
   maximumDaysBetweenEvents = 3650,
   minPatientsPerEventPair = 10,
@@ -23,6 +24,8 @@ createTrajectoryAnalysisArgs(
 )
 }
 \arguments{
+\item{mode}{Indicates whether the analysis is run in DISCOVERY or VALIDATION mode. In VALIDATION mode, the package tries to validate predefined event pairs. In DISCOVERY mode, it tries to identify all directional event pairs from the data.}
+
 \item{minimumDaysBetweenEvents}{The smallest number of days between 2 events of the patient that can be considered as event pair. Usually we have used 1.}
 
 \item{maximumDaysBetweenEvents}{The maximum number of days between 2 events of the patient that can be considered as event pair. Ususally we have not really limited it so we have used 3650 (10 years)}
