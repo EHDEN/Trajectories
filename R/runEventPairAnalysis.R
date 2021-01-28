@@ -25,20 +25,24 @@ runEventPairAnalysis<-function(connection,
 
   logger::log_info(paste0("Detect statistically significant directional event pairs and write the results to ",eventPairResultsFilename,"..."))
 
-  if(Trajectories::IsValidationMode(trajectoryLocalArgs)) logger::log_info('Parameter value for {relativeRiskForPowerCalculations} is ignored in runEventPairAnalysis() method as the package is running in VALIDATION mode and relative risk value in previous study is used instead.')
+  if(Trajectories::IsValidationMode(trajectoryAnalysisArgs)) logger::log_info('Parameter value for {relativeRiskForPowerCalculations} is ignored in runEventPairAnalysis() method as the package is running in VALIDATION mode and relative risk value in previous study is used instead.')
 
   #Set SQL role of the database session
   Trajectories::setRole(connection, trajectoryLocalArgs$sqlRole)
 
-  logger::log_info("Matching case and control groups for p-value pre-filtering (most time consuming part, also calculates relative risk)...")
+  if(Trajectories::IsValidationMode(trajectoryAnalysisArgs)) {
+    logger::log_info("Matching case and control groups for calculating relative risk and power for detecting relative risk as strong as in previous study...")
+  } else {
+    logger::log_info("Matching case and control groups for calculating relative risk...")
+  }
   Trajectories:::prepareEventPairsForStatisticalTesting(connection,
                                                    trajectoryAnalysisArgs,
                                                    trajectoryLocalArgs,
                                                    relativeRiskForPowerCalculations=relativeRiskForPowerCalculations,
                                                    forceRecalculation=forceRecalculation)
-  #Association tests
-  logger::log_info("Conducting p-value prefiltering. These are basically association tests, but direction is somewhat taken into account - outcome (E2) has to happen AFTER E1 (in case group)...")
-  Trajectories:::runPrefilteringTests(connection,
+  #RR tests
+  logger::log_info("Running significance tests for relative risk values (to eliminate such event pairs from the directionality analysis where relative risk is too close to 1)...")
+  Trajectories:::runRRTests(connection,
                                   trajectoryAnalysisArgs,
                                   trajectoryLocalArgs,
                                   forceRecalculation=forceRecalculation)
@@ -74,8 +78,8 @@ runEventPairAnalysis<-function(connection,
   )
   d1d2_data = DatabaseConnector::querySql(connection, RenderedSql)
   significant_pairs_count=sum(d1d2_data$EVENT_PAIR_PVALUE_SIGNIFICANT=='*', na.rm=T)
-  #add extra column for textual representation in validation mode
-  if(Trajectories::IsValidationMode(trajectoryLocalArgs)) d1d2_data=Trajectories:::addAnnotationForResults(d1d2_data)
+  #add extra column for textual representation
+  d1d2_data=Trajectories:::addAnnotationForResults(d1d2_data)
 
   # Write result table into file
   write.table(d1d2_data, file=d1d2ModelResultsFilename, quote=FALSE, sep='\t', col.names = NA)
@@ -89,8 +93,8 @@ runEventPairAnalysis<-function(connection,
                                                    rr = 1.1
   )
   selected_data = DatabaseConnector::querySql(connection, RenderedSql)
-  #add extra column for textual representation in validation mode
-  if(Trajectories::IsValidationMode(trajectoryLocalArgs)) selected_data=Trajectories:::addAnnotationForResults(selected_data)
+  #add extra column for textual representation
+  selected_data=Trajectories:::addAnnotationForResults(selected_data)
 
   # Write result table into file
   write.table(selected_data, file=eventPairResultsFilename, quote=FALSE, sep='\t', col.names = NA)
@@ -149,12 +153,30 @@ sampleFromEleveatedBackgroundOld <- function(E2_count_in_background=c(), non_E2_
 }
 
 
-#If the expected prevalence of event2_concept_id in case group is {round(expected_prob*100)}%, what is the p-value that we observe event2_concept_id in case group more than {observed_matches-1}?
+
+#get p-value of getting that many (or that little) E2 counts in case group if (by null hypothesis) we assume that E2 prevalence in case group is the same as in matched control group
 getPValueForAccociation<-function(expected_prob,observation_count,observed_matches) {
-  logger::log_debug('Actual prevalence of D2 in (adjusted) control group is {round(expected_prob*100)}% (and in case group {round(observed_matches*100/observation_count)}%). If the expected prevalence of event2_concept_id in case group is {expected_prob}, what is the probability that we observe event2_concept_id in case group more than {observed_matches-1} (we actually did {observed_matches})?')
-  logger::log_debug('If the expected prevalence of event2_concept_id in case group is {round(expected_prob*100)}%, what is the probability that we observe event2_concept_id in case group more than {observed_matches-1}?')
-  event_pair_pvalue <- pbinom(q = ifelse(observed_matches==0,0,observed_matches-1), size = observation_count, prob = expected_prob, lower.tail=FALSE)
-  return(event_pair_pvalue)
+
+  if(observed_matches/observation_count > expected_prob) {
+
+    #if relative risk > 1
+
+    logger::log_debug('Actual prevalence of E2 in (adjusted) control group is {round(expected_prob*100)}% (and in case group {round(observed_matches*100/observation_count)}%). If the expected prevalence of E2 in case group is {round(expected_prob*100)}%, what is the probability that we observe E2 in case group more than {observed_matches-1} (we actually did {observed_matches})?')
+    logger::log_debug('If the expected prevalence of event2_concept_id in case group is {round(expected_prob*100)}%, what is the probability that we observe event2_concept_id in case group more than {observed_matches-1}?')
+    event_pair_pvalue <- pbinom(q = ifelse(observed_matches==0,0,observed_matches-1), size = observation_count, prob = expected_prob, lower.tail=FALSE)
+    return(event_pair_pvalue)
+
+  } else {
+
+    #if relative risk <= 1
+
+    logger::log_debug('Actual prevalence of E2 in (adjusted) control group is {round(expected_prob*100)}% (and in case group {round(observed_matches*100/observation_count)}%). If the expected prevalence of E2 in case group is {round(expected_prob*100)}%, what is the probability that we observe E2 in case group less than {observed_matches} (as we actually did)?')
+    logger::log_debug('If the expected prevalence of event2_concept_id in case group is {round(expected_prob*100)}%, what is the probability that we observe event2_concept_id in case group more than {observed_matches}?')
+    event_pair_pvalue <- pbinom(q = ifelse(observed_matches==0,0,observed_matches), size = observation_count, prob = expected_prob)
+    return(event_pair_pvalue)
+
+  }
+
 }
 
 #pbinom(q = ifelse(eventperiod_count_event1_occurs_first_for_test==0,0,eventperiod_count_event1_occurs_first_for_test-1), size = total_tests, prob = 0.5, lower.tail=FALSE)
@@ -170,7 +192,8 @@ getPValueForDirection<-function(EVENTPERIOD_COUNT_E1_OCCURS_FIRST,EVENTPERIOD_CO
 }
 
 
-#Get power: the probability that we detect the association between E1 and E2 in case E1 increases the risk of getting E2 by 20% (relative risk threshold) when compared to (age-sex matched) general population
+#Get power: the probability that we detect the association between E1 and E2 in case E1 increases/decreases the risk of getting E2 by 20% (relative risk threshold) when compared to (age-sex matched) general population
+# rr.threshold can also be <1 (decreased risk)
 getPowerAssociation<-function(case_control,expected_prob,rr.threshold=1.2) {
 
 
@@ -181,9 +204,15 @@ getPowerAssociation<-function(case_control,expected_prob,rr.threshold=1.2) {
   elevated_E2_prevalence=expected_prob*rr.threshold
 
 
-  elevated_E2_count_in_control_group <- ceiling(control_group_size*elevated_E2_prevalence)
+  if(rr.threshold>1) {
+    elevated_E2_count_in_control_group <- ceiling(control_group_size*elevated_E2_prevalence)
+  } else {
+    elevated_E2_count_in_control_group <- floor(control_group_size*elevated_E2_prevalence)
+  }
   #check that it is not overfilled
   elevated_E2_count_in_control_group=ifelse(elevated_E2_count_in_control_group>control_group_size,control_group_size,elevated_E2_count_in_control_group)
+  #or underfilled
+  elevated_E2_count_in_control_group=ifelse(elevated_E2_count_in_control_group<0,0,elevated_E2_count_in_control_group)
   #sample 1000 new case groups from this elevated general population. Count, what is the E2 occurrence count in them
   observed_case_E2_counts<-rhyper(nn=n, m=elevated_E2_count_in_control_group, control_group_size-elevated_E2_count_in_control_group, case_group_size)
 
@@ -201,7 +230,6 @@ getPowerAssociation<-function(case_control,expected_prob,rr.threshold=1.2) {
   #power=sum(p.vals<cutoff_pval)/n
   power=sum(p.vals<0.05)/n
 
-
   logger::log_debug('If E1 increased the prevalence of E2 by {round(rr.threshold,3)}x, we would detect it with given case group size n={case_group_size} with probability {round(power*100)}% (=power)')
   return(power)
 
@@ -213,6 +241,8 @@ getPowerDirection<-function(EVENTPERIOD_COUNT_E1_OCCURS_FIRST,EVENTPERIOD_COUNT_
   n=1000
 
   total_tests=EVENTPERIOD_COUNT_E1_OCCURS_FIRST+EVENTPERIOD_COUNT_E2_OCCURS_FIRST+EVENTPERIOD_COUNT_E1_E2_OCCUR_ON_SAME_DAY
+
+  if(total_tests==1) return(0) #replicate() function does not work if total_tests==1 (does not provide matrix as output)
 
   elevated_signal_prob=rr.threshold/(1+rr.threshold) #if one direction has prevalence 55% (elevated signal prob) and the other 45%, then the signal strength is 20% (45% x 20%)
 
@@ -273,7 +303,7 @@ prepareEventPairsForStatisticalTesting<-function(connection,
                                                  relativeRiskForPowerCalculations=1.2,
                                                  forceRecalculation=F) {
 
-  logger::log_info("Preparing event pairs data for statistical testing (extracting necessary counts, calculating power, etc.)...")
+  logger::log_info("Preparing event pairs data for statistical testing (extracting necessary counts, calculating RR, power for detecting RR)...")
 
   #Set SQL role of the database session
   Trajectories::setRole(connection, trajectoryLocalArgs$sqlRole)
@@ -332,17 +362,21 @@ prepareEventPairsForStatisticalTesting<-function(connection,
     {
       diagnosis1        <- dpairs_for_analysis[i,'E1_CONCEPT_ID']
       diagnosis2        <- dpairs_for_analysis[i,'E2_CONCEPT_ID']
-      observation_count <- dpairs_for_analysis[i,'E1_COUNT_AS_FIRST_EVENT'] #case group size - eventperiod count where E1 is not the last event
-      observed_matches  <- dpairs_for_analysis[i,'E1_E2_EVENTPERIOD_COUNT'] #Number of cases where E2 is followed by E1
+      observation_count <- dpairs_for_analysis[i,'E1_COUNT_AS_FIRST_EVENT_OF_PAIRS'] #case group size - eventperiod count where E1 is not the last event
+      observed_matches  <- dpairs_for_analysis[i,'E1_BEFORE_E2_COUNT_IN_EVENTS'] #Number of cases where E2 is followed by E1
 
-      observation_count2 <- dpairs_for_analysis[i,'E1_COUNT'] #case group size - eventperiods where E1 is present (even if it is the last event)
-      observed_matches2  <- dpairs_for_analysis[i,'E1_AND_E2_TOGETHER_COUNT'] #Number of eventperiods where E1 and E2 are both present (random order)
 
       rr_in_previous_study=dpairs_for_analysis[i,'RR_IN_PREVIOUS_STUDY']
 
       logger::log_info(paste0('Matching control group for event pair ',i,'/',nrow(dpairs_for_analysis),': ',diagnosis1,' -> ',diagnosis2,' (total progress ',
-                              round(100*i/nrow(dpairs_for_analysis)),' ETA: ',Trajectories::estimatedTimeRemaining(progress_perc=(i-1)/nrow(dpairs_for_analysis),starttime=starttime),
+                              round(100*i/nrow(dpairs_for_analysis)),'%, ETA: ',Trajectories::estimatedTimeRemaining(progress_perc=(i-1)/nrow(dpairs_for_analysis),starttime=starttime),
                               ')...'))
+
+      # E2 prevalence in Case group
+      actual_prob=observed_matches/observation_count
+      if(observation_count==0) actual_prob=0 #should not happen, but just to be sure
+
+
 
       # Calculate
       # Expected E2 prevalence in matched control group
@@ -357,10 +391,6 @@ prepareEventPairsForStatisticalTesting<-function(connection,
                                                      trajectoryLocalArgs)
       expected_prob    <- z[1]
       powerAssociation <- z[2]
-
-      # Approximate E2 count (relative to case group size) in matched control group. It is not used in any calculation, it is only for fast check if the results make sense
-      E2_COUNT_IN_CONTROL_GROUP = round(observation_count*expected_prob)
-      if(E2_COUNT_IN_CONTROL_GROUP>observation_count) E2_COUNT_IN_CONTROL_GROUP=observation_count
 
       #What is the "relative risk" (effect) (how many times the event2_concept_id prevalence in case group is higher than in control group) and its CI
       rr_and_ci=Trajectories:::RRandCI(cases_with_outcome=observed_matches,
@@ -380,9 +410,9 @@ prepareEventPairsForStatisticalTesting<-function(connection,
                                                           rr_ci_lower=event_pair_rr_ci_lower,
                                                           rr_ci_upper=event_pair_rr_ci_upper,
                                                           expected_prob=expected_prob,
+                                                          actual_prob=actual_prob,
                                                           diag1 = diagnosis1,
                                                           diag2 = diagnosis2,
-                                                          E2_COUNT_IN_CONTROL_GROUP = E2_COUNT_IN_CONTROL_GROUP,
                                                           power=ifelse(is.na(powerAssociation),'NULL',powerAssociation),
                                                           prefix =  trajectoryLocalArgs$prefixForResultTableNames
       )
@@ -451,18 +481,16 @@ getExpectedPrevalenceAndPower<-function(diagnosis1,
 }
 
 
-# Note that these are not the true association tests as we are looking events in strict E1->E2 order here (for several reasons - first, as we do have the necessary available, second, to limit the analysis for directionality tests).
-# Typically one would assume that the direction is not important.
-# Therefore - if a pair comes out as not associated from here, it means that these are not associated in some sort of directionality aspect.
-runPrefilteringTests<-function(connection,
+# Testing whether RR is significantly different from 1 (either lower or higher)
+runRRTests<-function(connection,
                               trajectoryAnalysisArgs,
                               trajectoryLocalArgs,
                               forceRecalculation=F) {
 
+  logger::log_info('Running RR tests to identify event pairs that have RR significantly different from 1...')
 
-  # Typically, we conduct association tests for all pairs that have non-zero count.
+  # Typically, we conduct RR tests for all pairs that have non-zero count.
   # However, in validation mode, we skip tests for pairs that have power<80%
-
 
   # Find out how many tests need to be run in total
   RenderedSql <- Trajectories::loadRenderTranslateSql("GetPairsForAssociationTests.sql",
@@ -474,8 +502,12 @@ runPrefilteringTests<-function(connection,
   )
   pairs = DatabaseConnector::querySql(connection, RenderedSql)
   num.tests <- nrow(pairs)
-  logger::log_info('Number of event pairs with non-zero event count and >80% statistical power for detecting relative risk as large as in previous study: {num.tests}')
-  logger::log_info('Total number of pre-filtering tests to conduct: {num.tests}')
+  if(Trajectories::IsValidationMode(trajectoryAnalysisArgs)) {
+    logger::log_info('Number of event pairs with non-zero event count and >=80% statistical power for detecting relative risk (RR) as large as in previous study: {num.tests}')
+  } else {
+    logger::log_info('Number of event pairs with non-zero event count: {num.tests}')
+  }
+  logger::log_info('Total number of RR tests to conduct: {num.tests}')
 
   # Determine p-value threshold of Bonferroni correction
   if(num.tests==0) {
@@ -483,7 +515,7 @@ runPrefilteringTests<-function(connection,
     return(1);
   }
   cutoff_pval = 0.05/num.tests
-  logger::log_info(paste0('We use Bonferroni multiple test correction, therefore p-value threshold 0.05/',num.tests,'=',cutoff_pval,' is used in pre-filtering analysis.'))
+  logger::log_info(paste0('We use Bonferroni multiple test correction, therefore p-value threshold 0.05/',num.tests,'=',cutoff_pval,' is used in RR tests.'))
 
   # if forceRecalculation=F, then some pairs might be tested already
   if(forceRecalculation==F) {
@@ -496,13 +528,13 @@ runPrefilteringTests<-function(connection,
     )
     pairs = DatabaseConnector::querySql(connection, RenderedSql)
     precalculated.num.tests=num.tests-nrow(pairs)
-    if(precalculated.num.tests>0) logger::log_info('For {precalculated.num.tests} pairs, pre-filtering tests are already performed. These will be skipped from re-testing.')
+    if(precalculated.num.tests>0) logger::log_info('For {precalculated.num.tests} pairs, RR tests are already performed. These will be skipped from re-testing.')
     num.tests <- nrow(pairs)
   } else {
     precalculated.num.tests=0
   }
 
-  logger::log_info('Running {num.tests} statistical pre-filtering tests...')
+  logger::log_info('Running {num.tests} statistical tests for relative risk...')
   associated_count=0
   starttime=Sys.time()
   if(num.tests>0) {
@@ -510,12 +542,12 @@ runPrefilteringTests<-function(connection,
 
       diagnosis1        <- pairs[i,'E1_CONCEPT_ID']
       diagnosis2        <- pairs[i,'E2_CONCEPT_ID']
-      observed_matches  <- pairs[i,'E1_E2_EVENTPERIOD_COUNT']
-      observation_count <- pairs[i,'E1_COUNT_AS_FIRST_EVENT'] #case group size
+      observed_matches  <- pairs[i,'E1_BEFORE_E2_COUNT_IN_EVENTS']
+      observation_count <- pairs[i,'E1_COUNT_AS_FIRST_EVENT_OF_PAIRS'] #case group size
       expected_prob     <- pairs[i,'E2_PREVALENCE_IN_CONTROL_GROUP']
 
       eta=Trajectories::estimatedTimeRemaining(progress_perc=(i-1)/num.tests,starttime=starttime)
-      logger::log_info('Running pre-filtering test {i}/{num.tests}: {diagnosis1}->{diagnosis2}... ETA: {eta}')
+      logger::log_info('Running RR test {i}/{num.tests}: {diagnosis1}->{diagnosis2}... ETA: {eta}')
 
       event_pair_pvalue <- Trajectories:::getPValueForAccociation(expected_prob,observation_count,observed_matches)
 
@@ -544,7 +576,7 @@ runPrefilteringTests<-function(connection,
     }
   }
   logger::log_info('...done.')
-  logger::log_info('{associated_count} event pairs out of {num.tests} passed the pre-filtering tests.')
+  logger::log_info('{associated_count} event pairs out of {num.tests} passed the statistical tests of RR.')
 
   return()
 
@@ -555,7 +587,7 @@ runDirectionTests<-function(connection,
                               trajectoryLocalArgs,
                             forceRecalculation=F) {
 
-  # Direction tests are conducted for all pairs that are significantly associated
+  # Direction tests are conducted for all pairs that have significant RR
   # Find out how many tests need to be run in total
   RenderedSql <- Trajectories::loadRenderTranslateSql("GetPairsForDirectionTests.sql",
                                                       packageName=trajectoryAnalysisArgs$packageName,
@@ -565,10 +597,11 @@ runDirectionTests<-function(connection,
                                                       forceRecalculation = 1
   )
   pairs = DatabaseConnector::querySql(connection, RenderedSql)
-  num.tests <- nrow(pairs)
-  logger::log_info('Number of event pairs that are significantly associated in pre-filtering tests: {num.tests}')
+  #num.rows <- nrow(pairs)
+  #num.tests <- nrow(pairs %>% filter(RR_SIGNIFICANT=='*'))
+  num.tests<-nrow(pairs)
+  logger::log_info('Number of event pairs having significant RR: {num.tests}')
   logger::log_info('Total number of direction tests to conduct: {num.tests}')
-
 
   # Determine p-value threshold of Bonferroni correction
   cutoff_pval = 0.05/num.tests
@@ -579,7 +612,6 @@ runDirectionTests<-function(connection,
   logger::log_info(paste0('We use Bonferroni multiple test correction, therefore p-value threshold 0.05/',num.tests,'=',cutoff_pval,' is used in direction tests.'))
 
 
-  # if forceRecalculation=F, then some pairs might be tested already
   if(forceRecalculation==F) {
     RenderedSql <- Trajectories::loadRenderTranslateSql("GetPairsForDirectionTests.sql",
                                                         packageName=trajectoryAnalysisArgs$packageName,
@@ -592,8 +624,6 @@ runDirectionTests<-function(connection,
     precalculated.num.tests=num.tests-nrow(pairs)
     if(precalculated.num.tests>0) logger::log_info('For {precalculated.num.tests} pairs, directionality tests are already performed. These will be skipped from re-testing.')
     num.tests <- nrow(pairs)
-  } else {
-    precalculated.num.tests=0
   }
 
 
@@ -640,10 +670,22 @@ runDirectionTests<-function(connection,
       #            what is the probability that we observe event1_concept_id as the first diagnosis more than 'direction_counts$people_count_event1_occurs_first-1' times?
       # This question can be easily answered by pbinom(..., lower.tail=FALSE) which gives cumulative density function (cdf) as a result
       # Using lower.tail=FALSE is necessary, because otherwise pbinom would give the probability that we observe event1_concept_id as first diagnosis  LESS than 'direction_counts$people_count_event1_occurs_first'
-      event_pair_pvalue = Trajectories:::getPValueForDirection(direction_counts$EVENTPERIOD_COUNT_E1_OCCURS_FIRST,direction_counts$EVENTPERIOD_COUNT_E2_OCCURS_FIRST,direction_counts$EVENTPERIOD_COUNT_E1_E2_OCCUR_ON_SAME_DAY)
+      event_pair_pvalue = Trajectories:::getPValueForDirection(
+        EVENTPERIOD_COUNT_E1_OCCURS_FIRST=direction_counts$E1_BEFORE_E2_COUNT_IN_EVENTS,
+        EVENTPERIOD_COUNT_E2_OCCURS_FIRST=direction_counts$E1_AFTER_E2_COUNT_IN_EVENTS,
+        EVENTPERIOD_COUNT_E1_E2_OCCUR_ON_SAME_DAY=direction_counts$E1_AND_E2_ON_SAME_DAY_COUNT_IN_EVENTS)
+
+      # Calculate pvalue also for case when we "assume" that the events occurring on the same date are OK cases (this is just to understand why we get low pvalue because these events tend to on the same day)
+      event_pair_pvalue_same_day_ok = Trajectories:::getPValueForDirection(
+        EVENTPERIOD_COUNT_E1_OCCURS_FIRST=direction_counts$E1_BEFORE_E2_COUNT_IN_EVENTS+direction_counts$E1_AND_E2_ON_SAME_DAY_COUNT_IN_EVENTS,
+        EVENTPERIOD_COUNT_E2_OCCURS_FIRST=direction_counts$E1_AFTER_E2_COUNT_IN_EVENTS,
+        EVENTPERIOD_COUNT_E1_E2_OCCUR_ON_SAME_DAY=0)
 
       #Calculate direction power
-      powerDirection = Trajectories:::getPowerDirection(direction_counts$EVENTPERIOD_COUNT_E1_OCCURS_FIRST,direction_counts$EVENTPERIOD_COUNT_E2_OCCURS_FIRST,direction_counts$EVENTPERIOD_COUNT_E1_E2_OCCUR_ON_SAME_DAY,rr.threshold=1.2)
+      powerDirection = Trajectories:::getPowerDirection(direction_counts$E1_BEFORE_E2_COUNT_IN_EVENTS,
+                                                        direction_counts$E1_AFTER_E2_COUNT_IN_EVENTS,
+                                                        direction_counts$E1_AND_E2_ON_SAME_DAY_COUNT_IN_EVENTS,
+                                                        rr.threshold=1.2)
 
       if (event_pair_pvalue < cutoff_pval){
 
@@ -658,6 +700,18 @@ runDirectionTests<-function(connection,
 
       }
 
+      if (event_pair_pvalue_same_day_ok < cutoff_pval){
+
+        significant_same_day_str="'*'"
+        logger::log_debug(paste0('The direction of event pair ',diagnosis1,' -> ',diagnosis2,' would be significant if in ',direction_counts$E1_AND_E2_ON_SAME_DAY_COUNT_IN_EVENTS,' cases where both events occur on a same day actually had the order ',diagnosis1,' -> ',diagnosis2,' within the same day.'))
+
+      } else {
+
+        logger::log_debug(paste0('The direction of event pair ',diagnosis1,' -> ',diagnosis2,' would not be significant even if in ',direction_counts$E1_AND_E2_ON_SAME_DAY_COUNT_IN_EVENTS,' cases where both events occur on a same day actually had the order ',diagnosis1,' -> ',diagnosis2,' within the same day.'))
+        significant_same_day_str="''"
+
+      }
+
       # Store the pvalue to database
       RenderedSql <- Trajectories::loadRenderTranslateSql("9PvalInserterDirection.sql",
                                                           packageName=trajectoryAnalysisArgs$packageName,
@@ -665,6 +719,7 @@ runDirectionTests<-function(connection,
                                                           resultsSchema =   trajectoryLocalArgs$resultsSchema,
                                                           pval = event_pair_pvalue,
                                                           pvalSignificant=significant_str,
+                                                          significantIfSameDayOK=significant_same_day_str,
                                                           diag1 = diagnosis1,
                                                           diag2 = diagnosis2,
                                                           powerDirection=ifelse(is.na(powerDirection),'NULL',powerDirection),
@@ -683,16 +738,50 @@ runDirectionTests<-function(connection,
 
 }
 
-addAnnotationForResults<-function(event_pairs) {
-  event_pairs$VALIDATION_RESULT=NA
 
-  event_pairs[(event_pairs$E1_COUNT==0 | event_pairs$E2_COUNT==0),'VALIDATION_RESULT']<-'Event count = 0'
-  event_pairs[(event_pairs$E1_E2_EVENTPERIOD_COUNT==0),'VALIDATION_RESULT']<-'Event pair count = 0'
-  event_pairs[(is.na(event_pairs$VALIDATION_RESULT) & event_pairs$POWER_PREFILTERING<0.80),'VALIDATION_RESULT']<-'Low power for detecting such a low relative risk' # even association test was not performed
-  event_pairs[(is.na(event_pairs$VALIDATION_RESULT) & !is.na(event_pairs$EVENT_PAIR_PVALUE) & event_pairs$EVENT_PAIR_PVALUE_SIGNIFICANT==''),'VALIDATION_RESULT']<-'Not directional (validation failed)' #only association test was performed, but it was not found significant
-  event_pairs[(is.na(event_pairs$VALIDATION_RESULT) & !is.na(event_pairs$DIRECTIONAL_EVENT_PAIR_PVALUE_SIGNIFICANT) & (event_pairs$DIRECTIONAL_EVENT_PAIR_PVALUE_SIGNIFICANT=='*')),'VALIDATION_RESULT']<-'Directional (validation succeeded)'
-  event_pairs[(is.na(event_pairs$VALIDATION_RESULT) & is.na(event_pairs$DIRECTIONAL_EVENT_PAIR_PVALUE_SIGNIFICANT) & event_pairs$POWER_DIRECTION>=0.80),'VALIDATION_RESULT']<-'Not directional (validation failed)'
-  event_pairs[(is.na(event_pairs$VALIDATION_RESULT)),'VALIDATION_RESULT']<-'Associated but low power for directionality test' #nb! this is  powerfor 20% increase in signal. Actual increase might be larger!
+addAnnotationForResults<-function(event_pairs) {
+
+  if(any(!is.na(event_pairs$RR_IN_PREVIOUS_STUDY) & event_pairs$RR_IN_PREVIOUS_STUDY>0)) {
+    event_pairs$IS_PREVIOUS_RR_IN_OUR_RR_CI<-NA
+    event_pairs[!is.na(event_pairs$RR_IN_PREVIOUS_STUDY),'IS_PREVIOUS_RR_IN_OUR_RR_CI']<-ifelse(
+      !is.na(event_pairs$RR_IN_PREVIOUS_STUDY) & event_pairs$RR_IN_PREVIOUS_STUDY>=event_pairs$RR_CI_LOWER & event_pairs$RR_IN_PREVIOUS_STUDY<=event_pairs$RR_CI_UPPER,
+      T,
+      F)
+  }
+
+  event_pairs$TEXTUAL_RESULT=NA
+
+  event_pairs[(event_pairs$E1_COUNT_IN_EVENTS==0 | event_pairs$E2_COUNT_IN_EVENTS==0),'TEXTUAL_RESULT']<-'3.1 (step 1) Low power (count of any of these events is 0)'
+  event_pairs[(event_pairs$E1_BEFORE_E2_COUNT_IN_EVENTS==0),'TEXTUAL_RESULT']<-'3.2 (step 2) Low power (both events occur but never in given order)'
+
+  event_pairs[is.na(event_pairs$TEXTUAL_RESULT) & !is.na(event_pairs$RR_IN_PREVIOUS_STUDY) & event_pairs$RR_POWER<0.8,'TEXTUAL_RESULT']<-'3.3 (step 3) Low power (for detecting RR that different from 1 as in previous study)'
+
+  event_pairs[is.na(event_pairs$TEXTUAL_RESULT) & !is.na(event_pairs$RR_IN_PREVIOUS_STUDY) & !is.na(event_pairs$RR_SIGNIFICANT) & event_pairs$RR_SIGNIFICANT=='','TEXTUAL_RESULT']<-'2.1 (step 4) Validation failed (RR not statistically different from 1 despite having enough power for detecting RR as large as in previous study)' #only association test was performed, but it was not found significant
+  event_pairs[is.na(event_pairs$TEXTUAL_RESULT) & event_pairs$RR_SIGNIFICANT=='','TEXTUAL_RESULT']<-'2.1 (step 4) Validation failed (RR not significantly different from 1 despite having enough power for detecting RR>1.2)' #only association test was performed, but it was not found significant
+
+  event_pairs[is.na(event_pairs$TEXTUAL_RESULT) & event_pairs$DIRECTIONAL_POWER<0.8,'TEXTUAL_RESULT']<-'3.4 (step 5) Low power (despite having significant RR, there is low power for detecting significant order of these events)'
+  event_pairs[is.na(event_pairs$TEXTUAL_RESULT) & !is.na(event_pairs$DIRECTIONAL_SIGNIFICANT) & event_pairs$DIRECTIONAL_SIGNIFICANT=='' & event_pairs$DIRECTIONAL_SIGNIFICANT_IF_SAME_DAY_EVENTS_ORDERED=='*','TEXTUAL_RESULT']<-'2.3 (step 6) Validation failed (despite having significant RR and having enough power for directionality test, there is no significant order between these events. However, if eventperiods where the events happened on the same day, were considered as directional, the validation would have succeeded)'
+  event_pairs[is.na(event_pairs$TEXTUAL_RESULT) & !is.na(event_pairs$DIRECTIONAL_SIGNIFICANT) & event_pairs$DIRECTIONAL_SIGNIFICANT=='','TEXTUAL_RESULT']<-'2.2 (step 7) Validation failed (despite having significant RR and having enough power for directionality test, there is no significant order between these events)'
+
+
+  if(Trajectories::IsValidationMode(trajectoryAnalysisArgs)) {
+    event_pairs[is.na(event_pairs$TEXTUAL_RESULT) & !is.na(event_pairs$DIRECTIONAL_SIGNIFICANT) & event_pairs$DIRECTIONAL_SIGNIFICANT=='*' & sign(event_pairs$RR_IN_PREVIOUS_STUDY-1)!=sign(event_pairs$RR-1),'TEXTUAL_RESULT']<-'2.4 (step 8) Validation failed (event pair has significant RR and direction but RR has the opposite direction as compared to previous study)'
+  }
+  if(Trajectories::IsValidationMode(trajectoryAnalysisArgs)) {
+    event_pairs[is.na(event_pairs$TEXTUAL_RESULT) & !is.na(event_pairs$DIRECTIONAL_SIGNIFICANT) & event_pairs$DIRECTIONAL_SIGNIFICANT=='*','TEXTUAL_RESULT']<-'1.1 (step 9) Validation succeeded (event pair has significant RR and direction and RR direction matches with direction in previous study)'
+  } else {
+    event_pairs[is.na(event_pairs$TEXTUAL_RESULT) & !is.na(event_pairs$DIRECTIONAL_SIGNIFICANT) & event_pairs$DIRECTIONAL_SIGNIFICANT=='*','TEXTUAL_RESULT']<-'1.1 (step 9) Validation succeeded (event pair has significant RR and direction)'
+  }
+
+  #event_pairs[(is.na(event_pairs$TEXTUAL_RESULT) & is.na(event_pairs$DIRECTIONAL_SIGNIFICANT) & event_pairs$POWER_DIRECTION>=0.80),'TEXTUAL_RESULT']<-'Not directional (validation failed despite having enough power)'
+  event_pairs[is.na(event_pairs$TEXTUAL_RESULT),'TEXTUAL_RESULT']<-'Other (unkwown situation, not automatically labelled)'
+
+  #show up nicely
+  df<-data.frame(res=names(table(event_pairs$TEXTUAL_RESULT)),
+                 count=table(event_pairs$TEXTUAL_RESULT),
+                 perc=round(prop.table(table(event_pairs$TEXTUAL_RESULT))*100,1)) %>% select(res,count=count.Freq,freq=perc.Freq) %>% arrange(-freq)
+  print(df)
 
   return(event_pairs)
+
 }

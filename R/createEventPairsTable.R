@@ -35,6 +35,13 @@ createEventPairsTable<-function(connection,
                                    trajectoryAnalysisArgs=trajectoryAnalysisArgs,
                                    trajectoryLocalArgs=trajectoryLocalArgs)
   }
+
+
+
+  # Store used analysis arguments to JSON file
+  Trajectories::TrajectoryAnalysisArgsToJson(trajectoryAnalysisArgs, file.path(Trajectories::GetOutputFolder(trajectoryLocalArgs=trajectoryLocalArgs,trajectoryAnalysisArgs=trajectoryAnalysisArgs,createIfMissing=F),"trajectoryAnalysisArgs_used.json"))
+
+
   logger::log_info(paste0("Running SQL..."))
 
   #Set SQL role of the database session
@@ -52,9 +59,9 @@ createEventPairsTable<-function(connection,
                                                   maximumDaysBetweenEvents = trajectoryAnalysisArgs$maximumDaysBetweenEvents,
                                                   daysBeforeIndexDate = trajectoryAnalysisArgs$daysBeforeIndexDate,
                                                   prefiX = trajectoryLocalArgs$prefixForResultTableNames,
-                                                  cohortTableSchema = trajectoryLocalArgs$cohortTableSchema,
-                                                  cohortTable = trajectoryLocalArgs$cohortTable,
-                                                  cohortId = trajectoryLocalArgs$cohortId,
+                                                  cohortTableSchema = trajectoryLocalArgs$resultsSchema,
+                                                  cohortTable = paste0(trajectoryLocalArgs$prefixForResultTableNames,'cohort'),
+                                                  cohortId = ifelse(Trajectories::IsValidationMode(trajectoryAnalysisArgs)==TRUE,2,1), #cohort_id=1 when running in DISCOVERY mode, cohort_id=2 when running in VALIDATION mode,
                                                   addConditions = ifelse(trajectoryAnalysisArgs$addConditions==T,1,0),
                                                   addObservations = ifelse(trajectoryAnalysisArgs$addObservations==T,1,0),
                                                   addProcedures = ifelse(trajectoryAnalysisArgs$addProcedures==T,1,0),
@@ -69,7 +76,7 @@ createEventPairsTable<-function(connection,
   # Create and fill E1E2_model_input table
   # There are two options here - either to build it from the actual data OR (in validation mode) build it from given event-pairs
   #Check whether to run the method in validation mode
-  isValidationMode=Trajectories::IsValidationMode(trajectoryLocalArgs, verbose=T)
+  isValidationMode=Trajectories::IsValidationMode(trajectoryAnalysisArgs)
   if(isValidationMode) {
 
     f=file.path(trajectoryLocalArgs$inputFolder,'event_pairs_for_validation.tsv')
