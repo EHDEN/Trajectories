@@ -16,6 +16,8 @@ IF OBJECT_ID('@resultsSchema.@prefiXE2_summary', 'U') IS NOT NULL
   DROP TABLE @resultsSchema.@prefiXE2_summary;
 IF OBJECT_ID('@resultsSchema.@prefiXdebug', 'U') IS NOT NULL
   DROP TABLE @resultsSchema.@prefiXdebug;
+IF OBJECT_ID('@resultsSchema.@prefiXcohort', 'U') IS NOT NULL
+  DROP TABLE @resultsSchema.@prefiXcohort;
 IF OBJECT_ID('@resultsSchema.@prefiXmycohort', 'U') IS NOT NULL
   DROP TABLE @resultsSchema.@prefiXmycohort;
 IF OBJECT_ID('@resultsSchema.@prefiXevent_counts_in_eventperiods', 'U') IS NOT NULL
@@ -36,3 +38,7 @@ IF OBJECT_ID('@resultsSchema.@prefiXgraph_event_pairs', 'U') IS NOT NULL
   DROP TABLE @resultsSchema.@prefiXgraph_event_pairs;
 IF OBJECT_ID('@resultsSchema.@prefiXmylinks', 'U') IS NOT NULL
   DROP TABLE @resultsSchema.@prefiXmylinks;
+IF OBJECT_ID('@resultsSchema.@prefiXpairs_of_model', 'U') IS NOT NULL
+  DROP TABLE @resultsSchema.@prefiXpairs_of_model;
+IF OBJECT_ID('@resultsSchema.@prefiXpairs_stat', 'U') IS NOT NULL
+  DROP TABLE @resultsSchema.@prefiXpairs_stat;
