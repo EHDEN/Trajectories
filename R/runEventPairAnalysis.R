@@ -2,11 +2,91 @@ library(SqlRender)
 library(logger)
 
 
+#' Runs the analysis that validates given event pairs and writes the results to file. Data is taken from database and it is expected that the tables are created by function createEventPairsTable()
+#'
+#' @param connection DatabaseConnectorConnection object that is used to connect with database
+#' @param trajectoryAnalysisArgs TrajectoryAnalysisArgs object that must be created by createTrajectoryAnalysisArgs() method
+#' @param trajectoryLocalArgs TrajectoryLocalArgs object that must be created by createTrajectoryLocalArgs() method
+#' @param forceRecalculation Set to TRUE if you wish to recalculate p-values for all pairs again. If it is set to FALSE, it avoids overcalculating p-values for pairs that have been analyzed already.
+#' @param minRelativeRiskToValidate Relative risk that is used as a minimum threshold for filtering pairs from DISCOVERY STUDY that are being validated
+#'
+#' @return
+#' @export
+#'
+#' @examples
 runValidationAnalysis<-function(connection,
                                trajectoryAnalysisArgs,
                                trajectoryLocalArgs,
-                               forceRecalculation=F) {
+                               forceRecalculation=F,
+                               minRelativeRiskToValidate=1.1) {
 
+  logger::log_info("Begin the analysis of validation given directional event pairs...")
+
+  #Set SQL role of the database session
+  Trajectories::setRole(connection, trajectoryLocalArgs$sqlRole)
+
+  #Get pairs
+  pairs=Trajectories:::getAllPairs(connection,
+                                   trajectoryAnalysisArgs,
+                                   trajectoryLocalArgs)
+
+  logger::log_info("Number of event pairs to validate: {nrow(pairs)}")
+
+  #get pairs that are having RR_IN_PREVIOUS_STUDY > minRelativeRiskToValidate
+  pairs <- pairs %>% filter(RR_IN_PREVIOUS_STUDY > minRelativeRiskToValidate)
+  logger::log_info("Number of event pairs having RR_IN_PREVIOUS_STUDY > {minRelativeRiskToValidate}: {nrow(pairs)}")
+
+  #Calculate Bonferroni-corrected power for these pairs
+  logger::log_info("Calculate Bonferroni-corrected power for these pairs (also calculates RR)...")
+  pairs<-Trajectories:::calcRRandPower(connection,
+                                       trajectoryAnalysisArgs,
+                                       trajectoryLocalArgs,
+                                       pairs,
+                                       relativeRiskForPowerCalculations=NA, #the parameter is ignored as RR_IN_PREVIOUS_STUDY is given
+                                       powerPvalCutoff=0.05/nrow(pairs), #Bonferroni correction here
+                                       forceRecalculation = forceRecalculation
+  )
+
+  #get pairs having RR_IN_PREVIOUS_STUDY > minRelativeRiskToValidate AND sufficient power
+  pairs.with.power <- nrow(pairs %>% filter(RR_IN_PREVIOUS_STUDY > minRelativeRiskToValidate) %>% filter(RR_POWER>0.8))
+  logger::log_info("Number of event pairs having RR_IN_PREVIOUS_STUDY > {minRelativeRiskToValidate} and >80% power for detecting RR as large as in previous study: {pairs.with.power}")
+  logger::log_info("(that was just for the information, lacking power does not throw them out from RR testing)")
+
+  #RR tests
+  pairs<-pairs %>% filter(RR_IN_PREVIOUS_STUDY > minRelativeRiskToValidate)
+  logger::log_info("Running significance tests for RR values (to eliminate such event pairs from the directionality analysis where relative risk is too close to 1)...")
+  pairs<-Trajectories:::runRRTests(connection,
+                                   trajectoryAnalysisArgs,
+                                   trajectoryLocalArgs,
+                                   pairs,
+                                   forceRecalculation=forceRecalculation)
+
+  #get pairs having significant RR
+  pairs <- pairs %>% filter(!is.na(RR_SIGNIFICANT) & RR_SIGNIFICANT=='*')
+  logger::log_info("Number of event pairs having significant RR: {nrow(pairs)}")
+
+
+  #Run directionality test for pairs having significant RR (also calculates power)
+  logger::log_info("Running direction tests for pre-filtered event pairs...")
+  pairs<-Trajectories:::runDirectionTests(connection,
+                                          trajectoryAnalysisArgs,
+                                          trajectoryLocalArgs,
+                                          pairs,
+                                          forceRecalculation = forceRecalculation)
+
+
+
+  #Add labels
+  pairs<-Trajectories:::annotateValidationResults(pairs,verbose=T)
+
+  #write results to file
+  outputFolder<-Trajectories::GetOutputFolder(trajectoryLocalArgs,trajectoryAnalysisArgs)
+  allResultsFilenameTsv = file.path(outputFolder,'event_pairs_tested.tsv')
+  write.table(pairs, file=allResultsFilename, quote=FALSE, sep='\t', col.names = NA)
+  allResultsFilenameXsl = file.path(outputFolder,'event_pairs_tested.xlsx')
+  library(openxlsx)
+  write.xlsx(pairs, allResultsFilenameXsl)
+  logger::log_info('All tested pairs were written to {allResultsFilenameTsv} and {allResultsFilenameXsl}.')
 
 }
 
@@ -47,6 +127,7 @@ runDiscoveryAnalysis<-function(connection,
                                 trajectoryLocalArgs,
                                 pairs,
                                 relativeRiskForPowerCalculations=relativeRiskForPowerCalculations, #get power of detecting RR=10
+                                powerPvalCutoff=0.05, #no correction here
                                 forceRecalculation = forceRecalculation
                               )
 
@@ -80,9 +161,12 @@ runDiscoveryAnalysis<-function(connection,
 
   #write results to file
   outputFolder<-Trajectories::GetOutputFolder(trajectoryLocalArgs,trajectoryAnalysisArgs)
-  allResultsFilename = file.path(outputFolder,'event_pairs_tested.tsv')
+  allResultsFilenameTsv = file.path(outputFolder,'event_pairs_tested.tsv')
   write.table(pairs, file=allResultsFilename, quote=FALSE, sep='\t', col.names = NA)
-  logger::log_info('All tested pairs were written to {allResultsFilename}')
+  allResultsFilenameXsl = file.path(outputFolder,'event_pairs_tested.xlsx')
+  library(openxlsx)
+  write.xlsx(pairs, allResultsFilenameXsl)
+  logger::log_info('All tested pairs were written to {allResultsFilenameTsv} and {allResultsFilenameXsl}.')
 
   directionalResultsFilename = file.path(outputFolder,'event_pairs_directional.tsv')
   write.table(pairs %>% filter(!is.na(DIRECTIONAL_SIGNIFICANT) & DIRECTIONAL_SIGNIFICANT=='*'), file=directionalResultsFilename, quote=FALSE, sep='\t', col.names = NA)
@@ -287,7 +371,7 @@ getPValueForDirection<-function(EVENTPERIOD_COUNT_E1_OCCURS_FIRST,EVENTPERIOD_CO
 
 #Get power: the probability that we detect the association between E1 and E2 in case E1 increases/decreases the risk of getting E2 by 20% (relative risk threshold) when compared to (age-sex matched) general population
 # rr.threshold can also be <1 (decreased risk)
-getPowerRR<-function(case_control,expected_prob,rr.threshold=1.2,cutoff_pval=0.05) {
+getPowerRR<-function(case_control,expected_prob,rr.threshold=1.2,powerPvalCutoff=0.05) {
 
 
   #number of times to sample from general population. n=1000 seems reasonable to get quite accurate estimate
@@ -320,8 +404,8 @@ getPowerRR<-function(case_control,expected_prob,rr.threshold=1.2,cutoff_pval=0.0
 
   #Calculate power: how many p-values are belo threshold?
   #Note that we do not use corrected threshold here as we select the true threshold AFTER the power analysis. Therefore, conservatively, we use 0.05 here to leave out event pairs that do not exceed the threshold even without correction.
-  #power=sum(p.vals<cutoff_pval)/n
-  power=sum(p.vals<cutoff_pval)/n
+  #power=sum(p.vals<powerPvalCutoff)/n
+  power=sum(p.vals<powerPvalCutoff)/n
 
   logger::log_debug('If E1 increased the prevalence of E2 by {round(rr.threshold,3)}x, we would detect it with given case group size n={case_group_size} with probability {round(power*100)}% (=power).')
   return(power)
@@ -395,7 +479,8 @@ calcRRandPower<-function(connection,
                             trajectoryAnalysisArgs,
                             trajectoryLocalArgs,
                             pairs,
-                            relativeRiskForPowerCalculations=10,
+                            relativeRiskForPowerCalculations=10, #ignored if RR_IN_PREVIOUS_STUDY is given in the data
+                            powerPvalCutoff=0.05,
                             forceRecalculation=T) {
 
   num.pairs=nrow(pairs)
@@ -443,7 +528,7 @@ calcRRandPower<-function(connection,
                                                       connection,
                                                       trajectoryAnalysisArgs,
                                                       trajectoryLocalArgs,
-                                                      power_pval_cutoff = 0.05)
+                                                      powerPvalCutoff = powerPvalCutoff)
       expected_prob    <- z[1]
       power <- z[2]
       #powerRR_cutoff <- z[3]
@@ -501,7 +586,7 @@ getExpectedPrevalenceAndPower<-function(diagnosis1,
                                 connection,
                                 trajectoryAnalysisArgs,
                                 trajectoryLocalArgs,
-                                power_pval_cutoff=cutoff_pval) {
+                                powerPvalCutoff=0.05) {
   # Extract necessary event1_concept_id->event2_concept_id data from table d1d2_analysistable
   RenderedSql <- Trajectories::loadRenderTranslateSql("5CaseControlStats.sql",
                                                       packageName=trajectoryAnalysisArgs$packageName,
@@ -547,7 +632,7 @@ getExpectedPrevalenceAndPower<-function(diagnosis1,
   power=Trajectories:::getPowerRR(case_control,
                                   expected_prob,
                                   rr.threshold=ifelse(is.na(rr_in_previous_study),relativeRiskForPowerCalculations,rr_in_previous_study),
-                                  cutoff_pval = cutoff_pval
+                                  powerPvalCutoff = powerPvalCutoff
                                   )
   return(c(expected_prob,power))
 }
@@ -561,7 +646,10 @@ runRRTests<-function(connection,
                               forceRecalculation=F) {
 
   num.pairs=nrow(pairs)
-  logger::log_info("Running RR tests for {num.pairs} event pairs to identifypairs that have RR significantly different from 1...")
+  logger::log_info("Running RR tests for {num.pairs} event pairs to identify pairs having significant RR...")
+
+  cutoff_pval = 0.05/nrow(pairs)
+  logger::log_info(paste0('We use Bonferroni multiple test correction, therefore p-value threshold 0.05/',nrow(pairs),'=',cutoff_pval,' is used in RR tests.'))
 
   #Set SQL role of the database session
   Trajectories::setRole(connection, trajectoryLocalArgs$sqlRole)
@@ -569,15 +657,16 @@ runRRTests<-function(connection,
   if(forceRecalculation==F) {
     pairs <- pairs %>% filter(is.na(RR_PVALUE))
     num.already.calculated=num.pairs-nrow(pairs)
-    logger::log_info("For {num.already.calculated} pairs RR test is already conducted. Skipping these from recalculating.")
+    associated_count <- nrow(pairs %>% filter(!is.na(RR_SIGNIFICANT) & RR_SIGNIFICANT=='*'))
+    logger::log_info("For {num.already.calculated} pairs, RR test is already conducted ({associated_count} have significant RR). Skipping these from recalculating.")
+  } else {
+    num.already.calculated=0
+    associated_count=0
   }
 
-  cutoff_pval = 0.05/nrow(pairs)
-  logger::log_info(paste0('We use Bonferroni multiple test correction, therefore p-value threshold 0.05/',nrow(pairs),'=',cutoff_pval,' is used in RR tests.'))
 
-  associated_count=0
+
   starttime=Sys.time()
-  # For each event pair, run the analysis
   if(nrow(pairs)>0) {
     for(i in 1:nrow(pairs)) {
 
@@ -654,7 +743,7 @@ runDirectionTests<-function(connection,
 
     directional_count <- nrow(pairs %>% filter(!is.na(DIRECTIONAL_SIGNIFICANT) & DIRECTIONAL_SIGNIFICANT=='*'))
 
-    logger::log_info("For {num.already.calculated} pairs RR test is already conducted ({directional_count} have significant direction). Skipping these from recalculating.")
+    logger::log_info("For {num.already.calculated} pairs, RR test is already conducted ({directional_count} have significant direction). Skipping these from recalculating.")
   } else {
     num.already.calculated=0
     directional_count=0
@@ -810,7 +899,49 @@ annotateDiscoveryResults<-function(pairs,verbose=F) {
 }
 
 
-addAnnotationForResults<-function(event_pairs,verbose=F) {
+annotateValidationResults<-function(pairs,verbose=F) {
+
+  if(any(!is.na(pairs$RR_IN_PREVIOUS_STUDY) & pairs$RR_IN_PREVIOUS_STUDY>0)) {
+    pairs$IS_PREVIOUS_RR_IN_OUR_RR_CI<-NA
+    pairs[!is.na(pairs$RR_IN_PREVIOUS_STUDY),'IS_PREVIOUS_RR_IN_OUR_RR_CI']<-ifelse(
+      !is.na(pairs$RR_IN_PREVIOUS_STUDY) & pairs$RR_IN_PREVIOUS_STUDY>=pairs$RR_CI_LOWER & pairs$RR_IN_PREVIOUS_STUDY<=pairs$RR_CI_UPPER,
+      T,
+      F)
+  }
+
+  pairs$TEXTUAL_RESULT=NA
+
+  pairs[(pairs$E1_COUNT_IN_EVENTS==0 | pairs$E2_COUNT_IN_EVENTS==0),'TEXTUAL_RESULT']<-'Low power (count of any of these events is 0)'
+  pairs[(pairs$E1_BEFORE_E2_COUNT_IN_EVENTS==0),'TEXTUAL_RESULT']<-'Low power (both events occur but never in given order)'
+
+  pairs[is.na(pairs$TEXTUAL_RESULT) & !is.na(pairs$RR) & (pairs$RR<=1.1),'TEXTUAL_RESULT']<-'Not tested (RR in discovery study <=1.1)'
+
+
+  pairs[is.na(pairs$TEXTUAL_RESULT) & pairs$RR_POWER<=0.8 & pairs$RR_SIGNIFICANT=='','TEXTUAL_RESULT']<-'RR not significantly different from 1 (also low power for detecting RR as small as in discovery study)'
+  pairs[is.na(pairs$TEXTUAL_RESULT) & pairs$RR_SIGNIFICANT=='','TEXTUAL_RESULT']<-'RR not significantly different from 1 (despite having enough power for detecting RR as small as in discovery study)'
+
+
+  pairs[is.na(pairs$TEXTUAL_RESULT) & !is.na(pairs$DIRECTIONAL_SIGNIFICANT) & pairs$DIRECTIONAL_SIGNIFICANT=='' & pairs$DIRECTIONAL_SIGNIFICANT_IF_SAME_DAY_EVENTS_ORDERED=='*','TEXTUAL_RESULT']<-'Despite having significant RR, there is no significant order between these events. However, if eventperiods where the events happened on the same day, were considered as directional, the pair would become directionally significant.'
+  pairs[is.na(pairs$TEXTUAL_RESULT) & !is.na(pairs$DIRECTIONAL_SIGNIFICANT) & pairs$DIRECTIONAL_SIGNIFICANT=='' & pairs$DIRECTIONAL_POWER<=0.8,'TEXTUAL_RESULT']<-'Despite having significant RR, there is no significant order between these events (also low power for detecting less than 20% elevated order).'
+  pairs[is.na(pairs$TEXTUAL_RESULT) & !is.na(pairs$DIRECTIONAL_SIGNIFICANT) & pairs$DIRECTIONAL_SIGNIFICANT=='','TEXTUAL_RESULT']<-'Despite having significant RR, there is no significant order between these events (despite having enough power for detecting 20% elevated order).'
+
+  pairs[is.na(pairs$TEXTUAL_RESULT) & !is.na(pairs$DIRECTIONAL_SIGNIFICANT) & pairs$DIRECTIONAL_SIGNIFICANT=='*' & sign(pairs$RR_IN_PREVIOUS_STUDY-1)!=sign(pairs$RR-1),'TEXTUAL_RESULT']<-'Validation failed (event pair has significant RR and direction but RR has the opposite direction as compared to discovery study)'
+  pairs[is.na(pairs$TEXTUAL_RESULT) & !is.na(pairs$DIRECTIONAL_SIGNIFICANT) & pairs$DIRECTIONAL_SIGNIFICANT=='*','TEXTUAL_RESULT']<-'SUCCESS: Event pair has significant RR and direction'
+
+  #event_pairs[(is.na(event_pairs$TEXTUAL_RESULT) & is.na(event_pairs$DIRECTIONAL_SIGNIFICANT) & event_pairs$POWER_DIRECTION>=0.80),'TEXTUAL_RESULT']<-'Not directional (validation failed despite having enough power)'
+  pairs[is.na(pairs$TEXTUAL_RESULT),'TEXTUAL_RESULT']<-'Other (unkwown situation, not automatically labelled)'
+
+  #show up nicely
+  df<-data.frame(res=names(table(pairs$TEXTUAL_RESULT)),
+                 count=table(pairs$TEXTUAL_RESULT),
+                 perc=round(prop.table(table(pairs$TEXTUAL_RESULT))*100,1)) %>% select(res,count=count.Freq,freq=perc.Freq) %>% arrange(-freq)
+  if(verbose) print(df)
+
+  return(pairs)
+
+}
+
+addAnnotationForResultsOld<-function(event_pairs,verbose=F) {
 
   if(any(!is.na(event_pairs$RR_IN_PREVIOUS_STUDY) & event_pairs$RR_IN_PREVIOUS_STUDY>0)) {
     event_pairs$IS_PREVIOUS_RR_IN_OUR_RR_CI<-NA

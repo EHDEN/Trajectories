@@ -98,7 +98,7 @@ Trajectories::createEventPairsTable(connection=connection,
                                     trajectoryLocalArgs=trajectoryLocalArgs)
 
 
-# Detect statistically significant directional event pairs and write the results to eventPairResultsFilename
+# Detect statistically significant directional event pairs and write the results to eventPairResultsFilename. Also creates validation setup.
 Trajectories::runDiscoveryAnalysis(connection,
                                trajectoryAnalysisArgs,
                                trajectoryLocalArgs,
@@ -127,9 +127,6 @@ Trajectories::PlotTrajectoriesGraphForEvents(connection,
                                              skipOutputTables = T)
 
 
-# Create validation setup for validating the results in anohter database
-Trajectories::createValidationSetup(trajectoryAnalysisArgs,
-                                    trajectoryLocalArgs)
 
 
 ########### VALIDATING THE RESULTS FROM DISCOVERY STUDY ##################
@@ -139,17 +136,20 @@ trajectoryLocalArgs$inputFolder=file.path(Trajectories::GetOutputFolder(trajecto
 trajectoryAnalysisArgs<-Trajectories::TrajectoryAnalysisArgsFromInputFolder(trajectoryLocalArgs)
 Trajectories::IsValidationMode(trajectoryAnalysisArgs,verbose=T)
 
-# Create database tables of all event pairs (patient level data + summary statistics). Uses cohort_id depending on the running mode of the package (in this time, takes cohort_id=2)
+# Create database tables of all event pairs (patient level data + summary statistics). Uses cohort_id depending on the running mode of the package (this time, takes cohort_id=2)
 Trajectories::createEventPairsTable(connection=connection,
                                     trajectoryAnalysisArgs=trajectoryAnalysisArgs,
                                     trajectoryLocalArgs=trajectoryLocalArgs)
 
 
-# Detect statistically significant directional event pairs and write the results to eventPairResultsFilename
-Trajectories::runEventPairAnalysis(connection=connection,
-                                   trajectoryAnalysisArgs=trajectoryAnalysisArgs,
-                                   trajectoryLocalArgs=trajectoryLocalArgs,
-                                   forceRecalculation = T)
+# Validate statistically significant directional event pairs and write the results to eventPairResultsFilename
+Trajectories::runValidationAnalysis(connection,
+                                      trajectoryAnalysisArgs,
+                                      trajectoryLocalArgs,
+                                      forceRecalculation=F,
+                                      minRelativeRiskToValidate=1.1)
+
+
 
 
 ########### CLEANUP: DROP ANALYSIS TABLES IF THERE IS NO NEED FOR THESE RESULTS ANYMORE ###########
