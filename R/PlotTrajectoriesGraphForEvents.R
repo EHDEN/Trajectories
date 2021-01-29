@@ -29,7 +29,7 @@ PlotTrajectoriesGraphForEvents<-function(connection,
 
   library(stringi)
   outputFolder<-Trajectories::GetOutputFolder(trajectoryLocalArgs,trajectoryAnalysisArgs)
-  eventPairResultsFilename = file.path(outputFolder,'event_pairs.tsv')
+  eventPairResultsFilename = file.path(outputFolder,'event_pairs_directional.tsv')
 
   # create TrajectoriesGraph object from event pairs
   g<-Trajectories::createTrajectoriesGraph(eventPairResultsFilename=eventPairResultsFilename, minRelativeRisk=minRelativeRisk)

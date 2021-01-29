@@ -1,6 +1,103 @@
 library(SqlRender)
 library(logger)
 
+
+runValidationAnalysis<-function(connection,
+                               trajectoryAnalysisArgs,
+                               trajectoryLocalArgs,
+                               forceRecalculation=F) {
+
+
+}
+
+
+#' Runs the analysis that detects statistically significant directional event pairs and writes the results to file. Data is taken from database and it is expected that the tables are created by function createEventPairsTable()
+#'
+#' @param connection DatabaseConnectorConnection object that is used to connect with database
+#' @param trajectoryAnalysisArgs TrajectoryAnalysisArgs object that must be created by createTrajectoryAnalysisArgs() method
+#' @param trajectoryLocalArgs TrajectoryLocalArgs object that must be created by createTrajectoryLocalArgs() method
+#' @param forceRecalculation Set to TRUE if you wish to recalculate p-values for all pairs again. If it is set to FALSE, it avoids overcalculating p-values for pairs that have been analyzed already.
+#' @param relativeRiskForPowerCalculations Relative risk that is used for power calculations (what is the power to detect that relative risk in these data).
+#'
+#' @return
+#' @export
+#'
+#' @examples
+runDiscoveryAnalysis<-function(connection,
+                               trajectoryAnalysisArgs,
+                               trajectoryLocalArgs,
+                               forceRecalculation=F,
+                               relativeRiskForPowerCalculations=10) {
+
+  logger::log_info("Begin the analysis of detecting statistically significant directional event pairs...")
+
+  #Set SQL role of the database session
+  Trajectories::setRole(connection, trajectoryLocalArgs$sqlRole)
+
+  #Get pairs
+  pairs=Trajectories:::getAllPairs(connection,
+                                   trajectoryAnalysisArgs,
+                                   trajectoryLocalArgs)
+
+  logger::log_info("Number of event pairs to analyze: {nrow(pairs)}")
+
+  logger::log_info("Matching case and control groups for calculating relative risk (RR) and power...")
+  pairs<-Trajectories:::calcRRandPower(connection,
+                                trajectoryAnalysisArgs,
+                                trajectoryLocalArgs,
+                                pairs,
+                                relativeRiskForPowerCalculations=relativeRiskForPowerCalculations, #get power of detecting RR=10
+                                forceRecalculation = forceRecalculation
+                              )
+
+  #get Pairs that are having R>1.2 or R<0.8 and sufficient power for detecting RR=10
+  pairs <- pairs %>% filter((RR > 1.2 | RR < 0.8) & RR_POWER>0.8)
+  logger::log_info("Number of event pairs having (RR>1.2 or RR<0.8) and sufficient power to detect RR=10: {nrow(pairs)}")
+  logger::log_info("Difference of RR from 1.0 of these pairs will be tested.")
+
+  #RR tests
+  logger::log_info("Running significance tests for RR values (to eliminate such event pairs from the directionality analysis where relative risk is too close to 1)...")
+  pairs<-Trajectories:::runRRTests(connection,
+                            trajectoryAnalysisArgs,
+                            trajectoryLocalArgs,
+                            pairs,
+                            forceRecalculation=forceRecalculation)
+
+  #get Pairs that are having significant RR
+  pairs <- pairs %>% filter(!is.na(RR_SIGNIFICANT) & RR_SIGNIFICANT=='*')
+  logger::log_info("Number of event pairs having significant RR: {nrow(pairs)}")
+
+  #Run directionality test for pairs having significant RR
+  logger::log_info("Running direction tests for pre-filtered event pairs...")
+  pairs<-Trajectories:::runDirectionTests(connection,
+                                   trajectoryAnalysisArgs,
+                                   trajectoryLocalArgs,
+                                   pairs,
+                                   forceRecalculation = forceRecalculation)
+
+  #Add labels
+  pairs<-Trajectories:::annotateDiscoveryResults(pairs,verbose=T)
+
+  #write results to file
+  outputFolder<-Trajectories::GetOutputFolder(trajectoryLocalArgs,trajectoryAnalysisArgs)
+  allResultsFilename = file.path(outputFolder,'event_pairs_tested.tsv')
+  write.table(pairs, file=allResultsFilename, quote=FALSE, sep='\t', col.names = NA)
+  logger::log_info('All tested pairs were written to {allResultsFilename}')
+
+  directionalResultsFilename = file.path(outputFolder,'event_pairs_directional.tsv')
+  write.table(pairs %>% filter(!is.na(DIRECTIONAL_SIGNIFICANT) & DIRECTIONAL_SIGNIFICANT=='*'), file=directionalResultsFilename, quote=FALSE, sep='\t', col.names = NA)
+  logger::log_info('All directional pairs were written to {directionalResultsFilename}')
+
+  # Create validation setup for validating the results in anohter database
+  Trajectories::createValidationSetup(trajectoryAnalysisArgs,
+                                      trajectoryLocalArgs)
+
+
+}
+
+
+
+
 #' Runs the analysis that detects statistically significant directional event pairs and writes the results to file. Data is taken from database and it is expected that the tables are created by function createEventPairsTable()
 #'
 #' @param connection DatabaseConnectorConnection object that is used to connect with database
@@ -31,15 +128,16 @@ runEventPairAnalysis<-function(connection,
   Trajectories::setRole(connection, trajectoryLocalArgs$sqlRole)
 
   if(Trajectories::IsValidationMode(trajectoryAnalysisArgs)) {
-    logger::log_info("Matching case and control groups for calculating relative risk and power for detecting relative risk as strong as in previous study...")
+    logger::log_info("Matching case and control groups for calculating relative risk (RR) and power for detecting relative risk as strong as in previous study...")
   } else {
-    logger::log_info("Matching case and control groups for calculating relative risk...")
+    logger::log_info("Matching case and control groups for calculating relative risk (RR) and power...")
   }
-  Trajectories:::prepareEventPairsForStatisticalTesting(connection,
-                                                   trajectoryAnalysisArgs,
-                                                   trajectoryLocalArgs,
-                                                   relativeRiskForPowerCalculations=relativeRiskForPowerCalculations,
-                                                   forceRecalculation=forceRecalculation)
+  Trajectories:::calcRRandPower(connection,
+                                 trajectoryAnalysisArgs,
+                                 trajectoryLocalArgs,
+                                 relativeRiskForPowerCalculations=relativeRiskForPowerCalculations,
+                                 forceRecalculation=forceRecalculation)
+
   #RR tests
   logger::log_info("Running significance tests for relative risk values (to eliminate such event pairs from the directionality analysis where relative risk is too close to 1)...")
   Trajectories:::runRRTests(connection,
@@ -147,12 +245,6 @@ addSignalToBackground <- function(case_control, alpha=0.2){
 
 }
 
-# Function for sampling positive E2 with alpha lift
-#Create n case groups (by sampling) from the (20% elevated) general population and see how many E2 occurrencies you'd get in each sample/case group
-sampleFromEleveatedBackgroundOld <- function(E2_count_in_background=c(), non_E2_count_in_background=c(), case_count=c(), n=1000){
-  return(apply(mapply(rhyper, n, E2_count_in_background, non_E2_count_in_background, case_count), 1 , sum))
-}
-
 
 
 #get p-value of getting that many (or that little) E2 counts in case group if (by null hypothesis) we assume that E2 prevalence in case group is the same as in matched control group
@@ -195,7 +287,7 @@ getPValueForDirection<-function(EVENTPERIOD_COUNT_E1_OCCURS_FIRST,EVENTPERIOD_CO
 
 #Get power: the probability that we detect the association between E1 and E2 in case E1 increases/decreases the risk of getting E2 by 20% (relative risk threshold) when compared to (age-sex matched) general population
 # rr.threshold can also be <1 (decreased risk)
-getPowerAssociation<-function(case_control,expected_prob,rr.threshold=1.2) {
+getPowerRR<-function(case_control,expected_prob,rr.threshold=1.2,cutoff_pval=0.05) {
 
 
   #number of times to sample from general population. n=1000 seems reasonable to get quite accurate estimate
@@ -229,9 +321,9 @@ getPowerAssociation<-function(case_control,expected_prob,rr.threshold=1.2) {
   #Calculate power: how many p-values are belo threshold?
   #Note that we do not use corrected threshold here as we select the true threshold AFTER the power analysis. Therefore, conservatively, we use 0.05 here to leave out event pairs that do not exceed the threshold even without correction.
   #power=sum(p.vals<cutoff_pval)/n
-  power=sum(p.vals<0.05)/n
+  power=sum(p.vals<cutoff_pval)/n
 
-  logger::log_debug('If E1 increased the prevalence of E2 by {round(rr.threshold,3)}x, we would detect it with given case group size n={case_group_size} with probability {round(power*100)}% (=power)')
+  logger::log_debug('If E1 increased the prevalence of E2 by {round(rr.threshold,3)}x, we would detect it with given case group size n={case_group_size} with probability {round(power*100)}% (=power).')
   return(power)
 
 }
@@ -297,101 +389,65 @@ RRandCI<-function(cases_with_outcome,cases_total,expected_prob) {
 }
 
 
-# Calculates all necessary input values for statistical tests
-prepareEventPairsForStatisticalTesting<-function(connection,
-                                                 trajectoryAnalysisArgs,
-                                                 trajectoryLocalArgs,
-                                                 relativeRiskForPowerCalculations=1.2,
-                                                 forceRecalculation=F) {
 
-  logger::log_info("Preparing event pairs data for statistical testing (extracting necessary counts, calculating RR, power for detecting RR)...")
+# Calculates all necessary input values for statistical tests
+calcRRandPower<-function(connection,
+                            trajectoryAnalysisArgs,
+                            trajectoryLocalArgs,
+                            pairs,
+                            relativeRiskForPowerCalculations=10,
+                            forceRecalculation=T) {
+
+  num.pairs=nrow(pairs)
+  logger::log_info("Calculating relative risk and power for {num.pairs} event pairs...")
 
   #Set SQL role of the database session
   Trajectories::setRole(connection, trajectoryLocalArgs$sqlRole)
 
-  # Get number of all (frequent) event pairs from the database
-  RenderedSql <- Trajectories::loadRenderTranslateSql("GetNumPairs.sql",
-                                                      packageName=trajectoryAnalysisArgs$packageName,
-                                                      dbms=connection@dbms,
-                                                      resultsSchema =  trajectoryLocalArgs$resultsSchema,
-                                                      prefix =  trajectoryLocalArgs$prefixForResultTableNames
-  )
-  num.dpairs = DatabaseConnector::querySql(connection, RenderedSql)
-  num.dpairs <- num.dpairs$TOTAL
-
-  #Leave out pairs that have E1_E2_EVENTPERIOD_COUNT==0 (some counts might be 0 in case of validation mode). Skipping them from the analysis also affects Bonferroni correction
-  # Get number of all non-zero-count event pairs from the database
-  RenderedSql <- Trajectories::loadRenderTranslateSql("GetNumPairsForAnalysis.sql",
-                                                      packageName=trajectoryAnalysisArgs$packageName,
-                                                      dbms=connection@dbms,
-                                                      resultsSchema =  trajectoryLocalArgs$resultsSchema,
-                                                      prefix =  trajectoryLocalArgs$prefixForResultTableNames
-  )
-  num.nonzero.dpairs = DatabaseConnector::querySql(connection, RenderedSql)
-  num.nonzero.dpairs <- num.nonzero.dpairs$TOTAL
-
-  if(num.dpairs!=num.nonzero.dpairs) {
-    logger::log_info(paste0('There are ',num.dpairs,' event pairs in the original event pairs table. However, ',num.dpairs-num.nonzero.dpairs,' of them have count=0 and are therefore skipped from the remaining analysis.'))
-  }
-
-  logger::log_info(paste0('There are ',num.nonzero.dpairs,' event pairs that are going to be analyzed.'))
-
-  if(num.nonzero.dpairs==0) {
-    logger::log_info('Nothing to analyze, exit analysis function.')
-    return(1);
-  }
-
-  #Load all event pairs for the analysis
-  # (also) Avoid recalculation if forceRecalculation=T and the data is already there (the analysis has already run up to some point)
-  RenderedSql <- Trajectories::loadRenderTranslateSql("GetPairsForCalculation.sql",
-                                                      packageName=trajectoryAnalysisArgs$packageName,
-                                                      dbms=connection@dbms,
-                                                      resultsSchema =  trajectoryLocalArgs$resultsSchema,
-                                                      prefix =  trajectoryLocalArgs$prefixForResultTableNames,
-                                                      forceRecalculation = ifelse(forceRecalculation==T,1,0)
-  )
-  dpairs_for_analysis = DatabaseConnector::querySql(connection, RenderedSql)
-
-  if(nrow(dpairs_for_analysis)<num.nonzero.dpairs) {
-    logger::log_info(paste0("For ",num.nonzero.dpairs-nrow(dpairs_for_analysis))," event pairs, the data are already prepared. They are skipped in this preparation run.")
+  if(forceRecalculation==F) {
+    pairs <- pairs %>% filter(is.na(RR) | RR==0)
+    num.already.calculated=num.pairs-nrow(pairs)
+    logger::log_info("For {num.already.calculated} pairs RR is already calculated. Skipping these from recalculating.")
+  } else {
+    num.already.calculated=0
   }
 
   starttime=Sys.time()
   # For each event pair, run the analysis
-  if(nrow(dpairs_for_analysis)>0) {
-    for(i in 1:nrow(dpairs_for_analysis))
+  if(nrow(pairs)>0) {
+    for(i in 1:nrow(pairs))
     {
-      diagnosis1        <- dpairs_for_analysis[i,'E1_CONCEPT_ID']
-      diagnosis2        <- dpairs_for_analysis[i,'E2_CONCEPT_ID']
-      observation_count <- dpairs_for_analysis[i,'E1_COUNT_AS_FIRST_EVENT_OF_PAIRS'] #case group size - eventperiod count where E1 is not the last event
-      observed_matches  <- dpairs_for_analysis[i,'E1_BEFORE_E2_COUNT_IN_EVENTS'] #Number of cases where E2 is followed by E1
+      diagnosis1        <- pairs[i,'E1_CONCEPT_ID']
+      diagnosis2        <- pairs[i,'E2_CONCEPT_ID']
+      observation_count <- pairs[i,'E1_COUNT_AS_FIRST_EVENT_OF_PAIRS'] #case group size - eventperiod count where E1 is not the last event
+      observed_matches  <- pairs[i,'E1_BEFORE_E2_COUNT_IN_EVENTS'] #Number of cases where E2 is followed by E1
 
+      rr_in_previous_study=pairs[i,'RR_IN_PREVIOUS_STUDY']
 
-      rr_in_previous_study=dpairs_for_analysis[i,'RR_IN_PREVIOUS_STUDY']
-
-      logger::log_info(paste0('Matching control group for event pair ',i,'/',nrow(dpairs_for_analysis),': ',diagnosis1,' -> ',diagnosis2,' (total progress ',
-                              round(100*i/nrow(dpairs_for_analysis)),'%, ETA: ',Trajectories::estimatedTimeRemaining(progress_perc=(i-1)/nrow(dpairs_for_analysis),starttime=starttime),
+      logger::log_info(paste0('Matching control group for event pair ',i+num.already.calculated,'/',num.pairs,': ',diagnosis1,' -> ',diagnosis2,' (total progress ',
+                              round(100*(i+num.already.calculated)/num.pairs),'%, ETA: ',Trajectories::estimatedTimeRemaining(progress_perc=(i-1)/nrow(pairs),starttime=starttime),
                               ')...'))
 
       # E2 prevalence in Case group
       actual_prob=observed_matches/observation_count
       if(observation_count==0) actual_prob=0 #should not happen, but just to be sure
 
-
-
       # Calculate
       # Expected E2 prevalence in matched control group
       # and
-      # power - typically power for detecting RR=1.2 but in case RR_IN_PREVIOUS_STUDY is given, then the power to detect RR=RR_IN_PREVIOUS_STUDY
+      # power - typically power for detecting RR=... but in case RR_IN_PREVIOUS_STUDY is given, then the power to detect RR=RR_IN_PREVIOUS_STUDY
       z<-Trajectories:::getExpectedPrevalenceAndPower(diagnosis1,
-                                                     diagnosis2,
-                                                     rr_in_previous_study,
-                                                     relativeRiskForPowerCalculations,
-                                                     connection,
-                                                     trajectoryAnalysisArgs,
-                                                     trajectoryLocalArgs)
+                                                      diagnosis2,
+                                                      rr_in_previous_study,
+                                                      relativeRiskForPowerCalculations,
+                                                      connection,
+                                                      trajectoryAnalysisArgs,
+                                                      trajectoryLocalArgs,
+                                                      power_pval_cutoff = 0.05)
       expected_prob    <- z[1]
-      powerAssociation <- z[2]
+      power <- z[2]
+      #powerRR_cutoff <- z[3]
+
 
       #What is the "relative risk" (effect) (how many times the event2_concept_id prevalence in case group is higher than in control group) and its CI
       rr_and_ci=Trajectories:::RRandCI(cases_with_outcome=observed_matches,
@@ -414,7 +470,7 @@ prepareEventPairsForStatisticalTesting<-function(connection,
                                                           actual_prob=actual_prob,
                                                           diag1 = diagnosis1,
                                                           diag2 = diagnosis2,
-                                                          power=ifelse(is.na(powerAssociation),'NULL',powerAssociation),
+                                                          power=ifelse(is.na(power),'NULL',power),
                                                           prefix =  trajectoryLocalArgs$prefixForResultTableNames
       )
       #print(power)
@@ -422,10 +478,21 @@ prepareEventPairsForStatisticalTesting<-function(connection,
       DatabaseConnector::executeSql(connection, sql=RenderedSql, progressBar = FALSE, reportOverallTime = FALSE)
 
     } # for
+  } else {
+    logger::log_info('Nothing to analyze, exit RR calculation function.')
   } #if
 
-  logger::log_info('Pre-calculations done.')
+  logger::log_info('RR calculations done.')
+
+
+  #Get updated pairs
+  pairs<-Trajectories:::getAllPairs(connection,
+                                    trajectoryAnalysisArgs,
+                                    trajectoryLocalArgs)
+  return(pairs)
 }
+
+
 
 getExpectedPrevalenceAndPower<-function(diagnosis1,
                                 diagnosis2,
@@ -433,7 +500,8 @@ getExpectedPrevalenceAndPower<-function(diagnosis1,
                                 relativeRiskForPowerCalculations,
                                 connection,
                                 trajectoryAnalysisArgs,
-                                trajectoryLocalArgs) {
+                                trajectoryLocalArgs,
+                                power_pval_cutoff=cutoff_pval) {
   # Extract necessary event1_concept_id->event2_concept_id data from table d1d2_analysistable
   RenderedSql <- Trajectories::loadRenderTranslateSql("5CaseControlStats.sql",
                                                       packageName=trajectoryAnalysisArgs$packageName,
@@ -476,9 +544,12 @@ getExpectedPrevalenceAndPower<-function(diagnosis1,
 
   logger::log_debug('Expected prevalence of {diagnosis2} in case group (=people having prior {diagnosis1}) is {round(expected_prob*100,1)}%')
 
-  powerAssociation=Trajectories:::getPowerAssociation(case_control,expected_prob,rr.threshold=ifelse(is.na(rr_in_previous_study),relativeRiskForPowerCalculations,rr_in_previous_study))
-
-  return(c(expected_prob,powerAssociation))
+  power=Trajectories:::getPowerRR(case_control,
+                                  expected_prob,
+                                  rr.threshold=ifelse(is.na(rr_in_previous_study),relativeRiskForPowerCalculations,rr_in_previous_study),
+                                  cutoff_pval = cutoff_pval
+                                  )
+  return(c(expected_prob,power))
 }
 
 
@@ -486,60 +557,29 @@ getExpectedPrevalenceAndPower<-function(diagnosis1,
 runRRTests<-function(connection,
                               trajectoryAnalysisArgs,
                               trajectoryLocalArgs,
+                              pairs,
                               forceRecalculation=F) {
 
-  logger::log_info('Running RR tests to identify event pairs that have RR significantly different from 1...')
+  num.pairs=nrow(pairs)
+  logger::log_info("Running RR tests for {num.pairs} event pairs to identifypairs that have RR significantly different from 1...")
 
-  # Typically, we conduct RR tests for all pairs that have non-zero count.
-  # However, in validation mode, we skip tests for pairs that have power<80%
+  #Set SQL role of the database session
+  Trajectories::setRole(connection, trajectoryLocalArgs$sqlRole)
 
-  # Find out how many tests need to be run in total
-  RenderedSql <- Trajectories::loadRenderTranslateSql("GetPairsForAssociationTests.sql",
-                                                      packageName=trajectoryAnalysisArgs$packageName,
-                                                      dbms=connection@dbms,
-                                                      resultsSchema =  trajectoryLocalArgs$resultsSchema,
-                                                      prefix =  trajectoryLocalArgs$prefixForResultTableNames,
-                                                      forceRecalculation=1
-  )
-  pairs = DatabaseConnector::querySql(connection, RenderedSql)
-  num.tests <- nrow(pairs)
-  if(Trajectories::IsValidationMode(trajectoryAnalysisArgs)) {
-    logger::log_info('Number of event pairs with non-zero event count and >=80% statistical power for detecting relative risk (RR) as large as in previous study: {num.tests}')
-  } else {
-    logger::log_info('Number of event pairs with non-zero event count: {num.tests}')
-  }
-  logger::log_info('Total number of RR tests to conduct: {num.tests}')
-
-  # Determine p-value threshold of Bonferroni correction
-  if(num.tests==0) {
-    logger::log_info('Nothing to analyze, exit runPrefilteringTests() method.')
-    return(1);
-  }
-  cutoff_pval = 0.05/num.tests
-  logger::log_info(paste0('We use Bonferroni multiple test correction, therefore p-value threshold 0.05/',num.tests,'=',cutoff_pval,' is used in RR tests.'))
-
-  # if forceRecalculation=F, then some pairs might be tested already
   if(forceRecalculation==F) {
-    RenderedSql <- Trajectories::loadRenderTranslateSql("GetPairsForAssociationTests.sql",
-                                                        packageName=trajectoryAnalysisArgs$packageName,
-                                                        dbms=connection@dbms,
-                                                        resultsSchema =  trajectoryLocalArgs$resultsSchema,
-                                                        prefix =  trajectoryLocalArgs$prefixForResultTableNames,
-                                                        forceRecalculation= ifelse(forceRecalculation==T,1,0)
-    )
-    pairs = DatabaseConnector::querySql(connection, RenderedSql)
-    precalculated.num.tests=num.tests-nrow(pairs)
-    if(precalculated.num.tests>0) logger::log_info('For {precalculated.num.tests} pairs, RR tests are already performed. These will be skipped from re-testing.')
-    num.tests <- nrow(pairs)
-  } else {
-    precalculated.num.tests=0
+    pairs <- pairs %>% filter(is.na(RR_PVALUE))
+    num.already.calculated=num.pairs-nrow(pairs)
+    logger::log_info("For {num.already.calculated} pairs RR test is already conducted. Skipping these from recalculating.")
   }
 
-  logger::log_info('Running {num.tests} statistical tests for relative risk...')
+  cutoff_pval = 0.05/nrow(pairs)
+  logger::log_info(paste0('We use Bonferroni multiple test correction, therefore p-value threshold 0.05/',nrow(pairs),'=',cutoff_pval,' is used in RR tests.'))
+
   associated_count=0
   starttime=Sys.time()
-  if(num.tests>0) {
-    for(i in 1:num.tests){
+  # For each event pair, run the analysis
+  if(nrow(pairs)>0) {
+    for(i in 1:nrow(pairs)) {
 
       diagnosis1        <- pairs[i,'E1_CONCEPT_ID']
       diagnosis2        <- pairs[i,'E2_CONCEPT_ID']
@@ -547,8 +587,9 @@ runRRTests<-function(connection,
       observation_count <- pairs[i,'E1_COUNT_AS_FIRST_EVENT_OF_PAIRS'] #case group size
       expected_prob     <- pairs[i,'E2_PREVALENCE_IN_CONTROL_GROUP']
 
-      eta=Trajectories::estimatedTimeRemaining(progress_perc=(i-1)/num.tests,starttime=starttime)
-      logger::log_info('Running RR test {i}/{num.tests}: {diagnosis1}->{diagnosis2}... ETA: {eta}')
+      logger::log_info(paste0('Running RR test ',i+num.already.calculated,'/',num.pairs,': ',diagnosis1,' -> ',diagnosis2,' (total progress ',
+                              round(100*(i+num.already.calculated)/num.pairs),'%, ETA: ',Trajectories::estimatedTimeRemaining(progress_perc=(i-1)/nrow(pairs),starttime=starttime),
+                              ')...'))
 
       event_pair_pvalue <- Trajectories:::getPValueForAccociation(expected_prob,observation_count,observed_matches)
 
@@ -575,72 +616,64 @@ runRRTests<-function(connection,
       DatabaseConnector::executeSql(connection, sql=RenderedSql, progressBar = FALSE, reportOverallTime = FALSE)
 
     }
-  }
-  logger::log_info('...done.')
-  logger::log_info('{associated_count} event pairs out of {num.tests} passed the statistical tests of RR.')
+  } else {
+    logger::log_info('Nothing to analyze, exit analysis function.')
+  } #if
 
-  return()
+  logger::log_info('...done.')
+
+  logger::log_info('{associated_count} event pairs out of {num.pairs} passed the statistical tests of RR.')
+
+
+  #Get updated pairs
+  pairs<-Trajectories:::getAllPairs(connection,
+                                    trajectoryAnalysisArgs,
+                                    trajectoryLocalArgs)
+  return(pairs)
 
 }
 
 runDirectionTests<-function(connection,
                               trajectoryAnalysisArgs,
                               trajectoryLocalArgs,
+                            pairs,
                             forceRecalculation=F) {
 
-  # Direction tests are conducted for all pairs that have significant RR
-  # Find out how many tests need to be run in total
-  RenderedSql <- Trajectories::loadRenderTranslateSql("GetPairsForDirectionTests.sql",
-                                                      packageName=trajectoryAnalysisArgs$packageName,
-                                                      dbms=connection@dbms,
-                                                      resultsSchema =  trajectoryLocalArgs$resultsSchema,
-                                                      prefix =  trajectoryLocalArgs$prefixForResultTableNames,
-                                                      forceRecalculation = 1
-  )
-  pairs = DatabaseConnector::querySql(connection, RenderedSql)
-  #num.rows <- nrow(pairs)
-  #num.tests <- nrow(pairs %>% filter(RR_SIGNIFICANT=='*'))
-  num.tests<-nrow(pairs)
-  logger::log_info('Number of event pairs having significant RR: {num.tests}')
-  logger::log_info('Total number of direction tests to conduct: {num.tests}')
+  num.pairs=nrow(pairs)
+  logger::log_info("Running directionality tests for {num.pairs} event pairs to identifypairs that have RR significantly different from 1...")
 
-  # Determine p-value threshold of Bonferroni correction
-  cutoff_pval = 0.05/num.tests
-  if(num.tests==0) {
-    logger::log_info('Nothing to analyze, exit runDirectionsTests() method.')
-    return(1);
-  }
-  logger::log_info(paste0('We use Bonferroni multiple test correction, therefore p-value threshold 0.05/',num.tests,'=',cutoff_pval,' is used in direction tests.'))
+  #Set SQL role of the database session
+  Trajectories::setRole(connection, trajectoryLocalArgs$sqlRole)
 
+  cutoff_pval = 0.05/num.pairs
+  logger::log_info(paste0('We use Bonferroni multiple test correction, therefore p-value threshold 0.05/',num.pairs,'=',cutoff_pval,' is used in directionality tests.'))
 
   if(forceRecalculation==F) {
-    RenderedSql <- Trajectories::loadRenderTranslateSql("GetPairsForDirectionTests.sql",
-                                                        packageName=trajectoryAnalysisArgs$packageName,
-                                                        dbms=connection@dbms,
-                                                        resultsSchema =  trajectoryLocalArgs$resultsSchema,
-                                                        prefix =  trajectoryLocalArgs$prefixForResultTableNames,
-                                                        forceRecalculation = ifelse(forceRecalculation==T,1,0)
-    )
-    pairs = DatabaseConnector::querySql(connection, RenderedSql)
-    precalculated.num.tests=num.tests-nrow(pairs)
-    if(precalculated.num.tests>0) logger::log_info('For {precalculated.num.tests} pairs, directionality tests are already performed. These will be skipped from re-testing.')
-    num.tests <- nrow(pairs)
+    pairs <- pairs %>% filter(is.na(DIRECTIONAL_PVALUE))
+    num.already.calculated=num.pairs-nrow(pairs)
+
+    directional_count <- nrow(pairs %>% filter(!is.na(DIRECTIONAL_SIGNIFICANT) & DIRECTIONAL_SIGNIFICANT=='*'))
+
+    logger::log_info("For {num.already.calculated} pairs RR test is already conducted ({directional_count} have significant direction). Skipping these from recalculating.")
+  } else {
+    num.already.calculated=0
+    directional_count=0
   }
 
 
 
-
-  logger::log_info('Running {num.tests} statistical direction tests...')
-  directional_count=0
   starttime=Sys.time()
-  if(num.tests>0) {
-    for(i in 1:num.tests){
+  if(nrow(pairs)>0) {
+
+    for(i in 1:nrow(pairs)){
 
       diagnosis1        <- pairs[i,'E1_CONCEPT_ID']
       diagnosis2        <- pairs[i,'E2_CONCEPT_ID']
 
-      eta=Trajectories::estimatedTimeRemaining(progress_perc=(i-1)/num.tests,starttime=starttime)
-      logger::log_info('Running direction test {i}/{num.tests}: {diagnosis1}->{diagnosis2}... ETA: {eta}')
+      logger::log_info(paste0('Running direction test ',i+num.already.calculated,'/',num.pairs,': ',diagnosis1,' -> ',diagnosis2,' (total progress ',
+                              round(100*(i+num.already.calculated)/num.pairs),'%, ETA: ',Trajectories::estimatedTimeRemaining(progress_perc=(i-1)/nrow(pairs),starttime=starttime),
+                              ')...'))
+
 
       #Calculate in database: among people that have event1_concept_id and event2_concept_id pair, how many have date1<date2, date1=date2, date1>date2
       RenderedSql <- Trajectories::loadRenderTranslateSql("7DirectionCounts.sql",
@@ -730,12 +763,49 @@ runDirectionTests<-function(connection,
 
 
     }
-  }
-  logger::log_info('...done.')
-  logger::log_info('Events in {directional_count} event pairs out of {num.tests} have a significant direction.')
+  } else {
+    logger::log_info('Nothing to analyze, exit directionality tests calculation function.')
+  } #if
+  logger::log_info('Events in {directional_count} event pairs out of {num.pairs} have a significant direction.')
 
-  return()
+  #Get updated pairs
+  pairs<-Trajectories:::getAllPairs(connection,
+                                    trajectoryAnalysisArgs,
+                                    trajectoryLocalArgs)
+  return(pairs)
 
+
+}
+
+
+annotateDiscoveryResults<-function(pairs,verbose=F) {
+
+  pairs$TEXTUAL_RESULT=NA
+
+  #pairs[(pairs$E1_COUNT_IN_EVENTS==0 | pairs$E2_COUNT_IN_EVENTS==0),'TEXTUAL_RESULT']<-'Low power (count of any of these events is 0)'
+  #pairs[(pairs$E1_BEFORE_E2_COUNT_IN_EVENTS==0),'TEXTUAL_RESULT']<-'Low power (both events occur but never in given order)'
+
+  pairs[is.na(pairs$TEXTUAL_RESULT) & !is.na(pairs$RR) & (pairs$RR>=0.8 & pairs$RR<=1.2),'TEXTUAL_RESULT']<-'Not tested (RR in range 0.8..1.2)'
+  pairs[is.na(pairs$TEXTUAL_RESULT) & !is.na(pairs$RR_POWER) & pairs$RR_POWER<=0.8,'TEXTUAL_RESULT']<-'Not tested (low power for detecting RR=10)'
+
+  pairs[is.na(pairs$TEXTUAL_RESULT) & pairs$RR_SIGNIFICANT=='','TEXTUAL_RESULT']<-'RR not significantly different from 1'
+
+
+  pairs[is.na(pairs$TEXTUAL_RESULT) & !is.na(pairs$DIRECTIONAL_SIGNIFICANT) & pairs$DIRECTIONAL_SIGNIFICANT=='' & pairs$DIRECTIONAL_SIGNIFICANT_IF_SAME_DAY_EVENTS_ORDERED=='*','TEXTUAL_RESULT']<-'Despite having significant RR and having enough power for directionality test, there is no significant order between these events. However, if eventperiods where the events happened on the same day, were considered as directional, the pair would be directionally significant.'
+  pairs[is.na(pairs$TEXTUAL_RESULT) & !is.na(pairs$DIRECTIONAL_SIGNIFICANT) & pairs$DIRECTIONAL_SIGNIFICANT=='','TEXTUAL_RESULT']<-'Despite having significant RR and having enough power for directionality test, there is no significant order between these events'
+
+  pairs[is.na(pairs$TEXTUAL_RESULT) & !is.na(pairs$DIRECTIONAL_SIGNIFICANT) & pairs$DIRECTIONAL_SIGNIFICANT=='*','TEXTUAL_RESULT']<-'SUCCESS: Event pair has significant RR and direction'
+
+  #event_pairs[(is.na(event_pairs$TEXTUAL_RESULT) & is.na(event_pairs$DIRECTIONAL_SIGNIFICANT) & event_pairs$POWER_DIRECTION>=0.80),'TEXTUAL_RESULT']<-'Not directional (validation failed despite having enough power)'
+  pairs[is.na(pairs$TEXTUAL_RESULT),'TEXTUAL_RESULT']<-'Other (unkwown situation, not automatically labelled)'
+
+  #show up nicely
+  df<-data.frame(res=names(table(pairs$TEXTUAL_RESULT)),
+                 count=table(pairs$TEXTUAL_RESULT),
+                 perc=round(prop.table(table(pairs$TEXTUAL_RESULT))*100,1)) %>% select(res,count=count.Freq,freq=perc.Freq) %>% arrange(-freq)
+  if(verbose) print(df)
+
+  return(pairs)
 
 }
 
@@ -755,11 +825,13 @@ addAnnotationForResults<-function(event_pairs,verbose=F) {
   event_pairs[(event_pairs$E1_COUNT_IN_EVENTS==0 | event_pairs$E2_COUNT_IN_EVENTS==0),'TEXTUAL_RESULT']<-'3.1 Low power (count of any of these events is 0)'
   event_pairs[(event_pairs$E1_BEFORE_E2_COUNT_IN_EVENTS==0),'TEXTUAL_RESULT']<-'3.2 Low power (both events occur but never in given order)'
 
+
+
   event_pairs[is.na(event_pairs$TEXTUAL_RESULT) & !is.na(event_pairs$RR_IN_PREVIOUS_STUDY) & event_pairs$RR_POWER<0.8,'TEXTUAL_RESULT']<-'3.3 Low power (for detecting RR that different from 1 as in previous study)'
 
   event_pairs[is.na(event_pairs$TEXTUAL_RESULT) & !is.na(event_pairs$RR_IN_PREVIOUS_STUDY) & !is.na(event_pairs$RR_SIGNIFICANT) & event_pairs$RR_SIGNIFICANT=='','TEXTUAL_RESULT']<-'2.1 Validation failed (RR not statistically different from 1 despite having enough power for detecting RR as large as in previous study)' #only association test was performed, but it was not found significant
 
-  event_pairs[is.na(event_pairs$TEXTUAL_RESULT) & event_pairs$RR_SIGNIFICANT=='' & event_pairs$RR_POWER<0.8,'TEXTUAL_RESULT']<-'2.1 Validation failed, possibly low power (RR not significantly different from 1. However, there is low power (<80%) for detecting RR=1.2)'
+  #event_pairs[is.na(event_pairs$TEXTUAL_RESULT) & event_pairs$RR_SIGNIFICANT=='' & event_pairs$RR_POWER<0.8,'TEXTUAL_RESULT']<-'2.1 Validation failed, possibly low power (RR not significantly different from 1. However, there is low power (<80%) for detecting RR=1.2)'
   event_pairs[is.na(event_pairs$TEXTUAL_RESULT) & event_pairs$RR_SIGNIFICANT=='','TEXTUAL_RESULT']<-'2.1 Validation failed (RR not significantly different from 1 despite having enough power for detecting RR>1.2)' #only association test was performed, but it was not found significant
 
   event_pairs[is.na(event_pairs$TEXTUAL_RESULT) & !is.na(event_pairs$DIRECTIONAL_SIGNIFICANT) & event_pairs$DIRECTIONAL_SIGNIFICANT=='' & event_pairs$DIRECTIONAL_SIGNIFICANT_IF_SAME_DAY_EVENTS_ORDERED=='*','TEXTUAL_RESULT']<-'2.3 Validation failed (despite having significant RR and having enough power for directionality test, there is no significant order between these events. However, if eventperiods where the events happened on the same day, were considered as directional, the validation would have succeeded)'
@@ -780,14 +852,27 @@ addAnnotationForResults<-function(event_pairs,verbose=F) {
 
 
   #event_pairs[(is.na(event_pairs$TEXTUAL_RESULT) & is.na(event_pairs$DIRECTIONAL_SIGNIFICANT) & event_pairs$POWER_DIRECTION>=0.80),'TEXTUAL_RESULT']<-'Not directional (validation failed despite having enough power)'
-  event_pairs[is.na(event_pairs$TEXTUAL_RESULT),'TEXTUAL_RESULT']<-'Other (unkwown situation, not automatically labelled)'
+  pairs[is.na(pairs$TEXTUAL_RESULT),'TEXTUAL_RESULT']<-'Other (unkwown situation, not automatically labelled)'
 
   #show up nicely
-  df<-data.frame(res=names(table(event_pairs$TEXTUAL_RESULT)),
-                 count=table(event_pairs$TEXTUAL_RESULT),
-                 perc=round(prop.table(table(event_pairs$TEXTUAL_RESULT))*100,1)) %>% select(res,count=count.Freq,freq=perc.Freq) %>% arrange(-freq)
+  df<-data.frame(res=names(table(pairs$TEXTUAL_RESULT)),
+                 count=table(pairs$TEXTUAL_RESULT),
+                 perc=round(prop.table(table(pairs$TEXTUAL_RESULT))*100,1)) %>% select(res,count=count.Freq,freq=perc.Freq) %>% arrange(-freq)
   if(verbose) print(df)
 
   return(event_pairs)
 
+}
+
+getAllPairs<-function(connection,
+                      trajectoryAnalysisArgs,
+                      trajectoryLocalArgs) {
+  RenderedSql <- Trajectories::loadRenderTranslateSql('d1d2_model_reader.sql',
+                                                      packageName=trajectoryAnalysisArgs$packageName,
+                                                      dbms=connection@dbms,
+                                                      resultsSchema =   trajectoryLocalArgs$resultsSchema,
+                                                      prefix =  trajectoryLocalArgs$prefixForResultTableNames
+  )
+  pairs = DatabaseConnector::querySql(connection, RenderedSql)
+  return(pairs)
 }

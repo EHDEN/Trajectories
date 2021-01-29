@@ -23,15 +23,15 @@ createTrajectoriesGraph<-function(eventPairResultsFilename, minRelativeRisk=1.2)
   e = read.csv2(file = eventPairResultsFilename, sep = '\t', header = TRUE, as.is=T)
 
   # convert chr columns to numeric
-  e$EVENT_PAIR_RR<-as.numeric(e$EVENT_PAIR_RR)
-  e$AVG_NUMBER_OF_DAYS_BETWEEN_EVENTS<-as.numeric(e$AVG_NUMBER_OF_DAYS_BETWEEN_EVENTS)
+  e$RR<-as.numeric(e$RR)
+  #e$AVG_NUMBER_OF_DAYS_BETWEEN_E1_AND_E2<-as.numeric(e$AVG_NUMBER_OF_DAYS_BETWEEN_E1_AND_E2)
 
   #apply minimum RR threshold
-  e <- e %>% filter(EVENT_PAIR_RR > minRelativeRisk)
+  e <- e %>% filter(RR > minRelativeRisk)
   logger::log_info('Applying relative risk filter: only pairs having relative risk >= {minRelativeRisk} are used for building the trajectories graph.')
 
   # calculate max event count for scaling
-  max_event_count<-max(e$E1_COUNT,e$E2_COUNT)
+  max_event_count<-max(e$E1_COUNT_IN_EVENTS,e$E2_COUNT_IN_EVENTS)
 
   # predefined colors
   COLORS=list(Condition='#F1948A', #red
@@ -55,7 +55,7 @@ createTrajectoriesGraph<-function(eventPairResultsFilename, minRelativeRisk=1.2)
       # add vertexes if not exist already
       if(!e1 %in% V(g)$name) {g <- g + igraph::vertices(e1,
                                                 concept_id=e[i,'E1_CONCEPT_ID'],
-                                                count=e[i,'E1_COUNT'],
+                                                count=e[i,'E1_COUNT_IN_EVENTS'],
                                                 #size=e[i,'E1_COUNT']/max_event_count,
                                                 color=COLORS[[e[i,'E1_DOMAIN']]],
                                                 labelcolor=LABELCOLORS[[e[i,'E1_DOMAIN']]]
@@ -64,7 +64,7 @@ createTrajectoriesGraph<-function(eventPairResultsFilename, minRelativeRisk=1.2)
       }
       if(!e2 %in% V(g)$name) {g <- g + igraph::vertices(e2,
                                                 concept_id=e[i,'E2_CONCEPT_ID'],
-                                                count=e[i,'E2_COUNT'],
+                                                count=e[i,'E2_COUNT_IN_EVENTS'],
                                                 #size=e[i,'E2_COUNT']/max_event_count,
                                                 color=COLORS[[e[i,'E2_DOMAIN']]],
                                                 labelcolor=LABELCOLORS[[e[i,'E2_DOMAIN']]]
@@ -78,11 +78,12 @@ createTrajectoriesGraph<-function(eventPairResultsFilename, minRelativeRisk=1.2)
                     e1_concept_id=e[i,'E1_CONCEPT_ID'],
                     e2_concept_id=e[i,'E2_CONCEPT_ID'],
                     e2=e2,
-                    e1_count=e[i,'E1_COUNT'],
-                    effect=e[i,'EVENT_PAIR_RR'],
-                    prob=e[i,'E1_E2_EVENTPERIOD_COUNT']/e[i,'E1_COUNT'],
+                    e1_count=e[i,'E1_COUNT_IN_EVENTS'],
+                    effect=e[i,'RR'],
+                    prob=e[i,'E1_BEFORE_E2_COUNT_IN_EVENTS']/e[i,'E1_COUNT_IN_EVENTS'],
                     #weight=1/e[i,'EVENT_PAIR_EFFECT'], #opposite to the effect size. Do not use weight attribute, as it has a special meaning in igraph and we do not want to use this automatically
-                    numcohortExact=e[i,'EVENTPERIOD_COUNT_HAVING_E2_RIGHT_AFTER_E1'] #number of event periods that had E1->E2 as immediate order (no intermediate events)
+                    #numcohortExact=e[i,'EVENTPERIOD_COUNT_HAVING_E2_RIGHT_AFTER_E1'] #number of event periods that had E1->E2 as immediate order (no intermediate events)
+                    numcohortExact=NA
                     #numcohort=e[i,'EVENT1_EVENT2_COHORT_COUNT']/e[i,'EVENT1_COUNT']*e[i,'EVENT1_COUNT']/max_event_count #number of cohorts that had E1->E2, adjusted to but may have had intermediate events also
                     #numcohort=e[i,'EVENT1_EVENT2_COHORT_COUNT']/e[i,'EVENT1_COUNT']*e[i,'EVENT1_COUNT']/max_event_count #number of cohorts that had E1->E2, but may have had intermediate events also
       )

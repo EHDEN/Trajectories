@@ -1,4 +1,5 @@
 {
+  "mode": ["DISCOVERY"],
   "minimumDaysBetweenEvents": [1],
   "maximumDaysBetweenEvents": [3650],
   "minPatientsPerEventPair": [0.1],

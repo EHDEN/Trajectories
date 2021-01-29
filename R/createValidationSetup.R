@@ -42,7 +42,7 @@ createValidationSetup<-function(trajectoryAnalysisArgs,
   Trajectories::TrajectoryAnalysisArgsToJson(trajectoryAnalysisArgsToSave, file.path(outputFolderForValidationSetup,"trajectoryAnalysisArgs.json"))
 
   # Copy event pairs into it
-  eventPairResultsFilename = file.path(outputFolder,'event_pairs.tsv')
+  eventPairResultsFilename = file.path(outputFolder,'event_pairs_directional.tsv')
   eventPairResultsFilenameNew = file.path(outputFolderForValidationSetup,'event_pairs_for_validation.tsv')
   e = read.csv2(file = eventPairResultsFilename, sep = '\t', header = TRUE, as.is=T)
   e2 <- e %>% select(E1_CONCEPT_ID,E2_CONCEPT_ID,E1_NAME,E2_NAME,E1_DOMAIN,E2_DOMAIN,RR_IN_PREVIOUS_STUDY=RR)

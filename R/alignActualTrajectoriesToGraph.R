@@ -86,7 +86,7 @@ alignActualTrajectoriesToGraph <- function(connection,
 
   #event1 might be given as E1 and E2 (or both) in pairs
   sql<-"SELECT
-          CASE WHEN E1_CONCEPT_ID=@eventid THEN E1_COUNT ELSE E2_COUNT END AS E_COUNT
+          CASE WHEN E1_CONCEPT_ID=@eventid THEN E1_COUNT_IN_EVENTS ELSE E2_COUNT_IN_EVENTS END AS E_COUNT
         FROM @resultsSchema.@prefiXE1E2_model WHERE E1_CONCEPT_ID=@eventid OR E2_CONCEPT_ID=@eventid
   LIMIT 1;"
   RenderedSql <- SqlRender::render(sql, resultsSchema=trajectoryLocalArgs$resultsSchema, prefiX = trajectoryLocalArgs$prefixForResultTableNames, eventid=eventid)
