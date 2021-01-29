@@ -82,7 +82,7 @@ runValidationAnalysis<-function(connection,
   #write results to file
   outputFolder<-Trajectories::GetOutputFolder(trajectoryLocalArgs,trajectoryAnalysisArgs)
   allResultsFilenameTsv = file.path(outputFolder,'event_pairs_tested.tsv')
-  write.table(pairs, file=allResultsFilename, quote=FALSE, sep='\t', col.names = NA)
+  write.table(pairs, file=allResultsFilenameTsv, quote=FALSE, sep='\t', col.names = NA)
   allResultsFilenameXsl = file.path(outputFolder,'event_pairs_tested.xlsx')
   library(openxlsx)
   write.xlsx(pairs, allResultsFilenameXsl)
@@ -492,7 +492,7 @@ calcRRandPower<-function(connection,
   if(forceRecalculation==F) {
     pairs <- pairs %>% filter(is.na(RR) | RR==0)
     num.already.calculated=num.pairs-nrow(pairs)
-    logger::log_info("For {num.already.calculated} pairs RR is already calculated. Skipping these from recalculating.")
+    if(num.already.calculated>0) logger::log_info("For {num.already.calculated} pairs, RR is already calculated. Skipping these from recalculating.")
   } else {
     num.already.calculated=0
   }
@@ -655,10 +655,11 @@ runRRTests<-function(connection,
   Trajectories::setRole(connection, trajectoryLocalArgs$sqlRole)
 
   if(forceRecalculation==F) {
+    associated_count <- nrow(pairs %>% filter(!is.na(RR_SIGNIFICANT) & RR_SIGNIFICANT=='*'))
+
     pairs <- pairs %>% filter(is.na(RR_PVALUE))
     num.already.calculated=num.pairs-nrow(pairs)
-    associated_count <- nrow(pairs %>% filter(!is.na(RR_SIGNIFICANT) & RR_SIGNIFICANT=='*'))
-    logger::log_info("For {num.already.calculated} pairs, RR test is already conducted ({associated_count} have significant RR). Skipping these from recalculating.")
+    if(num.already.calculated>0) logger::log_info("For {num.already.calculated} pairs, RR test is already conducted (out of these, {associated_count} have significant RR). Skipping these from recalculating.")
   } else {
     num.already.calculated=0
     associated_count=0
@@ -738,12 +739,12 @@ runDirectionTests<-function(connection,
   logger::log_info(paste0('We use Bonferroni multiple test correction, therefore p-value threshold 0.05/',num.pairs,'=',cutoff_pval,' is used in directionality tests.'))
 
   if(forceRecalculation==F) {
+    directional_count <- nrow(pairs %>% filter(!is.na(DIRECTIONAL_SIGNIFICANT) & DIRECTIONAL_SIGNIFICANT=='*'))
+
     pairs <- pairs %>% filter(is.na(DIRECTIONAL_PVALUE))
     num.already.calculated=num.pairs-nrow(pairs)
 
-    directional_count <- nrow(pairs %>% filter(!is.na(DIRECTIONAL_SIGNIFICANT) & DIRECTIONAL_SIGNIFICANT=='*'))
-
-    logger::log_info("For {num.already.calculated} pairs, RR test is already conducted ({directional_count} have significant direction). Skipping these from recalculating.")
+    if(num.already.calculated>0) logger::log_info("For {num.already.calculated} pairs, RR test is already conducted (out of these, {directional_count} have significant direction). Skipping these from recalculating.")
   } else {
     num.already.calculated=0
     directional_count=0
