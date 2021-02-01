@@ -4,10 +4,12 @@
 \alias{getCohortSize}
 \title{Gets cohort size (number of rows in cohort table of that particluar cohort ID)}
 \usage{
-getCohortSize(connection, trajectoryLocalArgs)
+getCohortSize(connection, trajectoryAnalysisArgs, trajectoryLocalArgs)
 }
 \arguments{
 \item{connection}{Database connection object created by createConnectionDetails() method in DatabaseConnector package}
+
+\item{trajectoryAnalysisArgs}{Object created by Trajectories::createTrajectoryAnalysisArgs() method}
 
 \item{trajectoryLocalArgs}{Object created by Trajectories::createTrajectoryLocalArgs() method}
 }

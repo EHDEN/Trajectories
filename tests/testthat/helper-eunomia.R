@@ -137,19 +137,18 @@ setUpEunomia<-function() {
 
   #on.exit(DatabaseConnector::disconnect(connection)) #Close db connection on error or exit
 
-  trajectoryLocalArgs <- Trajectories::createTrajectoryLocalArgs(oracleTempSchema = "temp_schema",
-                                                                 prefixForResultTableNames = "",
+  trajectoryLocalArgs <- Trajectories::createTrajectoryLocalArgs(
+                                                                 oracleTempSchema = "temp_schema",
+                                                                 prefixForResultTableNames = "test_",
                                                                  cdmDatabaseSchema = 'main',
                                                                  vocabDatabaseSchema = 'main',
                                                                  resultsSchema = 'main',
                                                                  sqlRole = F,
-                                                                 cohortTableSchema='main',
-                                                                 cohortTable='cohort',
-                                                                 cohortId=1,
                                                                  inputFolder=system.file("extdata", "fulldb", package = "Trajectories"), # Full path to input folder that contains SQL file for cohort definition and optionally also trajectoryAnalysisArgs.json. You can use built-in folders of this package such as: inputFolder=system.file("extdata", "T2D", package = "Trajectories")
                                                                  #mainOutputFolder=tempdir(check=TRUE),
                                                                  mainOutputFolder=getwd(),
-                                                                 databaseHumanReadableName='TEST')
+                                                                 databaseHumanReadableName='TEST'
+                                                                 )
 
 
   return(list(connection=connection,trajectoryLocalArgs=trajectoryLocalArgs))
@@ -162,7 +161,7 @@ setObservationPeriodForAll<-function(connection,startdate='2010-01-01',enddate='
 }
 
 limitToNumPatients<-function(connection,n=2694) {
-  person_ids<-getPatientIds(connection,n)
+  person_ids<-getPatientIds(connection,n=n)
   executeSql(connection, paste0("DELETE FROM OBSERVATION_PERIOD WHERE person_id NOT IN (",paste(person_ids,collapse=","),");"), progressBar = F,
              reportOverallTime=F)
   executeSql(connection, paste0("DELETE FROM PERSON WHERE person_id NOT IN (",paste(person_ids,collapse=","),");"), progressBar = F,
@@ -221,7 +220,7 @@ limitToConcepts<-function(connection,concept_ids=c(9201, #inpatient visit
 
 }
 
-getEventPairsTableAsDataFrame<-function(trajectoryLocalArgs,trajectoryAnalysisArgs,filename='event_pairs.tsv') {
+getEventPairsTableAsDataFrame<-function(trajectoryLocalArgs,trajectoryAnalysisArgs,filename='event_pairs_tested.tsv') {
   #Get output folder for this analysis
   outputFolder<-Trajectories::GetOutputFolder(trajectoryLocalArgs,trajectoryAnalysisArgs,createIfMissing=F)
   eventPairResultsFilename = file.path(outputFolder,filename)
@@ -230,7 +229,7 @@ getEventPairsTableAsDataFrame<-function(trajectoryLocalArgs,trajectoryAnalysisAr
   return(event_pairs_data)
 }
 
-getEventPairFromEventPairsTable<-function(event1_concept_id,event2_concept_id,trajectoryLocalArgs,trajectoryAnalysisArgs,filename='event_pairs.tsv') {
+getEventPairFromEventPairsTable<-function(event1_concept_id,event2_concept_id,trajectoryLocalArgs,trajectoryAnalysisArgs,filename='event_pairs_tested.tsv') {
   e<-getEventPairsTableAsDataFrame(trajectoryLocalArgs,trajectoryAnalysisArgs,filename=filename)
   res<-e %>% filter(E1_CONCEPT_ID==event1_concept_id & E2_CONCEPT_ID==event2_concept_id)
   return(res)

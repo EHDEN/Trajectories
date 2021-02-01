@@ -23,8 +23,6 @@ PlotTrajectoriesGraphForEvents(
 
 \item{eventIds}{Exact concept id-s as a list that is used for analyzing/plotting trajectories. If not specified (NA) (recommended) creates trajectories for top 5 events.}
 
-\item{minRelativeRisk}{Minimum threshold for relative risk of an event pair. Used to filter out event pairs with small relative risk.}
-
 \item{limitOfNodes}{Max number of events in the consrtructed graph. Used to limit the analysis to most important events only.}
 
 \item{skipOutputTables}{If set to TRUE, no output data tables are made (the PDF graphs only).}

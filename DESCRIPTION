@@ -21,9 +21,10 @@ Depends:
     SqlRender (>= 1.5.2),
     igraph (>= 1.2.5),
     logger (>= 0.1),
-    stringi (>= 1.4.5)
-Imports:
+    stringi (>= 1.4.5),
+    openxlsx (>= 4.1.4),
     jsonlite (>= 1.7.1)
+Imports:
 Encoding: UTF-8
 RoxygenNote: 7.1.1
 Suggests: 

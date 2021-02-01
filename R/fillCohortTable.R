@@ -36,7 +36,7 @@ fillCohortTable<-function(connection,
                              vocabulary_database_schema = trajectoryLocalArgs$vocabDatabaseSchema,
                              target_database_schema = trajectoryLocalArgs$resultsSchema,
                              target_cohort_table = cohortTableName,
-                             target_cohort_id = 1,
+                             target_cohort_id = ifelse(Trajectories::IsValidationMode(trajectoryAnalysisArgs),2,1),
                              warnOnMissingParameters=F)
 
     #translate into right dialect
@@ -50,7 +50,9 @@ fillCohortTable<-function(connection,
     logger::log_info('...done filling cohort table.')
 
     #check how many records are there in the cohort table
-    count<-Trajectories::getCohortSize(connection, trajectoryLocalArgs)
-    logger::log_info(paste0('There are ',count,' rows in this cohort (id=',trajectoryLocalArgs$cohortId,') in the cohort table.'))
+    count<-Trajectories::getCohortSize(connection,
+                                       trajectoryAnalysisArgs,
+                                       trajectoryLocalArgs)
+    logger::log_info(paste0('There are ',count,' rows in this cohort in the cohort table.'))
 
 }

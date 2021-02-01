@@ -11,7 +11,6 @@ createTrajectoryLocalArgs(
   oracleTempSchema,
   sqlRole = F,
   prefixForResultTableNames = "",
-  cohortId = 1,
   inputFolder = system.file("extdata", "RA", package = "Trajectories"),
   mainOutputFolder = getwd(),
   databaseHumanReadableName = "My database"
@@ -29,8 +28,6 @@ createTrajectoryLocalArgs(
 \item{sqlRole}{Role to use in SQL for writing tables in 'resultsSchema'. It should also have access to 'cdmDatabaseSchema' and 'vocabDatabaseSchema'. Set to FALSE (or F) if setting to a specific role is not needed. It should be safe to use F if you have no idea of what the SQL roles mean.}
 
 \item{prefixForResultTableNames}{Table prefix that is used for all output tables to avoid any collision with existing table names. An empty string is also allowed.}
-
-\item{cohortId}{ID of the cohort (in cohortTable) that will be used for the analysis (default value is 1)}
 
 \item{inputFolder}{Full path to input folder that contains SQL file for cohort definition (SQL Server format) and optionally also trajectoryAnalysisArgs.json. You can use built-in folders of this package such as: inputFolder=system.file("extdata", "RA", package = "Trajectories") which is also the default value. In case your cohort data already exists in the database and you do not need to build it from scratch, set the value to FALSE.}
 

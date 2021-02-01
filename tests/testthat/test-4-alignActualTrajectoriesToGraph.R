@@ -30,7 +30,8 @@ test_that("Test alignments to graph", {
                                                                        addDeaths=F,
                                                                        daysBeforeIndexDate=Inf,
                                                                        packageName='Trajectories',
-                                                                       cohortName="test")
+                                                                       cohortName="test",
+                                                                       RRrangeToSkip=c(0,1))
 
 
   #Create output folder for this analysis
@@ -43,6 +44,11 @@ test_that("Test alignments to graph", {
   removeTestableOutputFiles(trajectoryLocalArgs,trajectoryAnalysisArgs)
   removeTrajectoryFile(trajectoryLocalArgs,trajectoryAnalysisArgs,concept_id=317009,concept_name='Asthma')
 
+  #Create cohort table
+  Trajectories::createCohortTable(connection=connection,
+                                trajectoryAnalysisArgs,
+                                trajectoryLocalArgs)
+
   # Fill cohort table with example cohort data
   Trajectories::fillCohortTable(connection=connection,
                                 trajectoryAnalysisArgs,
@@ -52,7 +58,7 @@ test_that("Test alignments to graph", {
   Trajectories::createEventPairsTable(connection=connection,
                                       trajectoryAnalysisArgs=trajectoryAnalysisArgs,
                                       trajectoryLocalArgs=trajectoryLocalArgs)
-  Trajectories::runEventPairAnalysis(connection=connection,
+  Trajectories::runDiscoveryAnalysis(connection=connection,
                                      trajectoryAnalysisArgs=trajectoryAnalysisArgs,
                                      trajectoryLocalArgs=trajectoryLocalArgs)
 

@@ -80,7 +80,6 @@ createTrajectoryAnalysisArgs <- function(mode='DISCOVERY',
 #' @param prefixForResultTableNames Table prefix that is used for all output tables to avoid any collision with existing table names. An empty string is also allowed.
 #' @param cohortTableSchema Schema where cohort table is located
 #' @param cohortTable Name of the cohort table in cohortTableSchema
-#' @param cohortId ID of the cohort (in cohortTable) that will be used for the analysis (default value is 1)
 #' @param inputFolder Full path to input folder that contains SQL file for cohort definition (SQL Server format) and optionally also trajectoryAnalysisArgs.json. You can use built-in folders of this package such as: inputFolder=system.file("extdata", "RA", package = "Trajectories") which is also the default value. In case your cohort data already exists in the database and you do not need to build it from scratch, set the value to FALSE.
 #' @param mainOutputFolder The output folder path. This is the folder where the final results are produced into. Use full path and do NOT add trailing slash! The folder must already exist. Default value is the default working directory.
 #' @param databaseHumanReadableName In the future, it will be added to the titles of the graph to indicate what data is this. Use something short. Currently this parameter is not used.
@@ -97,7 +96,7 @@ createTrajectoryLocalArgs <- function(cdmDatabaseSchema,
                                       prefixForResultTableNames='',
                                       #cohortTableSchema,
                                       #cohortTable,
-                                      cohortId=1, #use 1 for discovery studies and 2 for validation studies
+                                      #cohortId=1, #use 1 for discovery studies and 2 for validation studies
                                       inputFolder=system.file("extdata", "RA", package = "Trajectories"),
                                       mainOutputFolder=getwd(),
                                       databaseHumanReadableName='My database') {
@@ -115,7 +114,7 @@ createTrajectoryLocalArgs <- function(cdmDatabaseSchema,
                 prefixForResultTableNames=prefixForResultTableNames,
                 #cohortTableSchema=cohortTableSchema,
                 #cohortTable=cohortTable,
-                cohortId=cohortId,
+                #cohortId=cohortId,
                 inputFolder=inputFolder,
                 mainOutputFolder=mainOutputFolder, databaseHumanReadableName=databaseHumanReadableName)
   class(value) <- 'TrajectoryLocalArgs'

@@ -1,4 +1,5 @@
 {
+  "mode": ["DISCOVERY"],
   "minimumDaysBetweenEvents": [1],
   "maximumDaysBetweenEvents": [3650],
   "minPatientsPerEventPair": [0.01],
@@ -12,5 +13,6 @@
   "daysBeforeIndexDate": ["Inf"],
   "packageName": ["Trajectories"],
   "cohortName": ["Full database"],
-  "description": ["Full database study"]
+  "description": ["Full database study. This study is also used for internal testing of the package (do not edit)"],
+  "RRrangeToSkip": [0.8, 1.2]
 }

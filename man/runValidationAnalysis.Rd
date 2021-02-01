@@ -8,8 +8,7 @@ runValidationAnalysis(
   connection,
   trajectoryAnalysisArgs,
   trajectoryLocalArgs,
-  forceRecalculation = F,
-  minRelativeRiskToValidate = 1.1
+  forceRecalculation = F
 )
 }
 \arguments{

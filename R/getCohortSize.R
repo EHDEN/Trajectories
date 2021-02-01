@@ -8,14 +8,16 @@
 #' @export
 #'
 #' @examples
-getCohortSize<-function(connection, trajectoryLocalArgs) {
+getCohortSize<-function(connection,
+                        trajectoryAnalysisArgs,
+                        trajectoryLocalArgs) {
 
 
   #replace parameter values in SQL
   sql <- SqlRender::render("SELECT COUNT(*) AS CCC FROM @resultsSchema.@prefiXcohort WHERE cohort_definition_id = @cohortId;",
                            resultsSchema = trajectoryLocalArgs$resultsSchema,
                            prefiX = trajectoryLocalArgs$prefixForResultTableNames,
-                           cohortId=trajectoryLocalArgs$cohortId)
+                           cohortId=ifelse(Trajectories::IsValidationMode(trajectoryAnalysisArgs),2,1))
 
   #translate SQL into right dialect
   sql <- SqlRender::translate(sql = sql,
