@@ -47,6 +47,7 @@ createTrajectoriesGraph<-function(eventPairResultsFilename) {
 
   # BUILD A GRAPH!
   # create empty graph
+  requireNamespace("igraph", quietly = TRUE)
   g <- igraph::make_empty_graph(directed = TRUE)
   #add edges between these nodes
   if(nrow(e)>0) {
@@ -54,7 +55,7 @@ createTrajectoriesGraph<-function(eventPairResultsFilename) {
       e1<-e[i,'E1_NAME']
       e2<-e[i,'E2_NAME']
       # add vertexes if not exist already
-      if(!e1 %in% V(g)$name) {g <- g + igraph::vertices(e1,
+      if(!e1 %in% igraph::V(g)$name) {g <- g + igraph::vertices(e1,
                                                 concept_id=e[i,'E1_CONCEPT_ID'],
                                                 count=e[i,'E1_COUNT_IN_EVENTS'],
                                                 #size=e[i,'E1_COUNT']/max_event_count,
@@ -63,7 +64,7 @@ createTrajectoriesGraph<-function(eventPairResultsFilename) {
                                                 #, age=AGES[AGES$event==e1,'AGE_FOR_GRAPH']
                                                 )
       }
-      if(!e2 %in% V(g)$name) {g <- g + igraph::vertices(e2,
+      if(!e2 %in% igraph::V(g)$name) {g <- g + igraph::vertices(e2,
                                                 concept_id=e[i,'E2_CONCEPT_ID'],
                                                 count=e[i,'E2_COUNT_IN_EVENTS'],
                                                 #size=e[i,'E2_COUNT']/max_event_count,
@@ -91,25 +92,25 @@ createTrajectoriesGraph<-function(eventPairResultsFilename) {
     }
   }
 
-  logger::log_info(paste('Full graph contains',gsize(g),'links between',gorder(g),'events'))
+  logger::log_info(paste('Full graph contains',igraph::gsize(g),'links between',igraph::gorder(g),'events'))
 
   #Normalized numcohortExact
-  E(g)$normalizedNumcohortExact = (E(g)$numcohortExact-min(E(g)$numcohortExact))/(max(E(g)$numcohortExact)-min(E(g)$numcohortExact))
+  igraph::E(g)$normalizedNumcohortExact = (igraph::E(g)$numcohortExact-min(igraph::E(g)$numcohortExact))/(max(igraph::E(g)$numcohortExact)-min(igraph::E(g)$numcohortExact))
 
   #Effect*event1_count
-  E(g)$effectCount=E(g)$e1_count*E(g)$effect
+  igraph::E(g)$effectCount=igraph::E(g)$e1_count*igraph::E(g)$effect
 
   #make edge color equal to target node color
-  edge.end <- ends(g, es=E(g), names=F)[,2] #outputs the end node id of each edge
-  E(g)$color <- V(g)$color[edge.end]
+  edge.end <- igraph::ends(g, es=igraph::E(g), names=F)[,2] #outputs the end node id of each edge
+  igraph::E(g)$color <- igraph::V(g)$color[edge.end]
   #but make it a bit lighter
-  rgb1<-sapply(E(g)$color ,col2rgb)
+  rgb1<-sapply(igraph::E(g)$color ,col2rgb)
 
   rgb1<-rgb1*1.2
   rgb1<-ifelse(rgb1>255,255,rgb1)
 
   rgb2<-rgb(rgb1[1,],rgb1[2,],rgb1[3,],alpha=1,maxColorValue=255)
-  E(g)$color <- rgb2
+  igraph::E(g)$color <- rgb2
 
   # make it of the class TrajectoriesGraph which is derived from the class igraph
   class(g) <- c("TrajectoriesGraph","igraph")

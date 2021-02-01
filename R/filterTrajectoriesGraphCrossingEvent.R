@@ -18,13 +18,13 @@ filterTrajectoriesGraphCrossingEvent <-function(g, eventname='clopidogrel',limit
   if(!inherits(g, 'TrajectoriesGraph')) stop('Error in filterTrajectoriesGraphCrossingEvent(): object g is not class TrajectoriesGraph object')
 
   #check that eventname is present in g
-  if(!eventname %in% V(g)$name) {
+  if(!eventname %in% igraph::V(g)$name) {
     logger::log_warn(paste0('Cannot filter trajectories through {eventname} as the graph does not contain any links with that event. Return unfiltered graph.'))
     return(g)
   }
 
   #If limitOfNodes=F, still give to it a numeric value (no limit = number of initial nodes/events)
-  limitOfNodes=ifelse(limitOfNodes==F,length(E(g)),limitOfNodes)
+  limitOfNodes=ifelse(limitOfNodes==F,length(igraph::E(g)),limitOfNodes)
 
   # add first item to stack
   stack<-data.frame(event=c(eventname),
@@ -50,8 +50,8 @@ filterTrajectoriesGraphCrossingEvent <-function(g, eventname='clopidogrel',limit
 
     if (i==1 | stack[i,'direction']=='ancestor') {
       #find incoming edges for node
-      x<-incident_edges(g, v = V(g)[stack[stack$direction %in% c('both','ancestor'),'event']], mode = c("in"))
-      if(!'numcohortCustom' %in% edge_attr_names(g)) {
+      x<-igraph::incident_edges(g, v = igraph::V(g)[stack[stack$direction %in% c('both','ancestor'),'event']], mode = c("in"))
+      if(!'numcohortCustom' %in% igraph::edge_attr_names(g)) {
         cc<-rep(0,length(x))
       } else {
         cc<-x$numcohortCustom
@@ -60,12 +60,12 @@ filterTrajectoriesGraphCrossingEvent <-function(g, eventname='clopidogrel',limit
       for(name in names(x)) {
         y<-x[[name]]
         if(length(y)>0) nodelist<-rbind(nodelist,
-                                        data.frame(event=tail_of(g,y)$name,
-                                                   edgeid=get.edge.ids(g, as.vector(t(ends(g,y, names=F)))),
+                                        data.frame(event=igraph::tail_of(g,y)$name,
+                                                   edgeid=igraph::get.edge.ids(g, as.vector(t(igraph::ends(g,y, names=F)))),
                                                    effect=y$effect,
                                                    prob=y$prob,
                                                    #totalprob=y$prob*(data.frame(event=as.character(stack$event), prob=stack$totalprob, stringsAsFactors=F) %>% right_join( data.frame(from=ends(g,y, names=T)[,2], stringsAsFactors=F), by=c('event'='from')) %>% select(totalprob=prob)),
-                                                   totalprob=y$prob*(stack %>% filter(direction %in% c('both','ancestor')) %>% select (event,prob) %>% right_join( data.frame(from=ends(g,y, names=T)[,2], stringsAsFactors=F), by=c('event'='from')) %>% select(totalprob=prob)),
+                                                   totalprob=y$prob*(stack %>% filter(direction %in% c('both','ancestor')) %>% select (event,prob) %>% right_join( data.frame(from=igraph::ends(g,y, names=T)[,2], stringsAsFactors=F), by=c('event'='from')) %>% select(totalprob=prob)),
                                                    numcohortExact=y$numcohortExact,
                                                    effectCount=y$effectCount,
                                                    direction='ancestor'))
@@ -75,8 +75,8 @@ filterTrajectoriesGraphCrossingEvent <-function(g, eventname='clopidogrel',limit
     }
     if (i==1 | stack[i,'direction']=='descendant') {
       #find outgoing edges from node
-      x<-incident_edges(g, v = V(g)[stack[stack$direction %in% c('both','descendant'),'event']], mode = c("out"))
-      if(!'numcohortCustom' %in% edge_attr_names(g)) {
+      x<-igraph::incident_edges(g, v = igraph::V(g)[stack[stack$direction %in% c('both','descendant'),'event']], mode = c("out"))
+      if(!'numcohortCustom' %in% igraph::edge_attr_names(g)) {
         cc<-rep(0,length(x))
       } else {
         cc<-x$numcohortCustom
@@ -85,12 +85,12 @@ filterTrajectoriesGraphCrossingEvent <-function(g, eventname='clopidogrel',limit
       for(name in names(x)) {
         y<-x[[name]]
         if(length(y)>0) nodelist<-rbind(nodelist,
-                                        data.frame(event=head_of(g,y)$name,
-                                                   edgeid=get.edge.ids(g, as.vector(t(ends(g,y, names=F)))),
+                                        data.frame(event=igraph::head_of(g,y)$name,
+                                                   edgeid=igraph::get.edge.ids(g, as.vector(t(igraph::ends(g,y, names=F)))),
                                                    effect=y$effect,
                                                    prob=y$prob,
                                                    #totalprob=y$prob*(data.frame(event=as.character(stack$event), prob=stack$totalprob, stringsAsFactors=F) %>% right_join( data.frame(from=ends(g,y, names=T)[,1], stringsAsFactors=F), by=c('event'='from')) %>% select(totalprob=prob)),
-                                                   totalprob=y$prob*(stack %>% filter(direction %in% c('both','descendant')) %>% select (event,prob) %>% right_join( data.frame(from=ends(g,y, names=T)[,1], stringsAsFactors=F), by=c('event'='from')) %>% select(totalprob=prob)),
+                                                   totalprob=y$prob*(stack %>% filter(direction %in% c('both','descendant')) %>% select (event,prob) %>% right_join( data.frame(from=igraph::ends(g,y, names=T)[,1], stringsAsFactors=F), by=c('event'='from')) %>% select(totalprob=prob)),
                                                    numcohortExact=y$numcohortExact,
                                                    effectCount=y$effectCount,
                                                    direction='descendant'))
@@ -134,12 +134,12 @@ filterTrajectoriesGraphCrossingEvent <-function(g, eventname='clopidogrel',limit
   #create a new graph of selected nodes
   #g2 <- induced.subgraph(graph=g,vids=V(g)[stack$event])
   #create a new graph of selected edges
-  g2 <- subgraph.edges(g, edge.ids[edge.ids>0], delete.vertices = T)
+  g2 <- igraph::subgraph.edges(g, edge.ids[edge.ids>0], delete.vertices = T)
 
-  log_info(paste0('...done. The resulting graph contains ',length(V(g2)),' events and ',length(E(g2)),' links between them.'))
+  log_info(paste0('...done. The resulting graph contains ',length(igraph::V(g2)),' events and ',length(igraph::E(g2)),' links between them.'))
 
   #the length of longest path is the diameter of the graph
-  f<-farthest_vertices(g2, directed = TRUE, weights=NA)
+  f<-igraph::farthest_vertices(g2, directed = TRUE, weights=NA)
   if(limitOfNodes==F) {
     logger::log_info(paste0('The longest trajectory has a length ',f$distance," (between '{f$vertices[1]$name}' and '{f$vertices[2]$name}')"))
   } else {

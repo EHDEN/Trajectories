@@ -5,7 +5,6 @@
 #' @param connection DatabaseConnectorConnection object that is used to connect with database
 #'
 #' @return
-#' @export
 #'
 #' @examples
 createCohortTable<-function(connection,
@@ -18,7 +17,7 @@ createCohortTable<-function(connection,
   Trajectories::setRole(connection,trajectoryLocalArgs$sqlRole)
 
   RenderedSql <- Trajectories::loadRenderTranslateSql('createCohortTable.sql',
-                                                      packageName=trajectoryAnalysisArgs$packageName,
+                                                      packageName=get('TRAJECTORIES_PACKAGE_NAME', envir=TRAJECTORIES.CONSTANTS),
                                                       dbms=connection@dbms,
                                                       resultsSchema=trajectoryLocalArgs$resultsSchema,
                                                       prefiX =  trajectoryLocalArgs$prefixForResultTableNames

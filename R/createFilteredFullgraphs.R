@@ -21,7 +21,7 @@ createFilteredFullgraphs<-function(connection,
   # create igraph object from event pairs
   g<-Trajectories::createTrajectoriesGraph(eventPairResultsFilename=eventPairResultsFilename)
 
-  if(length(V(g))==0) {
+  if(length(igraph::V(g))==0) {
     logger::log_warn('The graph contains 0 events, skip plotting figures.')
     return()
   }
@@ -34,9 +34,9 @@ createFilteredFullgraphs<-function(connection,
   #Truncate the title for file name if it is too long
   truncated_title=ifelse(stri_length(title)<=200,title,paste(substr(title,1,200)))
   Trajectories::plotTrajectoriesGraph(g,
-                                      layout=layout_with_fr,
-                                      linknumbers=round(100*E(g)$prob),
-                                      linklabels=paste0(round(100*E(g)$prob),'%'),
+                                      layout=igraph::layout_with_fr,
+                                      linknumbers=round(100*igraph::E(g)$prob),
+                                      linklabels=paste0(round(100*igraph::E(g)$prob),'%'),
                                       outputPdfFullpath=file.path(outputFolder,paste0(make.names(truncated_title),'.pdf')),
                                       title=paste0(title,"\n",format(Sys.time(), '%d %B %Y %H:%M'))
                                       )
@@ -52,9 +52,9 @@ createFilteredFullgraphs<-function(connection,
     #Truncate the title for file name if it is too long
     truncated_title=ifelse(stri_length(title)<=200,title,paste(substr(title,1,200)))
     Trajectories::plotTrajectoriesGraph(h,
-                                        layout=layout_with_fr,
-                                        linknumbers=round(100*E(h)$prob),
-                                        linklabels=paste0(round(E(h)$prob*100),"%"),
+                                        layout=igraph::layout_with_fr,
+                                        linknumbers=round(100*igraph::E(h)$prob),
+                                        linklabels=paste0(round(igraph::E(h)$prob*100),"%"),
                                         outputPdfFullpath=file.path(outputFolder,paste0(make.names(truncated_title),'.pdf')),
                                         title=paste0(title,"\n",
                                         format(Sys.time(), '%d %B %Y %H:%M')))

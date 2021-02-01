@@ -68,29 +68,31 @@ trajectoryAnalysisArgs<-Trajectories::TrajectoryAnalysisArgsFromInputFolder(traj
 connection <- DatabaseConnector::connect(connectionDetails)
 on.exit(DatabaseConnector::disconnect(connection)) #Close db connection on error or exit
 
-########################################################################
+##############################################################################################################
 
+# BUILD A COHORT BASED ON COHORT DEFINITION SQL AND THEN DIVIDE IT TO 2 SETS: DISCOVERY & VALIDATION SET
 
+##############################################################################################################
 
-
-
-
-
-# Create new cohort table for this package to results schema
-Trajectories::createCohortTable(connection=connection,
+# Create new cohort table for this package to results schema & fill it in (all having cohort_id=1 in cohort data)
+Trajectories::createAndFillCohortTable(connection=connection,
                                 trajectoryAnalysisArgs=trajectoryAnalysisArgs,
                                 trajectoryLocalArgs=trajectoryLocalArgs)
-
-# Fill that cohort table with cohort data (all having cohort_id=1 in cohort data)
-Trajectories::fillCohortTable(connection=connection,
-                              trajectoryAnalysisArgs,
-                              trajectoryLocalArgs)
 
 # Assign 50% of the event-periods from the cohort to validation set (discovery set=data in cohort table where cohort_id=1; validation set=data in cohort table where cohort_id=2)
 Trajectories::createValidationSet(connection=connection,
                                   trajectoryAnalysisArgs,
                                   trajectoryLocalArgs,
                                   size=0.5)
+
+##############################################################################################################
+
+# RUN DISCOVERY ANALYSIS
+
+##############################################################################################################
+
+#check that the mode is now "DISCOVERY"
+stopifnot(Trajectories::IsValidationMode(trajectoryAnalysisArgs,verbose=T)==F)
 
 # Create database tables of all event pairs (patient level data + summary statistics). Uses cohort_id depending on the running mode of the package
 Trajectories::createEventPairsTable(connection=connection,
@@ -104,9 +106,36 @@ Trajectories::runDiscoveryAnalysis(connection,
                                    trajectoryLocalArgs,
                                    forceRecalculation=F)
 
+# Draw unfiltered graphs of the discovery results (not limited to specific concept_id-s)
+Trajectories::createFilteredFullgraphs(connection,
+                                       trajectoryAnalysisArgs,
+                                       trajectoryLocalArgs)
+
+##############################################################################################################
+
+# VALIDATE THE RESULTS OF DISCOVERY ANALYSIS (RUN VALIDATION ANALYSIS)
+
+##############################################################################################################
+
+# Load setup from output-folder-of-discovary-analysis/validation_setup folder
+trajectoryLocalArgs$inputFolder=file.path(Trajectories::GetOutputFolder(trajectoryLocalArgs=trajectoryLocalArgs, trajectoryAnalysisArgs=trajectoryAnalysisArgs, createIfMissing = F),"validation_setup")
+trajectoryAnalysisArgs<-Trajectories::TrajectoryAnalysisArgsFromInputFolder(trajectoryLocalArgs)
+#check that the mode is now "VALIDATION"
+stopifnot(Trajectories::IsValidationMode(trajectoryAnalysisArgs,verbose=T)==T)
+
+# Create database tables of all event pairs (patient level data + summary statistics). Uses cohort_id depending on the running mode of the package (this time, takes cohort_id=2)
+Trajectories::createEventPairsTable(connection=connection,
+                                    trajectoryAnalysisArgs=trajectoryAnalysisArgs,
+                                    trajectoryLocalArgs=trajectoryLocalArgs)
 
 
-# Draw unfiltered graphs (not limited to specific concept_id-s)
+# Validate statistically significant directional event pairs and write the results to eventPairResultsFilename
+Trajectories::runValidationAnalysis(connection,
+                                    trajectoryAnalysisArgs,
+                                    trajectoryLocalArgs,
+                                    forceRecalculation=F)
+
+# Draw unfiltered graphs of the validated results (not limited to specific concept_id-s)
 Trajectories::createFilteredFullgraphs(connection,
                                        trajectoryAnalysisArgs,
                                        trajectoryLocalArgs)
@@ -126,30 +155,6 @@ Trajectories::PlotTrajectoriesGraphForEvents(connection,
                                              trajectoryLocalArgs,
                                              eventIds=trajectoryAnalysisArgs$eventIdsForGraphs,
                                              skipOutputTables = T)
-
-
-
-
-########### VALIDATING THE RESULTS FROM DISCOVERY STUDY ##################
-
-# load setup from "validation_setup" folder
-trajectoryLocalArgs$inputFolder=file.path(Trajectories::GetOutputFolder(trajectoryLocalArgs=trajectoryLocalArgs, trajectoryAnalysisArgs=trajectoryAnalysisArgs, createIfMissing = F),"validation_setup")
-trajectoryAnalysisArgs<-Trajectories::TrajectoryAnalysisArgsFromInputFolder(trajectoryLocalArgs)
-#check that the mode is validationmode
-stopifnot(Trajectories::IsValidationMode(trajectoryAnalysisArgs,verbose=T)==T)
-
-# Create database tables of all event pairs (patient level data + summary statistics). Uses cohort_id depending on the running mode of the package (this time, takes cohort_id=2)
-Trajectories::createEventPairsTable(connection=connection,
-                                    trajectoryAnalysisArgs=trajectoryAnalysisArgs,
-                                    trajectoryLocalArgs=trajectoryLocalArgs)
-
-
-# Validate statistically significant directional event pairs and write the results to eventPairResultsFilename
-Trajectories::runValidationAnalysis(connection,
-                                    trajectoryAnalysisArgs,
-                                    trajectoryLocalArgs,
-                                    forceRecalculation=F)
-
 
 
 

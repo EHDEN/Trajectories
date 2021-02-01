@@ -41,7 +41,6 @@ test_that("No significant event pairs in random data", {
                                                                        addBirths=F,
                                                                        addDeaths=F,
                                                                        daysBeforeIndexDate=Inf,
-                                                                       packageName='Trajectories',
                                                                        cohortName="test",
                                                                        RRrangeToSkip=c(0,1))
 
@@ -57,15 +56,10 @@ test_that("No significant event pairs in random data", {
   #Remove output files (if exist from previous run)
   removeTestableOutputFiles(trajectoryLocalArgs,trajectoryAnalysisArgs)
 
-  #Create cohort table
-  Trajectories::createCohortTable(connection=connection,
-                                trajectoryAnalysisArgs,
-                                trajectoryLocalArgs)
-
-  # Fill cohort table with example cohort data
-  Trajectories::fillCohortTable(connection=connection,
-                                trajectoryAnalysisArgs,
-                                trajectoryLocalArgs)
+  # Create new cohort table for this package to results schema & fill it in (all having cohort_id=1 in cohort data)
+  Trajectories::createAndFillCohortTable(connection=connection,
+                                         trajectoryAnalysisArgs=trajectoryAnalysisArgs,
+                                         trajectoryLocalArgs=trajectoryLocalArgs)
 
   # Create database tables of all event pairs (patient level data + summary statistics)
   Trajectories::createEventPairsTable(connection=connection,
@@ -118,7 +112,6 @@ test_that("Test ability to detect a synthetic event pair in data", {
                                                                        addBirths=F,
                                                                        addDeaths=F,
                                                                        daysBeforeIndexDate=Inf,
-                                                                       packageName='Trajectories',
                                                                        cohortName="test")
 
 
@@ -128,20 +121,16 @@ test_that("Test ability to detect a synthetic event pair in data", {
   #Remove output files (if exist from previous run)
   removeTestableOutputFiles(trajectoryLocalArgs,trajectoryAnalysisArgs)
 
-  #Create cohort table
-  Trajectories::createCohortTable(connection=connection,
-                                  trajectoryAnalysisArgs,
-                                  trajectoryLocalArgs)
-
-  # Fill cohort table with example cohort data
-  Trajectories::fillCohortTable(connection=connection,
-                                trajectoryAnalysisArgs,
-                                trajectoryLocalArgs)
+  # Create new cohort table for this package to results schema & fill it in (all having cohort_id=1 in cohort data)
+  Trajectories::createAndFillCohortTable(connection=connection,
+                                         trajectoryAnalysisArgs=trajectoryAnalysisArgs,
+                                         trajectoryLocalArgs=trajectoryLocalArgs)
 
   # Create database tables of all event pairs (patient level data + summary statistics)
   Trajectories::createEventPairsTable(connection=connection,
                                       trajectoryAnalysisArgs=trajectoryAnalysisArgs,
                                       trajectoryLocalArgs=trajectoryLocalArgs)
+
   Trajectories::runDiscoveryAnalysis(connection=connection,
                                      trajectoryAnalysisArgs=trajectoryAnalysisArgs,
                                      trajectoryLocalArgs=trajectoryLocalArgs)
@@ -205,7 +194,6 @@ test_that("Test ability to detect a synthetic event pair association (not direct
                                                                        addBirths=F,
                                                                        addDeaths=F,
                                                                        daysBeforeIndexDate=Inf,
-                                                                       packageName='Trajectories',
                                                                        cohortName="test")
 
 
@@ -215,20 +203,16 @@ test_that("Test ability to detect a synthetic event pair association (not direct
   #Remove output files (if exist from previous run)
   removeTestableOutputFiles(trajectoryLocalArgs,trajectoryAnalysisArgs)
 
-  #Create cohort table
-  Trajectories::createCohortTable(connection=connection,
-                                  trajectoryAnalysisArgs,
-                                  trajectoryLocalArgs)
-
-  # Fill cohort table with example cohort data
-  Trajectories::fillCohortTable(connection=connection,
-                                trajectoryAnalysisArgs,
-                                trajectoryLocalArgs)
+  # Create new cohort table for this package to results schema & fill it in (all having cohort_id=1 in cohort data)
+  Trajectories::createAndFillCohortTable(connection=connection,
+                                         trajectoryAnalysisArgs=trajectoryAnalysisArgs,
+                                         trajectoryLocalArgs=trajectoryLocalArgs)
 
   # Create database tables of all event pairs (patient level data + summary statistics)
   Trajectories::createEventPairsTable(connection=connection,
                                       trajectoryAnalysisArgs=trajectoryAnalysisArgs,
                                       trajectoryLocalArgs=trajectoryLocalArgs)
+
   Trajectories::runDiscoveryAnalysis(connection=connection,
                                      trajectoryAnalysisArgs=trajectoryAnalysisArgs,
                                      trajectoryLocalArgs=trajectoryLocalArgs)
@@ -291,7 +275,6 @@ test_that("Test ability to detect a longer trajectory (consisting of 2 pairs)", 
                                                                        addBirths=F,
                                                                        addDeaths=F,
                                                                        daysBeforeIndexDate=Inf,
-                                                                       packageName='Trajectories',
                                                                        cohortName="test")
 
 
@@ -304,16 +287,10 @@ test_that("Test ability to detect a longer trajectory (consisting of 2 pairs)", 
   #Remove output files (if exist from previous run)
   removeTestableOutputFiles(trajectoryLocalArgs,trajectoryAnalysisArgs)
 
-  #Create cohort table
-  Trajectories::createCohortTable(connection=connection,
-                                  trajectoryAnalysisArgs,
-                                  trajectoryLocalArgs)
-
-
-  # Fill cohort table with example cohort data
-  Trajectories::fillCohortTable(connection=connection,
-                                trajectoryAnalysisArgs,
-                                trajectoryLocalArgs)
+  # Create new cohort table for this package to results schema & fill it in (all having cohort_id=1 in cohort data)
+  Trajectories::createAndFillCohortTable(connection=connection,
+                                         trajectoryAnalysisArgs=trajectoryAnalysisArgs,
+                                         trajectoryLocalArgs=trajectoryLocalArgs)
 
   # Create database tables of all event pairs (patient level data + summary statistics)
   Trajectories::createEventPairsTable(connection=connection,
@@ -403,7 +380,6 @@ test_that("Test that forceRecalculation=F does not cause any error", {
                                                                        addBirths=F,
                                                                        addDeaths=F,
                                                                        daysBeforeIndexDate=Inf,
-                                                                       packageName='Trajectories',
                                                                        cohortName="test")
 
 
@@ -413,15 +389,10 @@ test_that("Test that forceRecalculation=F does not cause any error", {
   #Remove output files (if exist from previous run)
   removeTestableOutputFiles(trajectoryLocalArgs,trajectoryAnalysisArgs)
 
-  #Create cohort table
-  Trajectories::createCohortTable(connection=connection,
-                                  trajectoryAnalysisArgs,
-                                  trajectoryLocalArgs)
-
-  # Fill cohort table with example cohort data
-  Trajectories::fillCohortTable(connection=connection,
-                                trajectoryAnalysisArgs,
-                                trajectoryLocalArgs)
+  # Create new cohort table for this package to results schema & fill it in (all having cohort_id=1 in cohort data)
+  Trajectories::createAndFillCohortTable(connection=connection,
+                                         trajectoryAnalysisArgs=trajectoryAnalysisArgs,
+                                         trajectoryLocalArgs=trajectoryLocalArgs)
 
   # Create database tables of all event pairs (patient level data + summary statistics)
   Trajectories::createEventPairsTable(connection=connection,

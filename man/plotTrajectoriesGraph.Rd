@@ -6,10 +6,10 @@
 \usage{
 plotTrajectoriesGraph(
   g,
-  layout = layout_nicely(g),
+  layout = igraph::layout_nicely(g),
   outputPdfFullpath = F,
-  nodesizes = V(g)$count,
-  linknumbers = E(g)$numcohortExact,
+  nodesizes = igraph::V(g)$count,
+  linknumbers = igraph::E(g)$numcohortExact,
   linklabels = NA,
   title = ""
 )

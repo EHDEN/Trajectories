@@ -76,15 +76,11 @@ on.exit(DatabaseConnector::disconnect(connection)) #Close db connection on error
 
 
 
-# Create new cohort table for this package to results schema
-Trajectories::createCohortTable(connection=connection,
-                                trajectoryAnalysisArgs=trajectoryAnalysisArgs,
-                                trajectoryLocalArgs=trajectoryLocalArgs)
+# Create new cohort table for this package to results schema & fill it in (all having cohort_id=1 in cohort data)
+Trajectories::createAndFillCohortTable(connection=connection,
+                                       trajectoryAnalysisArgs=trajectoryAnalysisArgs,
+                                       trajectoryLocalArgs=trajectoryLocalArgs)
 
-# Fill that cohort table with cohort data (all having cohort_id=1 in cohort data)
-Trajectories::fillCohortTable(connection=connection,
-                              trajectoryAnalysisArgs,
-                              trajectoryLocalArgs)
 
 # Assign 100% of the event-periods from the cohort to validation set (discovery set=data in cohort table where cohort_id=1; validation set=data in cohort table where cohort_id=2)
 Trajectories::createValidationSet(connection=connection,

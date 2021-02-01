@@ -20,7 +20,7 @@ dbCleanup<-function(connection,
   Trajectories::setRole(connection,trajectoryLocalArgs$sqlRole)
 
   RenderedSql <- SqlRender::loadRenderTranslateSql("12TableDropper.sql",
-                                                   packageName=trajectoryAnalysisArgs$packageName,
+                                                   packageName=get('TRAJECTORIES_PACKAGE_NAME', envir=TRAJECTORIES.CONSTANTS),
                                                    dbms=connection@dbms,
                                                    resultsSchema =  trajectoryLocalArgs$resultsSchema,
                                                    prefiX = trajectoryLocalArgs$prefixForResultTableNames

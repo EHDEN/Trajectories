@@ -1,4 +1,5 @@
 {
+  "mode": ["VALIDATION"],
   "minimumDaysBetweenEvents": [1],
   "maximumDaysBetweenEvents": [3650],
   "minPatientsPerEventPair": [0.1],
@@ -10,8 +11,8 @@
   "addBirths": [true],
   "addDeaths": [true],
   "daysBeforeIndexDate": ["Inf"],
-  "packageName": ["Trajectories"],
   "cohortName": ["Type 2 diabetes"],
   "description": ["Type 2 diabetes study"],
-  "eventIdsForGraphs": [4193704, 201826, 443732, 1503297]
+  "eventIdsForGraphs": [4193704, 201826, 443732, 1503297],
+  "RRrangeToSkip": [0.8, 1.2]
 }

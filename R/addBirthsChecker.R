@@ -14,7 +14,7 @@ addBirthsChecker <- function(connection,
                              trajectoryLocalArgs) {
   logger::log_info('Parameter addBirths is set to TRUE. Check whether person.birth_datetime is actually recorded in the data...')
   births_sql <- SqlRender::loadRenderTranslateSql("addBirthsChecker.sql",
-                                                packageName=trajectoryAnalysisArgs$packageName,
+                                                packageName=get('TRAJECTORIES_PACKAGE_NAME', envir=TRAJECTORIES.CONSTANTS),
                                                 dbms=connection@dbms,
                                                 cdmDatabaseSchema =  trajectoryLocalArgs$cdmDatabaseSchema
                                                 )

@@ -1,5 +1,96 @@
-library(SqlRender)
-library(logger)
+requireNamespace("SqlRender", quietly = TRUE)
+requireNamespace("logger", quietly = TRUE)
+requireNamespace("openxlsx", quietly = TRUE)
+
+
+#' Runs the analysis that detects statistically significant directional event pairs and writes the results to file. Data is taken from database and it is expected that the tables are created by function createEventPairsTable()
+#'
+#' @param connection DatabaseConnectorConnection object that is used to connect with database
+#' @param trajectoryAnalysisArgs TrajectoryAnalysisArgs object that must be created by createTrajectoryAnalysisArgs() method
+#' @param trajectoryLocalArgs TrajectoryLocalArgs object that must be created by createTrajectoryLocalArgs() method
+#' @param forceRecalculation Set to TRUE if you wish to recalculate p-values for all pairs again. If it is set to FALSE, it avoids overcalculating p-values for pairs that have been analyzed already.
+#' @param relativeRiskForPowerCalculations Relative risk that is used for power calculations (what is the power to detect that relative risk in these data).
+#'
+#' @return
+#' @export
+#'
+#' @examples
+runDiscoveryAnalysis<-function(connection,
+                               trajectoryAnalysisArgs,
+                               trajectoryLocalArgs,
+                               forceRecalculation=F,
+                               relativeRiskForPowerCalculations=10) {
+
+  logger::log_info("Begin the analysis of detecting statistically significant directional event pairs...")
+
+  #Set SQL role of the database session
+  Trajectories::setRole(connection, trajectoryLocalArgs$sqlRole)
+
+  #Get pairs
+  pairs=Trajectories:::getAllPairs(connection,
+                                   trajectoryAnalysisArgs,
+                                   trajectoryLocalArgs)
+
+  logger::log_info("Number of event pairs to analyze: {nrow(pairs)}")
+
+  logger::log_info("Matching case and control groups for calculating relative risk (RR) and power...")
+  pairs<-Trajectories:::calcRRandPower(connection,
+                                       trajectoryAnalysisArgs,
+                                       trajectoryLocalArgs,
+                                       pairs,
+                                       relativeRiskForPowerCalculations=relativeRiskForPowerCalculations, #get power of detecting RR=10
+                                       powerPvalCutoff=0.05, #no correction here
+                                       forceRecalculation = forceRecalculation
+  )
+
+  #get Pairs that are having R ourside of range RRrangeToSkip and sufficient power for detecting RR=10
+  pairs <- pairs %>% filter((RR < trajectoryAnalysisArgs$RRrangeToSkip[1] | RR >= trajectoryAnalysisArgs$RRrangeToSkip[2]))
+  logger::log_info("Number of event pairs having RR outside of range [{trajectoryAnalysisArgs$RRrangeToSkip[1]},{trajectoryAnalysisArgs$RRrangeToSkip[2]}): {nrow(pairs)}")
+  pairs <- pairs %>% filter(RR_POWER>0.8)
+  logger::log_info("Number of event pairs having RR outside of range [{trajectoryAnalysisArgs$RRrangeToSkip[1]},{trajectoryAnalysisArgs$RRrangeToSkip[2]}) and sufficient power to detect RR=10: {nrow(pairs)}")
+  logger::log_info("Difference of RR from 1.0 of these pairs will be tested.")
+
+  #RR tests
+  logger::log_info("Running significance tests for RR values (to eliminate such event pairs from the directionality analysis where relative risk is too close to 1)...")
+  pairs<-Trajectories:::runRRTests(connection,
+                                   trajectoryAnalysisArgs,
+                                   trajectoryLocalArgs,
+                                   pairs,
+                                   forceRecalculation=forceRecalculation)
+
+  #get Pairs that are having significant RR
+  pairs <- pairs %>% filter(!is.na(RR_SIGNIFICANT) & RR_SIGNIFICANT=='*')
+  logger::log_info("Number of event pairs having significant RR: {nrow(pairs)}")
+
+  #Run directionality test for pairs having significant RR
+  logger::log_info("Running direction tests for pre-filtered event pairs...")
+  pairs<-Trajectories:::runDirectionTests(connection,
+                                          trajectoryAnalysisArgs,
+                                          trajectoryLocalArgs,
+                                          pairs,
+                                          forceRecalculation = forceRecalculation)
+
+  #Add labels
+  pairs<-Trajectories:::annotateDiscoveryResults(pairs,trajectoryAnalysisArgs=trajectoryAnalysisArgs,verbose=T)
+
+  #write results to file
+  outputFolder<-Trajectories::GetOutputFolder(trajectoryLocalArgs,trajectoryAnalysisArgs)
+  allResultsFilenameTsv = file.path(outputFolder,'event_pairs_tested.tsv')
+  write.table(pairs, file=allResultsFilenameTsv, quote=FALSE, sep='\t', col.names = NA)
+  allResultsFilenameXsl = file.path(outputFolder,'event_pairs_tested.xlsx')
+  write.xlsx(pairs, allResultsFilenameXsl)
+  logger::log_info('All tested pairs were written to {allResultsFilenameTsv} and {allResultsFilenameXsl}.')
+
+  directionalResultsFilename = file.path(outputFolder,'event_pairs_directional.tsv')
+  write.table(pairs %>% filter(!is.na(DIRECTIONAL_SIGNIFICANT) & DIRECTIONAL_SIGNIFICANT=='*'), file=directionalResultsFilename, quote=FALSE, sep='\t', col.names = NA)
+  logger::log_info('All directional pairs were written to {directionalResultsFilename}')
+
+  # Create validation setup for validating the results in anohter database
+  Trajectories::createValidationSetup(trajectoryAnalysisArgs,
+                                      trajectoryLocalArgs)
+
+
+}
 
 
 #' Runs the analysis that validates given event pairs and writes the results to file. Data is taken from database and it is expected that the tables are created by function createEventPairsTable()
@@ -104,89 +195,6 @@ runValidationAnalysis<-function(connection,
   allResultsFilenameTsv = file.path(outputFolder,'event_pairs_tested.tsv')
   write.table(pairs, file=allResultsFilenameTsv, quote=FALSE, sep='\t', col.names = NA)
   allResultsFilenameXsl = file.path(outputFolder,'event_pairs_tested.xlsx')
-  library(openxlsx)
-  write.xlsx(pairs, allResultsFilenameXsl)
-  logger::log_info('All tested pairs were written to {allResultsFilenameTsv} and {allResultsFilenameXsl}.')
-
-}
-
-
-#' Runs the analysis that detects statistically significant directional event pairs and writes the results to file. Data is taken from database and it is expected that the tables are created by function createEventPairsTable()
-#'
-#' @param connection DatabaseConnectorConnection object that is used to connect with database
-#' @param trajectoryAnalysisArgs TrajectoryAnalysisArgs object that must be created by createTrajectoryAnalysisArgs() method
-#' @param trajectoryLocalArgs TrajectoryLocalArgs object that must be created by createTrajectoryLocalArgs() method
-#' @param forceRecalculation Set to TRUE if you wish to recalculate p-values for all pairs again. If it is set to FALSE, it avoids overcalculating p-values for pairs that have been analyzed already.
-#' @param relativeRiskForPowerCalculations Relative risk that is used for power calculations (what is the power to detect that relative risk in these data).
-#'
-#' @return
-#' @export
-#'
-#' @examples
-runDiscoveryAnalysis<-function(connection,
-                               trajectoryAnalysisArgs,
-                               trajectoryLocalArgs,
-                               forceRecalculation=F,
-                               relativeRiskForPowerCalculations=10) {
-
-  logger::log_info("Begin the analysis of detecting statistically significant directional event pairs...")
-
-  #Set SQL role of the database session
-  Trajectories::setRole(connection, trajectoryLocalArgs$sqlRole)
-
-  #Get pairs
-  pairs=Trajectories:::getAllPairs(connection,
-                                   trajectoryAnalysisArgs,
-                                   trajectoryLocalArgs)
-
-  logger::log_info("Number of event pairs to analyze: {nrow(pairs)}")
-
-  logger::log_info("Matching case and control groups for calculating relative risk (RR) and power...")
-  pairs<-Trajectories:::calcRRandPower(connection,
-                                trajectoryAnalysisArgs,
-                                trajectoryLocalArgs,
-                                pairs,
-                                relativeRiskForPowerCalculations=relativeRiskForPowerCalculations, #get power of detecting RR=10
-                                powerPvalCutoff=0.05, #no correction here
-                                forceRecalculation = forceRecalculation
-                              )
-
-  #get Pairs that are having R ourside of range RRrangeToSkip and sufficient power for detecting RR=10
-  pairs <- pairs %>% filter((RR < trajectoryAnalysisArgs$RRrangeToSkip[1] | RR >= trajectoryAnalysisArgs$RRrangeToSkip[2]))
-  logger::log_info("Number of event pairs having RR outside of range [{trajectoryAnalysisArgs$RRrangeToSkip[1]},{trajectoryAnalysisArgs$RRrangeToSkip[2]}): {nrow(pairs)}")
-  pairs <- pairs %>% filter(RR_POWER>0.8)
-  logger::log_info("Number of event pairs having RR outside of range [{trajectoryAnalysisArgs$RRrangeToSkip[1]},{trajectoryAnalysisArgs$RRrangeToSkip[2]}) and sufficient power to detect RR=10: {nrow(pairs)}")
-  logger::log_info("Difference of RR from 1.0 of these pairs will be tested.")
-
-  #RR tests
-  logger::log_info("Running significance tests for RR values (to eliminate such event pairs from the directionality analysis where relative risk is too close to 1)...")
-  pairs<-Trajectories:::runRRTests(connection,
-                            trajectoryAnalysisArgs,
-                            trajectoryLocalArgs,
-                            pairs,
-                            forceRecalculation=forceRecalculation)
-
-  #get Pairs that are having significant RR
-  pairs <- pairs %>% filter(!is.na(RR_SIGNIFICANT) & RR_SIGNIFICANT=='*')
-  logger::log_info("Number of event pairs having significant RR: {nrow(pairs)}")
-
-  #Run directionality test for pairs having significant RR
-  logger::log_info("Running direction tests for pre-filtered event pairs...")
-  pairs<-Trajectories:::runDirectionTests(connection,
-                                   trajectoryAnalysisArgs,
-                                   trajectoryLocalArgs,
-                                   pairs,
-                                   forceRecalculation = forceRecalculation)
-
-  #Add labels
-  pairs<-Trajectories:::annotateDiscoveryResults(pairs,trajectoryAnalysisArgs=trajectoryAnalysisArgs,verbose=T)
-
-  #write results to file
-  outputFolder<-Trajectories::GetOutputFolder(trajectoryLocalArgs,trajectoryAnalysisArgs)
-  allResultsFilenameTsv = file.path(outputFolder,'event_pairs_tested.tsv')
-  write.table(pairs, file=allResultsFilenameTsv, quote=FALSE, sep='\t', col.names = NA)
-  allResultsFilenameXsl = file.path(outputFolder,'event_pairs_tested.xlsx')
-  library(openxlsx)
   write.xlsx(pairs, allResultsFilenameXsl)
   logger::log_info('All tested pairs were written to {allResultsFilenameTsv} and {allResultsFilenameXsl}.')
 
@@ -194,7 +202,8 @@ runDiscoveryAnalysis<-function(connection,
   write.table(pairs %>% filter(!is.na(DIRECTIONAL_SIGNIFICANT) & DIRECTIONAL_SIGNIFICANT=='*'), file=directionalResultsFilename, quote=FALSE, sep='\t', col.names = NA)
   logger::log_info('All directional pairs were written to {directionalResultsFilename}')
 
-  # Create validation setup for validating the results in anohter database
+
+  # Create validation setup for validating the (validation) results in anohter database
   Trajectories::createValidationSetup(trajectoryAnalysisArgs,
                                       trajectoryLocalArgs)
 
@@ -203,113 +212,6 @@ runDiscoveryAnalysis<-function(connection,
 
 
 
-
-#' Runs the analysis that detects statistically significant directional event pairs and writes the results to file. Data is taken from database and it is expected that the tables are created by function createEventPairsTable()
-#'
-#' @param connection DatabaseConnectorConnection object that is used to connect with database
-#' @param trajectoryAnalysisArgs TrajectoryAnalysisArgs object that must be created by createTrajectoryAnalysisArgs() method
-#' @param trajectoryLocalArgs TrajectoryLocalArgs object that must be created by createTrajectoryLocalArgs() method
-#' @param forceRecalculation Set to TRUE if you wish to recalculate p-values for all pairs again. If it is set to FALSE, it avoids overcalculating p-values for pairs that have been analyzed already.
-#' @param relativeRiskForPowerCalculations Relative risk that is used for power calculations (what is the power to detect that relative risk in these data). When run in validation mode, this parameter is ignored.
-#'
-#' @return
-#' @export
-#'
-#' @examples
-runEventPairAnalysis<-function(connection,
-                               trajectoryAnalysisArgs,
-                               trajectoryLocalArgs,
-                               forceRecalculation=F,
-                               relativeRiskForPowerCalculations=1.2) {
-
-  outputFolder<-Trajectories::GetOutputFolder(trajectoryLocalArgs,trajectoryAnalysisArgs)
-  d1d2ModelResultsFilename = file.path(outputFolder,'event_pairs_tested.tsv')
-  eventPairResultsFilename = file.path(outputFolder,'event_pairs.tsv')
-
-  logger::log_info(paste0("Detect statistically significant directional event pairs and write the results to ",eventPairResultsFilename,"..."))
-
-  if(Trajectories::IsValidationMode(trajectoryAnalysisArgs)) logger::log_info('Parameter value for {relativeRiskForPowerCalculations} is ignored in runEventPairAnalysis() method as the package is running in VALIDATION mode and relative risk value in previous study is used instead.')
-
-  #Set SQL role of the database session
-  Trajectories::setRole(connection, trajectoryLocalArgs$sqlRole)
-
-  if(Trajectories::IsValidationMode(trajectoryAnalysisArgs)) {
-    logger::log_info("Matching case and control groups for calculating relative risk (RR) and power for detecting relative risk as strong as in previous study...")
-  } else {
-    logger::log_info("Matching case and control groups for calculating relative risk (RR) and power...")
-  }
-  Trajectories:::calcRRandPower(connection,
-                                 trajectoryAnalysisArgs,
-                                 trajectoryLocalArgs,
-                                 relativeRiskForPowerCalculations=relativeRiskForPowerCalculations,
-                                 forceRecalculation=forceRecalculation)
-
-  #RR tests
-  logger::log_info("Running significance tests for relative risk values (to eliminate such event pairs from the directionality analysis where relative risk is too close to 1)...")
-  Trajectories:::runRRTests(connection,
-                                  trajectoryAnalysisArgs,
-                                  trajectoryLocalArgs,
-                                  forceRecalculation=forceRecalculation)
-
-  #Run directionality test for associated pairs
-  logger::log_info("Running direction tests for pre-filtered event pairs...")
-  Trajectories:::runDirectionTests(connection,
-                                     trajectoryAnalysisArgs,
-                                     trajectoryLocalArgs,
-                                   forceRecalculation = forceRecalculation)
-
-
-
-  # Read in results
-  RenderedSql <- Trajectories::loadRenderTranslateSql("11ResultsReader.sql",
-                                                   packageName=trajectoryAnalysisArgs$packageName,
-                                                   dbms=connection@dbms,
-                                                   resultsSchema =   trajectoryLocalArgs$resultsSchema,
-                                                   prefix =  trajectoryLocalArgs$prefixForResultTableNames,
-                                                   rr = 1.0
-  )
-  selected_data = DatabaseConnector::querySql(connection, RenderedSql)
-  significant_directional_pairs_count=nrow(selected_data)
-  #logger::log_info(paste0('There are ',significant_directional_pairs_count,' significant directional event pairs with relative risk > 1.'))
-  #logger::log_info('Some of them may have very small relative risk (close to 1). Therefore, we extract significant event pairs that have relative risk > 1.1')
-
-
-  RenderedSql <- Trajectories::loadRenderTranslateSql('d1d2_model_reader.sql',
-                                                      packageName=trajectoryAnalysisArgs$packageName,
-                                                      dbms=connection@dbms,
-                                                      resultsSchema =   trajectoryLocalArgs$resultsSchema,
-                                                      prefix =  trajectoryLocalArgs$prefixForResultTableNames
-  )
-  d1d2_data = DatabaseConnector::querySql(connection, RenderedSql)
-  significant_pairs_count=sum(d1d2_data$RR_SIGNIFICANT=='*', na.rm=T)
-  #add extra column for textual representation
-  d1d2_data=Trajectories:::addAnnotationForResults(d1d2_data,verbose=T)
-  logger::log_info(paste0(nrow(d1d2_data),' event pairs were tested. All test results are written to {d1d2ModelResultsFilename}.'))
-  logger::log_info(paste0('Relative risk in ',significant_pairs_count,' pairs is significantly different from 1.'))
-
-  # Write result table into file
-  write.table(d1d2_data, file=d1d2ModelResultsFilename, quote=FALSE, sep='\t', col.names = NA)
-
-
-  RenderedSql <- Trajectories::loadRenderTranslateSql("11ResultsReader.sql",
-                                                   packageName=trajectoryAnalysisArgs$packageName,
-                                                   dbms=connection@dbms,
-                                                   resultsSchema =   trajectoryLocalArgs$resultsSchema,
-                                                   prefix =  trajectoryLocalArgs$prefixForResultTableNames,
-                                                   rr = 1.1
-  )
-  selected_data = DatabaseConnector::querySql(connection, RenderedSql)
-  #add extra column for textual representation
-  selected_data=Trajectories:::addAnnotationForResults(selected_data,verbose=F)
-
-  # Write result table into file
-  write.table(selected_data, file=eventPairResultsFilename, quote=FALSE, sep='\t', col.names = NA)
-
-  logger::log_info(paste0(nrow(selected_data),' event pairs have both significant RR and also significant direction.'))
-  logger::log_info("These directional event pairs are written to {eventPairResultsFilename}.")
-
-  logger::log_info('TASK COMPLETED: Detecting statistically significant directional event pairs completed successfully.')
-}
 
 
 
@@ -567,7 +469,7 @@ calcRRandPower<-function(connection,
 
       # Writing the results back to database
       RenderedSql <- Trajectories::loadRenderTranslateSql("insertDataForPrefilter.sql",
-                                                          packageName=trajectoryAnalysisArgs$packageName,
+                                                          packageName=get('TRAJECTORIES_PACKAGE_NAME', envir=TRAJECTORIES.CONSTANTS),
                                                           dbms=connection@dbms,
                                                           resultsSchema =   trajectoryLocalArgs$resultsSchema,
                                                           rr = event_pair_rr,
@@ -611,7 +513,7 @@ getExpectedPrevalenceAndPower<-function(diagnosis1,
                                 powerPvalCutoff=0.05) {
   # Extract necessary event1_concept_id->event2_concept_id data from table d1d2_analysistable
   RenderedSql <- Trajectories::loadRenderTranslateSql("5CaseControlStats.sql",
-                                                      packageName=trajectoryAnalysisArgs$packageName,
+                                                      packageName=get('TRAJECTORIES_PACKAGE_NAME', envir=TRAJECTORIES.CONSTANTS),
                                                       dbms=connection@dbms,
                                                       event1=diagnosis1,
                                                       event2=diagnosis2,
@@ -716,7 +618,7 @@ runRRTests<-function(connection,
 
       # Writing p-value to database
       RenderedSql <- Trajectories::loadRenderTranslateSql("PvalInserter.sql",
-                                                          packageName=trajectoryAnalysisArgs$packageName,
+                                                          packageName=get('TRAJECTORIES_PACKAGE_NAME', envir=TRAJECTORIES.CONSTANTS),
                                                           dbms=connection@dbms,
                                                           resultsSchema =   trajectoryLocalArgs$resultsSchema,
                                                           pval = event_pair_pvalue,
@@ -789,7 +691,7 @@ runDirectionTests<-function(connection,
 
       #Calculate in database: among people that have event1_concept_id and event2_concept_id pair, how many have date1<date2, date1=date2, date1>date2
       RenderedSql <- Trajectories::loadRenderTranslateSql("7DirectionCounts.sql",
-                                                          packageName=trajectoryAnalysisArgs$packageName,
+                                                          packageName=get('TRAJECTORIES_PACKAGE_NAME', envir=TRAJECTORIES.CONSTANTS),
                                                           dbms=connection@dbms,
                                                           resultsSchema =   trajectoryLocalArgs$resultsSchema,
                                                           diag1 = if(is.character(diagnosis1)) {paste0("'",diagnosis1,"'",sep="")} else {diagnosis1}, #if-then hocus-pocus is to handle character-based diagnosis codes when using some non-standard concept codes. Should never happen normally.
@@ -800,7 +702,7 @@ runDirectionTests<-function(connection,
 
       # Get calculation results from database
       RenderedSql <- Trajectories::loadRenderTranslateSql("8DpairReader.sql",
-                                                          packageName=trajectoryAnalysisArgs$packageName,
+                                                          packageName=get('TRAJECTORIES_PACKAGE_NAME', envir=TRAJECTORIES.CONSTANTS),
                                                           dbms=connection@dbms,
                                                           resultsSchema =   trajectoryLocalArgs$resultsSchema,
                                                           diag1=diagnosis1,
@@ -860,7 +762,7 @@ runDirectionTests<-function(connection,
 
       # Store the pvalue to database
       RenderedSql <- Trajectories::loadRenderTranslateSql("9PvalInserterDirection.sql",
-                                                          packageName=trajectoryAnalysisArgs$packageName,
+                                                          packageName=get('TRAJECTORIES_PACKAGE_NAME', envir=TRAJECTORIES.CONSTANTS),
                                                           dbms=connection@dbms,
                                                           resultsSchema =   trajectoryLocalArgs$resultsSchema,
                                                           pval = event_pair_pvalue,
@@ -972,7 +874,7 @@ getAllPairs<-function(connection,
                       trajectoryAnalysisArgs,
                       trajectoryLocalArgs) {
   RenderedSql <- Trajectories::loadRenderTranslateSql('d1d2_model_reader.sql',
-                                                      packageName=trajectoryAnalysisArgs$packageName,
+                                                      packageName=get('TRAJECTORIES_PACKAGE_NAME', envir=TRAJECTORIES.CONSTANTS),
                                                       dbms=connection@dbms,
                                                       resultsSchema =   trajectoryLocalArgs$resultsSchema,
                                                       prefiX =  trajectoryLocalArgs$prefixForResultTableNames
@@ -985,7 +887,7 @@ clearOldResultsFromDb<-function(connection,
                       trajectoryAnalysisArgs,
                       trajectoryLocalArgs) {
   RenderedSql <- Trajectories::loadRenderTranslateSql('clear_e1e2_model_results.sql',
-                                                      packageName=trajectoryAnalysisArgs$packageName,
+                                                      packageName=get('TRAJECTORIES_PACKAGE_NAME', envir=TRAJECTORIES.CONSTANTS),
                                                       dbms=connection@dbms,
                                                       resultsSchema =   trajectoryLocalArgs$resultsSchema,
                                                       prefiX =  trajectoryLocalArgs$prefixForResultTableNames

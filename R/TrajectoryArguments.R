@@ -36,7 +36,6 @@ createTrajectoryAnalysisArgs <- function(mode='DISCOVERY',
                                          addDeaths=T,
                                          daysBeforeIndexDate=Inf,
                                          RRrangeToSkip=c(0,1.2),
-                                         packageName = 'Trajectories',
                                          cohortName = 'My sample cohort',
                                          description = '',
                                          eventIdsForGraphs=NA) {
@@ -64,7 +63,7 @@ createTrajectoryAnalysisArgs <- function(mode='DISCOVERY',
                 addDrugEras=addDrugEras,addBirths=addBirths,addDeaths=addDeaths,
                 daysBeforeIndexDate=daysBeforeIndexDate,
                 RRrangeToSkip=RRrangeToSkip,
-                packageName=packageName,cohortName=cohortName,description=description,eventIdsForGraphs=eventIdsForGraphs)
+                cohortName=cohortName,description=description,eventIdsForGraphs=eventIdsForGraphs)
   class(value) <- 'TrajectoryAnalysisArgs'
   return(value)
 
@@ -199,7 +198,6 @@ TrajectoryAnalysisArgsFromJson<-function(filepath) {
     addDeaths=T,
     daysBeforeIndexDate=Inf,
     RRrangeToSkip=c(0,1.2),
-    packageName = 'Trajectories',
     cohortName = 'My sample cohort',
     description = '',
     eventIdsForGraphs=NA
@@ -229,7 +227,6 @@ TrajectoryAnalysisArgsFromJson<-function(filepath) {
                                addDeaths=vals_for_obj[['addDeaths']],
                                daysBeforeIndexDate=vals_for_obj[['daysBeforeIndexDate']],
                                RRrangeToSkip=vals_for_obj[['RRrangeToSkip']],
-                               packageName=vals_for_obj[['packageName']],
                                cohortName=vals_for_obj[['cohortName']],
                                description=vals_for_obj[['description']],
                                eventIdsForGraphs=vals_for_obj[['eventIdsForGraphs']])

@@ -23,7 +23,6 @@ test_that("Filling in cohort table with fulldb buit-in study", {
                                                                        addBirths=F,
                                                                        addDeaths=F,
                                                                        daysBeforeIndexDate=Inf,
-                                                                       packageName='Trajectories',
                                                                        RRrangeToSkip=c(0.9,1.1))
 
 
@@ -32,17 +31,11 @@ test_that("Filling in cohort table with fulldb buit-in study", {
 
   Trajectories::InitLogger(logfile = file.path(outputFolder,'log.txt'), threshold = logger:::DEBUG)
 
-  # Create new cohort table for this package to results schema
-  Trajectories::createCohortTable(connection=connection,
-                                  trajectoryAnalysisArgs=trajectoryAnalysisArgs,
-                                  trajectoryLocalArgs=trajectoryLocalArgs)
+  # Create new cohort table for this package to results schema & fill it in (all having cohort_id=1 in cohort data)
+  Trajectories::createAndFillCohortTable(connection=connection,
+                                         trajectoryAnalysisArgs=trajectoryAnalysisArgs,
+                                         trajectoryLocalArgs=trajectoryLocalArgs)
 
-
-
-  # Fill cohort table with example cohort data
-  Trajectories::fillCohortTable(connection=connection,
-                                trajectoryAnalysisArgs,
-                                trajectoryLocalArgs)
 
 
   #First check: is cohort table filled in correctly (should be 100 rows)
@@ -77,7 +70,6 @@ test_that("Spliting cohort to DISCOVERY and VALIDATION set", {
                                                                        addBirths=F,
                                                                        addDeaths=F,
                                                                        daysBeforeIndexDate=Inf,
-                                                                       packageName='Trajectories',
                                                                        RRrangeToSkip=c(0.9,1.1))
 
 
@@ -86,15 +78,11 @@ test_that("Spliting cohort to DISCOVERY and VALIDATION set", {
 
   Trajectories::InitLogger(logfile = file.path(outputFolder,'log.txt'), threshold = logger:::DEBUG)
 
-  # Create new cohort table for this package to results schema
-  Trajectories::createCohortTable(connection=connection,
-                                  trajectoryAnalysisArgs=trajectoryAnalysisArgs,
-                                  trajectoryLocalArgs=trajectoryLocalArgs)
+  # Create new cohort table for this package to results schema & fill it in (all having cohort_id=1 in cohort data)
+  Trajectories::createAndFillCohortTable(connection=connection,
+                                         trajectoryAnalysisArgs=trajectoryAnalysisArgs,
+                                         trajectoryLocalArgs=trajectoryLocalArgs)
 
-  # Fill cohort table with example cohort data
-  Trajectories::fillCohortTable(connection=connection,
-                                trajectoryAnalysisArgs,
-                                trajectoryLocalArgs)
 
 
   # Assign 50% of the event-periods from the cohort to validation set (discovery set=data in cohort table where cohort_id=1; validation set=data in cohort table where cohort_id=2)

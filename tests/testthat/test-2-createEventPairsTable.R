@@ -24,22 +24,17 @@ test_that("Filling in cohort table with fulldb buit-in study (no events)", {
                                                                        addBirths=F,
                                                                        addDeaths=F,
                                                                        daysBeforeIndexDate=Inf,
-                                                                       packageName='Trajectories',
                                                                        cohortName="test")
 
 
   #Create output folder for this analysis
   outputFolder<-GetOutputFolder(trajectoryLocalArgs,trajectoryAnalysisArgs,createIfMissing=T)
 
-  #Create cohort table
-  createCohortTable(connection=connection,
-                                  trajectoryAnalysisArgs,
-                                  trajectoryLocalArgs)
+  # Create new cohort table for this package to results schema & fill it in (all having cohort_id=1 in cohort data)
+  Trajectories::createAndFillCohortTable(connection=connection,
+                                         trajectoryAnalysisArgs=trajectoryAnalysisArgs,
+                                         trajectoryLocalArgs=trajectoryLocalArgs)
 
-  # Fill cohort table with example cohort data
-  fillCohortTable(connection=connection,
-                                trajectoryAnalysisArgs,
-                                trajectoryLocalArgs)
 
 
   createEventPairsTable(connection=connection,
@@ -78,22 +73,17 @@ test_that("Filling in cohort table with fulldb buit-in study (there are some eve
                                                          addBirths=F,
                                                          addDeaths=F,
                                                          daysBeforeIndexDate=Inf,
-                                                         packageName='Trajectories',
                                                          cohortName="test")
 
 
   #Create output folder for this analysis
   outputFolder<-GetOutputFolder(trajectoryLocalArgs,trajectoryAnalysisArgs,createIfMissing=T)
 
-  #Create cohort table
-  createCohortTable(connection=connection,
-                    trajectoryAnalysisArgs,
-                    trajectoryLocalArgs)
+  # Create new cohort table for this package to results schema & fill it in (all having cohort_id=1 in cohort data)
+  Trajectories::createAndFillCohortTable(connection=connection,
+                                         trajectoryAnalysisArgs=trajectoryAnalysisArgs,
+                                         trajectoryLocalArgs=trajectoryLocalArgs)
 
-  # Fill cohort table with example cohort data
-  fillCohortTable(connection=connection,
-                  trajectoryAnalysisArgs,
-                  trajectoryLocalArgs)
 
 
   createEventPairsTable(connection=connection,

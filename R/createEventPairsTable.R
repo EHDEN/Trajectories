@@ -1,4 +1,3 @@
-library(SqlRender)
 #' Creates event pairs table and populates it with the data
 #'
 #' @param connection DatabaseConnectorConnection object that is used to connect with database
@@ -11,13 +10,16 @@ createEventPairsTable<-function(connection,
                                 trajectoryAnalysisArgs,
                                 trajectoryLocalArgs
                                ) {
-  logger::log_info(paste0("Create database tables + data for all event pairs to '",trajectoryLocalArgs$resultsSchema,"' schema..."))
+
+  COHORT_ID=ifelse(Trajectories::IsValidationMode(trajectoryAnalysisArgs)==TRUE,2,1) #cohort_id=1 when running in DISCOVERY mode, cohort_id=2 when running in VALIDATION mode,
+
+  logger::log_info(paste0("Create database tables + data for all event pairs from cohort ID={COHORT_ID} to '",trajectoryLocalArgs$resultsSchema,"' schema..."))
 
 
   #In case trajectoryAnalysisArgs$minPatientsPerEventPair < 1, the actual value means "prevalence", not absolute number.
   #Therefore, we need to calculate the absolute number from this
   if(trajectoryAnalysisArgs$minPatientsPerEventPair<1) {
-    cohortCount<-getCohortSize(connection, trajectoryLocalArgs)
+    cohortCount<-getCohortSize(connection, trajectoryAnalysisArgs, trajectoryLocalArgs)
     minPatientsPerEventPair=round(cohortCount*trajectoryAnalysisArgs$minPatientsPerEventPair)
     if(minPatientsPerEventPair==0) minPatientsPerEventPair=1
     logger::log_info(paste0('Parameter value of minPatientsPerEventPair=',trajectoryAnalysisArgs$minPatientsPerEventPair,' is less than 1. ',
@@ -50,7 +52,7 @@ createEventPairsTable<-function(connection,
   # Create everything up to E1E2_model table
   logger::log_info("Creating event pairs in data...")
   RenderedSql = Trajectories::loadRenderTranslateSql(sqlFilename='createEventPairsTable-part1.sql',
-                                                  packageName=trajectoryAnalysisArgs$packageName,
+                                                  packageName=get('TRAJECTORIES_PACKAGE_NAME', envir=TRAJECTORIES.CONSTANTS),
                                                   dbms = connection@dbms,
                                                   oracleTempSchema = NULL,
                                                   resultsSchema = trajectoryLocalArgs$resultsSchema,
@@ -61,7 +63,7 @@ createEventPairsTable<-function(connection,
                                                   prefiX = trajectoryLocalArgs$prefixForResultTableNames,
                                                   cohortTableSchema = trajectoryLocalArgs$resultsSchema,
                                                   cohortTable = paste0(trajectoryLocalArgs$prefixForResultTableNames,'cohort'),
-                                                  cohortId = ifelse(Trajectories::IsValidationMode(trajectoryAnalysisArgs)==TRUE,2,1), #cohort_id=1 when running in DISCOVERY mode, cohort_id=2 when running in VALIDATION mode,
+                                                  cohortId = COHORT_ID,
                                                   addConditions = ifelse(trajectoryAnalysisArgs$addConditions==T,1,0),
                                                   addObservations = ifelse(trajectoryAnalysisArgs$addObservations==T,1,0),
                                                   addProcedures = ifelse(trajectoryAnalysisArgs$addProcedures==T,1,0),
@@ -94,7 +96,7 @@ createEventPairsTable<-function(connection,
 
     #Create empty table manually
     RenderedSql <- Trajectories::loadRenderTranslateSql(sqlFilename='createEventPairsTable-part2b.sql',
-                                                        packageName=trajectoryAnalysisArgs$packageName,
+                                                        packageName=get('TRAJECTORIES_PACKAGE_NAME', envir=TRAJECTORIES.CONSTANTS),
                                                         dbms = connection@dbms,
                                                         oracleTempSchema = NULL,
                                                         resultsSchema = trajectoryLocalArgs$resultsSchema,
@@ -139,7 +141,7 @@ createEventPairsTable<-function(connection,
   } else {
     logger::log_info("Running package in DISCOVERY mode (not validating someone's results)")
     RenderedSql = Trajectories::loadRenderTranslateSql(sqlFilename='createEventPairsTable-part2a.sql',
-                                                       packageName=trajectoryAnalysisArgs$packageName,
+                                                       packageName=get('TRAJECTORIES_PACKAGE_NAME', envir=TRAJECTORIES.CONSTANTS),
                                                        dbms = connection@dbms,
                                                        oracleTempSchema = NULL,
                                                        resultsSchema = trajectoryLocalArgs$resultsSchema,
@@ -156,7 +158,7 @@ createEventPairsTable<-function(connection,
   # Create E1E2_model table and all that is inherited from that
   logger::log_info("Creating statistics for events pairs that are going to be analyzed...")
   RenderedSql = Trajectories::loadRenderTranslateSql(sqlFilename='createEventPairsTable-part3.sql',
-                                                     packageName=trajectoryAnalysisArgs$packageName,
+                                                     packageName=get('TRAJECTORIES_PACKAGE_NAME', envir=TRAJECTORIES.CONSTANTS),
                                                      dbms = connection@dbms,
                                                      oracleTempSchema = NULL,
                                                      resultsSchema = trajectoryLocalArgs$resultsSchema,
@@ -179,7 +181,7 @@ createEventPairsTable<-function(connection,
 
   # Get all (frequent) event pairs from the database
   RenderedSql <- Trajectories::loadRenderTranslateSql("GetNumPairs.sql",
-                                                   packageName=trajectoryAnalysisArgs$packageName,
+                                                   packageName=get('TRAJECTORIES_PACKAGE_NAME', envir=TRAJECTORIES.CONSTANTS),
                                                    dbms=connection@dbms,
                                                    resultsSchema = trajectoryLocalArgs$resultsSchema,
                                                    prefix = trajectoryLocalArgs$prefixForResultTableNames

@@ -12,19 +12,19 @@
 #' @export
 #'
 #' @examples
-plotTrajectoriesGraph<-function(g,layout=layout_nicely(g),outputPdfFullpath=F,nodesizes=V(g)$count,linknumbers=E(g)$numcohortExact, linklabels=NA, title="") {
+plotTrajectoriesGraph<-function(g,layout=igraph::layout_nicely(g),outputPdfFullpath=F,nodesizes=igraph::V(g)$count,linknumbers=igraph::E(g)$numcohortExact, linklabels=NA, title="") {
 
   if(!'TrajectoriesGraph' %in% class(g)) stop('Error in plotTrajectoriesGraph(): object class of g must be TrajectoriesGraph.')
 
 
   if(outputPdfFullpath!=F) {
     #pointsize a bit depends on the number of nodes. pointsize=11 is OK of 20 nodes. pointsize=3 is OK for 300 events. The corresponding formula is:
-    n=length(V(g))
+    n=length(igraph::V(g))
     p=round(0.000066*n*n-0.05*n+12)
     pdf(outputPdfFullpath,width=11, height=8, paper="special", pointsize=p)
   }
 
-  if(length(E(g))==0) {
+  if(length(igraph::E(g))==0) {
     logger::log_warn('There are 0 edges on that graph. Nothing to plot.')
     return()
   }
@@ -48,7 +48,7 @@ plotTrajectoriesGraph<-function(g,layout=layout_nicely(g),outputPdfFullpath=F,no
   edgelabel_cex=0.5+0.8*sqrt(normalizedLinknumbers) #font size
 
   #edge alpha depends on linknumbers
-  rgb1<-sapply(E(g)$color ,col2rgb)
+  rgb1<-sapply(igraph::E(g)$color ,col2rgb)
   edgecolor<-rgb(rgb1[1,],rgb1[2,],rgb1[3,],alpha=255*(0.2+0.8*sqrt(normalizedLinknumbers)),maxColorValue=255)
   #edge text color is darker
   edgelabelcolor<-rgb(round(rgb1[1,]/2),round(rgb1[2,]/2),round(rgb1[3,]/2),alpha=255*(0.2+0.8*sqrt(normalizedLinknumbers)),maxColorValue=255)
@@ -60,13 +60,13 @@ plotTrajectoriesGraph<-function(g,layout=layout_nicely(g),outputPdfFullpath=F,no
   if(is.na(linklabels[1])) linklabels=linknumbers
 
   #normalized Event count
-  V(g)$size<-nodesizes/max(nodesizes)
+  igraph::V(g)$size<-nodesizes/max(nodesizes)
 
   #Update 15 Oct 2020: always turn 0-count nodes to lightgray
-  vertexcolor=V(g)$color
+  vertexcolor=igraph::V(g)$color
   vertexcolor[nodesizes==0]<-rgb(196,196,196,alpha=128,maxColorValue=255)
-  vertexlabelcolor=V(g)$labelcolor
-  vertexlabelcolor[V(g)$size==0]<-rgb(196,196,196,alpha=128,maxColorValue=255)
+  vertexlabelcolor=igraph::V(g)$labelcolor
+  vertexlabelcolor[igraph::V(g)$size==0]<-rgb(196,196,196,alpha=128,maxColorValue=255)
 
   #E(g)$normalizedNumcohortCustom = (E(g)$numcohortCustom - min(E(g)$numcohortCustom))/(max(E(g)$numcohortCustom)-min(E(g)$numcohortCustom))
 
@@ -76,9 +76,9 @@ plotTrajectoriesGraph<-function(g,layout=layout_nicely(g),outputPdfFullpath=F,no
        #layout[,2]<-layout[,2]*2, #y-telje peal rohkem laiali
        vertex.color = vertexcolor,
        vertex.frame.color= vertexcolor,
-       vertex.size=sqrt(V(g)$size)*10,
+       vertex.size=sqrt(igraph::V(g)$size)*10,
        vertex.label.font=1,
-       vertex.label.cex = sqrt(1+V(g)$size),
+       vertex.label.cex = sqrt(1+igraph::V(g)$size),
        vertex.label.color = vertexlabelcolor,
 
        #vertex.label = paste(node_labels$dgn,node_labels$name),
@@ -94,7 +94,7 @@ plotTrajectoriesGraph<-function(g,layout=layout_nicely(g),outputPdfFullpath=F,no
        #edge.arrow.width=round(E(g)$weight*1),
        edge.curved=0.1,
        #weights=E(g)$weight,
-       vertex.label.dist=V(g)$size/10, #labeli kaugus nodest. Default=0 - siis on label node peal
+       vertex.label.dist=igraph::V(g)$size/10, #labeli kaugus nodest. Default=0 - siis on label node peal
        vertex.label.degree=-pi/2, #labeli asukoht node suhtes. 0=paremal. pi/2... jne vt https://www.rdocumentation.org/packages/igraph/versions/0.3.3/topics/tkplot
        asp=0
   )

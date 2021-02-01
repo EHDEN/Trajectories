@@ -10,7 +10,6 @@
 #' @param skipOutputTables If set to T, no output data tables are made (the PDF graphs only).
 #'
 #' @return
-#' @export
 #'
 #' @examples
 PlotTrajectoriesGraphForEvent<-function(connection,
@@ -24,7 +23,7 @@ PlotTrajectoriesGraphForEvent<-function(connection,
   #if(!is.numeric(eventId)) {
   #  stop('Error: Event ID is not numeric')
   #}
-  if(!eventId %in% V(g)$concept_id) {
+  if(!eventId %in% igraph::V(g)$concept_id) {
     msg=glue::glue('Event with concept_id={eventId} is missing from TrajectoriesGraph object. The plot for this is not created (skipping).')
     logger::log_warn(msg)
     warning(msg)
@@ -33,7 +32,7 @@ PlotTrajectoriesGraphForEvent<-function(connection,
 
   outputFolder<-Trajectories::GetOutputFolder(trajectoryLocalArgs,trajectoryAnalysisArgs)
   cohortName=trajectoryAnalysisArgs$cohortName
-  EVENTNAME=V(g)[V(g)$concept_id==eventId]$name
+  EVENTNAME=igraph::V(g)[igraph::V(g)$concept_id==eventId]$name
 
   logger::log_info("Creating graphs for concept_id={eventId} ('{EVENTNAME}')...")
 
@@ -41,11 +40,11 @@ PlotTrajectoriesGraphForEvent<-function(connection,
 
   # Construct most-likely trajectories that go through EVENT
   if(limitOfNodes==F) {
-    title=paste0("Constructed most-likely trajectories of ",cohortName," patients through\n",EVENTNAME,"\n(based on ",V(g)[V(g)$concept_id==eventId]$count," patients and all directional event pairs)")
+    title=paste0("Constructed most-likely trajectories of ",cohortName," patients through\n",EVENTNAME,"\n(based on ",igraph::V(g)[igraph::V(g)$concept_id==eventId]$count," patients and all directional event pairs)")
     aligned_to_title="constructed graph of all event pairs"
     filename_template=paste0(ifelse(stri_length(EVENTNAME)<=20,EVENTNAME,paste(substr(EVENTNAME,1,20))), eventId, '.constructed') #add event ID to file name as the beginning of the concept name might not be unique
   } else {
-    title=paste0("Constructed most-likely trajectories of ",cohortName," patients through\n",EVENTNAME,"\n(based on ",V(g)[V(g)$concept_id==eventId]$count," patients and limited to ",limitOfNodes," events)")
+    title=paste0("Constructed most-likely trajectories of ",cohortName," patients through\n",EVENTNAME,"\n(based on ",igraph::V(g)[igraph::V(g)$concept_id==eventId]$count," patients and limited to ",limitOfNodes," events)")
     aligned_to_title=paste0("constructed graph of ",limitOfNodes," events")
     filename_template=paste0(ifelse(stri_length(EVENTNAME)<=20,EVENTNAME,paste(substr(EVENTNAME,1,20))), eventId, ".constructed.limit",limitOfNodes," events") #add event ID to file name as the beginning of the concept name might not be unique
   }
@@ -55,9 +54,9 @@ PlotTrajectoriesGraphForEvent<-function(connection,
   #truncated_title=ifelse(stri_length(title)<=200,title,paste(substr(title,1,200)))
   filename=file.path(outputFolder,paste0(make.names(filename_template),'.pdf'))
   Trajectories::plotTrajectoriesGraph(constructed.graph,
-                                      layout=layout_with_fr,
-                                      linknumbers=round(E(constructed.graph)$prob*100),
-                                      linklabels=paste0(round(E(constructed.graph)$prob*100),"%"),
+                                      layout=igraph::layout_with_fr,
+                                      linknumbers=round(igraph::E(constructed.graph)$prob*100),
+                                      linklabels=paste0(round(igraph::E(constructed.graph)$prob*100),"%"),
                                       outputPdfFullpath=filename,
                                       title=paste0(title,"\n",format(Sys.time(), '%d %B %Y %H:%M')))
   logger::log_info(' ...done. File saved to {filename}.')
@@ -97,16 +96,16 @@ PlotTrajectoriesGraphForEvent<-function(connection,
   logger::log_info(' Step 4: Printing aligned graph: ')
   #One difficult thing to understand now is that V(h)$alignedTrajsCount for the EVENTNAME holds the number of trajectories that go through the EVENTNAME, not the prevalence of EVENTNAME
   #We've found that this is difficult to understand and for EVENTNAME it is better to show the actual prevalence/count instead (and calculate all frequencies based on that)
-  title=paste0(ifelse(is.na(limitOfTrajs),'All ',''),V(h)[V(h)$concept_id==eventId]$count," actual trajectories of ",cohortName," patients having/passing\n",EVENTNAME," (EVENT),\naligned to ",aligned_to_title," (count + frequency relative to EVENT given on edges)")
+  title=paste0(ifelse(is.na(limitOfTrajs),'All ',''),igraph::V(h)[igraph::V(h)$concept_id==eventId]$count," actual trajectories of ",cohortName," patients having/passing\n",EVENTNAME," (EVENT),\naligned to ",aligned_to_title," (count + frequency relative to EVENT given on edges)")
   #Truncate the title for file name if it is too long
   #truncated_title=ifelse(stri_length(title)<=200,title,paste(substr(title,1,200)))
   filename=paste0(filename_template,".aligned")
   filename=file.path(outputFolder,paste0(make.names(filename),'.pdf'))
   Trajectories::plotTrajectoriesGraph(h,
-                                      layout=layout_with_fr,
-                                      nodesizes=V(h)$alignedTrajsCount,
-                                      linknumbers=round(E(h)$alignedTrajsCount),
-                                      linklabels=paste0(E(h)$alignedTrajsCount," (",round(E(h)$alignedTrajsProb*100),"%)"),
+                                      layout=igraph::layout_with_fr,
+                                      nodesizes=igraph::V(h)$alignedTrajsCount,
+                                      linknumbers=round(igraph::E(h)$alignedTrajsCount),
+                                      linklabels=paste0(igraph::E(h)$alignedTrajsCount," (",round(igraph::E(h)$alignedTrajsProb*100),"%)"),
                                       outputPdfFullpath=filename,
                                       title=paste0(title,"\n",format(Sys.time(), '%d %B %Y %H:%M')))
   logger::log_info(' ...done. File saved to {filename}.')

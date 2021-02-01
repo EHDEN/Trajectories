@@ -20,7 +20,7 @@ createValidationSet<-function(
 
   logger::log_info("Assigning {round(100*size)}% of events from the cohort to validation set...")
   RenderedSql = Trajectories::loadRenderTranslateSql(sqlFilename='createValidationSet.sql',
-                                                     packageName=trajectoryAnalysisArgs$packageName,
+                                                     packageName=get('TRAJECTORIES_PACKAGE_NAME', envir=TRAJECTORIES.CONSTANTS),
                                                      dbms = connection@dbms,
                                                      oracleTempSchema = NULL,
                                                      resultsSchema = trajectoryLocalArgs$resultsSchema,

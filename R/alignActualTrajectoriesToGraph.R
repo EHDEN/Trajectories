@@ -1,3 +1,5 @@
+requireNamespace("igraph", quietly = TRUE)
+
 #' Adds numcohortCustom value to graph edges - actual number of people (out of all people who have EVENTNAME) on that edge
 #'
 #' @param g An igrpah object that is created by specific graph functions in this package
@@ -29,16 +31,16 @@ alignActualTrajectoriesToGraph <- function(connection,
   if(is.na(limit)) limit=0
 
   #check that eventname is present in g
-  if(!eventname %in% V(g)$name) {
+  if(!eventname %in% igraph::V(g)$name) {
     logger::log_warn(paste0('Cannot align trajectories through {eventname} as the graph does not contain any links with that event. Return unaligned graph.'))
     return(g)
   }
 
-  eventid=V(g)[V(g)$name==eventname]$concept_id
+  eventid=igraph::V(g)[igraph::V(g)$name==eventname]$concept_id
 
   #First, put event pairs of the graph into table
 
-  logger::log_info(paste0('Putting ',length(E(g)),' event pairs of the graph into database to align to: {eventname}...'))
+  logger::log_info(paste0('Putting ',length(igraph::E(g)),' event pairs of the graph into database to align to: {eventname}...'))
 
   e<-igraph::as_data_frame(g,what="edges")
   edges<- e %>% select(e1_concept_id,e2_concept_id)
@@ -52,7 +54,7 @@ alignActualTrajectoriesToGraph <- function(connection,
 
   #Create empty table manually
   RenderedSql <- Trajectories::loadRenderTranslateSql("create_mylinks_table.sql",
-                                                   packageName=trajectoryAnalysisArgs$packageName,
+                                                  packageName=get('TRAJECTORIES_PACKAGE_NAME', envir=TRAJECTORIES.CONSTANTS),
                                                    dbms=attr(connection, "dbms"),
                                                    resultsSchema =  trajectoryLocalArgs$resultsSchema,
                                                    prefiX = trajectoryLocalArgs$prefixForResultTableNames
@@ -65,12 +67,12 @@ alignActualTrajectoriesToGraph <- function(connection,
                      tablename,
                      " (e1_concept_id, e2_concept_id) VALUES ",
                      paste(paste0("(",paste(
-
                        #edges$e1_concept_id,
-                       if(is.character(edges$e1_concept_id)) {paste0("'",edges$e1_concept_id,"'")} else {edges$e1_concept_id}, #this hocus-pocus is just for handling character-based CONCEP_ID-s. This normally does not happen, but in case someone is tricking a bit and tries to use source_values for tha analysis, then here we want to make sure that the code does not break
+                       #if(is.character(edges$e1_concept_id)) {paste0("'",edges$e1_concept_id,"'")} else {edges$e1_concept_id}, #this hocus-pocus is just for handling character-based CONCEP_ID-s. This normally does not happen, but in case someone is tricking a bit and tries to use source_values for tha analysis, then here we want to make sure that the code does not break
+                       DBI::dbQuoteString(connection, edges %>% mutate(e1_concept_id=if_else(is.na(e1_concept_id),'NULL',as.character(e1_concept_id))) %>% pull(e1_concept_id)  ),
                        #edges$e2_concept_id,
-                       if(is.character(edges$e2_concept_id)) {paste0("'",edges$e2_concept_id,"'")} else {edges$e2_concept_id},
-
+                       #if(is.character(edges$e2_concept_id)) {paste0("'",edges$e2_concept_id,"'")} else {edges$e2_concept_id},
+                       DBI::dbQuoteString(connection, edges %>% mutate(e2_concept_id=if_else(is.na(e2_concept_id),'NULL',as.character(e2_concept_id))) %>% pull(e2_concept_id)  ),
                        sep=","),")") , collapse=","),
                      ";",
                      sep = "")
@@ -111,7 +113,7 @@ alignActualTrajectoriesToGraph <- function(connection,
   #Takes all trajectories that pass any event of that graph. Leaves out intermediate events that are not given in the graph.
   logger::log_info('Extracting actual sequences of these events from database...')
   RenderedSql <- Trajectories::loadRenderTranslateSql("map_actual_trajs_to_graph2.sql",
-                                                   packageName=trajectoryAnalysisArgs$packageName,
+                                                  packageName=get('TRAJECTORIES_PACKAGE_NAME', envir=TRAJECTORIES.CONSTANTS),
                                                    dbms=attr(connection, "dbms"),
                                                    resultsSchema =  trajectoryLocalArgs$resultsSchema,
                                                    prefiX = trajectoryLocalArgs$prefixForResultTableNames,
@@ -125,7 +127,7 @@ alignActualTrajectoriesToGraph <- function(connection,
   logger::log_info('Reading cohort-ids of these sequences...')
 
   RenderedSql <- Trajectories::loadRenderTranslateSql("get_actual_trajs_to_graph_persons.sql",
-                                                   packageName=trajectoryAnalysisArgs$packageName,
+                                                   packageName=get('TRAJECTORIES_PACKAGE_NAME', envir=TRAJECTORIES.CONSTANTS),
                                                    dbms=attr(connection, "dbms"),
                                                    resultsSchema =  trajectoryLocalArgs$resultsSchema,
                                                    prefiX = trajectoryLocalArgs$prefixForResultTableNames
@@ -149,8 +151,8 @@ alignActualTrajectoriesToGraph <- function(connection,
 
 
   #clear all numcohortCustom values
-  E(g)$alignedTrajsCount<-0
-  V(g)$alignedTrajsCount<-0
+  igraph::E(g)$alignedTrajsCount<-0
+  igraph::V(g)$alignedTrajsCount<-0
 
   #Create a list of concept names (for faster search later)
   Node.names<-igraph::as_data_frame(g, what="vertices") %>% select(concept_id,name)
@@ -167,7 +169,7 @@ alignActualTrajectoriesToGraph <- function(connection,
     logger::log_info(paste0('Aligning ',length(chunk),' event-periods to the graph (',i,'/',length(chunks),')...'))
 
     RenderedSql <- Trajectories::loadRenderTranslateSql("get_actual_trajs_to_graph2.sql",
-                                                     packageName=trajectoryAnalysisArgs$packageName,
+                                                        packageName=get('TRAJECTORIES_PACKAGE_NAME', envir=TRAJECTORIES.CONSTANTS),
                                                      dbms=attr(connection, "dbms"),
                                                      resultsSchema =  trajectoryLocalArgs$resultsSchema,
                                                      prefiX = trajectoryLocalArgs$prefixForResultTableNames,
@@ -213,10 +215,10 @@ alignActualTrajectoriesToGraph <- function(connection,
           (r$cohort_day_relative_to_indexevent<0 & r$E2_CONCEPT_ID %in% visitednodes)
         ) {
           #check that the edge exists in our graph
-          eid<-which(E(g)$e1_concept_id==r$E1_CONCEPT_ID & E(g)$e2_concept_id==r$E2_CONCEPT_ID)
+          eid<-which(igraph::E(g)$e1_concept_id==r$E1_CONCEPT_ID & igraph::E(g)$e2_concept_id==r$E2_CONCEPT_ID)
           if(length(eid)==1) {
             #yes, it exists. Add +1 to edge count
-            E(g)[eid]$alignedTrajsCount<-E(g)[eid]$alignedTrajsCount+1
+            igraph::E(g)[eid]$alignedTrajsCount<-igraph::E(g)[eid]$alignedTrajsCount+1
             # Also +1 to the node
             if(r$cohort_day_relative_to_indexevent>=0) {
               # and also add to visitednode
@@ -226,22 +228,22 @@ alignActualTrajectoriesToGraph <- function(connection,
               visitednodes<-c(visitednodes,r$E1_CONCEPT_ID)
             }
 
-            logger::log_debug(paste0('Added ',r$E1_CONCEPT_ID,':',V(g)[V(g)$concept_id==r$E1_CONCEPT_ID]$name,'->',r$E2_CONCEPT_ID,':',V(g)[V(g)$concept_id==r$E2_CONCEPT_ID]$name,' (eventperiod ',cohort_id,') to graph (current count of edge: ',E(g)[eid]$alignedTrajsCount,')'))
+            logger::log_debug(paste0('Added ',r$E1_CONCEPT_ID,':',igraph::V(g)[igraph::V(g)$concept_id==r$E1_CONCEPT_ID]$name,'->',r$E2_CONCEPT_ID,':',igraph::V(g)[igraph::V(g)$concept_id==r$E2_CONCEPT_ID]$name,' (eventperiod ',cohort_id,') to graph (current count of edge: ',igraph::E(g)[eid]$alignedTrajsCount,')'))
           } else {
-            logger::log_debug(paste0('Cannot add ',r$E1_CONCEPT_ID,':',V(g)[V(g)$concept_id==r$E1_CONCEPT_ID]$name,'->',r$E2_CONCEPT_ID,':',V(g)[V(g)$concept_id==r$E2_CONCEPT_ID]$name,' (eventperiod ',cohort_id,') as this edge is not part of the graph'))
+            logger::log_debug(paste0('Cannot add ',r$E1_CONCEPT_ID,':',igraph::V(g)[igraph::V(g)$concept_id==r$E1_CONCEPT_ID]$name,'->',r$E2_CONCEPT_ID,':',igraph::V(g)[igraph::V(g)$concept_id==r$E2_CONCEPT_ID]$name,' (eventperiod ',cohort_id,') as this edge is not part of the graph'))
           }
         } else {
-          logger::log_debug(paste0('Cannot add ',r$E1_CONCEPT_ID,':',V(g)[V(g)$concept_id==r$E1_CONCEPT_ID]$name,'->',r$E2_CONCEPT_ID,':',V(g)[V(g)$concept_id==r$E2_CONCEPT_ID]$name,' as ',r$E1_CONCEPT_ID,' is not in visitednodes of eventperiod ',cohort_id))
+          logger::log_debug(paste0('Cannot add ',r$E1_CONCEPT_ID,':',igraph::V(g)[igraph::V(g)$concept_id==r$E1_CONCEPT_ID]$name,'->',r$E2_CONCEPT_ID,':',igraph::V(g)[igraph::V(g)$concept_id==r$E2_CONCEPT_ID]$name,' as ',r$E1_CONCEPT_ID,' is not in visitednodes of eventperiod ',cohort_id))
         }
 
       } #for j
       # add +1 to all visited nodes
-      if(length(visitednodes)>0) V(g)[V(g)$concept_id %in% visitednodes]$alignedTrajsCount<- V(g)[V(g)$concept_id %in% visitednodes]$alignedTrajsCount+1
+      if(length(visitednodes)>0) igraph::V(g)[igraph::V(g)$concept_id %in% visitednodes]$alignedTrajsCount<- igraph::V(g)[igraph::V(g)$concept_id %in% visitednodes]$alignedTrajsCount+1
 
 
 
 
-      logger::log_debug(paste0('alignedTrajsCount of {eventname} after eventperiod ',cohort_id,': ',V(g)[V(g)$name==eventname]$alignedTrajsCount))
+      logger::log_debug(paste0('alignedTrajsCount of {eventname} after eventperiod ',cohort_id,': ',igraph::V(g)[igraph::V(g)$name==eventname]$alignedTrajsCount))
       #visitednodes.str<-paste0(c(visitednodes.names$node),collapse="\t")
       #l<-length(visitednodes)
       #logger::log_info("{i}:{cohort_id}:len={l}: {visitednodes.str}")
@@ -271,7 +273,7 @@ alignActualTrajectoriesToGraph <- function(connection,
 
   } #for i
 
-  E(g)$alignedTrajsProb=E(g)$alignedTrajsCount/V(g)[V(g)$concept_id==eventid]$count
+  igraph::E(g)$alignedTrajsProb=igraph::E(g)$alignedTrajsCount/igraph::V(g)[igraph::V(g)$concept_id==eventid]$count
 
 
   INTERPRETER[['number_of_single_node_trajs']]=number_of_single_node_trajs
@@ -396,8 +398,8 @@ alignActualTrajectoriesToGraph <- function(connection,
   if(!is.na(filename_interpretation)) {
     logger::log_info(' Step 4: Saving graph interpretation to file: {filename_interpretation}...')
     #most frequent event pair
-    most_frequent_edge<-E(g)[which(E(g)$alignedTrajsCount==max(E(g)$alignedTrajsCount))][1] # [1] here to take the first in case there are several equally frequent edges
-    msg=paste0("For example, ",most_frequent_edge$alignedTrajsCount," event-periods (",round(most_frequent_edge$alignedTrajsProb*100,1),"%) have '",V(g)[V(g)$concept_id==most_frequent_edge$e2_concept_id]$name,"' right after '",V(g)[V(g)$concept_id==most_frequent_edge$e1_concept_id]$name,"'")
+    most_frequent_edge<-igraph::E(g)[which(igraph::E(g)$alignedTrajsCount==max(igraph::E(g)$alignedTrajsCount))][1] # [1] here to take the first in case there are several equally frequent edges
+    msg=paste0("For example, ",most_frequent_edge$alignedTrajsCount," event-periods (",round(most_frequent_edge$alignedTrajsProb*100,1),"%) have '",igraph::V(g)[igraph::V(g)$concept_id==most_frequent_edge$e2_concept_id]$name,"' right after '",igraph::V(g)[igraph::V(g)$concept_id==most_frequent_edge$e1_concept_id]$name,"'")
     INTERPRETER.MSG=c(INTERPRETER.MSG,msg)
 
     #Save graph interpretation to file

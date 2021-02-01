@@ -39,7 +39,7 @@ PlotTrajectoriesGraphForEvents<-function(connection,
 
   if(is.na(eventIds[1])) {
     logger::log_info('Going to plot graphs for 5 most-prevalent events...')
-    eventIds<-Trajectories::getTop5Events(g)$concept_id
+    eventIds<-getTop5Events(g)$concept_id
   } else {
     logger::log_info('Going to plot graphs for {length(eventIds)} selected events...')
   }
@@ -50,14 +50,14 @@ PlotTrajectoriesGraphForEvents<-function(connection,
     logger::log_info(paste0('Building graph for the folloing event id: {eventId}'))
 
     #check that event id is present in g
-    if(eventId %in% V(g)$concept_id) {
-      Trajectories::PlotTrajectoriesGraphForEvent(connection,
-                                                  trajectoryAnalysisArgs,
-                                                  trajectoryLocalArgs,
-                                                  g=g,
-                                                  eventId=eventId,
-                                                  limitOfNodes=30,
-                                                  skipOutputTables=skipOutputTables)
+    if(eventId %in% igraph::V(g)$concept_id) {
+      PlotTrajectoriesGraphForEvent(connection,
+                                    trajectoryAnalysisArgs,
+                                    trajectoryLocalArgs,
+                                    g=g,
+                                    eventId=eventId,
+                                    limitOfNodes=30,
+                                    skipOutputTables=skipOutputTables)
 
     } else {
       logger::log_warn('Cannot plot trajectories through {eventId} as there is no such event in the graph (skipping).')

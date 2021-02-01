@@ -1,6 +1,3 @@
-library(SqlRender)
-library(DatabaseConnector)
-
 #####
 
 #' Function to fill the cohort table.
@@ -9,7 +6,6 @@ library(DatabaseConnector)
 #' @param connection DatabaseConnectorConnection object that is used to connect with database
 #'
 #' @return
-#' @export
 #'
 #' @examples
 fillCohortTable<-function(connection,

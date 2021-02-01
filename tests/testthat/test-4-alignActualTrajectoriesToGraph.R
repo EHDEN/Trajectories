@@ -29,7 +29,6 @@ test_that("Test alignments to graph", {
                                                                        addBirths=F,
                                                                        addDeaths=F,
                                                                        daysBeforeIndexDate=Inf,
-                                                                       packageName='Trajectories',
                                                                        cohortName="test",
                                                                        RRrangeToSkip=c(0,1))
 
@@ -44,20 +43,16 @@ test_that("Test alignments to graph", {
   removeTestableOutputFiles(trajectoryLocalArgs,trajectoryAnalysisArgs)
   removeTrajectoryFile(trajectoryLocalArgs,trajectoryAnalysisArgs,concept_id=317009,concept_name='Asthma')
 
-  #Create cohort table
-  Trajectories::createCohortTable(connection=connection,
-                                trajectoryAnalysisArgs,
-                                trajectoryLocalArgs)
-
-  # Fill cohort table with example cohort data
-  Trajectories::fillCohortTable(connection=connection,
-                                trajectoryAnalysisArgs,
-                                trajectoryLocalArgs)
+  # Create new cohort table for this package to results schema & fill it in (all having cohort_id=1 in cohort data)
+  Trajectories::createAndFillCohortTable(connection=connection,
+                                         trajectoryAnalysisArgs=trajectoryAnalysisArgs,
+                                         trajectoryLocalArgs=trajectoryLocalArgs)
 
   # Create database tables of all event pairs (patient level data + summary statistics)
   Trajectories::createEventPairsTable(connection=connection,
                                       trajectoryAnalysisArgs=trajectoryAnalysisArgs,
                                       trajectoryLocalArgs=trajectoryLocalArgs)
+
   Trajectories::runDiscoveryAnalysis(connection=connection,
                                      trajectoryAnalysisArgs=trajectoryAnalysisArgs,
                                      trajectoryLocalArgs=trajectoryLocalArgs)
