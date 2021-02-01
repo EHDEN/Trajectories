@@ -1,5 +1,5 @@
 SELECT
   *
-FROM @resultsSchema.@prefixE1E2_model
+FROM @resultsSchema.@prefiXE1E2_model
 
 ORDER BY RR DESC;

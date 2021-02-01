@@ -13,6 +13,7 @@
 #' @param addBirths TRUE/FALSE parameter to indicate whether births events should be included in the analysis.
 #' @param addDeaths TRUE/FALSE parameter to indicate whether events from Death table should be included in the analysis.
 #' @param daysBeforeIndexDate 0 or any positive number that indicates for how many days before index date of the cohort the events are included in the analysis. In case one wants to include all events before index date, use value Inf
+#' @param RRrangeToSkip": Range of relative risks (RR) that are skipped from the analysis. The minimum value for the range is 0. E.g RRrangeToSkip=c(0,1) searches for RR>1 only (event pairs where the first event increases the risk of the second event). To skip RR with very small effect, it is recommended to use RRrangeToSkip=c(0,1.1) or even RRrangeToSkip=c(0,1.2) in DISCOVERY mode. In case one is interested in pairs with decreasing risk also, it is recommended to use the range something like RRrangeToSkip=c(0.8,1.2) (analyse all pairs that have RR<0.8 or R>=1.2). If you don't want to skip anything, use RRrangeToSkip=c(1,1) (analyses all pairs that have RR<1 or RR>=1 - that means, all pairs)
 #' @param packageName Do not use/edit, this is required by SqlRender::loadRenderTranslateSql
 #' @param cohortName Reader-friendly short description of the cohort. Used in graph titles and file names (can contain spaces)
 #' @param description This is a placeholder for any description of the study/cohort/analysis. For instance, it would be wise to descibe here what kind of cohort is that and what the analysis does.
@@ -34,6 +35,7 @@ createTrajectoryAnalysisArgs <- function(mode='DISCOVERY',
                                          addBirths=F,
                                          addDeaths=T,
                                          daysBeforeIndexDate=Inf,
+                                         RRrangeToSkip=c(0,1.2),
                                          packageName = 'Trajectories',
                                          cohortName = 'My sample cohort',
                                          description = '',
@@ -52,10 +54,17 @@ createTrajectoryAnalysisArgs <- function(mode='DISCOVERY',
     }
   }
 
+  if(RRrangeToSkip[2]<RRrangeToSkip[1]) {
+    logger::log_error(paste0("Error in RRrangeToSkip=c(",RRrangeToSkip[1],",",RRrangeToSkip[2],") value: the start value of the range ('",RRrangeToSkip[1],"') can't be larger than the end value ('",RRrangeToSkip[2],"'). Check your analysis parameters."))
+    stop()
+  }
+
   value <- list(mode=mode,minimumDaysBetweenEvents=minimumDaysBetweenEvents,maximumDaysBetweenEvents=maximumDaysBetweenEvents, minPatientsPerEventPair=minPatientsPerEventPair,
                 addConditions=addConditions,addObservations=addObservations,addProcedures=addProcedures,addDrugExposures=addDrugExposures,
                 addDrugEras=addDrugEras,addBirths=addBirths,addDeaths=addDeaths,
-                daysBeforeIndexDate=daysBeforeIndexDate,packageName=packageName,cohortName=cohortName,description=description,eventIdsForGraphs=eventIdsForGraphs)
+                daysBeforeIndexDate=daysBeforeIndexDate,
+                RRrangeToSkip=RRrangeToSkip,
+                packageName=packageName,cohortName=cohortName,description=description,eventIdsForGraphs=eventIdsForGraphs)
   class(value) <- 'TrajectoryAnalysisArgs'
   return(value)
 
@@ -153,7 +162,7 @@ TrajectoryAnalysisArgsToJson<-function(trajectoryAnalysisArgs, filepath) {
   if(!Trajectories::is.TrajectoryAnalysisArgs(trajectoryAnalysisArgs)) stop("Something is not right. 'trajectoryAnalysisArgs' is not an object from class 'TrajectoryAnalysisArgs'")
 
   library(jsonlite)
-  json<-toJSON(trajectoryAnalysisArgs, force=T, pretty=T)
+  json<-jsonlite::toJSON(trajectoryAnalysisArgs, force=T, pretty=T)
 
   fileConn<-file(filepath)
   writeLines(json, fileConn)
@@ -190,6 +199,7 @@ TrajectoryAnalysisArgsFromJson<-function(filepath) {
     addBirths=F,
     addDeaths=T,
     daysBeforeIndexDate=Inf,
+    RRrangeToSkip=c(0,1.2),
     packageName = 'Trajectories',
     cohortName = 'My sample cohort',
     description = '',
@@ -219,6 +229,7 @@ TrajectoryAnalysisArgsFromJson<-function(filepath) {
                                addBirths=vals_for_obj[['addBirths']],
                                addDeaths=vals_for_obj[['addDeaths']],
                                daysBeforeIndexDate=vals_for_obj[['daysBeforeIndexDate']],
+                               RRrangeToSkip=vals_for_obj[['RRrangeToSkip']],
                                packageName=vals_for_obj[['packageName']],
                                cohortName=vals_for_obj[['cohortName']],
                                description=vals_for_obj[['description']],

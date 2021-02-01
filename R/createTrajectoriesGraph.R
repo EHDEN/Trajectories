@@ -9,13 +9,12 @@
 #' e1 (name), e1_concept_id, e2 (name), e2_concept_id, e1_count, effect, prob, numcohortExact. numcohortExact is a number of event periods that had E1->E2 as immediate order (no intermediate events).
 #'
 #' @param eventPairResultsFilename Full path to event pairs file
-#' @param minRelativeRisk Minimum threshold for relative risk of an event pair. Used to filter out event pairs with small relative risk.
 #'
 #' @return
 #' @export
 #'
 #' @examples
-createTrajectoriesGraph<-function(eventPairResultsFilename, minRelativeRisk=1.2) {
+createTrajectoriesGraph<-function(eventPairResultsFilename) {
 
   logger::log_info('Creating TrajectoriesGraph object based on event pairs data from the following file: {eventPairResultsFilename}...')
 
@@ -26,9 +25,9 @@ createTrajectoriesGraph<-function(eventPairResultsFilename, minRelativeRisk=1.2)
   e$RR<-as.numeric(e$RR)
   #e$AVG_NUMBER_OF_DAYS_BETWEEN_E1_AND_E2<-as.numeric(e$AVG_NUMBER_OF_DAYS_BETWEEN_E1_AND_E2)
 
-  #apply minimum RR threshold
-  e <- e %>% filter(RR > minRelativeRisk)
-  logger::log_info('Applying relative risk filter: only pairs having relative risk >= {minRelativeRisk} are used for building the trajectories graph.')
+  #apply minimum RR threshold (there is no sense to draw graphs for decreasing risks - hard to interpret)
+  e <- e %>% filter(RR > 1)
+  logger::log_info('Applying relative risk filter: only pairs having relative risk > 1 are used for building the trajectories graph.')
 
   # calculate max event count for scaling
   max_event_count<-max(e$E1_COUNT_IN_EVENTS,e$E2_COUNT_IN_EVENTS)
@@ -37,12 +36,14 @@ createTrajectoriesGraph<-function(eventPairResultsFilename, minRelativeRisk=1.2)
   COLORS=list(Condition='#F1948A', #red
               Observation='#85C1E9', #blue
               Procedure='#ccc502',#yellow
-              Drug='#8fba75') #green
+              Drug='#8fba75', #green
+              Unknown='#bbbbbb') #gray
               #Drug='#ABEBC6') #green
   LABELCOLORS=list(Condition='#7B241C',
                    Observation='#21618C',
                    Procedure='#7D6608',
-                   Drug='#145A32')
+                   Drug='#145A32', #green
+                   Unknown='#666666')
 
   # BUILD A GRAPH!
   # create empty graph
@@ -57,8 +58,8 @@ createTrajectoriesGraph<-function(eventPairResultsFilename, minRelativeRisk=1.2)
                                                 concept_id=e[i,'E1_CONCEPT_ID'],
                                                 count=e[i,'E1_COUNT_IN_EVENTS'],
                                                 #size=e[i,'E1_COUNT']/max_event_count,
-                                                color=COLORS[[e[i,'E1_DOMAIN']]],
-                                                labelcolor=LABELCOLORS[[e[i,'E1_DOMAIN']]]
+                                                color=if(is.na(e[i,'E1_DOMAIN']) | !e[i,'E1_DOMAIN'] %in% names(COLORS)) {COLORS[['Unknown']]} else {COLORS[[e[i,'E1_DOMAIN']]]},
+                                                labelcolor=if(is.na(e[i,'E1_DOMAIN']) | !e[i,'E1_DOMAIN'] %in% names(LABELCOLORS)) {LABELCOLORS[['Unknown']]} else {LABELCOLORS[[e[i,'E1_DOMAIN']]]}
                                                 #, age=AGES[AGES$event==e1,'AGE_FOR_GRAPH']
                                                 )
       }
@@ -66,8 +67,8 @@ createTrajectoriesGraph<-function(eventPairResultsFilename, minRelativeRisk=1.2)
                                                 concept_id=e[i,'E2_CONCEPT_ID'],
                                                 count=e[i,'E2_COUNT_IN_EVENTS'],
                                                 #size=e[i,'E2_COUNT']/max_event_count,
-                                                color=COLORS[[e[i,'E2_DOMAIN']]],
-                                                labelcolor=LABELCOLORS[[e[i,'E2_DOMAIN']]]
+                                                color=if(is.na(e[i,'E2_DOMAIN']) | !e[i,'E2_DOMAIN'] %in% names(COLORS)) {COLORS[['Unknown']]} else {COLORS[[e[i,'E2_DOMAIN']]]},
+                                                labelcolor=if(is.na(e[i,'E2_DOMAIN']) | !e[i,'E2_DOMAIN'] %in% names(LABELCOLORS)) {LABELCOLORS[['Unknown']]} else {LABELCOLORS[[e[i,'E2_DOMAIN']]]}
                                                 #, age=AGES[AGES$event==e2,'AGE_FOR_GRAPH']
                                                 )
       }

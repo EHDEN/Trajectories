@@ -17,13 +17,17 @@ library(logger)
 runValidationAnalysis<-function(connection,
                                trajectoryAnalysisArgs,
                                trajectoryLocalArgs,
-                               forceRecalculation=F,
-                               minRelativeRiskToValidate=1.1) {
+                               forceRecalculation=F) {
 
   logger::log_info("Begin the analysis of validation given directional event pairs...")
 
   #Set SQL role of the database session
   Trajectories::setRole(connection, trajectoryLocalArgs$sqlRole)
+
+  #clear previous results
+  if(forceRecalculation==T) Trajectories:::clearOldResultsFromDb(connection,
+                                                                 trajectoryAnalysisArgs,
+                                                                 trajectoryLocalArgs)
 
   #Get pairs
   pairs=Trajectories:::getAllPairs(connection,
@@ -32,9 +36,20 @@ runValidationAnalysis<-function(connection,
 
   logger::log_info("Number of event pairs to validate: {nrow(pairs)}")
 
-  #get pairs that are having RR_IN_PREVIOUS_STUDY > minRelativeRiskToValidate
-  pairs <- pairs %>% filter(RR_IN_PREVIOUS_STUDY > minRelativeRiskToValidate)
-  logger::log_info("Number of event pairs having RR_IN_PREVIOUS_STUDY > {minRelativeRiskToValidate}: {nrow(pairs)}")
+  #get pairs that are having RR_IN_PREVIOUS_STUDY outside the range of trajectoryAnalysisArgs$RRrangeToSkip
+  pairs <- pairs %>% filter(RR_IN_PREVIOUS_STUDY < trajectoryAnalysisArgs$RRrangeToSkip[1] | RR_IN_PREVIOUS_STUDY >= trajectoryAnalysisArgs$RRrangeToSkip[2])
+  logger::log_info("Number of event pairs having RR_IN_PREVIOUS_STUDY outside the range [{trajectoryAnalysisArgs$RRrangeToSkip[1]},{trajectoryAnalysisArgs$RRrangeToSkip[2]}): {nrow(pairs)}")
+
+  #get pairs that have E1_COUNT_IN_EVENTS=0 or E2_COUNT_IN_EVENTS=0
+  num.zerocount.events <- nrow(pairs %>% filter(E1_COUNT_IN_EVENTS == 0 | E2_COUNT_IN_EVENTS == 0))
+  pairs <- pairs %>% filter(E1_COUNT_IN_EVENTS > 0 & E2_COUNT_IN_EVENTS > 0)
+  logger::log_info("From those, the number of event pairs where at least one event never occurs in our data: {num.zerocount.events}")
+
+  #get pairs that have E1_BEFORE_E2_COUNT_IN_EVENTS>0
+  num.zerocount.pairs <- nrow(pairs %>% filter(E1_BEFORE_E2_COUNT_IN_EVENTS==0))
+  pairs <- pairs %>% filter(E1_BEFORE_E2_COUNT_IN_EVENTS > 0)
+  logger::log_info("From the remaining pairs, the number of event pairs that never happen in E1->E2 order in our data (even if such sequences exist, these do not satisfy the analysis requirements for the pairs): {num.zerocount.pairs}")
+
 
   #Calculate Bonferroni-corrected power for these pairs
   logger::log_info("Calculate Bonferroni-corrected power for these pairs (also calculates RR)...")
@@ -48,13 +63,13 @@ runValidationAnalysis<-function(connection,
   )
 
   #get pairs having RR_IN_PREVIOUS_STUDY > minRelativeRiskToValidate AND sufficient power
-  pairs.with.power <- nrow(pairs %>% filter(RR_IN_PREVIOUS_STUDY > minRelativeRiskToValidate) %>% filter(RR_POWER>0.8))
-  logger::log_info("Number of event pairs having RR_IN_PREVIOUS_STUDY > {minRelativeRiskToValidate} and >80% power for detecting RR as large as in previous study: {pairs.with.power}")
-  logger::log_info("(that was just for the information, lacking power does not throw them out from RR testing)")
+  pairs.with.power <- nrow(pairs %>% filter(RR_IN_PREVIOUS_STUDY < trajectoryAnalysisArgs$RRrangeToSkip[1] | RR_IN_PREVIOUS_STUDY >= trajectoryAnalysisArgs$RRrangeToSkip[2]) %>% filter(E1_BEFORE_E2_COUNT_IN_EVENTS>0) %>% filter(RR_POWER>0.8))
+  logger::log_info("Number of event pairs having RR outside of range [{trajectoryAnalysisArgs$RRrangeToSkip[1]},{trajectoryAnalysisArgs$RRrangeToSkip[2]}), nonzero count, and >80% power for detecting RR as large as in previous study: {pairs.with.power}")
+  logger::log_info("(that was just for the information, lack of power does not throw them out from RR testing)")
 
   #RR tests
-  pairs<-pairs %>% filter(RR_IN_PREVIOUS_STUDY > minRelativeRiskToValidate)
-  logger::log_info("Running significance tests for RR values (to eliminate such event pairs from the directionality analysis where relative risk is too close to 1)...")
+  pairs<-pairs %>% filter(RR_IN_PREVIOUS_STUDY < trajectoryAnalysisArgs$RRrangeToSkip[1] | RR_IN_PREVIOUS_STUDY >= trajectoryAnalysisArgs$RRrangeToSkip[2])  %>% filter(E1_BEFORE_E2_COUNT_IN_EVENTS>0)
+  logger::log_info("Running {nrow(pairs)} significance tests for RR values (to eliminate such event pairs from the directionality analysis where relative risk is too close to 1)...")
   pairs<-Trajectories:::runRRTests(connection,
                                    trajectoryAnalysisArgs,
                                    trajectoryLocalArgs,
@@ -64,6 +79,11 @@ runValidationAnalysis<-function(connection,
   #get pairs having significant RR
   pairs <- pairs %>% filter(!is.na(RR_SIGNIFICANT) & RR_SIGNIFICANT=='*')
   logger::log_info("Number of event pairs having significant RR: {nrow(pairs)}")
+
+  #get pairs having significant RR but having the oppisite RR direction
+  pairs.with.opposite.rr <- nrow(pairs %>% filter(!is.na(RR_SIGNIFICANT) & RR_SIGNIFICANT=='*' & sign(1-RR_IN_PREVIOUS_STUDY)!=sign(1-RR)))
+  pairs <- pairs %>% filter(!is.na(RR_SIGNIFICANT) & RR_SIGNIFICANT=='*' & sign(1-RR_IN_PREVIOUS_STUDY)==sign(1-RR))
+  logger::log_info("Number of event pairs having significant RR but the direction of RR is different from discovery study: {pairs.with.opposite.rr} (these will be skipped from the remaining of the analysis)")
 
 
   #Run directionality test for pairs having significant RR (also calculates power)
@@ -77,7 +97,7 @@ runValidationAnalysis<-function(connection,
 
 
   #Add labels
-  pairs<-Trajectories:::annotateValidationResults(pairs,verbose=T)
+  pairs<-Trajectories:::annotateValidationResults(pairs,trajectoryAnalysisArgs=trajectoryAnalysisArgs,verbose=T)
 
   #write results to file
   outputFolder<-Trajectories::GetOutputFolder(trajectoryLocalArgs,trajectoryAnalysisArgs)
@@ -131,9 +151,11 @@ runDiscoveryAnalysis<-function(connection,
                                 forceRecalculation = forceRecalculation
                               )
 
-  #get Pairs that are having R>1.2 or R<0.8 and sufficient power for detecting RR=10
-  pairs <- pairs %>% filter((RR > 1.2 | RR < 0.8) & RR_POWER>0.8)
-  logger::log_info("Number of event pairs having (RR>1.2 or RR<0.8) and sufficient power to detect RR=10: {nrow(pairs)}")
+  #get Pairs that are having R ourside of range RRrangeToSkip and sufficient power for detecting RR=10
+  pairs <- pairs %>% filter((RR < trajectoryAnalysisArgs$RRrangeToSkip[1] | RR >= trajectoryAnalysisArgs$RRrangeToSkip[2]))
+  logger::log_info("Number of event pairs having RR outside of range [{trajectoryAnalysisArgs$RRrangeToSkip[1]},{trajectoryAnalysisArgs$RRrangeToSkip[2]}): {nrow(pairs)}")
+  pairs <- pairs %>% filter(RR_POWER>0.8)
+  logger::log_info("Number of event pairs having RR outside of range [{trajectoryAnalysisArgs$RRrangeToSkip[1]},{trajectoryAnalysisArgs$RRrangeToSkip[2]}) and sufficient power to detect RR=10: {nrow(pairs)}")
   logger::log_info("Difference of RR from 1.0 of these pairs will be tested.")
 
   #RR tests
@@ -157,12 +179,12 @@ runDiscoveryAnalysis<-function(connection,
                                    forceRecalculation = forceRecalculation)
 
   #Add labels
-  pairs<-Trajectories:::annotateDiscoveryResults(pairs,verbose=T)
+  pairs<-Trajectories:::annotateDiscoveryResults(pairs,trajectoryAnalysisArgs=trajectoryAnalysisArgs,verbose=T)
 
   #write results to file
   outputFolder<-Trajectories::GetOutputFolder(trajectoryLocalArgs,trajectoryAnalysisArgs)
   allResultsFilenameTsv = file.path(outputFolder,'event_pairs_tested.tsv')
-  write.table(pairs, file=allResultsFilename, quote=FALSE, sep='\t', col.names = NA)
+  write.table(pairs, file=allResultsFilenameTsv, quote=FALSE, sep='\t', col.names = NA)
   allResultsFilenameXsl = file.path(outputFolder,'event_pairs_tested.xlsx')
   library(openxlsx)
   write.xlsx(pairs, allResultsFilenameXsl)
@@ -770,8 +792,8 @@ runDirectionTests<-function(connection,
                                                           packageName=trajectoryAnalysisArgs$packageName,
                                                           dbms=connection@dbms,
                                                           resultsSchema =   trajectoryLocalArgs$resultsSchema,
-                                                          diag1 = diagnosis1,
-                                                          diag2 = diagnosis2,
+                                                          diag1 = if(is.character(diagnosis1)) {paste0("'",diagnosis1,"'",sep="")} else {diagnosis1}, #if-then hocus-pocus is to handle character-based diagnosis codes when using some non-standard concept codes. Should never happen normally.
+                                                          diag2 = if(is.character(diagnosis2)) {paste0("'",diagnosis2,"'",sep="")} else {diagnosis2},  #if-then hocus-pocus is to handle character-based diagnosis codes when using some non-standard concept codes. Should never happen normally.
                                                           prefix =  trajectoryLocalArgs$prefixForResultTableNames
       )
       DatabaseConnector::executeSql(connection, sql=RenderedSql, progressBar = FALSE, reportOverallTime = FALSE)
@@ -868,26 +890,27 @@ runDirectionTests<-function(connection,
 }
 
 
-annotateDiscoveryResults<-function(pairs,verbose=F) {
+annotateDiscoveryResults<-function(pairs,trajectoryAnalysisArgs,verbose=F) {
 
   pairs$TEXTUAL_RESULT=NA
 
   #pairs[(pairs$E1_COUNT_IN_EVENTS==0 | pairs$E2_COUNT_IN_EVENTS==0),'TEXTUAL_RESULT']<-'Low power (count of any of these events is 0)'
   #pairs[(pairs$E1_BEFORE_E2_COUNT_IN_EVENTS==0),'TEXTUAL_RESULT']<-'Low power (both events occur but never in given order)'
 
-  pairs[is.na(pairs$TEXTUAL_RESULT) & !is.na(pairs$RR) & (pairs$RR>=0.8 & pairs$RR<=1.2),'TEXTUAL_RESULT']<-'Not tested (RR in range 0.8..1.2)'
-  pairs[is.na(pairs$TEXTUAL_RESULT) & !is.na(pairs$RR_POWER) & pairs$RR_POWER<=0.8,'TEXTUAL_RESULT']<-'Not tested (low power for detecting RR=10)'
+  pairs[is.na(pairs$TEXTUAL_RESULT) & !is.na(pairs$RR) & (pairs$RR>=trajectoryAnalysisArgs$RRrangeToSkip[1] & pairs$RR<trajectoryAnalysisArgs$RRrangeToSkip[2]),'TEXTUAL_RESULT']<-paste0('Not tested (RR in skipped range [',trajectoryAnalysisArgs$RRrangeToSkip[1],',',trajectoryAnalysisArgs$RRrangeToSkip[2],')).')
 
-  pairs[is.na(pairs$TEXTUAL_RESULT) & pairs$RR_SIGNIFICANT=='','TEXTUAL_RESULT']<-'RR not significantly different from 1'
+  pairs[is.na(pairs$TEXTUAL_RESULT) & !is.na(pairs$RR_POWER) & pairs$RR_POWER<=0.8,'TEXTUAL_RESULT']<-'Not tested (low power for detecting RR=10).'
+
+  pairs[is.na(pairs$TEXTUAL_RESULT) & pairs$RR_SIGNIFICANT=='','TEXTUAL_RESULT']<-'RR not significantly different from 1.'
 
 
-  pairs[is.na(pairs$TEXTUAL_RESULT) & !is.na(pairs$DIRECTIONAL_SIGNIFICANT) & pairs$DIRECTIONAL_SIGNIFICANT=='' & pairs$DIRECTIONAL_SIGNIFICANT_IF_SAME_DAY_EVENTS_ORDERED=='*','TEXTUAL_RESULT']<-'Despite having significant RR and having enough power for directionality test, there is no significant order between these events. However, if eventperiods where the events happened on the same day, were considered as directional, the pair would be directionally significant.'
-  pairs[is.na(pairs$TEXTUAL_RESULT) & !is.na(pairs$DIRECTIONAL_SIGNIFICANT) & pairs$DIRECTIONAL_SIGNIFICANT=='','TEXTUAL_RESULT']<-'Despite having significant RR and having enough power for directionality test, there is no significant order between these events'
+  pairs[is.na(pairs$TEXTUAL_RESULT) & !is.na(pairs$DIRECTIONAL_SIGNIFICANT) & pairs$DIRECTIONAL_SIGNIFICANT=='' & pairs$DIRECTIONAL_SIGNIFICANT_IF_SAME_DAY_EVENTS_ORDERED=='*','TEXTUAL_RESULT']<-'Despite having significant RR and having enough power for directionality test, there is no significant E1->E2 order. However, if eventperiods where the events happened on the same day, were considered as directional, the pair would be directionally significant.'
+  pairs[is.na(pairs$TEXTUAL_RESULT) & !is.na(pairs$DIRECTIONAL_SIGNIFICANT) & pairs$DIRECTIONAL_SIGNIFICANT=='','TEXTUAL_RESULT']<-'Despite having significant RR and having enough power for directionality test, there is no significant E1->E2 order.'
 
-  pairs[is.na(pairs$TEXTUAL_RESULT) & !is.na(pairs$DIRECTIONAL_SIGNIFICANT) & pairs$DIRECTIONAL_SIGNIFICANT=='*','TEXTUAL_RESULT']<-'SUCCESS: Event pair has significant RR and direction'
+  pairs[is.na(pairs$TEXTUAL_RESULT) & !is.na(pairs$DIRECTIONAL_SIGNIFICANT) & pairs$DIRECTIONAL_SIGNIFICANT=='*','TEXTUAL_RESULT']<-'SUCCESS: Event pair has significant RR and direction.'
 
   #event_pairs[(is.na(event_pairs$TEXTUAL_RESULT) & is.na(event_pairs$DIRECTIONAL_SIGNIFICANT) & event_pairs$POWER_DIRECTION>=0.80),'TEXTUAL_RESULT']<-'Not directional (validation failed despite having enough power)'
-  pairs[is.na(pairs$TEXTUAL_RESULT),'TEXTUAL_RESULT']<-'Other (unkwown situation, not automatically labelled)'
+  pairs[is.na(pairs$TEXTUAL_RESULT),'TEXTUAL_RESULT']<-'Other (unkwown situation, not automatically labelled).'
 
   #show up nicely
   df<-data.frame(res=names(table(pairs$TEXTUAL_RESULT)),
@@ -900,7 +923,7 @@ annotateDiscoveryResults<-function(pairs,verbose=F) {
 }
 
 
-annotateValidationResults<-function(pairs,verbose=F) {
+annotateValidationResults<-function(pairs,trajectoryAnalysisArgs,verbose=F) {
 
   if(any(!is.na(pairs$RR_IN_PREVIOUS_STUDY) & pairs$RR_IN_PREVIOUS_STUDY>0)) {
     pairs$IS_PREVIOUS_RR_IN_OUR_RR_CI<-NA
@@ -912,90 +935,39 @@ annotateValidationResults<-function(pairs,verbose=F) {
 
   pairs$TEXTUAL_RESULT=NA
 
-  pairs[(pairs$E1_COUNT_IN_EVENTS==0 | pairs$E2_COUNT_IN_EVENTS==0),'TEXTUAL_RESULT']<-'Low power (count of any of these events is 0)'
-  pairs[(pairs$E1_BEFORE_E2_COUNT_IN_EVENTS==0),'TEXTUAL_RESULT']<-'Low power (both events occur but never in given order)'
 
-  pairs[is.na(pairs$TEXTUAL_RESULT) & !is.na(pairs$RR) & (pairs$RR<=1.1),'TEXTUAL_RESULT']<-'Not tested (RR in discovery study <=1.1)'
+  pairs[is.na(pairs$TEXTUAL_RESULT) & !is.na(pairs$RR_IN_PREVIOUS_STUDY) & (pairs$RR_IN_PREVIOUS_STUDY>=trajectoryAnalysisArgs$RRrangeToSkip[1] & pairs$RR_IN_PREVIOUS_STUDY<trajectoryAnalysisArgs$RRrangeToSkip[2]),'TEXTUAL_RESULT']<-paste0('1. Not tested (RR in discovery study in range [',trajectoryAnalysisArgs$RRrangeToSkip[1],',',trajectoryAnalysisArgs$RRrangeToSkip[2],')).')
 
-
-  pairs[is.na(pairs$TEXTUAL_RESULT) & pairs$RR_POWER<=0.8 & pairs$RR_SIGNIFICANT=='','TEXTUAL_RESULT']<-'RR not significantly different from 1 (also low power for detecting RR as small as in discovery study)'
-  pairs[is.na(pairs$TEXTUAL_RESULT) & pairs$RR_SIGNIFICANT=='','TEXTUAL_RESULT']<-'RR not significantly different from 1 (despite having enough power for detecting RR as small as in discovery study)'
+  pairs[(pairs$E1_COUNT_IN_EVENTS==0 | pairs$E2_COUNT_IN_EVENTS==0),'TEXTUAL_RESULT']<-'2. Low power (count of any of these events is 0).'
+  pairs[(pairs$E1_BEFORE_E2_COUNT_IN_EVENTS==0),'TEXTUAL_RESULT']<-'3. Low power (both events occur but never in given order).'
 
 
-  pairs[is.na(pairs$TEXTUAL_RESULT) & !is.na(pairs$DIRECTIONAL_SIGNIFICANT) & pairs$DIRECTIONAL_SIGNIFICANT=='' & pairs$DIRECTIONAL_SIGNIFICANT_IF_SAME_DAY_EVENTS_ORDERED=='*','TEXTUAL_RESULT']<-'Despite having significant RR, there is no significant order between these events. However, if eventperiods where the events happened on the same day, were considered as directional, the pair would become directionally significant.'
-  pairs[is.na(pairs$TEXTUAL_RESULT) & !is.na(pairs$DIRECTIONAL_SIGNIFICANT) & pairs$DIRECTIONAL_SIGNIFICANT=='' & pairs$DIRECTIONAL_POWER<=0.8,'TEXTUAL_RESULT']<-'Despite having significant RR, there is no significant order between these events (also low power for detecting less than 20% elevated order).'
-  pairs[is.na(pairs$TEXTUAL_RESULT) & !is.na(pairs$DIRECTIONAL_SIGNIFICANT) & pairs$DIRECTIONAL_SIGNIFICANT=='','TEXTUAL_RESULT']<-'Despite having significant RR, there is no significant order between these events (despite having enough power for detecting 20% elevated order).'
+  pairs[is.na(pairs$TEXTUAL_RESULT) & pairs$RR_POWER<=0.8 & pairs$RR_SIGNIFICANT=='','TEXTUAL_RESULT']<-'4a. RR not significantly different from 1 (but low power also for detecting RR as close to 1 as in discovery study).'
+  pairs[is.na(pairs$TEXTUAL_RESULT) & pairs$RR_SIGNIFICANT=='','TEXTUAL_RESULT']<-'4b. Validation failed: RR not significantly different from 1 (despite having enough power for detecting RR as close to 1 as in discovery study).'
+  pairs[is.na(pairs$TEXTUAL_RESULT) & pairs$RR_SIGNIFICANT=='*' & sign(pairs$RR_IN_PREVIOUS_STUDY-1)!=sign(pairs$RR-1),'TEXTUAL_RESULT']<-'4c. Validation failed: Despite having significant RR, its direction is the opposite to discovery study).'
 
-  pairs[is.na(pairs$TEXTUAL_RESULT) & !is.na(pairs$DIRECTIONAL_SIGNIFICANT) & pairs$DIRECTIONAL_SIGNIFICANT=='*' & sign(pairs$RR_IN_PREVIOUS_STUDY-1)!=sign(pairs$RR-1),'TEXTUAL_RESULT']<-'Validation failed (event pair has significant RR and direction but RR has the opposite direction as compared to discovery study)'
-  pairs[is.na(pairs$TEXTUAL_RESULT) & !is.na(pairs$DIRECTIONAL_SIGNIFICANT) & pairs$DIRECTIONAL_SIGNIFICANT=='*','TEXTUAL_RESULT']<-'SUCCESS: Event pair has significant RR and direction'
+
+  pairs[is.na(pairs$TEXTUAL_RESULT) & !is.na(pairs$DIRECTIONAL_SIGNIFICANT) & pairs$DIRECTIONAL_SIGNIFICANT=='' & pairs$DIRECTIONAL_SIGNIFICANT_IF_SAME_DAY_EVENTS_ORDERED=='*','TEXTUAL_RESULT']<-'5a. Validation failed: Despite having significant RR, there is no significant E1->E2 order. However, if eventperiods where the events happened on the same day, were considered as ordered, the pair would become directionally significant.'
+  pairs[is.na(pairs$TEXTUAL_RESULT) & !is.na(pairs$DIRECTIONAL_SIGNIFICANT) & pairs$DIRECTIONAL_SIGNIFICANT=='' & pairs$DIRECTIONAL_POWER<=0.8,'TEXTUAL_RESULT']<-'5c. Validation failed: Despite having significant RR, there is no significant E1->E2 order (also low power for detecting less than 20% elevated order).'
+  pairs[is.na(pairs$TEXTUAL_RESULT) & !is.na(pairs$DIRECTIONAL_SIGNIFICANT) & pairs$DIRECTIONAL_SIGNIFICANT=='','TEXTUAL_RESULT']<-'5b. Validation failed: Despite having significant RR, there is no significant E1->E2 order (despite having enough power for detecting 20% elevated E1->E2 order and even when consedered the same day events happening as ordered).'
+
+  pairs[is.na(pairs$TEXTUAL_RESULT) & !is.na(pairs$DIRECTIONAL_SIGNIFICANT) & pairs$DIRECTIONAL_SIGNIFICANT=='*','TEXTUAL_RESULT']<-'7. Validation successful: Event pair has significant RR and direction.'
 
   #event_pairs[(is.na(event_pairs$TEXTUAL_RESULT) & is.na(event_pairs$DIRECTIONAL_SIGNIFICANT) & event_pairs$POWER_DIRECTION>=0.80),'TEXTUAL_RESULT']<-'Not directional (validation failed despite having enough power)'
-  pairs[is.na(pairs$TEXTUAL_RESULT),'TEXTUAL_RESULT']<-'Other (unkwown situation, not automatically labelled)'
+  pairs[is.na(pairs$TEXTUAL_RESULT),'TEXTUAL_RESULT']<-'Other (unkwown situation, not automatically labelled).'
 
   #show up nicely
   df<-data.frame(res=names(table(pairs$TEXTUAL_RESULT)),
                  count=table(pairs$TEXTUAL_RESULT),
-                 perc=round(prop.table(table(pairs$TEXTUAL_RESULT))*100,1)) %>% select(res,count=count.Freq,freq=perc.Freq) %>% arrange(-freq)
-  if(verbose) print(df)
+                 perc=round(prop.table(table(pairs$TEXTUAL_RESULT))*100,1)) %>% select(res,count=count.Freq,freq=perc.Freq) %>% arrange(res)
+  if(verbose) {
+    logger::log_info('Total number of event pairs validated: {nrow(pairs)}')
+    print(df)
+  }
 
   return(pairs)
 
 }
-
-addAnnotationForResultsOld<-function(event_pairs,verbose=F) {
-
-  if(any(!is.na(event_pairs$RR_IN_PREVIOUS_STUDY) & event_pairs$RR_IN_PREVIOUS_STUDY>0)) {
-    event_pairs$IS_PREVIOUS_RR_IN_OUR_RR_CI<-NA
-    event_pairs[!is.na(event_pairs$RR_IN_PREVIOUS_STUDY),'IS_PREVIOUS_RR_IN_OUR_RR_CI']<-ifelse(
-      !is.na(event_pairs$RR_IN_PREVIOUS_STUDY) & event_pairs$RR_IN_PREVIOUS_STUDY>=event_pairs$RR_CI_LOWER & event_pairs$RR_IN_PREVIOUS_STUDY<=event_pairs$RR_CI_UPPER,
-      T,
-      F)
-  }
-
-  event_pairs$TEXTUAL_RESULT=NA
-
-  event_pairs[(event_pairs$E1_COUNT_IN_EVENTS==0 | event_pairs$E2_COUNT_IN_EVENTS==0),'TEXTUAL_RESULT']<-'3.1 Low power (count of any of these events is 0)'
-  event_pairs[(event_pairs$E1_BEFORE_E2_COUNT_IN_EVENTS==0),'TEXTUAL_RESULT']<-'3.2 Low power (both events occur but never in given order)'
-
-
-
-  event_pairs[is.na(event_pairs$TEXTUAL_RESULT) & !is.na(event_pairs$RR_IN_PREVIOUS_STUDY) & event_pairs$RR_POWER<0.8,'TEXTUAL_RESULT']<-'3.3 Low power (for detecting RR that different from 1 as in previous study)'
-
-  event_pairs[is.na(event_pairs$TEXTUAL_RESULT) & !is.na(event_pairs$RR_IN_PREVIOUS_STUDY) & !is.na(event_pairs$RR_SIGNIFICANT) & event_pairs$RR_SIGNIFICANT=='','TEXTUAL_RESULT']<-'2.1 Validation failed (RR not statistically different from 1 despite having enough power for detecting RR as large as in previous study)' #only association test was performed, but it was not found significant
-
-  #event_pairs[is.na(event_pairs$TEXTUAL_RESULT) & event_pairs$RR_SIGNIFICANT=='' & event_pairs$RR_POWER<0.8,'TEXTUAL_RESULT']<-'2.1 Validation failed, possibly low power (RR not significantly different from 1. However, there is low power (<80%) for detecting RR=1.2)'
-  event_pairs[is.na(event_pairs$TEXTUAL_RESULT) & event_pairs$RR_SIGNIFICANT=='','TEXTUAL_RESULT']<-'2.1 Validation failed (RR not significantly different from 1 despite having enough power for detecting RR>1.2)' #only association test was performed, but it was not found significant
-
-  event_pairs[is.na(event_pairs$TEXTUAL_RESULT) & !is.na(event_pairs$DIRECTIONAL_SIGNIFICANT) & event_pairs$DIRECTIONAL_SIGNIFICANT=='' & event_pairs$DIRECTIONAL_SIGNIFICANT_IF_SAME_DAY_EVENTS_ORDERED=='*','TEXTUAL_RESULT']<-'2.3 Validation failed (despite having significant RR and having enough power for directionality test, there is no significant order between these events. However, if eventperiods where the events happened on the same day, were considered as directional, the validation would have succeeded)'
-  event_pairs[is.na(event_pairs$TEXTUAL_RESULT) & !is.na(event_pairs$DIRECTIONAL_SIGNIFICANT) & event_pairs$DIRECTIONAL_SIGNIFICANT=='','TEXTUAL_RESULT']<-'2.2 Validation failed (despite having significant RR and having enough power for directionality test, there is no significant order between these events)'
-
-  if(Trajectories::IsValidationMode(trajectoryAnalysisArgs)) {
-    event_pairs[is.na(event_pairs$TEXTUAL_RESULT) & !is.na(event_pairs$DIRECTIONAL_SIGNIFICANT) & event_pairs$DIRECTIONAL_SIGNIFICANT=='*' & sign(event_pairs$RR_IN_PREVIOUS_STUDY-1)!=sign(event_pairs$RR-1),'TEXTUAL_RESULT']<-'2.4 Validation failed (event pair has significant RR and direction but RR has the opposite direction as compared to previous study)'
-  }
-  if(Trajectories::IsValidationMode(trajectoryAnalysisArgs)) {
-    event_pairs[is.na(event_pairs$TEXTUAL_RESULT) & !is.na(event_pairs$DIRECTIONAL_SIGNIFICANT) & event_pairs$DIRECTIONAL_SIGNIFICANT=='*','TEXTUAL_RESULT']<-'1.1 Validation succeeded (event pair has significant RR and direction and RR direction matches with direction in previous study)'
-  } else {
-    event_pairs[is.na(event_pairs$TEXTUAL_RESULT) & !is.na(event_pairs$DIRECTIONAL_SIGNIFICANT) & event_pairs$DIRECTIONAL_SIGNIFICANT=='*','TEXTUAL_RESULT']<-'1.1 Validation succeeded (event pair has significant RR and direction)'
-  }
-
-  event_pairs[is.na(event_pairs$TEXTUAL_RESULT) & event_pairs$DIRECTIONAL_POWER<0.8,'TEXTUAL_RESULT']<-'2.5 Validation failed, possibly low power (despite having significant RR, no significant order of the events was detected. However, there is low power (<80%) for detecting small (20%) direction signal.'
-
-
-
-
-  #event_pairs[(is.na(event_pairs$TEXTUAL_RESULT) & is.na(event_pairs$DIRECTIONAL_SIGNIFICANT) & event_pairs$POWER_DIRECTION>=0.80),'TEXTUAL_RESULT']<-'Not directional (validation failed despite having enough power)'
-  pairs[is.na(pairs$TEXTUAL_RESULT),'TEXTUAL_RESULT']<-'Other (unkwown situation, not automatically labelled)'
-
-  #show up nicely
-  df<-data.frame(res=names(table(pairs$TEXTUAL_RESULT)),
-                 count=table(pairs$TEXTUAL_RESULT),
-                 perc=round(prop.table(table(pairs$TEXTUAL_RESULT))*100,1)) %>% select(res,count=count.Freq,freq=perc.Freq) %>% arrange(-freq)
-  if(verbose) print(df)
-
-  return(event_pairs)
-
-}
-
 getAllPairs<-function(connection,
                       trajectoryAnalysisArgs,
                       trajectoryLocalArgs) {
@@ -1003,8 +975,20 @@ getAllPairs<-function(connection,
                                                       packageName=trajectoryAnalysisArgs$packageName,
                                                       dbms=connection@dbms,
                                                       resultsSchema =   trajectoryLocalArgs$resultsSchema,
-                                                      prefix =  trajectoryLocalArgs$prefixForResultTableNames
+                                                      prefiX =  trajectoryLocalArgs$prefixForResultTableNames
   )
   pairs = DatabaseConnector::querySql(connection, RenderedSql)
   return(pairs)
+}
+
+clearOldResultsFromDb<-function(connection,
+                      trajectoryAnalysisArgs,
+                      trajectoryLocalArgs) {
+  RenderedSql <- Trajectories::loadRenderTranslateSql('clear_e1e2_model_results.sql',
+                                                      packageName=trajectoryAnalysisArgs$packageName,
+                                                      dbms=connection@dbms,
+                                                      resultsSchema =   trajectoryLocalArgs$resultsSchema,
+                                                      prefiX =  trajectoryLocalArgs$prefixForResultTableNames
+  )
+  DatabaseConnector::executeSql(connection, RenderedSql)
 }

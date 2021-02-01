@@ -13,5 +13,6 @@
   "daysBeforeIndexDate": ["Inf"],
   "packageName": ["Trajectories"],
   "cohortName": ["Rheumatoid arthritis"],
-  "description": ["Rheumatoid arthritis study"]
+  "description": ["Rheumatoid arthritis study"],
+  "RRrangeToSkip": [0.9, 1.1]
 }

@@ -88,6 +88,8 @@ createEventPairsTable<-function(connection,
     e = read.csv2(file = f, sep = '\t', header = TRUE, as.is=T)
     e$RR_IN_PREVIOUS_STUDY<-as.numeric(e$RR_IN_PREVIOUS_STUDY)
 
+    if(any(is.na(e$RR_IN_PREVIOUS_STUDY))) logger::log_error("Package is run in validation mode, but RR_IN_PREVIOUS_STUDY in file 'event_pairs_for_validation.tsv' is empty for at least one pair. This is not allowed as this is used for power calculations (please remove such rows).")
+
     if(nrow(e)==0) logger::log_error("Package is run in validation mode, but file 'event_pairs_for_validation.tsv' is empty")
 
     #Create empty table manually
@@ -102,29 +104,35 @@ createEventPairsTable<-function(connection,
 
     #Fill with data
     tablename<-paste0(trajectoryLocalArgs$resultsSchema,'.',trajectoryLocalArgs$prefixForResultTableNames,'E1E2_MODEL_INPUT')
-    logger::log_info("Filling {tablename} with data from 'event_pairs_for_validation.tsv'...")
+    logger::log_info("Filling {tablename} with data from 'event_pairs_for_validation.tsv' ({nrow(e)} pairs as 100-size-chunks)...")
     e$sql <- paste0("INSERT INTO ",
                    tablename,
                    " (E1_CONCEPT_ID,E2_CONCEPT_ID,E1_NAME,E1_DOMAIN,E2_NAME,E2_DOMAIN,RR_IN_PREVIOUS_STUDY) VALUES (",
-                   e$E1_CONCEPT_ID,
+                   DBI::dbQuoteString(connection, e %>% mutate(E1_CONCEPT_ID=if_else(is.na(E1_CONCEPT_ID),'NULL',as.character(E1_CONCEPT_ID))) %>% pull(E1_CONCEPT_ID)  ),
                    ",",
-                   e$E2_CONCEPT_ID,
-                   ",'",
-                   e$E1_NAME,
-                   "','",
-                   e$E1_DOMAIN,
-                   "','",
-                   e$E2_NAME,
-                   "','",
-                   e$E2_DOMAIN,
-                   "',",
-                   ifelse(is.na(e$RR_IN_PREVIOUS_STUDY),'NULL',e$RR_IN_PREVIOUS_STUDY),
+                   DBI::dbQuoteString(connection, e %>% mutate(E2_CONCEPT_ID=if_else(is.na(E2_CONCEPT_ID),'NULL',as.character(E2_CONCEPT_ID))) %>% pull(E2_CONCEPT_ID)  ),
+                   ",",
+                   DBI::dbQuoteString(connection, e %>% mutate(E1_NAME=if_else(is.na(E1_NAME),'NULL',as.character(E1_NAME))) %>% pull(E1_NAME)  ),
+                   ",",
+                   DBI::dbQuoteString(connection, e %>% mutate(E1_DOMAIN=if_else(is.na(E1_DOMAIN),'NULL',E1_DOMAIN)) %>% pull(E1_DOMAIN)  ),
+                   ",",
+                   DBI::dbQuoteString(connection, e %>% mutate(E2_NAME=if_else(is.na(E1_NAME),'NULL',E2_NAME)) %>% pull(E2_NAME)  ),
+                   ",",
+                   DBI::dbQuoteString(connection, e %>% mutate(E2_DOMAIN=if_else(is.na(E2_DOMAIN),'NULL',E2_DOMAIN)) %>% pull(E2_DOMAIN)  ),
+                   ",",
+                   e %>% mutate(RR_IN_PREVIOUS_STUDY=if_else(is.na(RR_IN_PREVIOUS_STUDY),'NULL',as.character(RR_IN_PREVIOUS_STUDY))) %>% pull(RR_IN_PREVIOUS_STUDY),
                    ");")
     e <- e %>% arrange(-RR_IN_PREVIOUS_STUDY)
-    for(insertSql in e$sql) {
+    #create chunks - in each chunk, 100 inserts
+    chunks<-split(e$sql, ceiling(seq_along(e$sql)/100))
+    for(i in 1:length(chunks)) {
+      #print(paste('i=',i))
+      chunk<-chunks[[i]]
+      logger::log_info(paste0(' ...chunk ',i,'/',length(chunks),'...'))
+      insertSql=paste0(chunk,collapse="")
       RenderedSql <- SqlRender::translate(insertSql,targetDialect=attr(connection, "dbms"))
       #print(RenderedSql)
-      DatabaseConnector::executeSql(connection, RenderedSql)
+      DatabaseConnector::executeSql(connection, sql=RenderedSql, profile=F, progressBar = F, reportOverallTime = F)
     }
     logger::log_info("...done.")
 

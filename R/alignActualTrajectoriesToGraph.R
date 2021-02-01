@@ -64,7 +64,14 @@ alignActualTrajectoriesToGraph <- function(connection,
   insertSql <- paste("INSERT INTO ",
                      tablename,
                      " (e1_concept_id, e2_concept_id) VALUES ",
-                     paste(paste0("(",paste(edges$e1_concept_id,  edges$e2_concept_id, sep=","),")") , collapse=","),
+                     paste(paste0("(",paste(
+
+                       #edges$e1_concept_id,
+                       if(is.character(edges$e1_concept_id)) {paste0("'",edges$e1_concept_id,"'")} else {edges$e1_concept_id}, #this hocus-pocus is just for handling character-based CONCEP_ID-s. This normally does not happen, but in case someone is tricking a bit and tries to use source_values for tha analysis, then here we want to make sure that the code does not break
+                       #edges$e2_concept_id,
+                       if(is.character(edges$e2_concept_id)) {paste0("'",edges$e2_concept_id,"'")} else {edges$e2_concept_id},
+
+                       sep=","),")") , collapse=","),
                      ";",
                      sep = "")
   RenderedSql <- SqlRender::translate(insertSql,targetDialect=attr(connection, "dbms"))
@@ -89,7 +96,8 @@ alignActualTrajectoriesToGraph <- function(connection,
           CASE WHEN E1_CONCEPT_ID=@eventid THEN E1_COUNT_IN_EVENTS ELSE E2_COUNT_IN_EVENTS END AS E_COUNT
         FROM @resultsSchema.@prefiXE1E2_model WHERE E1_CONCEPT_ID=@eventid OR E2_CONCEPT_ID=@eventid
   LIMIT 1;"
-  RenderedSql <- SqlRender::render(sql, resultsSchema=trajectoryLocalArgs$resultsSchema, prefiX = trajectoryLocalArgs$prefixForResultTableNames, eventid=eventid)
+  RenderedSql <- SqlRender::render(sql, resultsSchema=trajectoryLocalArgs$resultsSchema, prefiX = trajectoryLocalArgs$prefixForResultTableNames,
+                                   eventid=if(is.character(eventid)) {paste0("'",eventid,"'")} else {eventid})
   RenderedSql <- SqlRender::translate(RenderedSql,targetDialect=attr(connection, "dbms"))
   res<-c(DatabaseConnector::querySql(connection, RenderedSql))
 
@@ -107,7 +115,7 @@ alignActualTrajectoriesToGraph <- function(connection,
                                                    dbms=attr(connection, "dbms"),
                                                    resultsSchema =  trajectoryLocalArgs$resultsSchema,
                                                    prefiX = trajectoryLocalArgs$prefixForResultTableNames,
-                                                   eventid=eventid,
+                                                   eventid=if(is.character(eventid)) {paste0("'",eventid,"'")} else {eventid},
                                                    limit=limit
   )
   DatabaseConnector::executeSql(connection, RenderedSql)
