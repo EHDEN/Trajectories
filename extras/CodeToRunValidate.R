@@ -98,7 +98,7 @@ Trajectories::createEventPairsTable(connection=connection,
 Trajectories::runValidationAnalysis(connection,
                                     trajectoryAnalysisArgs,
                                     trajectoryLocalArgs,
-                                    forceRecalculation=T)
+                                    forceRecalculation=F)
 
 
 

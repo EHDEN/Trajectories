@@ -40,7 +40,7 @@ test_that("Filling in cohort table with fulldb buit-in study", {
 
   #First check: is cohort table filled in correctly (should be 100 rows)
   res<-querySql(connection, paste0('SELECT COUNT(*) as TOTAL FROM test_cohort where cohort_definition_id=1;'))
-  expect_equal(res$TOTAL, 100)
+  testthat::expect_equal(res$TOTAL, 100)
 
 
 
@@ -93,10 +93,10 @@ test_that("Spliting cohort to DISCOVERY and VALIDATION set", {
 
   #First check: is cohort table filled in correctly (should be 100 rows)
   res<-querySql(connection, paste0('SELECT COUNT(*) as TOTAL FROM test_cohort where cohort_definition_id=1;'))
-  expect_equal(res$TOTAL, 30)
+  testthat::expect_equal(res$TOTAL, 30)
 
   res<-querySql(connection, paste0('SELECT COUNT(*) as TOTAL FROM test_cohort where cohort_definition_id=2;'))
-  expect_equal(res$TOTAL, 10)
+  testthat::expect_equal(res$TOTAL, 10)
 
 
 })

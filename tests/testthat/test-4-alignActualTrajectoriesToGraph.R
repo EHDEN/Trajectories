@@ -67,9 +67,9 @@ test_that("Test alignments to graph", {
 
   row<-getTrajectoryFromTrajectoryFile(trajectoryLocalArgs,trajectoryAnalysisArgs,concept_id=317009,concept_name='Asthma',trajectory_concept_ids=c(317009,255848,4299128))
   #Test that the trajectory comes out from the trajectory file
-  expect_equal(nrow(row),1)
+  testthat::expect_equal(nrow(row),1)
   #Test that the trajectory count is 20
-  expect_equal(row$exact_count,20)
-  expect_equal(row$total_count,20)
+  testthat::expect_equal(row$exact_count,20)
+  testthat::expect_equal(row$total_count,20)
 
 })

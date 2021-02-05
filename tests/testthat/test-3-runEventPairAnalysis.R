@@ -48,7 +48,7 @@ test_that("No significant event pairs in random data", {
   #Create output folder for this analysis
   outputFolder<-Trajectories::GetOutputFolder(trajectoryLocalArgs,trajectoryAnalysisArgs,createIfMissing=T)
   print(paste0('Test that output folder ',outputFolder,' exists: ',dir.exists(outputFolder)))
-  expect_equal(dir.exists(outputFolder), TRUE)
+  testthat::expect_equal(dir.exists(outputFolder), TRUE)
 
   # Set up logger
   Trajectories::InitLogger(logfile = file.path(outputFolder,'log.txt'), threshold = logger:::INFO)
@@ -75,16 +75,16 @@ test_that("No significant event pairs in random data", {
 
 
   #print(paste0('Test that output folder ',outputFolder,' exists: ',dir.exists(outputFolder)))
-  #expect_equal(dir.exists(outputFolder), TRUE)
+  #testthat::expect_equal(dir.exists(outputFolder), TRUE)
   #print('Files in directory:')
   #list.files(outputFolder)
 
   #test that output file was created, but it has header row only
   eventPairResultsFilename = file.path(outputFolder,'event_pairs_tested.tsv')
   print(paste0('Test that ',eventPairResultsFilename,' exists...'))
-  expect_equal(file.exists(eventPairResultsFilename), TRUE)
+  testthat::expect_equal(file.exists(eventPairResultsFilename), TRUE)
   directional_event_pairs<-getEventPairsTableAsDataFrame(trajectoryLocalArgs,trajectoryAnalysisArgs,filename='event_pairs_directional.tsv')
-  expect_equal(nrow(directional_event_pairs),0)
+  testthat::expect_equal(nrow(directional_event_pairs),0)
 
 })
 
@@ -140,29 +140,29 @@ test_that("Test ability to detect a synthetic event pair in data", {
 
   #test that there is at least 1 event pairs tested
   tested_event_pairs<-getEventPairsTableAsDataFrame(trajectoryLocalArgs,trajectoryAnalysisArgs,filename='event_pairs_tested.tsv')
-  expect_gt(nrow(tested_event_pairs),0)
+  testthat::expect_gt(nrow(tested_event_pairs),0)
   #test that event pair 317009->255848 is among them
   row<-getEventPairFromEventPairsTable(event1_concept_id=317009,event2_concept_id=255848,trajectoryLocalArgs,trajectoryAnalysisArgs,filename='event_pairs_tested.tsv')
-  expect_equal(row$E1_COUNT_IN_EVENTS, 20)
-  expect_equal(row$E2_COUNT_IN_EVENTS, 20)
-  expect_equal(row$E1_COUNT_IN_PAIRS, 20)
-  expect_equal(row$E2_COUNT_IN_PAIRS, 20)
-  expect_equal(row$E1_BEFORE_E2_COUNT_IN_EVENTS, 20)
+  testthat::expect_equal(row$E1_COUNT_IN_EVENTS, 20)
+  testthat::expect_equal(row$E2_COUNT_IN_EVENTS, 20)
+  testthat::expect_equal(row$E1_COUNT_IN_PAIRS, 20)
+  testthat::expect_equal(row$E2_COUNT_IN_PAIRS, 20)
+  testthat::expect_equal(row$E1_BEFORE_E2_COUNT_IN_EVENTS, 20)
 
   #test that event pair 317009->255848 is found significant and the counts are correct
   row<-getEventPairFromEventPairsTable(event1_concept_id=317009,event2_concept_id=255848,trajectoryLocalArgs,trajectoryAnalysisArgs)
-  expect_equal(row$E1_COUNT_IN_PAIRS, 20)
-  expect_equal(row$E2_COUNT_IN_PAIRS, 20)
-  expect_equal(row$E1_BEFORE_E2_COUNT_IN_EVENTS, 20)
+  testthat::expect_equal(row$E1_COUNT_IN_PAIRS, 20)
+  testthat::expect_equal(row$E2_COUNT_IN_PAIRS, 20)
+  testthat::expect_equal(row$E1_BEFORE_E2_COUNT_IN_EVENTS, 20)
 
-  expect_gt(as.numeric(row$RR_PVALUE), 0) # P-value of RR is calculated
-  expect_gt(as.numeric(row$DIRECTIONAL_PVALUE), 0) # P-value of direction is calculated
+  testthat::expect_gt(as.numeric(row$RR_PVALUE), 0) # P-value of RR is calculated
+  testthat::expect_gt(as.numeric(row$DIRECTIONAL_PVALUE), 0) # P-value of direction is calculated
 
   #test that the names are correct
-  expect_equal(row$E1_NAME, 'Asthma')
-  expect_equal(row$E1_DOMAIN, 'Condition')
-  expect_equal(row$E2_NAME, 'Pneumonia')
-  expect_equal(row$E2_DOMAIN, 'Condition')
+  testthat::expect_equal(row$E1_NAME, 'Asthma')
+  testthat::expect_equal(row$E1_DOMAIN, 'Condition')
+  testthat::expect_equal(row$E2_NAME, 'Pneumonia')
+  testthat::expect_equal(row$E2_DOMAIN, 'Condition')
 
 
 })
@@ -222,30 +222,30 @@ test_that("Test ability to detect a synthetic event pair association (not direct
 
   #test that there is at least 2 event pairs tested
   tested_event_pairs<-getEventPairsTableAsDataFrame(trajectoryLocalArgs,trajectoryAnalysisArgs,filename='event_pairs_tested.tsv')
-  expect_gte(nrow(tested_event_pairs),2)
+  testthat::expect_gte(nrow(tested_event_pairs),2)
   #test that event pair 317009->255848 is among them
   row<-getEventPairFromEventPairsTable(event1_concept_id=317009,event2_concept_id=255848,trajectoryLocalArgs,trajectoryAnalysisArgs,filename='event_pairs_tested.tsv')
-  expect_equal(row$E1_COUNT_IN_EVENTS, 60)
-  expect_equal(row$E2_COUNT_IN_EVENTS, 60)
-  expect_equal(row$E1_BEFORE_E2_COUNT_IN_EVENTS, 30)
-  expect_gt(as.numeric(row$RR_PVALUE), 0) # P-value of RR is calculated
-  expect_gt(as.numeric(row$DIRECTIONAL_PVALUE), 0) # P-value of direction is calculated
+  testthat::expect_equal(row$E1_COUNT_IN_EVENTS, 60)
+  testthat::expect_equal(row$E2_COUNT_IN_EVENTS, 60)
+  testthat::expect_equal(row$E1_BEFORE_E2_COUNT_IN_EVENTS, 30)
+  testthat::expect_gt(as.numeric(row$RR_PVALUE), 0) # P-value of RR is calculated
+  testthat::expect_gt(as.numeric(row$DIRECTIONAL_PVALUE), 0) # P-value of direction is calculated
 
   #test that event pair (opposite) 255848->317009 is among them
   row<-getEventPairFromEventPairsTable(event1_concept_id=255848,event2_concept_id=317009,trajectoryLocalArgs,trajectoryAnalysisArgs,filename='event_pairs_tested.tsv')
-  expect_equal(row$E1_COUNT_IN_EVENTS, 60)
-  expect_equal(row$E2_COUNT_IN_EVENTS, 60)
-  expect_equal(row$E1_BEFORE_E2_COUNT_IN_EVENTS, 30)
-  expect_gt(as.numeric(row$RR_PVALUE), 0) # P-value of RR is calculated
-  expect_gt(as.numeric(row$DIRECTIONAL_PVALUE), 0) # P-value of direction is calculated
+  testthat::expect_equal(row$E1_COUNT_IN_EVENTS, 60)
+  testthat::expect_equal(row$E2_COUNT_IN_EVENTS, 60)
+  testthat::expect_equal(row$E1_BEFORE_E2_COUNT_IN_EVENTS, 30)
+  testthat::expect_gt(as.numeric(row$RR_PVALUE), 0) # P-value of RR is calculated
+  testthat::expect_gt(as.numeric(row$DIRECTIONAL_PVALUE), 0) # P-value of direction is calculated
 
   #test that event pair 317009->255848 is not represented in results file as the direction is not significant
   row<-getEventPairFromEventPairsTable(event1_concept_id=317009,event2_concept_id=255848,trajectoryLocalArgs,trajectoryAnalysisArgs,filename='event_pairs_directional.tsv')
-  expect_equal(nrow(row),0)
+  testthat::expect_equal(nrow(row),0)
 
   #test that event pair 255848->317009 is not represented in results file as the direction is not significant
   row<-getEventPairFromEventPairsTable(event1_concept_id=255848,event2_concept_id=317009,trajectoryLocalArgs,trajectoryAnalysisArgs,filename='event_pairs_directional.tsv')
-  expect_equal(nrow(row),0)
+  testthat::expect_equal(nrow(row),0)
 
 
 })
@@ -305,52 +305,52 @@ test_that("Test ability to detect a longer trajectory (consisting of 2 pairs)", 
 
   #test that there is at least 2 event pairs tested
   tested_event_pairs<-getEventPairsTableAsDataFrame(trajectoryLocalArgs,trajectoryAnalysisArgs,filename='event_pairs_tested.tsv')
-  expect_gte(nrow(tested_event_pairs),2)
+  testthat::expect_gte(nrow(tested_event_pairs),2)
   #test that event pair 317009->255848 is among them
   row<-getEventPairFromEventPairsTable(event1_concept_id=317009,event2_concept_id=255848,trajectoryLocalArgs,trajectoryAnalysisArgs,filename='event_pairs_tested.tsv')
-  expect_equal(row$E1_COUNT_IN_PAIRS, 20)
-  expect_equal(row$E2_COUNT_IN_PAIRS, 20)
-  expect_equal(row$E1_BEFORE_E2_COUNT_IN_EVENTS, 20)
+  testthat::expect_equal(row$E1_COUNT_IN_PAIRS, 20)
+  testthat::expect_equal(row$E2_COUNT_IN_PAIRS, 20)
+  testthat::expect_equal(row$E1_BEFORE_E2_COUNT_IN_EVENTS, 20)
 
   #test that event pair 317009->4299128 is among them
   row<-getEventPairFromEventPairsTable(event1_concept_id=317009,event2_concept_id=4299128,trajectoryLocalArgs,trajectoryAnalysisArgs,filename='event_pairs_tested.tsv')
-  expect_equal(row$E1_COUNT_IN_PAIRS, 20)
-  expect_equal(row$E2_COUNT_IN_PAIRS, 20)
-  expect_equal(row$E1_BEFORE_E2_COUNT_IN_EVENTS, 20)
+  testthat::expect_equal(row$E1_COUNT_IN_PAIRS, 20)
+  testthat::expect_equal(row$E2_COUNT_IN_PAIRS, 20)
+  testthat::expect_equal(row$E1_BEFORE_E2_COUNT_IN_EVENTS, 20)
 
   #test that event pair 255848->4299128 is among them
   row<-getEventPairFromEventPairsTable(event1_concept_id=255848,event2_concept_id=4299128,trajectoryLocalArgs,trajectoryAnalysisArgs,filename='event_pairs_tested.tsv')
-  expect_equal(row$E1_COUNT_IN_PAIRS, 20)
-  expect_equal(row$E2_COUNT_IN_PAIRS, 20)
-  expect_equal(row$E1_BEFORE_E2_COUNT_IN_EVENTS, 20)
+  testthat::expect_equal(row$E1_COUNT_IN_PAIRS, 20)
+  testthat::expect_equal(row$E2_COUNT_IN_PAIRS, 20)
+  testthat::expect_equal(row$E1_BEFORE_E2_COUNT_IN_EVENTS, 20)
 
   #test that event pair 317009->255848 is found directionally significant and the counts are correct
   row<-getEventPairFromEventPairsTable(event1_concept_id=317009,event2_concept_id=255848,trajectoryLocalArgs,trajectoryAnalysisArgs)
-  expect_equal(row$E1_COUNT_IN_PAIRS, 20)
-  expect_equal(row$E2_COUNT_IN_PAIRS, 20)
-  expect_equal(row$E1_BEFORE_E2_COUNT_IN_EVENTS, 20)
-  expect_gt(as.numeric(row$RR_PVALUE), 0) # P-value of associaction is calculated
-  expect_gt(as.numeric(row$DIRECTIONAL_PVALUE), 0) # P-value of direction is calculated
-  expect_equal(row$DIRECTIONAL_SIGNIFICANT, '*') # P-value of direction is calculated
+  testthat::expect_equal(row$E1_COUNT_IN_PAIRS, 20)
+  testthat::expect_equal(row$E2_COUNT_IN_PAIRS, 20)
+  testthat::expect_equal(row$E1_BEFORE_E2_COUNT_IN_EVENTS, 20)
+  testthat::expect_gt(as.numeric(row$RR_PVALUE), 0) # P-value of associaction is calculated
+  testthat::expect_gt(as.numeric(row$DIRECTIONAL_PVALUE), 0) # P-value of direction is calculated
+  testthat::expect_equal(row$DIRECTIONAL_SIGNIFICANT, '*') # P-value of direction is calculated
 
 
   #test that event pair 255848->4299128 is found directionally significant and the counts are correct
   row<-getEventPairFromEventPairsTable(event1_concept_id=255848,event2_concept_id=4299128,trajectoryLocalArgs,trajectoryAnalysisArgs)
-  expect_equal(row$E1_COUNT_IN_PAIRS, 20)
-  expect_equal(row$E2_COUNT_IN_PAIRS, 20)
-  expect_equal(row$E1_BEFORE_E2_COUNT_IN_EVENTS, 20)
-  expect_gt(as.numeric(row$RR_PVALUE), 0) # P-value of associaction is calculated
-  expect_gt(as.numeric(row$DIRECTIONAL_PVALUE), 0) # P-value of direction is calculated
-  expect_equal(row$DIRECTIONAL_SIGNIFICANT, '*') # P-value of direction is calculated
+  testthat::expect_equal(row$E1_COUNT_IN_PAIRS, 20)
+  testthat::expect_equal(row$E2_COUNT_IN_PAIRS, 20)
+  testthat::expect_equal(row$E1_BEFORE_E2_COUNT_IN_EVENTS, 20)
+  testthat::expect_gt(as.numeric(row$RR_PVALUE), 0) # P-value of associaction is calculated
+  testthat::expect_gt(as.numeric(row$DIRECTIONAL_PVALUE), 0) # P-value of direction is calculated
+  testthat::expect_equal(row$DIRECTIONAL_SIGNIFICANT, '*') # P-value of direction is calculated
 
   #test that event pair 317009->4299128 is found directionally significant and the counts are correct
   row<-getEventPairFromEventPairsTable(event1_concept_id=317009,event2_concept_id=4299128,trajectoryLocalArgs,trajectoryAnalysisArgs)
-  expect_equal(row$E1_COUNT_IN_PAIRS, 20)
-  expect_equal(row$E2_COUNT_IN_PAIRS, 20)
-  expect_equal(row$E1_BEFORE_E2_COUNT_IN_EVENTS, 20)
-  expect_gt(as.numeric(row$RR_PVALUE), 0) # P-value of associaction is calculated
-  expect_gt(as.numeric(row$DIRECTIONAL_PVALUE), 0) # P-value of direction is calculated
-  expect_equal(row$DIRECTIONAL_SIGNIFICANT, '*') # P-value of direction is calculated
+  testthat::expect_equal(row$E1_COUNT_IN_PAIRS, 20)
+  testthat::expect_equal(row$E2_COUNT_IN_PAIRS, 20)
+  testthat::expect_equal(row$E1_BEFORE_E2_COUNT_IN_EVENTS, 20)
+  testthat::expect_gt(as.numeric(row$RR_PVALUE), 0) # P-value of associaction is calculated
+  testthat::expect_gt(as.numeric(row$DIRECTIONAL_PVALUE), 0) # P-value of direction is calculated
+  testthat::expect_equal(row$DIRECTIONAL_SIGNIFICANT, '*') # P-value of direction is calculated
 
 })
 
@@ -407,7 +407,7 @@ test_that("Test that forceRecalculation=F does not cause any error", {
   tested_event_pairs<-getEventPairsTableAsDataFrame(trajectoryLocalArgs,trajectoryAnalysisArgs,filename='event_pairs_tested.tsv')
   #at least 1 pair significant
   num.pairs.significant=nrow(tested_event_pairs)
-  expect_gte(num.pairs.significant,1)
+  testthat::expect_gte(num.pairs.significant,1)
 
   #create new results
   Trajectories::runDiscoveryAnalysis(connection=connection,
@@ -415,7 +415,7 @@ test_that("Test that forceRecalculation=F does not cause any error", {
                                      trajectoryLocalArgs=trajectoryLocalArgs,
                                      forceRecalculation = T)
   tested_event_pairs<-getEventPairsTableAsDataFrame(trajectoryLocalArgs,trajectoryAnalysisArgs,filename='event_pairs_tested.tsv')
-  expect_equal(nrow(tested_event_pairs),num.pairs.significant)
+  testthat::expect_equal(nrow(tested_event_pairs),num.pairs.significant)
 
   #overwrite results
   Trajectories::runDiscoveryAnalysis(connection=connection,
@@ -423,6 +423,6 @@ test_that("Test that forceRecalculation=F does not cause any error", {
                                      trajectoryLocalArgs=trajectoryLocalArgs,
                                      forceRecalculation = F)
   tested_event_pairs<-getEventPairsTableAsDataFrame(trajectoryLocalArgs,trajectoryAnalysisArgs,filename='event_pairs_tested.tsv')
-  expect_equal(nrow(tested_event_pairs),num.pairs.significant)
+  testthat::expect_equal(nrow(tested_event_pairs),num.pairs.significant)
 
 })
