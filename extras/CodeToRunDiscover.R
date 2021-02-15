@@ -54,7 +54,10 @@ trajectoryAnalysisArgs<-Trajectories::TrajectoryAnalysisArgsFromInputFolder(traj
 #                                                                     addDeaths=T,
 #                                                                     daysBeforeIndexDate=Inf,
 #                                                                     packageName='Trajectories',
-#                                                                     cohortName="Rheumatoid.arthritis")
+#                                                                     cohortName="Type 2 diabetes",
+#                                                                     description="Type 2 diabetes study",
+#                                                                     eventIdsForGraphs=c(4193704, 201826, 443732, 1503297),
+#                                                                     RRrangeToSkip=[0.8, 1.2])
 
 #trajectoryAnalysisArgs$addDrugEras=F
 

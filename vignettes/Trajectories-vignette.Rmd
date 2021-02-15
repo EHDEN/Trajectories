@@ -219,7 +219,7 @@ DatabaseConnector::disconnect(connection)
 ```
 
 # Results validation
-Validatinf the event pairs that have been discovered previously can be done by running `/extras/CodeToRunValidate.R`. The requirements for input files are the same as for `/extras/CodeToRunDiscover.R`, but also the file `event_pairs_for_validation.tsv` must be located in the study folder. 
+Validating the event pairs that have been discovered previously can be done by running `/extras/CodeToRunValidate.R`. The requirements for input files are the same as for `/extras/CodeToRunDiscover.R`, but also the file `event_pairs_for_validation.tsv` must be located in the study folder. 
 
 Setting the parameters for `/extras/CodeToRunDiscover.R` follow the same rules as `/extras/CodeToRunDiscover.R` that are described in this vignette.
 
