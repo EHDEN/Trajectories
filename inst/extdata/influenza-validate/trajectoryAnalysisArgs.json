@@ -1,0 +1,18 @@
+{
+  "mode": ["VALIDATION"],
+  "minimumDaysBetweenEvents": [1],
+  "maximumDaysBetweenEvents": [90],
+  "minPatientsPerEventPair": [0.05],
+  "addConditions": [true],
+  "addObservations": [true],
+  "addProcedures": [true],
+  "addDrugExposures": [true],
+  "addDrugEras": [false],
+  "addBirths": [true],
+  "addDeaths": [true],
+  "daysBeforeIndexDate": [7],
+  "RRrangeToSkip": [0.8, 1.2],
+  "cohortName": ["Influenza"],
+  "description": ["Influenza study, looking at 7 days prior and 90 days after influenza diagnosis/measurement/positive test. Can occur several times per patient."],
+  "eventIdsForGraphs": []
+}
