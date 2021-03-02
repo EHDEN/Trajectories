@@ -17,7 +17,7 @@ connectionDetails = createConnectionDetails(dbms = 'postgresql',#  e.g. oracle, 
 
 # Setting local system & database parameters - CHANGE ACCORDING TO YOUR SYSTEM & DATABASE:
 trajectoryLocalArgs <- Trajectories::createTrajectoryLocalArgs(oracleTempSchema = "temp_schema",
-                                                               prefixForResultTableNames = "sr_t2d_", # Alternatively, you could use this to randomly generate the prefix (requires library(stringi) to be loaded): paste0(  if(!is.null(attr(connectionDetails,'user'))) substr(USER,1,2), stri_rand_strings(1, 2, pattern = "[A-Za-z]"), sep="_")
+                                                               prefixForResultTableNames = "sr_infl_", # Alternatively, you could use this to randomly generate the prefix (requires library(stringi) to be loaded): paste0(  if(!is.null(attr(connectionDetails,'user'))) substr(USER,1,2), stri_rand_strings(1, 2, pattern = "[A-Za-z]"), sep="_")
                                                                cdmDatabaseSchema = 'ohdsi_cdm',
                                                                vocabDatabaseSchema = 'ohdsi_vocab',
                                                                resultsSchema = 'ohdsi_temp',
@@ -25,7 +25,7 @@ trajectoryLocalArgs <- Trajectories::createTrajectoryLocalArgs(oracleTempSchema 
                                                                #cohortTableSchema= 'ohdsi_temp',
                                                                #cohortTable='cohort',
                                                                #cohortId=1, #use 1 for discovery studies
-                                                               inputFolder=system.file("extdata", "T2D", package = "Trajectories"), # Full path to input folder that contains SQL file for cohort definition and optionally also trajectoryAnalysisArgs.json. You can use built-in folders of this package such as: inputFolder=system.file("extdata", "T2D", package = "Trajectories")
+                                                               inputFolder=system.file("extdata", "influenza", package = "Trajectories"), # Full path to input folder that contains SQL file for cohort definition and optionally also trajectoryAnalysisArgs.json. You can use built-in folders of this package such as: inputFolder=system.file("extdata", "T2D", package = "Trajectories")
                                                                mainOutputFolder='/Users/sulevr/temp', #Subfolders to this will be created automatically
                                                                databaseHumanReadableName='RITA') #Use something short. It will be added to the titles of the graph.
 
