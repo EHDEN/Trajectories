@@ -92,9 +92,9 @@ test_that("Filling in cohort table with fulldb buit-in study (there are some eve
 
 
 
-  # Get number of rows from E1E2_model table (should be >100 rows)
+  # Get number of rows from E1E2_model table (should be >10 rows)
   res<-querySql(connection, glue::glue('SELECT COUNT(*) AS TOTAL FROM {trajectoryLocalArgs$resultsSchema}.{trajectoryLocalArgs$prefixForResultTableNames}E1E2_model'))
-  testthat::expect_gt(res$TOTAL, 100) #in Sulev's test there was 133 rows
+  testthat::expect_gt(res$TOTAL, 10) #in Sulev's test there was 31 rows
 
 
 

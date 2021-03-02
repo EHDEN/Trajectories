@@ -32,6 +32,10 @@ runDiscoveryAnalysis<-function(connection,
                                    trajectoryLocalArgs)
 
   logger::log_info("Number of event pairs to analyze: {nrow(pairs)}")
+  if(nrow(pairs)==0) {
+    logger::log_info("Nothing to analyze. Exiting.")
+    return()
+  }
 
   logger::log_info("Matching case and control groups for calculating relative risk (RR) and power...")
   pairs<-Trajectories:::calcRRandPower(connection,
@@ -130,8 +134,11 @@ runValidationAnalysis<-function(connection,
   pairs=Trajectories:::getAllPairs(connection,
                                    trajectoryAnalysisArgs,
                                    trajectoryLocalArgs)
-
   logger::log_info("Number of event pairs to validate: {nrow(pairs)}")
+  if(nrow(pairs)==0) {
+    logger::log_info("Nothing to analyze. Exiting.")
+    return()
+  }
 
   #get pairs that are having RR_IN_PREVIOUS_STUDY outside the range of trajectoryAnalysisArgs$RRrangeToSkip
   pairs <- pairs %>% filter(RR_IN_PREVIOUS_STUDY < trajectoryAnalysisArgs$RRrangeToSkip[1] | RR_IN_PREVIOUS_STUDY >= trajectoryAnalysisArgs$RRrangeToSkip[2])
@@ -315,6 +322,7 @@ getPowerRR<-function(case_control,expected_prob,rr.threshold=1.2,powerPvalCutoff
   control_group_size=sum(case_control$CONTROL_COUNT)
   case_group_size= sum(case_control$CASE_COUNT)
   elevated_E2_prevalence=expected_prob*rr.threshold
+  if(elevated_E2_prevalence>1) elevated_E2_prevalence=1 #expected prevalence can't be larger than 1
 
 
   if(rr.threshold>1) {
@@ -358,6 +366,7 @@ getPowerDirection<-function(EVENTPERIOD_COUNT_E1_OCCURS_FIRST,EVENTPERIOD_COUNT_
   if(total_tests==1) return(0) #replicate() function does not work if total_tests==1 (does not provide matrix as output)
 
   elevated_signal_prob=rr.threshold/(1+rr.threshold) #if one direction has prevalence 55% (elevated signal prob) and the other 45%, then the signal strength is 20% (45% x 20%)
+  if(elevated_signal_prob>1) elevated_signal_prob=1 #probability cant be higher than 1
 
   #Sample this distribution 1000 times (from infinite distribution) and see how many elevated_e1_occurs_first-s you'll get (skip tests where EVENTPERIOD_COUNT_E1_E2_OCCUR_ON_SAME_DAY)
   elevated_e1_occurs_first = apply(replicate(n = n, expr=sample(c(1,0), total_tests-EVENTPERIOD_COUNT_E1_E2_OCCUR_ON_SAME_DAY, T, c(elevated_signal_prob,1-elevated_signal_prob)), simplify = T),2,sum)

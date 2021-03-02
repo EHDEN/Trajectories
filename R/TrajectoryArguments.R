@@ -282,7 +282,7 @@ GetOutputFolder<-function(trajectoryLocalArgs,trajectoryAnalysisArgs,createIfMis
   if (!dir.exists(outputFolder)){
     if(createIfMissing==F) stop(paste0("ERROR in GetOutputFolder(): There is no '",subFolder1,"' subfolder in '",outputFolderPrev,"' folder. Cannot create the folder either as parameter 'createIfMissing=F'."))
     dir.create(outputFolder)
-    log_info(paste0('Created folder for database results: ',outputFolder))
+    print(paste0('Created folder for database results: ',outputFolder)) #do not use logger::log_... here as logger is not yet initialized
   } else {
     #print(paste0('Folder for database results already exists: ',outputFolder))
   }
@@ -292,7 +292,7 @@ GetOutputFolder<-function(trajectoryLocalArgs,trajectoryAnalysisArgs,createIfMis
   if (!dir.exists(outputFolder)){
     if(createIfMissing==F) stop(paste0("ERROR in GetOutputFolder(): There is no '",subFolder2,"' subfolder in '",outputFolderPrev,"' folder. Cannot create the folder either as parameter 'createIfMissing=F'."))
     dir.create(outputFolder)
-    log_info(paste0('Created folder for analysis results: ',outputFolder))
+    print(paste0('Created folder for database results: ',outputFolder)) #do not use logger::log_... here as logger is not yet initialized
   } else {
     #print(paste0('Folder for analysis results already exists: ',outputFolder))
   }
@@ -302,12 +302,12 @@ GetOutputFolder<-function(trajectoryLocalArgs,trajectoryAnalysisArgs,createIfMis
   if (!dir.exists(outputFolder)){
     if(createIfMissing==F) stop(paste0("ERROR in GetOutputFolder(): There is no '",subFolder3,"' subfolder in '",outputFolderPrev,"' folder. Cannot create the folder either as parameter 'createIfMissing=F'."))
     dir.create(outputFolder)
-    log_info(paste0('Created folder for analysis results: ',outputFolder))
+    print(paste0('Created folder for database results: ',outputFolder)) #do not use logger::log_... here as logger is not yet initialized
   } else {
     #print(paste0('Folder for analysis results already exists: ',outputFolder))
   }
 
-  if(createIfMissing==T) log_info(paste0("Output folder set to ",outputFolder))
+  if(createIfMissing==T) logger::log_info(paste0("Output folder set to ",outputFolder))
   return(outputFolder)
 
 }

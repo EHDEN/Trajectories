@@ -97,7 +97,7 @@ test_that("Test ability to detect a synthetic event pair in data", {
   limitToNumPatients(connection,n=100) #in analysis, use 100 patients
   limitToConcepts(connection)
   setObservationPeriodForAll(connection,startdate='2010-01-01',enddate='2012-12-31')
-  person_ids<-addConditionEventTrajectory(connection,event_concept_ids=c(317009,255848),n=20) # Add asthma->pneumonia pair for 20 patients
+  person_ids<-addConditionEventTrajectory(connection,event_concept_ids=c(317009,255848),n=20,days_to_skip_from_obs_period_start=365) # Add asthma->pneumonia pair for 20 patients
   addRandomEvents(connection,n_per_person_range=c(0,10),exclude_concept_ids=c(317009,255848)) # Add up to 10 random events per each patient, except events 317009 and 255848
 
 
@@ -178,8 +178,8 @@ test_that("Test ability to detect a synthetic event pair association (not direct
   limitToNumPatients(connection,n=250) #in analysis, use 50 patients
   limitToConcepts(connection)
   setObservationPeriodForAll(connection,startdate='2010-01-01',enddate='2012-12-31')
-  person_ids<-addConditionEventTrajectory(connection,event_concept_ids=c(317009,255848),n=30) # Add asthma->pneumonia pair for 30 patients
-  person_ids<-addConditionEventTrajectory(connection,event_concept_ids=c(255848,317009),n=30,excludePatientIds=person_ids) # Add pneumonia->asthma pair for (different) 30 patients
+  person_ids<-addConditionEventTrajectory(connection,event_concept_ids=c(317009,255848),n=30,days_to_skip_from_obs_period_start=365) # Add asthma->pneumonia pair for 30 patients
+  person_ids<-addConditionEventTrajectory(connection,event_concept_ids=c(255848,317009),n=30,days_to_skip_from_obs_period_start=365,excludePatientIds=person_ids) # Add pneumonia->asthma pair for (different) 30 patients
   addRandomEvents(connection,n_per_person_range=c(0,10),exclude_concept_ids=c(317009,255848)) # Add up to 10 random events per each patient, except events 317009 and 255848
 
 
@@ -260,7 +260,7 @@ test_that("Test ability to detect a longer trajectory (consisting of 2 pairs)", 
   limitToNumPatients(connection,n=500) #in analysis, use 500 patients. Big enough number is needed for having sufficient amount of events on same disharge_date
   limitToConcepts(connection)
   setObservationPeriodForAll(connection,startdate='2010-01-01',enddate='2011-12-31')
-  person_ids<-addConditionEventTrajectory(connection,event_concept_ids=c(317009,255848,4299128),n=20) # Add asthma->pneumonia pair for 20 patients
+  person_ids<-addConditionEventTrajectory(connection,event_concept_ids=c(317009,255848,4299128),n=20,days_to_skip_from_obs_period_start=365) # Add asthma->pneumonia pair for 20 patients
   addRandomEvents(connection,n_per_person_range=c(0,10),exclude_concept_ids=c(317009,255848,4299128)) # Add up to 10 random events per each patient, except events 317009 and 255848
 
 
@@ -365,7 +365,7 @@ test_that("Test that forceRecalculation=F does not cause any error", {
   limitToNumPatients(connection,n=100) #in analysis, use 100 patients
   limitToConcepts(connection)
   setObservationPeriodForAll(connection,startdate='2010-01-01',enddate='2012-12-31')
-  person_ids<-addConditionEventTrajectory(connection,event_concept_ids=c(317009,255848),n=20) # Add asthma->pneumonia pair for 20 patients
+  person_ids<-addConditionEventTrajectory(connection,event_concept_ids=c(317009,255848),n=20,days_to_skip_from_obs_period_start=365) # Add asthma->pneumonia pair for 20 patients
   addRandomEvents(connection,n_per_person_range=c(0,10),exclude_concept_ids=c(317009,255848)) # Add up to 10 random events per each patient, except events 317009 and 255848
 
 

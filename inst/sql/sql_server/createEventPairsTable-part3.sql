@@ -39,13 +39,13 @@ CREATE TABLE @resultsSchema.@prefiXE1E2_model (
   E1_DOMAIN VARCHAR(20) NULL,
   E2_DOMAIN VARCHAR(20) NULL,
 
-  E1_COUNT_IN_EVENTS INT NULL, -- this is the total number of eventperiods where E1 is present. Singe-event-eventperiods are not counted (but that should not change the big picture).
+  E1_COUNT_IN_EVENTS INT NULL, -- this is the total number of eventperiods where E1 is present.
   E1_COUNT_IN_PAIRS INT NULL, -- this is the total number of eventperiods that contain E1 (either as E1->smht or smth->E1) The number is smaller than E1_COUNT_IN_EVENTS because there are additional restrictions for making pairs (e.g required day difference)
   E1_COUNT_AS_FIRST_EVENT_OF_PAIRS INT NULL, -- this is the total number of eventperiods containing E1->smth pair
   --E1_COUNT_AS_FIRST_EVENT_OF_EVENTPERIODS INT NULL, -- this is the total number of eventperiods having E1 as the very first event
   E1_COUNT_AS_LAST_EVENT_OF_EVENTPERIODS INT NULL, -- this is the total number of eventperiods having E1 as the very last event (these eventperiods do not produce any E1->smth pairs)
 
-  E2_COUNT_IN_EVENTS INT NULL, -- this is the total number of eventperiods where E2 is present (does not equal to event pairs with E2 as single-event eventperiods do not form any pair). Singe-event-eventperiods are not counted.
+  E2_COUNT_IN_EVENTS INT NULL, -- this is the total number of eventperiods where E2 is present (does not equal to event pairs with E2 as single-event eventperiods do not form any pair).
   E2_COUNT_IN_PAIRS INT NULL,
   E2_COUNT_AS_SECOND_EVENT_OF_PAIRS INT NULL, -- this is the number of eventperiods containing event pairs where E2 is the second event
   E2_COUNT_AS_FIRST_EVENT_OF_EVENTPERIODS INT NULL, -- this is the total number of eventperiods having E2 as the very first event (these eventperiods do not produce any smth->E2 pairs)
@@ -67,7 +67,7 @@ CREATE TABLE @resultsSchema.@prefiXE1E2_model (
 
   --EVENTPERIOD_COUNT_HAVING_E2_RIGHT_AFTER_E1 INT NULL, --this field is filled after the analysis when we consider only trajectories and events that are significant
 
-  E1_AND_E2_TOGETHER_COUNT_IN_EVENTS INT NULL, -- this is the number of eventperiods where E1 and E2 are both present (in both directions). Singe-event-eventperiods are not counted.
+  E1_AND_E2_TOGETHER_COUNT_IN_EVENTS INT NULL, -- this is the number of eventperiods where E1 and E2 are both present (in both directions).
   E1_BEFORE_E2_COUNT_IN_EVENTS INT NULL,
   E1_AND_E2_ON_SAME_DAY_COUNT_IN_EVENTS INT NULL,
   E1_AFTER_E2_COUNT_IN_EVENTS INT NULL,

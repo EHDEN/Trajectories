@@ -22,6 +22,7 @@ INSERT INTO @resultsSchema.@prefiXdebug (entry) VALUES ('Debug table created');
 -- First, add some data about the size of the database
 INSERT INTO @resultsSchema.@prefiXdebug (entry) VALUES (CONCAT('Database size: There are ',CAST((SELECT COUNT(*) FROM @cdmDatabaseSchema.person) AS VARCHAR),' rows in @cdmDatabaseSchema.person'));
 INSERT INTO @resultsSchema.@prefiXdebug (entry) VALUES (CONCAT('Database size: There are ',CAST((SELECT COUNT(*) FROM @cdmDatabaseSchema.condition_occurrence) AS VARCHAR),' rows in @cdmDatabaseSchema.condition_occurrence'));
+INSERT INTO @resultsSchema.@prefiXdebug (entry) VALUES (CONCAT('Database size: There are ',CAST((SELECT COUNT(*) FROM @cohortTableSchema.@cohortTable) AS VARCHAR),' rows in @cohortTableSchema.@cohortTable'));
 
 
 
@@ -81,107 +82,121 @@ IF OBJECT_ID('@resultsSchema.@prefiXevents', 'U') IS NOT NULL
     (
     -- conditions
     SELECT
+      e.person_id                  AS person_id,
       c.eventperiod_id             AS eventperiod_id,
       e.condition_concept_id       AS CONCEPT_ID,
       MIN(e.condition_start_date)  AS date -- This is min date per one event-period (for patients with multiple event-periods, there are several min dates)
      -- for CDM 6 use condition_start_datetime?
     FROM @cdmDatabaseSchema.condition_occurrence e
+    -- note that the same event may belong to several event periods. It gets multiplied here while doing this INNER JOIN
     INNER JOIN @resultsSchema.@prefiXmycohort c ON e.person_id=c.person_id {@daysBeforeIndexDate == Inf} ? {} : { AND DATEADD(day,@daysBeforeIndexDate,e.condition_start_date)>=c.eventperiod_start_date } AND e.condition_start_date<=c.eventperiod_end_date
     WHERE
       1=@addConditions -- if addConditions is TRUE, then this UNION is ADDED, otherwise this query give 0 rows as result
       AND
       e.condition_concept_id!=0
-    GROUP BY c.eventperiod_id,e.condition_concept_id
+    GROUP BY c.eventperiod_id,e.condition_concept_id,e.person_id
 
     UNION ALL -- we use UNION ALL as it does not try to delete duplicates (faster) (although there cant be any anyways)
 
     -- observations
     SELECT
+      e.person_id               AS person_id,
       c.eventperiod_id          AS eventperiod_id,
       e.observation_concept_id  AS CONCEPT_ID,
       min(e.observation_date)   AS date
     FROM @cdmDatabaseSchema.observation e
+    -- note that the same event may belong to several event periods. It gets multiplied here while doing this INNER JOIN
     INNER JOIN @resultsSchema.@prefiXmycohort c ON e.person_id=c.person_id {@daysBeforeIndexDate == Inf} ? {} : { AND DATEADD(day,@daysBeforeIndexDate,e.observation_date)>=c.eventperiod_start_date } AND e.observation_date>=c.eventperiod_start_date AND e.observation_date<=c.eventperiod_end_date
     WHERE
       1=@addObservations -- if addObservations is TRUE, then this UNION is ADDED, otherwise this query give 0 rows as result
       AND
       observation_concept_id!=0
-    GROUP BY c.eventperiod_id,observation_concept_id
+    GROUP BY c.eventperiod_id,observation_concept_id,e.person_id
 
     UNION ALL -- we use UNION ALL as it does not try to delete duplicates (faster) (although there cant be any anyways)
 
     -- procedures
     SELECT
+      e.person_id             AS person_id,
       c.eventperiod_id        AS eventperiod_id,
       e.procedure_concept_id  AS CONCEPT_ID,
       min(e.procedure_date)   AS date
     FROM @cdmDatabaseSchema.procedure_occurrence e
+    -- note that the same event may belong to several event periods. It gets multiplied here while doing this INNER JOIN
     INNER JOIN @resultsSchema.@prefiXmycohort c ON e.person_id=c.person_id {@daysBeforeIndexDate == Inf} ? {} : { AND DATEADD(day,@daysBeforeIndexDate,e.procedure_date)>=c.eventperiod_start_date } AND e.procedure_date>=c.eventperiod_start_date AND e.procedure_date<=c.eventperiod_end_date
     WHERE
       1=@addProcedures -- if addProcedures is TRUE, then this UNION is ADDED, otherwise this query give 0 rows as result
       AND
       procedure_concept_id!=0
-    GROUP BY c.eventperiod_id,e.procedure_concept_id
+    GROUP BY c.eventperiod_id,e.procedure_concept_id,e.person_id
 
     UNION ALL -- we use UNION ALL as it does not try to delete duplicates (faster) (although there cant be any anyways)
 
     -- drugs
     SELECT
+      e.person_id                       AS person_id,
       c.eventperiod_id                  AS eventperiod_id,
       e.drug_concept_id                 AS CONCEPT_ID,
       min(e.drug_exposure_start_date)   AS date
     FROM @cdmDatabaseSchema.drug_exposure e
+    -- note that the same event may belong to several event periods. It gets multiplied here while doing this INNER JOIN
     INNER JOIN @resultsSchema.@prefiXmycohort c ON e.person_id=c.person_id {@daysBeforeIndexDate == Inf} ? {} : { AND DATEADD(day,@daysBeforeIndexDate,e.drug_exposure_start_date)>=c.eventperiod_start_date } AND e.drug_exposure_start_date>=c.eventperiod_start_date AND e.drug_exposure_start_date<=c.eventperiod_end_date
     WHERE
       1=@addDrugExposures -- if addDrugExposures is TRUE, then this UNION is ADDED, otherwise this query give 0 rows as result
       AND
       drug_concept_id!=0
-    GROUP BY c.eventperiod_id,e.drug_concept_id
+    GROUP BY c.eventperiod_id,e.drug_concept_id,e.person_id
 
     UNION ALL -- we use UNION ALL as it does not try to delete duplicates (faster) (although there cant be any anyways)
 
     -- drug eras
     SELECT
+      e.person_id                 AS person_id,
       c.eventperiod_id            AS eventperiod_id,
       e.drug_concept_id           AS CONCEPT_ID,
       min(e.drug_era_start_date)  AS date
     FROM @cdmDatabaseSchema.drug_era e
+    -- note that the same event may belong to several event periods. It gets multiplied here while doing this INNER JOIN
     INNER JOIN @resultsSchema.@prefiXmycohort c ON e.person_id=c.person_id {@daysBeforeIndexDate == Inf} ? {} : { AND DATEADD(day,@daysBeforeIndexDate,e.drug_era_start_date)>=c.eventperiod_start_date } AND e.drug_era_start_date>=c.eventperiod_start_date AND e.drug_era_start_date<=c.eventperiod_end_date
     WHERE
       1=@addDrugEras -- if addDrugEras is TRUE, then this UNION is ADDED, otherwise this query give 0 rows as result
       AND
       drug_concept_id!=0
-    GROUP BY c.eventperiod_id,e.drug_concept_id
+    GROUP BY c.eventperiod_id,e.drug_concept_id,e.person_id
 
     UNION ALL -- we use UNION ALL as it does not try to delete duplicates (faster) (although there cant be any anyways)
 
     -- births
      SELECT
+      e.person_id               AS person_id,
       c.eventperiod_id          AS eventperiod_id,
       4216316                   AS CONCEPT_ID, -- this is a birth event
       MIN(CAST(e.birth_datetime AS DATE))   AS date
      FROM @cdmDatabaseSchema.person e
+     -- note that the same event may belong to several event periods. It gets multiplied here while doing this INNER JOIN
      INNER JOIN @resultsSchema.@prefiXmycohort c ON e.person_id=c.person_id {@daysBeforeIndexDate == Inf} ? {} : { AND DATEADD(day,@daysBeforeIndexDate,CAST(e.birth_datetime AS DATE))>=c.eventperiod_start_date } AND CAST(e.birth_datetime AS DATE)>=c.eventperiod_start_date AND CAST(e.birth_datetime AS DATE)<=c.eventperiod_end_date
      WHERE
       1=@addBirths -- if addBirths is TRUE, then this UNION is ADDED, otherwise this query give 0 rows as result
       AND
       e.birth_datetime IS NOT NULL
-    GROUP BY c.eventperiod_id
+    GROUP BY c.eventperiod_id,e.person_id
 
     UNION ALL -- we use UNION ALL as it does not try to delete duplicates (faster) (although there cant be any anyways)
 
     -- deaths
     SELECT
+      e.person_id           AS person_id,
       c.eventperiod_id      AS eventperiod_id,
       40566982              AS CONCEPT_ID, -- this is a death event
       MIN(CAST(e.death_date AS DATE)) AS date --death.death_datetime not required in CDM 5.1, death.death_date used instead
     FROM @cdmDatabaseSchema.death e
+    -- note that the same event may belong to several event periods. It gets multiplied here while doing this INNER JOIN
     INNER JOIN @resultsSchema.@prefiXmycohort c on e.person_id=c.person_id {@daysBeforeIndexDate == Inf} ? {} : { AND DATEADD(day,@daysBeforeIndexDate,CAST(e.death_date AS DATE))>=c.eventperiod_start_date } AND CAST(e.death_date AS DATE)>=c.eventperiod_start_date AND CAST(e.death_date AS DATE)<=c.eventperiod_end_date
     WHERE
       1=@addDeaths -- if addDeaths is TRUE, then this UNION is ADDED, otherwise this query give 0 rows as result
       AND
       e.death_date IS NOT NULL
-    GROUP BY c.eventperiod_id
+    GROUP BY c.eventperiod_id,e.person_id
 
     ) SSS
 
@@ -191,8 +206,11 @@ INSERT INTO @resultsSchema.@prefiXdebug (entry) VALUES (CONCAT('..done. There ar
 
 
 ---------------------------------------------------------------------------------------------
--- Remove event periods with only one event since we are looking for event pairs
+-- Mark events in event periods with only one event as "to_be_skipped_from_making_pairs" since we are looking for pairs of events
 ---------------------------------------------------------------------------------------------
+
+ALTER TABLE @resultsSchema.@prefiXevents ADD SINGLE_EVENT_EVENTPERIOD INT; -- default: no skip
+UPDATE @resultsSchema.@prefiXevents SET SINGLE_EVENT_EVENTPERIOD=0;
 
 INSERT INTO @resultsSchema.@prefiXdebug (entry) VALUES ('Creating @resultsSchema.@prefiXsingle_event_eventperiods...');
 
@@ -210,55 +228,80 @@ IF OBJECT_ID('@resultsSchema.@prefiXsingle_event_eventperiods', 'U') IS NOT NULL
 
 INSERT INTO @resultsSchema.@prefiXdebug (entry) VALUES (CONCAT('..done. There are ',CAST((SELECT COUNT(*) FROM @resultsSchema.@prefiXsingle_event_eventperiods) AS VARCHAR),' rows in @resultsSchema.@prefiXsingle_event_eventperiods (removing them from @resultsSchema.@prefiXevents and @resultsSchema.@prefiXmycohort)'));
 
-DELETE FROM @resultsSchema.@prefiXevents
+
+--DELETE FROM @resultsSchema.@prefiXevents
+UPDATE @resultsSchema.@prefiXevents
+SET
+  SINGLE_EVENT_EVENTPERIOD=1
 WHERE eventperiod_id IN (SELECT eventperiod_id FROM @resultsSchema.@prefiXsingle_event_eventperiods);
 
-DELETE FROM @resultsSchema.@prefiXmycohort
-WHERE eventperiod_id IN (SELECT eventperiod_id FROM @resultsSchema.@prefiXsingle_event_eventperiods);
+--DELETE FROM @resultsSchema.@prefiXmycohort
+--WHERE eventperiod_id IN (SELECT eventperiod_id FROM @resultsSchema.@prefiXsingle_event_eventperiods);
 
 
 IF OBJECT_ID('@resultsSchema.@prefiXsingle_event_eventperiods', 'U') IS NOT NULL
   DROP TABLE @resultsSchema.@prefiXsingle_event_eventperiods;
 
 
-
-
 ---------------------------------------------------------------------------------------------
--- Adding gender and year of birth to eventperiod events (new table events_in_eventperiods)
+-- Calculate day-difference between the obs. period start and event date
 ---------------------------------------------------------------------------------------------
 
-INSERT INTO @resultsSchema.@prefiXdebug (entry) VALUES ('Creating @resultsSchema.@prefiXevents_in_eventperiods...');
+INSERT INTO @resultsSchema.@prefiXdebug (entry) VALUES ('Creating @resultsSchema.@prefiXdaydiff_from_beginning_of_op...');
+
+IF OBJECT_ID('@resultsSchema.@prefiXdaydiff_from_beginning_of_op', 'U') IS NOT NULL
+  DROP TABLE @resultsSchema.@prefiXdaydiff_from_beginning_of_op;
+
+SELECT e.person_id,
+       e.concept_id,
+       min(
+          CASE WHEN
+                DATEDIFF(DAY, OP.OBSERVATION_PERIOD_START_DATE, e.date) >=0
+                THEN
+                DATEDIFF(DAY, OP.OBSERVATION_PERIOD_START_DATE, e.date)
+               ELSE
+                99999
+           END
+
+       ) AS daydiff_from_beginning_of_op -- event is too close to the beginning of observation period (might not be the first event of that type)
+    INTO @resultsSchema.@prefiXdaydiff_from_beginning_of_op
+    FROM  @resultsSchema.@prefiXevents e
+        -- join observation period to know how far the event is from the beginning of observation period
+        -- By CDM rules the observation periods of the same patients should not overlap which means that no need to do a full join.
+        -- However, to prevent any problems in this matter lets write the code in a way that it will not break (full join)
+        JOIN @cdmDatabaseSchema.observation_period OP on e.person_id = OP.person_id
+    GROUP BY e.person_id, e.concept_id
+;
+
+
+-- putting all together
 
 IF OBJECT_ID('@resultsSchema.@prefiXevents_in_eventperiods', 'U') IS NOT NULL
   DROP TABLE @resultsSchema.@prefiXevents_in_eventperiods;
-    SELECT e.*,
-           p.gender,
-           p.year_of_birth
-    INTO @resultsSchema.@prefiXevents_in_eventperiods
-    FROM  @resultsSchema.@prefiXevents e
-        INNER JOIN  @resultsSchema.@prefiXmycohort p
-            ON e.eventperiod_id = p.eventperiod_id;
+
+SELECT
+  e.*,
+  CASE WHEN p.gender_concept_id = 8532 THEN 'F'
+               WHEN p.gender_concept_id = 8507 THEN 'M'
+               END AS gender,
+  p.year_of_birth,
+  o.daydiff_from_beginning_of_op,
+  YEAR(e.date)-p.year_of_birth AS age,
+  CONCAT(YEAR(date), MONTH(date)) AS discharge_time
+INTO
+  @resultsSchema.@prefiXevents_in_eventperiods
+FROM @resultsSchema.@prefiXevents e
+  LEFT JOIN @resultsSchema.@prefiXdaydiff_from_beginning_of_op o ON  o.person_id=e.person_id AND o.concept_id=e.concept_id
+  LEFT JOIN @cdmDatabaseSchema.person p ON p.person_id=e.person_id
+;
+
+
+
 
 INSERT INTO @resultsSchema.@prefiXdebug (entry) VALUES (CONCAT('..done. There are ',CAST((SELECT COUNT(*) FROM @resultsSchema.@prefiXevents_in_eventperiods) AS VARCHAR),' rows in @resultsSchema.@prefiXevents_in_eventperiods'));
 
 
-------------------------------------------------------------------------------------
--- Adding age during event
-------------------------------------------------------------------------------------
 
-ALTER TABLE  @resultsSchema.@prefiXevents_in_eventperiods
-            ADD age int NULL;
-UPDATE  @resultsSchema.@prefiXevents_in_eventperiods SET
-    age = YEAR(date)-year_of_birth;
-
-------------------------------------------------------------------------------------
--- Adding year and month of event
-------------------------------------------------------------------------------------
-
-ALTER TABLE  @resultsSchema.@prefiXevents_in_eventperiods
-            ADD discharge_time VARCHAR(6) NULL;
-UPDATE  @resultsSchema.@prefiXevents_in_eventperiods SET
-    discharge_time = CONCAT(YEAR(date), MONTH(date));
 
 
 ------------------------------------------------------------------------------------
@@ -323,6 +366,10 @@ IF OBJECT_ID('@resultsSchema.@prefiXpairs', 'U') IS NOT NULL
               ON  a.eventperiod_id = b.eventperiod_id
                   AND a.CONCEPT_ID != b.CONCEPT_ID
     WHERE
+      a.SINGLE_EVENT_EVENTPERIOD=0 AND b.SINGLE_EVENT_EVENTPERIOD=0 --skip eventperiods with single events
+      --AND
+      --(b.age<=1 OR b.daydiff_from_beginning_of_op>=365) --second event not happening within 1st year of observation period (unless close to birth) <- because it is possible that this is not actually the first occurrence of that event (the first occurrence was happening before observation period, especially valid for chronic diseases)
+      AND
       DATEDIFF(DAY,
                     a.date,
                     b.date) >= @minimumDaysBetweenEvents -- this also requires that event b is always no later than event a. Seems that minimum allowed value for @minimumDaysBetweenEvents is 0.

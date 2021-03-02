@@ -10,6 +10,24 @@ clearConditionsTable<-function(connection) {
   executeSql(connection, "DELETE FROM CONDITION_OCCURRENCE;")
 }
 
+loadBuiltInPersons<-function(connection) {
+
+  persons<-read.csv2(system.file("testdata","person.tsv",package="Trajectories"),sep="\t")
+  dbWriteTable(connection, "person", persons, overwrite = T, append=F)
+
+  deaths<-read.csv2(system.file("testdata","death.tsv",package="Trajectories"),sep="\t")
+  dbWriteTable(connection, "death", deaths, overwrite = T, append=F)
+
+  op<-read.csv2(system.file("testdata","observation_period.tsv",package="Trajectories"),sep="\t")
+  dbWriteTable(connection, "observation_period", op, overwrite = T, append=F)
+
+  print(paste0('Added ',nrow(persons),' persons and their deaths (n=',nrow(deaths),') & observation periods (n=',nrow(op),') to database.'))
+
+  #querySql(connection, paste0('SELECT COUNT(*) FROM observation_period;'))
+
+}
+
+
 getPatientIds<-function(connection,n=2694,excludePatientIds=c()) {
   if(length(excludePatientIds)>0) {
     res<-querySql(connection, paste0('SELECT person_id FROM PERSON WHERE person_id NOT IN (',paste0(excludePatientIds,collapse=","),') ORDER BY random() LIMIT ',as.numeric(n),';'))
@@ -26,11 +44,12 @@ getObservationPeriod<-function(connection,person_id) {
 
 
 
-
-addConditionEventTrajectoryForPerson<-function(connection,event_concept_ids=c(133834,255848,4299128),person_id=6) {
+addConditionEventTrajectoryForPerson<-function(connection,event_concept_ids=c(133834,255848,4299128),person_id=6,days_to_skip_from_obs_period_start=0) {
   obsPeriod=getObservationPeriod(connection,person_id)
   startDate=obsPeriod$OBSERVATION_PERIOD_START_DATE
   endDate=obsPeriod$OBSERVATION_PERIOD_END_DATE
+
+  startDate=startDate+days_to_skip_from_obs_period_start
 
   prevDate=as.Date(startDate)-1
   datecounter=0
@@ -108,14 +127,15 @@ addRandomEvents<-function(connection,n_per_person_range=c(0,5),exclude_concept_i
 }
 
 
-addConditionEventTrajectory<-function(connection,event_concept_ids=c(133834,255848,4299128),n=n, excludePatientIds=c()) {
+addConditionEventTrajectory<-function(connection,event_concept_ids=c(133834,255848,4299128),n=n, excludePatientIds=c(),days_to_skip_from_obs_period_start=0) {
+  if(n<1) return(c())
   print(paste0('Adding ',n,'x ',paste0(event_concept_ids,collapse="->"),' event trajectory to data'))
   if(n>2694) warning("Error in tests: n>2694 but there are 2694 people in Eunomia database")
   if(n>(2694-length(excludePatientIds))) stop('Error in addConditionEventTrajectory: cannot add that many trajectories')
   person_ids<-getPatientIds(connection, n, excludePatientIds=excludePatientIds)
   for(person_id in person_ids) {
-    #print(person_id)
-    addConditionEventTrajectoryForPerson(connection,event_concept_ids=event_concept_ids,person_id=person_id)
+    print(person_id)
+    addConditionEventTrajectoryForPerson(connection,event_concept_ids=event_concept_ids,person_id=person_id,days_to_skip_from_obs_period_start=days_to_skip_from_obs_period_start)
   }
   return(person_ids)
 }
@@ -169,6 +189,20 @@ limitToNumPatients<-function(connection,n=2694) {
   executeSql(connection, paste0("DELETE FROM CONDITION_OCCURRENCE WHERE person_id NOT IN (",paste(person_ids,collapse=","),");"), progressBar = F,
              reportOverallTime=F)
 }
+
+removeEventsOutside<-function(mindate='1990-01-01',maxdate='2020-12-31') {
+  sql=paste0("DELETE FROM CONDITION_OCCURRENCE WHERE
+                                (JULIANDAY(CONDITION_START_DATE, 'unixepoch') - JULIANDAY(",getSQLiteRealFromDateSQLstring(mindate),", 'unixepoch'))<0
+             OR
+             (JULIANDAY(",getSQLiteRealFromDateSQLstring(maxdate),", 'unixepoch')-JULIANDAY(CONDITION_START_DATE, 'unixepoch')) <0
+             ;")
+  #querySql(connection, sql)
+  executeSql(connection, sql, progressBar = F, reportOverallTime=F)
+
+  TODO SIIN TULEKS UUENDADA KA OBSERVATION PERIOD
+
+}
+
 
 limitToConcepts<-function(connection,concept_ids=c(9201, #inpatient visit
                                                    9202, #outpatient visit
@@ -260,10 +294,13 @@ removeTestableOutputFiles<-function(trajectoryLocalArgs,trajectoryAnalysisArgs) 
   #Get output folder for this analysis
   outputFolder<-Trajectories::GetOutputFolder(trajectoryLocalArgs,trajectoryAnalysisArgs,createIfMissing=F)
 
-  filename="event_pairs.tsv"
+  filename="event_pairs_directional.tsv"
   if(file.exists(file.path(outputFolder,filename))) file.remove(file.path(outputFolder,filename))
 
   filename="event_pairs_tested.tsv"
+  if(file.exists(file.path(outputFolder,filename))) file.remove(file.path(outputFolder,filename))
+
+  filename="event_pairs_tested.xlsx"
   if(file.exists(file.path(outputFolder,filename))) file.remove(file.path(outputFolder,filename))
 
 }
