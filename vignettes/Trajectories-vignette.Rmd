@@ -1,0 +1,225 @@
+---
+title: "Trajectories-vignette"
+author: "Kadri Künnapuu, Kadri Ligi, Raivo Kolde, Sven Laur, Solomon Ioannou, Peter Rijnbeek, Jaak Vilo and Sulev Reisberg"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{my-vignette}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r, include = FALSE}
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment = "#>"
+)
+```
+```{r, echo = FALSE, message = FALSE, warning = FALSE}
+library(Trajectories)
+```
+# Introduction
+This vignette describes how to use the Trajectories package in discovery and validation mode. The discovery mode enables to discover and visualize event pairs in OMOP-formatted EHR data while the validation mode validates the results against event pairs discovered elsewhere.
+
+We have selected type 2 diabetes as an example, creating graphs with both conditions and drug eras included in the analysis.
+The package can be run in 2 modes: discovery and validation. When running the package on your own data, we recommend running the discovery mode on 50% of the data and validate the results on the rest of the data. Both modes have separate CodeToRun files.
+
+# Installation instructions
+Java must be available before installing the Trajectories package. It can be downloaded from www.java.com, Windows users must also have RTools (????) which can be dowlonaded from CRAN.
+
+At the current moment the Trajectories package is maintained in a Github repository.
+Simply download the repository from Github and install in Rstudio (or install.packages(“remotes”) ; 
+```
+remotes::install_github(“ohdsi/Trajectories”))
+```
+# Assembling the study cohort
+The input folder, `/inst/extdata/` must contain a folder for each study. The study folder must contain the file `cohort.sql` for cohort creation and `trajectoryAnalysisArgs.json` for specifying study paramteres (separate instructions under 'Configuring Analysis parameters').
+
+The package assembles the cohort by running `cohort.sql` from a folder located at `inst/extdata/`. It contains the SQL queries that assemble the desired cohort.
+
+For the current example where we look at type-2 diabetes, we will be creating the folder `/inst/extdata/T2D`
+
+Next, we will add the SQL script for extracting the cohort from the database data into the newly created `/inst/extdata/T2D` folder under the name `cohort.sql`
+
+We recommend using the OHDSI ATLAS https://atlas.ohdsi.org/ for creating the SQL script. 
+From there you can choose export OHDSI.SQL and copy the SQL script into the study folder, `/inst/extdata/T2D/cohort.sql` in this example case.
+
+We have included some pre-made cohorts in the package already, such as `inst/extdata/fulldb`, which should include all the patients in your OHDSI-CDM database.
+
+# Setting up study parameters
+The whole Trajectories package can be run in discovery mode from `extras/CodeToRunDiscover.R`. 
+The first step is to set up the parameters for the study.
+
+## Configuring the connection to the server
+Trajectories uses the [`DatabaseConnector`](http://github.com/ohdsi/DatabaseConnector) package to connect to the server, namely the function `createConnectionDetails`.
+To configure the username (`DB_USERNAME`) and password (`DB_PASSWORD`), open the `Renviron.template` file in the main `Trajectories/` folder, enter the required details and rename the file to `.Renviron`.
+
+Next, set the appropriate values for `dbms` and `connectionString`, according to your database parameters in the `extras/CodeToRunDiscover.R` file.
+
+```{r tidy=FALSE,eval=FALSE}
+connectionDetails = createConnectionDetails(dbms = 'postgresql',
+                                            user = Sys.getenv('DB_USERNAME'),
+                                            password = Sys.getenv('DB_PASSWORD'),
+                                            connectionString = "jdbc:postgresql://host:port/location")
+```
+
+## Configuring Local parameters
+The variables configured in the `createTrajectoryLocalArgs` function in `extras/CodeToRunDiscover.R` are specific to the user’s database and computer settings. They are used to tell the program where the data is located and where new files can be saved.
+
+The role the user specifies under these settings must have permissions to read from all necessary schemas and create tables to the results schema. The proper schemas for reading and writing can be specified under the local parameters. 
+To get more information about the different parameters, type `?createTrajectoryLocalArgs` into the console.
+
+
+```{r tidy=FALSE,eval=FALSE}
+trajectoryLocalArgs <- Trajectories::createTrajectoryLocalArgs(oracleTempSchema = "temp_schema",
+                                                               prefixForResultTableNames = "test_",
+                                                               cdmDatabaseSchema = 'ohdsi_cdm',
+                                                               vocabDatabaseSchema = 'ohdsi_vocab',
+                                                               resultsSchema = 'ohdsi_temp',
+                                                               sqlRole = F, 
+                                                               cohortTableSchema= 'ohdsi_temp',
+                                                               cohortTable='cohort',
+                                                               cohortId=1, #use 1 for discovery studies
+                                                               inputFolder=system.file("extdata", "T2D", package = "Trajectories"), 
+                                                               mainOutputFolder='/Users/USER/temp',
+                                                               databaseHumanReadableName='T2D') #Use something short.
+```
+
+## Configuring Analysis parameters
+The analysis parameters determine the details of the analysis at hand: the minimum number of patients per event pair, min/max days between the two events, which domains are included in the study etc. 
+The first option (a) is to load them from the folder that was defined as `inputFolder` in the last step under local parameters.
+The second option (b) is to enter the values in the `CodeToRunDiscover.R` manually.
+
+We recommend configuring the Analysis parameters in a separate json file `trajectoryAnalysisArgs.json` that located at the study folder, `/inst/exdata/T2D` in our current example. The parameters can be easily configured in that .json file.
+
+The structure of `trajectoryAnalysisArgs.json` in our example. We want to look at events that have dates at least one day apart, but no more than  10 years. The program should only look at those event pairs which are found in at least 10% of the study population (`minPatientsPerEventPair = 0.1`). If you enter any number less than 1 into minPatientsPerEventPair, it will be read as a fraction, any number greater than 1 will be read as a fixed number of patients.
+```
+{
+  "mode": ["DISCOVERY"],
+  "minimumDaysBetweenEvents": [1],
+  "maximumDaysBetweenEvents": [3650],
+  "minPatientsPerEventPair": [0.1],
+  "addConditions": [true],
+  "addObservations": [false],
+  "addProcedures": [true],
+  "addDrugExposures": [false],
+  "addDrugEras": [true],
+  "addBirths": [true],
+  "addDeaths": [true],
+  "daysBeforeIndexDate": ["Inf"],
+  "cohortName": ["Type 2 diabetes"],
+  "description": ["Type 2 diabetes study"],
+  "eventIdsForGraphs": [4193704, 201826, 443732, 1503297],
+  "RRrangeToSkip": [0.8, 1.2]
+}
+```
+Section in the `CodeToRunDiscover.R` which reads the .json file:
+
+```{r tidy=FALSE,eval=FALSE}
+trajectoryAnalysisArgs<-Trajectories::TrajectoryAnalysisArgsFromInputFolder(trajectoryLocalArgs)
+```
+
+
+The alternative method to configure analysis parameters is to set them manually, which requires the user to un-comment the following function:
+
+```{r tidy=FALSE,eval=FALSE}
+trajectoryAnalysisArgs <- Trajectories::createTrajectoryAnalysisArgs(minimumDaysBetweenEvents = 1,
+                                                                     maximumDaysBetweenEvents = 3650,
+                                                                     minPatientsPerEventPair = 0.1,
+                                                                     addConditions=T,
+                                                                     addObservations=F,
+                                                                     addProcedures=F,
+                                                                     addDrugExposures=F, 
+                                                                     addDrugEras=T, 
+                                                                     addBirths=T,
+                                                                     addDeaths=T,
+                                                                     daysBeforeIndexDate=Inf,
+                                                                     packageName='Trajectories',
+                                                                     cohortName="Type 2 diabetes",
+                                                                     description="Type 2 diabetes study",
+                                                                     eventIdsForGraphs=c(4193704, 201826, 443732, 1503297),
+                                                                     RRrangeToSkip=[0.8, 1.2]))
+```
+
+
+To get more information about the different parameters, type `?createTrajectoryAnalysisArgs` into the console.
+
+# Running the package
+After the parameters are configured, run all functions from `extras/CodeToRunDiscover.R` to create event pairs. 
+
+```{r tidy=FALSE,eval=FALSE}
+# ##################################################
+# Connect to database
+# ##################################################
+
+connection <- DatabaseConnector::connect(connectionDetails)
+on.exit(DatabaseConnector::disconnect(connection)) #Close db connection on error or exit
+
+##############################################################################################################
+
+# BUILD A COHORT BASED ON COHORT DEFINITION SQL AND THEN DIVIDE IT TO 2 SETS: DISCOVERY & VALIDATION SET
+
+##############################################################################################################
+
+# Create new cohort table for this package to results schema & fill it in (all having cohort_id=1 in cohort data)
+Trajectories::createAndFillCohortTable(connection=connection,
+                                trajectoryAnalysisArgs=trajectoryAnalysisArgs,
+                                trajectoryLocalArgs=trajectoryLocalArgs)
+
+# Assign 50% of the event-periods from the cohort to validation set (discovery set=data in cohort table where cohort_id=1; validation set=data in cohort table where cohort_id=2)
+Trajectories::createValidationSet(connection=connection,
+                                  trajectoryAnalysisArgs,
+                                  trajectoryLocalArgs,
+                                  size=0.5)
+
+##############################################################################################################
+
+# RUN DISCOVERY ANALYSIS
+
+##############################################################################################################
+
+#check that the mode is now "DISCOVERY"
+stopifnot(Trajectories::IsValidationMode(trajectoryAnalysisArgs,verbose=T)==F)
+
+# Create database tables of all event pairs (patient level data + summary statistics). Uses cohort_id depending on the running mode of the package
+Trajectories::createEventPairsTable(connection=connection,
+                                    trajectoryAnalysisArgs=trajectoryAnalysisArgs,
+                                    trajectoryLocalArgs=trajectoryLocalArgs)
+
+
+# Detect statistically significant directional event pairs and write the results to eventPairResultsFilename. Also creates validation setup.
+Trajectories::runDiscoveryAnalysis(connection,
+                                   trajectoryAnalysisArgs,
+                                   trajectoryLocalArgs,
+                                   forceRecalculation=F)
+```
+
+# Retrieving the results
+The edges and vertices of the detected event pairs are written as .csv files to the folder specified under `mainOutputFolder` under `createTrajectoryLocalArgs`. 
+The most prominent event pairs are plotted and saved as pdf files in the output folder.
+
+Under `PlotTrajectoriesGraphForEvents` specific OMOP concept ID’s can be specified under eventIds to extract event trajectories connected to specific events. Note that if you, for example have only used conditions and drug eras in your analysis, you can only use those concept ID’s in this field as well as no other concepts are passed through the analysis. If no concept ID’s are specified, the graphs are constructed using the 5 most prevalent concept ID’s in the dataset.
+
+```{r tidy=FALSE,eval=FALSE}
+# Draw unfiltered graphs of the discovery results (not limited to specific concept_id-s)
+Trajectories::createFilteredFullgraphs(connection,
+                                       trajectoryAnalysisArgs,
+                                       trajectoryLocalArgs)
+
+```
+
+# Database cleanup
+When you're ready to delete all the tables from the database that were created in the first step, run the following section in the code.
+
+```{r tidy=FALSE,eval=FALSE}
+Trajectories::dbCleanup(connection=connection,
+                        trajectoryAnalysisArgs=trajectoryAnalysisArgs,
+                        trajectoryLocalArgs=trajectoryLocalArgs)
+
+DatabaseConnector::disconnect(connection)
+```
+
+# Results validation
+Validating the event pairs that have been discovered previously can be done by running `/extras/CodeToRunValidate.R`. The requirements for input files are the same as for `/extras/CodeToRunDiscover.R`, but also the file `event_pairs_for_validation.tsv` must be located in the study folder. 
+
+Setting the parameters for `/extras/CodeToRunDiscover.R` follow the same rules as `/extras/CodeToRunDiscover.R` that are described in this vignette.
+
