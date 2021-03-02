@@ -25,9 +25,9 @@ trajectoryLocalArgs <- Trajectories::createTrajectoryLocalArgs(oracleTempSchema 
                                                                #cohortTableSchema= 'ohdsi_temp',
                                                                #cohortTable='cohort',
                                                                #cohortId=1, #use 1 for discovery studies
-                                                               inputFolder=system.file("extdata", "T2D-validation", package = "Trajectories"), # Full path to input folder that contains SQL file for cohort definition and optionally also trajectoryAnalysisArgs.json. You can use built-in folders of this package such as: inputFolder=system.file("extdata", "T2D", package = "Trajectories")
+                                                               inputFolder=system.file("extdata", "T2D-validation-ipci", package = "Trajectories"), # Full path to input folder that contains SQL file for cohort definition and optionally also trajectoryAnalysisArgs.json. You can use built-in folders of this package such as: inputFolder=system.file("extdata", "T2D", package = "Trajectories")
                                                                mainOutputFolder='/Users/sulevr/temp', #Subfolders to this will be created automatically
-                                                               databaseHumanReadableName='RITA.BRUNAK') #Use something short. It will be added to the titles of the graph.
+                                                               databaseHumanReadableName='RITA') #Use something short. It will be added to the titles of the graph.
 
 
 # Setting analysis parameters. Two options here:

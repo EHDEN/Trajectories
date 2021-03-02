@@ -1,12 +1,16 @@
 	E1_CONCEPT_ID	E2_CONCEPT_ID	E1_NAME	E2_NAME	E1_DOMAIN	E2_DOMAIN	RR_IN_PREVIOUS_STUDY
-1	36714388	4266507	Influenza caused by seasonal influenza virus	DNA analysis	Condition	Procedure	1.645
-2	4075112	4137738	Emergency examination for triage	Admission by GP	Procedure	Observation	1.415
-3	36714388	4137738	Influenza caused by seasonal influenza virus	Admission by GP	Condition	Observation	1.309
-4	46273463	4137738	Upper respiratory tract infection due to Influenza	Admission by GP	Condition	Observation	1.26
-5	46273463	4089050	Upper respiratory tract infection due to Influenza	Follow-up visit	Condition	Observation	1.22
-6	36714388	4089050	Influenza caused by seasonal influenza virus	Follow-up visit	Condition	Observation	1.218
-7	4075112	4137910	Emergency examination for triage	Admission by general nurse	Procedure	Observation	1.204
-8	320752	4089050	Influenza with non-respiratory manifestation	Follow-up visit	Condition	Observation	1.202
-9	4266367	4137738	Influenza	Admission by GP	Condition	Observation	0.785
-10	1799139	4163872	oseltamivir	Plain chest X-ray	Drug	Procedure	0.775
-11	4266367	1799139	Influenza	oseltamivir	Condition	Drug	0.666
+1	4187078	4230911	Electrocardiographic monitoring	Echocardiography	Procedure	Procedure	1.9
+2	36714388	40484651	Influenza caused by seasonal influenza virus	Analysis using real time PCR	Condition	Procedure	1.768
+3	4187078	4238738	Electrocardiographic monitoring	Physical therapy procedure	Procedure	Observation	1.664
+4	36714388	4266507	Influenza caused by seasonal influenza virus	DNA analysis	Condition	Procedure	1.654
+5	260139	4163872	Acute bronchitis	Plain chest X-ray	Condition	Procedure	1.629
+6	36714388	4238738	Influenza caused by seasonal influenza virus	Physical therapy procedure	Condition	Observation	1.502
+7	46273463	40484651	Upper respiratory tract infection due to Influenza	Analysis using real time PCR	Condition	Procedure	1.469
+8	4163872	4266507	Plain chest X-ray	DNA analysis	Procedure	Procedure	1.433
+9	4187078	4266507	Electrocardiographic monitoring	DNA analysis	Procedure	Procedure	1.418
+10	4075112	4137738	Emergency examination for triage	Admission by GP	Procedure	Observation	1.413
+11	46273463	4089050	Upper respiratory tract infection due to Influenza	Follow-up visit	Condition	Observation	1.21
+12	4266367	4089050	Influenza	Follow-up visit	Condition	Observation	1.184
+13	36714388	4089050	Influenza caused by seasonal influenza virus	Follow-up visit	Condition	Observation	1.147
+14	46273463	4137738	Upper respiratory tract infection due to Influenza	Admission by GP	Condition	Observation	1.136
+15	4137738	4089050	Admission by GP	Follow-up visit	Observation	Observation	1.13
