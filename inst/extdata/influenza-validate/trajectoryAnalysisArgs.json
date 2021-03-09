@@ -6,13 +6,13 @@
   "addConditions": [true],
   "addObservations": [true],
   "addProcedures": [true],
-  "addDrugExposures": [true],
-  "addDrugEras": [false],
+  "addDrugExposures": [false],
+  "addDrugEras": [true],
   "addBirths": [true],
   "addDeaths": [true],
   "daysBeforeIndexDate": [7],
+  "RRrangeToSkip": [0, 1.1],
   "cohortName": ["Influenza"],
-  "description": ["Influenza validation study (validation results from Estoniann study), looking at 7 days prior and 60 days after influenza diagnosis/measurement/positive test. Can occur several times per patient."],
-  "eventIdsForGraphs": [],
-  "RRrangeToSkip": [0, 1.1]
+  "description": ["Influenza study, looking at 7 days prior and 60 days after influenza diagnosis/measurement/positive test. Can occur several times per patient."],
+  "eventIdsForGraphs": []
 }

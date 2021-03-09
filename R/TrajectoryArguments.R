@@ -8,7 +8,7 @@
 #' @param addConditions TRUE/FALSE parameter to indicate whether events from Condition_occurrence table should be included in the analysis
 #' @param addObservations TRUE/FALSE parameter to indicate whether events from Condition_occurrence table should be included in the analysis
 #' @param addProcedures TRUE/FALSE parameter to indicate whether events from Procedure_occurrence table should be included in the analysis
-#' @param addDrugExposures TRUE/FALSE parameter to indicate whether events from Drug_exposure table should be included in the analysis
+#' @param addDrugExposures TRUE/FALSE parameter to indicate whether events from Drug_exposure table should be included in the analysis. In most of the cases, prefer using addDrugEras instead as the particular RxNorm codes may differ in various databases (leading to no replication) but drug_era is always on ingredient level (active compound) and it also fills gaps between close events.
 #' @param addDrugEras TRUE/FALSE parameter to indicate whether events from Drug_era table should be included in the analysis. NB! use either addDrugEras=T or addDrugExposures=T (not both) as it leads to analysis duplication...
 #' @param addBirths TRUE/FALSE parameter to indicate whether births events should be included in the analysis.
 #' @param addDeaths TRUE/FALSE parameter to indicate whether events from Death table should be included in the analysis.
