@@ -1,0 +1,7 @@
+#selected_icd_codes ~ .multi-wrapper{
+  color: black;
+}
+
+#selected_icd_codes ~ .multi-wrapper .item{
+  color: black;
+}

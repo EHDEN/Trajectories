@@ -199,7 +199,7 @@ removeEventsOutside<-function(mindate='1990-01-01',maxdate='2020-12-31') {
   #querySql(connection, sql)
   executeSql(connection, sql, progressBar = F, reportOverallTime=F)
 
-  TODO SIIN TULEKS UUENDADA KA OBSERVATION PERIOD
+  #TODO: SIIN TULEKS UUENDADA KA OBSERVATION PERIOD
 
 }
 
