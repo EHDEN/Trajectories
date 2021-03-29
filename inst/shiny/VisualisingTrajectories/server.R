@@ -14,10 +14,10 @@ library(icd)
 library(tidyverse)
 library(tidygraph)
 library(readxl)
-library(futile.logger)
 library(visNetwork)
 library(geomnet)
 library(igraph)
+
 
 
 DEFAULT_COLUMNS_FOR_WEIGHT = c("RR", "E1_AND_E2_TOGETHER_COUNT_IN_EVENTS")
@@ -28,7 +28,7 @@ data  <- getShinyOption("data", test_data)
 
 # Define server function
 server <- function(input, output) {
-  flog.info("Loading Shiny server")
+  logger::log_info("Loading Shiny server")
 
   #create nodes dataframe
   nodes <- make_nodes_from_data(data)

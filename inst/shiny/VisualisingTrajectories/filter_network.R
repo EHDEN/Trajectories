@@ -51,7 +51,7 @@ create_nodes_and_edges = function(tg) {
 }
 
 filter_nodes_and_edges = function(tg, filter, selected_icd_codes) {
-  flog.info("Filtering dataset")
+  logger::log_info("Filtering dataset")
   use_for_weight <- filter@use_for_weight
   RR_effect_value <- filter@RR_effect_value
   E1E2Together_effect_value <- filter@E1E2Together_effect_value
@@ -78,9 +78,6 @@ filter_nodes_and_edges = function(tg, filter, selected_icd_codes) {
       pull(id) %>% {
         which(. %in% selected_icd_codes)
       }
-
-    #print(chosen_nodes)
-    print(list())
 
     tg = tg %>%
       activate(nodes) %>%

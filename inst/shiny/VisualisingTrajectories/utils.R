@@ -19,12 +19,12 @@ GraphFilter <- setClass(
 
 get_test_data = function() {
   test_data = as.data.frame(read_xlsx(test_data_source))
-  flog.info("Got test data from: %s", test_data_source)
+  logger::log_info("Got test data from: %s", test_data_source)
   return(test_data)
 }
 
 make_links_from_data = function(data) {
-  flog.info("Making edges from data")
+  logger::log_info("Making edges from data")
 
   # Prepare edges
   edges = data %>%
@@ -37,7 +37,7 @@ make_links_from_data = function(data) {
 }
 
 make_nodes_from_data = function(data) {
-  flog.info("Making nodes from data")
+  logger::log_info("Making nodes from data")
 
   nodes = tibble(name = unique(c(
     data$E1_CONCEPT_ID, data$E2_CONCEPT_ID

@@ -4,7 +4,7 @@
 #' @export
 #' @examples
 #' data <- as.data.frame(read.xlsx("inst/shiny/VisualisingTrajectories/Data/event_pairs_tested.xlsx"))
-#' visualize_data_pairs(data)
+#' Trajectories::visualize_data_pairs(data)
 visualize_data_pairs <- function(data) {
   ensure_installed("DT")
   ensure_installed("shiny")
@@ -17,20 +17,20 @@ visualize_data_pairs <- function(data) {
   ensure_installed("tidyverse")
   ensure_installed("tidygraph")
   ensure_installed("readxl")
-  ensure_installed("futile.logger")
   ensure_installed("visNetwork")
   ensure_installed("geomnet")
   ensure_installed("igraph")
 
+  Trajectories::InitLogger(logfile = file.path(".",'log.txt'), threshold = logger:::INFO)
   #data validation
   if (length(colnames(data)) < 3) {
-    flog.error("Dataset does not contain enough columns")
+    logger::log_error("Dataset does not contain enough columns")
     stop()
   }
   if (!('E1_CONCEPT_ID' %in% colnames(data)) |
       !('E2_CONCEPT_ID' %in% colnames(data))) {
-    flog.error("Dataset does not contain needed column E1_CONCEPT_ID or E2_CONCEPT_ID")
-    flog.info("Column names: ", colnames(data))
+    logger::log_error("Dataset does not contain needed column E1_CONCEPT_ID or E2_CONCEPT_ID")
+    logger::log_info("Column names: ", colnames(data))
     stop()
   }
 
