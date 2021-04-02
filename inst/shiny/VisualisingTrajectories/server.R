@@ -27,7 +27,7 @@ test_data = get_test_data()
 data  <- getShinyOption("data", test_data)
 
 # Define server function
-server <- function(input, output) {
+server <- function(input, output, session) {
   logger::log_info("Loading Shiny server")
 
   #create nodes dataframe
@@ -186,6 +186,15 @@ server <- function(input, output) {
       choiceValues = nodes$id,
       width = "100%"
     )
+  })
+
+  observeEvent(input$resetFilter, {
+    logger::log_info("Filter has been reset")
+    updateSliderInput(session,'importance_value',value = 1)
+    updateSliderInput(session,'RR_effect_value',value = 1)
+    updateSliderInput(session,'E1E2Together_effect_value',value = 0)
+    updateMultiInput(session, "selected_icd_codes", selected = character(0))
+    updateRadioButtons(session, "use_for_weight", selected = "RR")
   })
 
 }

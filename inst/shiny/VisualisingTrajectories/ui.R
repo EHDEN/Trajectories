@@ -36,7 +36,8 @@ ui <- dashboardPage(
     uiOutput("icd_selectinput"),
     uiOutput("weight_radiobox"),
     uiOutput('weight_slider'),
-    uiOutput("importance_slider")
+    uiOutput("importance_slider"),
+    actionButton("resetFilter","Reset Filtering", class = "btn-info")
   ),
   dashboardBody(
     tags$head(
