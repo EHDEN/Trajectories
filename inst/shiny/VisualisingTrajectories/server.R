@@ -17,6 +17,7 @@ library(readxl)
 library(visNetwork)
 library(geomnet)
 library(igraph)
+library(hash)
 
 
 
@@ -25,13 +26,15 @@ appDir <- getwd()
 
 test_data = get_test_data()
 data  <- getShinyOption("data", test_data)
-
+data <- format_given_data(data)
+domain_hash <- get_domains_from_given_data(data)
+name_hash <- get_names_from_given_data(data)
 # Define server function
 server <- function(input, output, session) {
   logger::log_info("Loading Shiny server")
 
   #create nodes dataframe
-  nodes <- make_nodes_from_data(data)
+  nodes <- make_nodes_from_data(data, domain_hash, name_hash)
   #create links dataframe
   edges <- make_links_from_data(data)
 
@@ -180,7 +183,7 @@ server <- function(input, output, session) {
   output$icd_selectinput <- renderUI({
     multiInput(
       inputId = "selected_icd_codes",
-      label = h3("Select icd codes"),
+      label = h3("Select id codes"),
       choices = NULL,
       choiceNames = nodes$CodeDescription,
       choiceValues = nodes$id,
@@ -190,9 +193,9 @@ server <- function(input, output, session) {
 
   observeEvent(input$resetFilter, {
     logger::log_info("Filter has been reset")
-    updateSliderInput(session,'importance_value',value = 1)
-    updateSliderInput(session,'RR_effect_value',value = 1)
-    updateSliderInput(session,'E1E2Together_effect_value',value = 0)
+    updateSliderInput(session, 'importance_value', value = 1)
+    updateSliderInput(session, 'RR_effect_value', value = 1)
+    updateSliderInput(session, 'E1E2Together_effect_value', value = 0)
     updateMultiInput(session, "selected_icd_codes", selected = character(0))
     updateRadioButtons(session, "use_for_weight", selected = "RR")
   })

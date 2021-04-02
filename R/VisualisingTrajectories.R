@@ -20,7 +20,7 @@ visualize_data_pairs <- function(data) {
   ensure_installed("visNetwork")
   ensure_installed("geomnet")
   ensure_installed("igraph")
-
+  ensure_installed("hash")
   Trajectories::InitLogger(logfile = file.path(".",'log.txt'), threshold = logger:::INFO)
   #data validation
   if (length(colnames(data)) < 3) {
