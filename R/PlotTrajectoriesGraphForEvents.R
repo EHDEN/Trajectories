@@ -21,7 +21,6 @@ PlotTrajectoriesGraphForEvents<-function(connection,
                        trajectoryAnalysisArgs,
                        trajectoryLocalArgs,
                        eventIds=NA,
-                       minRelativeRisk=1.2,
                        limitOfNodes=30,
                        skipOutputTables=T
                        ) {
@@ -29,7 +28,7 @@ PlotTrajectoriesGraphForEvents<-function(connection,
 
   library(stringi)
   outputFolder<-Trajectories::GetOutputFolder(trajectoryLocalArgs,trajectoryAnalysisArgs)
-  eventPairResultsFilename = file.path(outputFolder,'event_pairs_directional.tsv')
+  eventPairResultsFilename = file.path(outputFolder,'tables','event_pairs_directional.tsv')
 
   # create TrajectoriesGraph object from event pairs
   g<-Trajectories::createTrajectoriesGraph(eventPairResultsFilename=eventPairResultsFilename)
@@ -51,7 +50,7 @@ PlotTrajectoriesGraphForEvents<-function(connection,
 
     #check that event id is present in g
     if(eventId %in% igraph::V(g)$concept_id) {
-      PlotTrajectoriesGraphForEvent(connection,
+      Trajectories:::PlotTrajectoriesGraphForEvent(connection,
                                     trajectoryAnalysisArgs,
                                     trajectoryLocalArgs,
                                     g=g,

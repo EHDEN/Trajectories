@@ -166,7 +166,7 @@ TrajectoryAnalysisArgsToJson<-function(trajectoryAnalysisArgs, filepath) {
   writeLines(json, fileConn)
   close(fileConn)
 
-  log_info("...done.")
+  logger::log_info("...done.")
 }
 
 #' Reads trajectoryAnalysisArgs object from JSON file
@@ -230,7 +230,7 @@ TrajectoryAnalysisArgsFromJson<-function(filepath) {
                                cohortName=vals_for_obj[['cohortName']],
                                description=vals_for_obj[['description']],
                                eventIdsForGraphs=vals_for_obj[['eventIdsForGraphs']])
-  log_info('...done.')
+  logger::log_info('...done.')
   return(trajectoryAnalysisArgs)
 }
 
@@ -251,7 +251,7 @@ TrajectoryAnalysisArgsFromInputFolder<-function(trajectoryLocalArgs) {
   outputFolder<-Trajectories::GetOutputFolder(trajectoryLocalArgs,trajectoryAnalysisArgs,createIfMissing=T)
 
   # Set up logger
-  Trajectories::InitLogger(logfile = file.path(outputFolder,paste0(format(Sys.time(), "%Y%m%d-%H%M%S"),"-log.txt")), threshold = logger:::INFO)
+  Trajectories::InitLogger(logfile = file.path(outputFolder,'logs',paste0(format(Sys.time(), "%Y%m%d-%H%M%S"),"-log.txt")), threshold = logger:::INFO)
 
   return(trajectoryAnalysisArgs)
 }
@@ -274,6 +274,7 @@ GetOutputFolder<-function(trajectoryLocalArgs,trajectoryAnalysisArgs,createIfMis
   subFolder1=make.names(trajectoryLocalArgs$databaseHumanReadableName)
   subFolder2=make.names(trajectoryAnalysisArgs$cohortName)
   subFolder3=trajectoryAnalysisArgs$mode
+  subFolder4="logs"
 
   if (!dir.exists(outputFolder)) stop(paste0("ERROR in GetOutputFolder(): trajectoryLocalArgs$mainOutputFolder='",mainOutputFolder,"' does not exist."))
 
@@ -308,6 +309,43 @@ GetOutputFolder<-function(trajectoryLocalArgs,trajectoryAnalysisArgs,createIfMis
   }
 
   if(createIfMissing==T) logger::log_info(paste0("Output folder set to ",outputFolder))
+
+  #subfolders
+
+  subfolder='logs'
+      outputFolderPrev=outputFolder
+      outputFolder2 <- file.path(outputFolder, subfolder)
+      if (!dir.exists(outputFolder2)){
+        if(createIfMissing==F) stop(paste0("ERROR in GetOutputFolder(): There is no '",subfolder,"' subfolder in '",outputFolderPrev,"' folder. Cannot create the folder either as parameter 'createIfMissing=F'."))
+        dir.create(outputFolder2)
+        print(paste0('Created folder for logs: ',outputFolder2)) #do not use logger::log_... here as logger is not yet initialized
+      } else {
+        #print(paste0('Folder for analysis results already exists: ',outputFolder))
+      }
+
+  subfolder='figures'
+      outputFolderPrev=outputFolder
+      outputFolder2 <- file.path(outputFolder, subfolder)
+      if (!dir.exists(outputFolder2)){
+        if(createIfMissing==F) stop(paste0("ERROR in GetOutputFolder(): There is no '",subfolder,"' subfolder in '",outputFolderPrev,"' folder. Cannot create the folder either as parameter 'createIfMissing=F'."))
+        dir.create(outputFolder2)
+        print(paste0('Created folder for figures: ',outputFolder2)) #do not use logger::log_... here as logger is not yet initialized
+      } else {
+        #print(paste0('Folder for analysis results already exists: ',outputFolder))
+      }
+
+  subfolder='tables'
+    outputFolderPrev=outputFolder
+    outputFolder2 <- file.path(outputFolder, subfolder)
+    if (!dir.exists(outputFolder2)){
+      if(createIfMissing==F) stop(paste0("ERROR in GetOutputFolder(): There is no '",subfolder,"' subfolder in '",outputFolderPrev,"' folder. Cannot create the folder either as parameter 'createIfMissing=F'."))
+      dir.create(outputFolder2)
+      print(paste0('Created folder for tables: ',outputFolder2)) #do not use logger::log_... here as logger is not yet initialized
+    } else {
+      #print(paste0('Folder for analysis results already exists: ',outputFolder))
+    }
+
+
   return(outputFolder)
 
 }

@@ -16,7 +16,7 @@ PlotTrajectoriesGraphForEvent<-function(connection,
                        trajectoryAnalysisArgs,
                        trajectoryLocalArgs,
                        g,
-                       eventId,
+                       eventId=443732, #Disorder due to type 2 diabetes mellitus
                        limitOfNodes=30,
                        skipOutputTables=T) {
 
@@ -32,7 +32,7 @@ PlotTrajectoriesGraphForEvent<-function(connection,
 
   outputFolder<-Trajectories::GetOutputFolder(trajectoryLocalArgs,trajectoryAnalysisArgs)
   cohortName=trajectoryAnalysisArgs$cohortName
-  EVENTNAME=igraph::V(g)[igraph::V(g)$concept_id==eventId]$name
+  EVENTNAME=igraph::V(g)[igraph::V(g)$concept_id==eventId]$concept_name
 
   logger::log_info("Creating graphs for concept_id={eventId} ('{EVENTNAME}')...")
 
@@ -49,10 +49,13 @@ PlotTrajectoriesGraphForEvent<-function(connection,
     filename_template=paste0(ifelse(stri_length(EVENTNAME)<=20,EVENTNAME,paste(substr(EVENTNAME,1,20))), eventId, ".constructed.limit",limitOfNodes," events") #add event ID to file name as the beginning of the concept name might not be unique
   }
   logger::log_info(" Step 1: Constructing filtered graph for event {eventId}: '{title}'...")
-  constructed.graph<-Trajectories::filterTrajectoriesGraphCrossingEvent(g, eventname = EVENTNAME, limitOfNodes=limitOfNodes, edge_param_to_sort_by=edge_param_to_sort_by)
+  constructed.graph<-Trajectories::filterTrajectoriesGraphCrossingEvent(g,
+                                                                        eventname = eventId,
+                                                                        limitOfNodes=limitOfNodes,
+                                                                        edge_param_to_sort_by=edge_param_to_sort_by)
   #Truncate the title for file name if it is too long
   #truncated_title=ifelse(stri_length(title)<=200,title,paste(substr(title,1,200)))
-  filename=file.path(outputFolder,paste0(make.names(filename_template),'.pdf'))
+  filename=file.path(outputFolder,'figures',paste0(make.names(filename_template),'.pdf'))
   Trajectories::plotTrajectoriesGraph(constructed.graph,
                                       layout=igraph::layout_with_fr,
                                       linknumbers=round(igraph::E(constructed.graph)$prob*100),
@@ -69,10 +72,10 @@ PlotTrajectoriesGraphForEvent<-function(connection,
                                                    trajectoryAnalysisArgs=trajectoryAnalysisArgs,
                                                    trajectoryLocalArgs=trajectoryLocalArgs,
                                                    g=constructed.graph,
-                                                   eventname=EVENTNAME,
+                                                   eventid=eventId,
                                                    limit=limitOfTrajs,
-                                                   filename=ifelse(skipOutputTables==T,NA,file.path(outputFolder,paste0(make.names(filename_template),'.trajs.csv'))),
-                                                   filename_interpretation =file.path(outputFolder,paste0(make.names(filename_template),'.trajs_interpretation.txt')) )
+                                                   filename=file.path(outputFolder,'tables',paste0(make.names(filename_template),'.trajs.csv')),
+                                                   filename_interpretation =file.path(outputFolder,'tables',paste0(make.names(filename_template),'.trajs_interpretation.txt')) )
   #remove edges and nodes with count=0
   #Update 15 Oct 2020: do not remove them, we need them to draw out as gray (otherwise it is not clear which events and trajectories were analyzed)
   #h<-h-E(h)[E(h)$alignedTrajsCount==0]
@@ -81,8 +84,8 @@ PlotTrajectoriesGraphForEvent<-function(connection,
   class(h)<-c("TrajectoriesGraph","igraph")
 
   if(skipOutputTables==F) {
-    filename_e=file.path(outputFolder,paste0(make.names(filename_template),'.edges.csv'))
-    filename_v=file.path(outputFolder,paste0(make.names(filename_template),'.vertices.csv'))
+    filename_e=file.path(outputFolder,'tables',paste0(make.names(filename_template),'.edges.csv'))
+    filename_v=file.path(outputFolder,'tables',paste0(make.names(filename_template),'.vertices.csv'))
     logger::log_info(' Step 3: Saving graph data to edge/vertex files: {filename_e} and {filename_v}...')
     x<-igraph::as_data_frame(h, what='edges')
     y<-igraph::as_data_frame(h, what='vertices')
@@ -100,7 +103,7 @@ PlotTrajectoriesGraphForEvent<-function(connection,
   #Truncate the title for file name if it is too long
   #truncated_title=ifelse(stri_length(title)<=200,title,paste(substr(title,1,200)))
   filename=paste0(filename_template,".aligned")
-  filename=file.path(outputFolder,paste0(make.names(filename),'.pdf'))
+  filename=file.path(outputFolder,'figures',paste0(make.names(filename),'.pdf'))
   Trajectories::plotTrajectoriesGraph(h,
                                       layout=igraph::layout_with_fr,
                                       nodesizes=igraph::V(h)$alignedTrajsCount,

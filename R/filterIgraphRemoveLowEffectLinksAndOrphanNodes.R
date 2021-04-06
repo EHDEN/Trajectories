@@ -38,7 +38,7 @@ filterIgraphRemoveLowEffectLinksAndOrphanNodes<-function(g, limitOfLinks=20,edge
     o<-order(igraph::E(g)$actualTrajsProb, decreasing=T)
   } else {
     #log_debug('Sort by effect')
-    o<-order(igraph::E(g)$effect, decreasing=T)
+    o<-order(abs(igraph::E(g)$effect-1), decreasing=T)
   }
   #create a new graph from reordered edges (take only first limitOfLinks edges)
   g=igraph::graph_from_data_frame(d=igraph::as_data_frame(

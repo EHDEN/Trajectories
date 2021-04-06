@@ -1,6 +1,7 @@
 context("Filling in cohor table")
 
-test_that("Filling in cohort table with fulldb buit-in study", {
+
+testthat::test_that("Filling in cohort table with fulldb buit-in study", {
 
   eunomia <-setUpEunomia() #also fills in trajectoryLocalArgs
   connection<-eunomia$connection
@@ -47,7 +48,7 @@ test_that("Filling in cohort table with fulldb buit-in study", {
 })
 
 
-test_that("Spliting cohort to DISCOVERY and VALIDATION set", {
+testthat::test_that("Spliting cohort to DISCOVERY and VALIDATION set", {
   eunomia <-setUpEunomia() #also fills in trajectoryLocalArgs
   connection<-eunomia$connection
   trajectoryLocalArgs<-eunomia$trajectoryLocalArgs

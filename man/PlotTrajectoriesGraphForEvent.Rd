@@ -9,7 +9,7 @@ PlotTrajectoriesGraphForEvent(
   trajectoryAnalysisArgs,
   trajectoryLocalArgs,
   g,
-  eventId,
+  eventId = 443732,
   limitOfNodes = 30,
   skipOutputTables = T
 )

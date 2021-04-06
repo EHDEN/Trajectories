@@ -80,6 +80,7 @@ plotTrajectoriesGraph<-function(g,layout=igraph::layout_nicely(g),outputPdfFullp
        vertex.label.font=1,
        vertex.label.cex = sqrt(1+igraph::V(g)$size),
        vertex.label.color = vertexlabelcolor,
+       vertex.label = igraph::V(g)$concept_name,
 
        #vertex.label = paste(node_labels$dgn,node_labels$name),
        #edge.label=NA, #round(100*links$width),
@@ -93,7 +94,7 @@ plotTrajectoriesGraph<-function(g,layout=igraph::layout_nicely(g),outputPdfFullp
        edge.arrow.size=1, #sqrt(normalizedLinknumbers)*4,#iGraph currently always takes only the first value.
        #edge.arrow.width=round(E(g)$weight*1),
        edge.curved=0.1,
-       #weights=E(g)$weight,
+
        vertex.label.dist=igraph::V(g)$size/10, #labeli kaugus nodest. Default=0 - siis on label node peal
        vertex.label.degree=-pi/2, #labeli asukoht node suhtes. 0=paremal. pi/2... jne vt https://www.rdocumentation.org/packages/igraph/versions/0.3.3/topics/tkplot
        asp=0

@@ -13,7 +13,7 @@ library(Eunomia)
 #querySql(connection, paste0('SELECT * FROM E1E2_MODEL;'))
 
 
-test_that("No significant event pairs in random data", {
+testthat::test_that("No significant event pairs in random data", {
 
   eunomia <-setUpEunomia()
   connection<-eunomia$connection
@@ -80,7 +80,7 @@ test_that("No significant event pairs in random data", {
   #list.files(outputFolder)
 
   #test that output file was created, but it has header row only
-  eventPairResultsFilename = file.path(outputFolder,'event_pairs_tested.tsv')
+  eventPairResultsFilename = file.path(outputFolder,'tables','event_pairs_tested.tsv')
   print(paste0('Test that ',eventPairResultsFilename,' exists...'))
   testthat::expect_equal(file.exists(eventPairResultsFilename), TRUE)
   directional_event_pairs<-getEventPairsTableAsDataFrame(trajectoryLocalArgs,trajectoryAnalysisArgs,filename='event_pairs_directional.tsv')
@@ -88,7 +88,7 @@ test_that("No significant event pairs in random data", {
 
 })
 
-test_that("Test ability to detect a synthetic event pair in data", {
+testthat::test_that("Test ability to detect a synthetic event pair in data", {
 
   eunomia <-setUpEunomia()
   connection<-eunomia$connection
@@ -169,7 +169,7 @@ test_that("Test ability to detect a synthetic event pair in data", {
 
 
 
-test_that("Test ability to detect a synthetic event pair association (not directional) in data", {
+testthat::test_that("Test ability to detect a synthetic event pair association (not directional) in data", {
 
   eunomia <-setUpEunomia()
   connection<-eunomia$connection
@@ -251,7 +251,7 @@ test_that("Test ability to detect a synthetic event pair association (not direct
 })
 
 
-test_that("Test ability to detect a longer trajectory (consisting of 2 pairs)", {
+testthat::test_that("Test ability to detect a longer trajectory (consisting of 2 pairs)", {
 
   eunomia <-setUpEunomia()
   connection<-eunomia$connection
@@ -356,7 +356,7 @@ test_that("Test ability to detect a longer trajectory (consisting of 2 pairs)", 
 
 
 
-test_that("Test that forceRecalculation=F does not cause any error", {
+testthat::test_that("Test that forceRecalculation=F does not cause any error", {
 
   eunomia <-setUpEunomia()
   connection<-eunomia$connection

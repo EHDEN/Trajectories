@@ -31,7 +31,7 @@ createValidationSet<-function(
   logger::log_info("...done.")
 
   #replace parameter values in SQL
-  sql <- SqlRender::render("SELECT cohort_definition_id,count(*) FROM @resultsSchema.@prefiXcohort group by cohort_definition_id;",
+  sql <- SqlRender::render("SELECT cohort_definition_id,count(*) AS COUNT FROM @resultsSchema.@prefiXcohort group by cohort_definition_id;",
                            resultsSchema = trajectoryLocalArgs$resultsSchema,
                            prefiX = trajectoryLocalArgs$prefixForResultTableNames)
   #translate SQL into right dialect

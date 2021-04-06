@@ -1,13 +1,13 @@
 requireNamespace("igraph", quietly = TRUE)
 
-#' Adds numcohortCustom value to graph edges - actual number of people (out of all people who have EVENTNAME) on that edge
+#' Adds numcohortCustom value to graph edges - actual number of people (out of all people who have eventId) on that edge
 #'
 #' @param g An igrpah object that is created by specific graph functions in this package
 #' @param connection Database connection object created by createConnectionDetails() method in DatabaseConnector package
 #' @param limit Max number of trajectories to align (to limit the analysis). Set to NA if no limit.
 #' @param trajectoryAnalysisArgs TrajectoryAnalysisArgs object that must be created by createTrajectoryAnalysisArgs() method
 #' @param trajectoryLocalArgs TrajectoryLocalArgs object that must be created by createTrajectoryLocalArgs() method
-#' @param eventname Event name (concept name) through which the trajectories are analyzed
+#' @param eventid Event name (concept ID) through which the trajectories are analyzed
 #' @param filename Full path to output file for trajectory counts. Set to NA to skip this.
 #' @param filename_interpretation Full path to output file for textual interpretation of the output graph. Set to NA to skip this.
 #'
@@ -19,7 +19,7 @@ alignActualTrajectoriesToGraph <- function(connection,
                                            trajectoryAnalysisArgs,
                                            trajectoryLocalArgs,
                                            g,
-                                           eventname,
+                                           eventid,
                                            limit=1000,
                                            filename=file.path(getwd(),'trajectories.csv'),
                                            filename_interpretation=file.path(getwd(),'trajectories_interpretation.txt')) {
@@ -30,13 +30,13 @@ alignActualTrajectoriesToGraph <- function(connection,
 
   if(is.na(limit)) limit=0
 
-  #check that eventname is present in g
-  if(!eventname %in% igraph::V(g)$name) {
-    logger::log_warn(paste0('Cannot align trajectories through {eventname} as the graph does not contain any links with that event. Return unaligned graph.'))
+  #check that eventid is present in g
+  if(!eventid %in% igraph::V(g)$concept_id) {
+    logger::log_warn(paste0('Cannot align trajectories through {eventid} as the graph does not contain any links with that event. Return unaligned graph.'))
     return(g)
   }
 
-  eventid=igraph::V(g)[igraph::V(g)$name==eventname]$concept_id
+  eventname=igraph::V(g)[igraph::V(g)$concept_id==eventid]$name
 
   #First, put event pairs of the graph into table
 

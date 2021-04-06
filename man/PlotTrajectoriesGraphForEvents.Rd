@@ -9,7 +9,6 @@ PlotTrajectoriesGraphForEvents(
   trajectoryAnalysisArgs,
   trajectoryLocalArgs,
   eventIds = NA,
-  minRelativeRisk = 1.2,
   limitOfNodes = 30,
   skipOutputTables = T
 )

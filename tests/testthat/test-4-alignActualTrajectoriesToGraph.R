@@ -5,7 +5,7 @@ library(stringr)
 library(SqlRender)
 
 
-test_that("Test alignments to graph", {
+testthat::test_that("Test alignments to graph", {
 
   eunomia <-setUpEunomia()
   connection<-eunomia$connection

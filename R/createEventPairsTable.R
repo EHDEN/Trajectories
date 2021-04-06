@@ -41,7 +41,7 @@ createEventPairsTable<-function(connection,
 
 
   # Store used analysis arguments to JSON file
-  Trajectories::TrajectoryAnalysisArgsToJson(trajectoryAnalysisArgs, file.path(Trajectories::GetOutputFolder(trajectoryLocalArgs=trajectoryLocalArgs,trajectoryAnalysisArgs=trajectoryAnalysisArgs,createIfMissing=F),"trajectoryAnalysisArgs_used.json"))
+  Trajectories::TrajectoryAnalysisArgsToJson(trajectoryAnalysisArgs, file.path(Trajectories::GetOutputFolder(trajectoryLocalArgs=trajectoryLocalArgs,trajectoryAnalysisArgs=trajectoryAnalysisArgs,createIfMissing=F),'logs',"trajectoryAnalysisArgs_used.json"))
 
 
   logger::log_info(paste0("Running SQL..."))

@@ -23,6 +23,18 @@ runDiscoveryAnalysis<-function(connection,
 
   logger::log_info("Begin the analysis of detecting statistically significant directional event pairs...")
 
+
+  #Delete the old results files if exist
+  outputFolder<-Trajectories::GetOutputFolder(trajectoryLocalArgs,trajectoryAnalysisArgs)
+  allResultsFilenameTsv = file.path(outputFolder,'tables','event_pairs_tested.tsv')
+  allResultsFilenameXsl = file.path(outputFolder,'tables','event_pairs_tested.xlsx')
+  directionalResultsFilename = file.path(outputFolder,'tables','event_pairs_directional.tsv')
+  processDiagramfilename=file.path(outputFolder,'figures','process.pdf')
+  if(file.exists(allResultsFilenameTsv)) file.remove(allResultsFilenameTsv)
+  if(file.exists(allResultsFilenameXsl)) file.remove(allResultsFilenameXsl)
+  if(file.exists(directionalResultsFilename)) file.remove(directionalResultsFilename)
+  if(file.exists(processDiagramfilename)) file.remove(processDiagramfilename)
+
   #Set SQL role of the database session
   Trajectories::setRole(connection, trajectoryLocalArgs$sqlRole)
 
@@ -78,20 +90,13 @@ runDiscoveryAnalysis<-function(connection,
   pairs<-Trajectories:::annotateDiscoveryResults(pairs,trajectoryAnalysisArgs=trajectoryAnalysisArgs,verbose=T)
 
   #Draw process diagram
-  filename=file.path(Trajectories::GetOutputFolder(trajectoryLocalArgs,
-                                         trajectoryAnalysisArgs,
-                                         createIfMissing = F),'process.pdf')
-  Trajectories:::drawProcessGraph(annotated.pairs=pairs,filename=filename,trajectoryAnalysisArgs=trajectoryAnalysisArgs,title='General process flow of the discovery of directional event pairs')
+  Trajectories:::drawProcessGraph(annotated.pairs=pairs,filename=processDiagramfilename,trajectoryAnalysisArgs=trajectoryAnalysisArgs,title='General process flow of the discovery of directional event pairs')
 
   #write results to file
-  outputFolder<-Trajectories::GetOutputFolder(trajectoryLocalArgs,trajectoryAnalysisArgs)
-  allResultsFilenameTsv = file.path(outputFolder,'event_pairs_tested.tsv')
   write.table(pairs, file=allResultsFilenameTsv, quote=FALSE, sep='\t', col.names = NA)
-  allResultsFilenameXsl = file.path(outputFolder,'event_pairs_tested.xlsx')
   openxlsx::write.xlsx(pairs, allResultsFilenameXsl)
   logger::log_info('All tested pairs were written to {allResultsFilenameTsv} and {allResultsFilenameXsl}.')
 
-  directionalResultsFilename = file.path(outputFolder,'event_pairs_directional.tsv')
   write.table(pairs %>% filter(!is.na(DIRECTIONAL_SIGNIFICANT) & DIRECTIONAL_SIGNIFICANT=='*'), file=directionalResultsFilename, quote=FALSE, sep='\t', col.names = NA)
   logger::log_info('All directional pairs were written to {directionalResultsFilename}')
 
@@ -121,6 +126,19 @@ runValidationAnalysis<-function(connection,
                                forceRecalculation=F) {
 
   logger::log_info("Begin the analysis of validation given directional event pairs...")
+
+
+  #Delete the old results files if exist
+  outputFolder<-Trajectories::GetOutputFolder(trajectoryLocalArgs,trajectoryAnalysisArgs)
+  allResultsFilenameTsv = file.path(outputFolder,'tables','event_pairs_tested.tsv')
+  allResultsFilenameXsl = file.path(outputFolder,'tables','event_pairs_tested.xlsx')
+  directionalResultsFilename = file.path(outputFolder,'tables','event_pairs_directional.tsv')
+  processDiagramfilename=file.path(outputFolder,'figures','process.pdf')
+  if(file.exists(allResultsFilenameTsv)) file.remove(allResultsFilenameTsv)
+  if(file.exists(allResultsFilenameXsl)) file.remove(allResultsFilenameXsl)
+  if(file.exists(directionalResultsFilename)) file.remove(directionalResultsFilename)
+  if(file.exists(processDiagramfilename)) file.remove(processDiagramfilename)
+
 
   #Set SQL role of the database session
   Trajectories::setRole(connection, trajectoryLocalArgs$sqlRole)
@@ -204,20 +222,13 @@ runValidationAnalysis<-function(connection,
   pairs<-Trajectories:::annotateValidationResults(pairs,trajectoryAnalysisArgs=trajectoryAnalysisArgs,verbose=T)
 
   #Draw process diagram
-  filename=file.path(Trajectories::GetOutputFolder(trajectoryLocalArgs,
-                                                   trajectoryAnalysisArgs,
-                                                   createIfMissing = F),'process.pdf')
-  Trajectories:::drawProcessGraph(annotated.pairs=pairs,filename=filename,trajectoryAnalysisArgs=trajectoryAnalysisArgs,title='General process flow of the validation of directional event pairs')
+  Trajectories:::drawProcessGraph(annotated.pairs=pairs,filename=processDiagramfilename,trajectoryAnalysisArgs=trajectoryAnalysisArgs,title='General process flow of the validation of directional event pairs')
 
   #write results to file
-  outputFolder<-Trajectories::GetOutputFolder(trajectoryLocalArgs,trajectoryAnalysisArgs)
-  allResultsFilenameTsv = file.path(outputFolder,'event_pairs_tested.tsv')
   write.table(pairs, file=allResultsFilenameTsv, quote=FALSE, sep='\t', col.names = NA)
-  allResultsFilenameXsl = file.path(outputFolder,'event_pairs_tested.xlsx')
   openxlsx::write.xlsx(pairs, allResultsFilenameXsl)
   logger::log_info('All tested pairs were written to {allResultsFilenameTsv} and {allResultsFilenameXsl}.')
 
-  directionalResultsFilename = file.path(outputFolder,'event_pairs_directional.tsv')
   write.table(pairs %>% filter(!is.na(DIRECTIONAL_SIGNIFICANT) & DIRECTIONAL_SIGNIFICANT=='*'), file=directionalResultsFilename, quote=FALSE, sep='\t', col.names = NA)
   logger::log_info('All directional pairs were written to {directionalResultsFilename}')
 

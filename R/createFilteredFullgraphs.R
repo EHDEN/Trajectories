@@ -16,7 +16,7 @@ createFilteredFullgraphs<-function(connection,
   logger::log_info('Creating a plot of full graph (built from all event pairs)...')
 
   outputFolder<-Trajectories::GetOutputFolder(trajectoryLocalArgs,trajectoryAnalysisArgs)
-  eventPairResultsFilename = file.path(outputFolder,'event_pairs_directional.tsv')
+  eventPairResultsFilename = file.path(outputFolder,'tables','event_pairs_directional.tsv')
 
   # create igraph object from event pairs
   g<-Trajectories::createTrajectoriesGraph(eventPairResultsFilename=eventPairResultsFilename)
@@ -37,7 +37,7 @@ createFilteredFullgraphs<-function(connection,
                                       layout=igraph::layout_with_fr,
                                       linknumbers=round(100*igraph::E(g)$prob),
                                       linklabels=paste0(round(100*igraph::E(g)$prob),'%'),
-                                      outputPdfFullpath=file.path(outputFolder,paste0(make.names(truncated_title),'.pdf')),
+                                      outputPdfFullpath=file.path(outputFolder,'figures',paste0(make.names(truncated_title),'.pdf')),
                                       title=paste0(title,"\n",format(Sys.time(), '%d %B %Y %H:%M'))
                                       )
 
@@ -55,7 +55,7 @@ createFilteredFullgraphs<-function(connection,
                                         layout=igraph::layout_with_fr,
                                         linknumbers=round(100*igraph::E(h)$prob),
                                         linklabels=paste0(round(igraph::E(h)$prob*100),"%"),
-                                        outputPdfFullpath=file.path(outputFolder,paste0(make.names(truncated_title),'.pdf')),
+                                        outputPdfFullpath=file.path(outputFolder,'figures',paste0(make.names(truncated_title),'.pdf')),
                                         title=paste0(title,"\n",
                                         format(Sys.time(), '%d %B %Y %H:%M')))
   }

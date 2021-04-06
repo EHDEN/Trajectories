@@ -2,7 +2,7 @@ context("Creating event pair tables")
 
 library(Trajectories)
 
-test_that("Filling in cohort table with fulldb buit-in study (no events)", {
+testthat::test_that("Filling in cohort table with fulldb buit-in study (no events)", {
 
 
   eunomia <-setUpEunomia() #also fills in trajectoryLocalArgs
@@ -51,7 +51,7 @@ test_that("Filling in cohort table with fulldb buit-in study (no events)", {
 
 })
 
-test_that("Filling in cohort table with fulldb buit-in study (there are some events)", {
+testthat::test_that("Filling in cohort table with fulldb buit-in study (there are some events)", {
 
 
   eunomia <-setUpEunomia() #also fills in trajectoryLocalArgs

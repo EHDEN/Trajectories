@@ -52,11 +52,15 @@ createTrajectoriesGraph<-function(eventPairResultsFilename) {
   #add edges between these nodes
   if(nrow(e)>0) {
     for(i in seq(1,nrow(e))) {
-      e1<-e[i,'E1_NAME']
-      e2<-e[i,'E2_NAME']
+      e1_concept_id=e[i,'E1_CONCEPT_ID']
+      e2_concept_id=e[i,'E2_CONCEPT_ID']
+      e1<-ifelse(is.na(e[i,'E1_NAME']),'NA',e[i,'E1_NAME']) #if the name is missing from vocabulary, it is possible that we have NA as name. This if-else-then here is for ensuring that things do not break in that case
+      e2<-ifelse(is.na(e[i,'E2_NAME']),'NA',e[i,'E2_NAME']) #if the name is missing from vocabulary, it is possible that we have NA as name. This if-else-then here is for ensuring that things do not break in that case
       # add vertexes if not exist already
-      if(!e1 %in% igraph::V(g)$name) {g <- g + igraph::vertices(e1,
-                                                concept_id=e[i,'E1_CONCEPT_ID'],
+      if(!as.character(e1_concept_id) %in% igraph::V(g)$name) {g <- g + igraph::vertices(
+                                                as.character(e1_concept_id), #"name" of the object is CONCEPT_ID
+                                                concept_name=e1,
+                                                concept_id=e1_concept_id,
                                                 count=e[i,'E1_COUNT_IN_EVENTS'],
                                                 #size=e[i,'E1_COUNT']/max_event_count,
                                                 color=if(is.na(e[i,'E1_DOMAIN']) | !e[i,'E1_DOMAIN'] %in% names(COLORS)) {COLORS[['Unknown']]} else {COLORS[[e[i,'E1_DOMAIN']]]},
@@ -64,8 +68,10 @@ createTrajectoriesGraph<-function(eventPairResultsFilename) {
                                                 #, age=AGES[AGES$event==e1,'AGE_FOR_GRAPH']
                                                 )
       }
-      if(!e2 %in% igraph::V(g)$name) {g <- g + igraph::vertices(e2,
-                                                concept_id=e[i,'E2_CONCEPT_ID'],
+      if(!as.character(e2_concept_id) %in% igraph::V(g)$name) {g <- g + igraph::vertices(
+                                                as.character(e2_concept_id), #"name" of the object is CONCEPT_ID
+                                                concept_name=e2,
+                                                concept_id=e2_concept_id,
                                                 count=e[i,'E2_COUNT_IN_EVENTS'],
                                                 #size=e[i,'E2_COUNT']/max_event_count,
                                                 color=if(is.na(e[i,'E2_DOMAIN']) | !e[i,'E2_DOMAIN'] %in% names(COLORS)) {COLORS[['Unknown']]} else {COLORS[[e[i,'E2_DOMAIN']]]},
@@ -74,11 +80,11 @@ createTrajectoriesGraph<-function(eventPairResultsFilename) {
                                                 )
       }
       # add edge
-      g <- g + igraph::edge(e1,
-                    e2,
+      g <- g + igraph::edge(as.character(e[i,'E1_CONCEPT_ID']),
+                            as.character(e[i,'E2_CONCEPT_ID']),
                     e1=e1,
-                    e1_concept_id=e[i,'E1_CONCEPT_ID'],
-                    e2_concept_id=e[i,'E2_CONCEPT_ID'],
+                    e1_concept_id=e1_concept_id,
+                    e2_concept_id=e2_concept_id,
                     e2=e2,
                     e1_count=e[i,'E1_COUNT_IN_EVENTS'],
                     effect=e[i,'RR'],

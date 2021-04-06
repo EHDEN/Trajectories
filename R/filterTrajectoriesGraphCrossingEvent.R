@@ -10,15 +10,16 @@
 #' @export
 #'
 #' @examples
-filterTrajectoriesGraphCrossingEvent <-function(g, eventname='clopidogrel',limitOfNodes=F, edge_param_to_sort_by=c('effect','numcohortExact','numcohortCustom','effectCount','prob')) {
+filterTrajectoriesGraphCrossingEvent <-function(g, eventname=4283892,limitOfNodes=F, edge_param_to_sort_by=c('effect','numcohortExact','numcohortCustom','effectCount','prob')) {
 
   logger::log_info(paste0("Filtering trajectories from the graph that occur before or after {eventname} (sorted by ",edge_param_to_sort_by,')...'))
   if(limitOfNodes!=F) {log_info(paste0('  (also limiting to ',limitOfNodes,' nodes)'))}
 
   if(!inherits(g, 'TrajectoriesGraph')) stop('Error in filterTrajectoriesGraphCrossingEvent(): object g is not class TrajectoriesGraph object')
 
-  #check that eventname is present in g
-  if(!eventname %in% igraph::V(g)$name) {
+  #check that event concept_id is present in g
+  eventname=as.character(eventname)
+  if(!eventname %in% names(igraph::V(g))) {
     logger::log_warn(paste0('Cannot filter trajectories through {eventname} as the graph does not contain any links with that event. Return unfiltered graph.'))
     return(g)
   }
@@ -60,12 +61,12 @@ filterTrajectoriesGraphCrossingEvent <-function(g, eventname='clopidogrel',limit
       for(name in names(x)) {
         y<-x[[name]]
         if(length(y)>0) nodelist<-rbind(nodelist,
-                                        data.frame(event=igraph::tail_of(g,y)$name,
+                                        data.frame(event=as.character(igraph::tail_of(g,y)$name),
                                                    edgeid=igraph::get.edge.ids(g, as.vector(t(igraph::ends(g,y, names=F)))),
                                                    effect=y$effect,
                                                    prob=y$prob,
                                                    #totalprob=y$prob*(data.frame(event=as.character(stack$event), prob=stack$totalprob, stringsAsFactors=F) %>% right_join( data.frame(from=ends(g,y, names=T)[,2], stringsAsFactors=F), by=c('event'='from')) %>% select(totalprob=prob)),
-                                                   totalprob=y$prob*(stack %>% filter(direction %in% c('both','ancestor')) %>% select (event,prob) %>% right_join( data.frame(from=igraph::ends(g,y, names=T)[,2], stringsAsFactors=F), by=c('event'='from')) %>% select(totalprob=prob)),
+                                                   totalprob=y$prob*(stack %>% filter(direction %in% c('both','ancestor')) %>% select (event,prob) %>% right_join( data.frame(from=as.character(igraph::ends(g,y, names=T)[,2]), stringsAsFactors=F), by=c('event'='from')) %>% select(totalprob=prob)),
                                                    numcohortExact=y$numcohortExact,
                                                    effectCount=y$effectCount,
                                                    direction='ancestor'))
@@ -85,12 +86,12 @@ filterTrajectoriesGraphCrossingEvent <-function(g, eventname='clopidogrel',limit
       for(name in names(x)) {
         y<-x[[name]]
         if(length(y)>0) nodelist<-rbind(nodelist,
-                                        data.frame(event=igraph::head_of(g,y)$name,
+                                        data.frame(event=as.character(igraph::head_of(g,y)$name),
                                                    edgeid=igraph::get.edge.ids(g, as.vector(t(igraph::ends(g,y, names=F)))),
                                                    effect=y$effect,
                                                    prob=y$prob,
                                                    #totalprob=y$prob*(data.frame(event=as.character(stack$event), prob=stack$totalprob, stringsAsFactors=F) %>% right_join( data.frame(from=ends(g,y, names=T)[,1], stringsAsFactors=F), by=c('event'='from')) %>% select(totalprob=prob)),
-                                                   totalprob=y$prob*(stack %>% filter(direction %in% c('both','descendant')) %>% select (event,prob) %>% right_join( data.frame(from=igraph::ends(g,y, names=T)[,1], stringsAsFactors=F), by=c('event'='from')) %>% select(totalprob=prob)),
+                                                   totalprob=y$prob*(stack %>% filter(direction %in% c('both','descendant')) %>% select (event,prob) %>% right_join( data.frame(from=as.character(igraph::ends(g,y, names=T)[,1]), stringsAsFactors=F), by=c('event'='from')) %>% select(totalprob=prob)),
                                                    numcohortExact=y$numcohortExact,
                                                    effectCount=y$effectCount,
                                                    direction='descendant'))

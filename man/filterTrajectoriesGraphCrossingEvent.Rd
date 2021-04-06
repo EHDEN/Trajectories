@@ -6,7 +6,7 @@
 \usage{
 filterTrajectoriesGraphCrossingEvent(
   g,
-  eventname = "clopidogrel",
+  eventname = 4283892,
   limitOfNodes = F,
   edge_param_to_sort_by = c("effect", "numcohortExact", "numcohortCustom",
     "effectCount", "prob")

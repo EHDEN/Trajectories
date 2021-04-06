@@ -2,14 +2,14 @@
 % Please edit documentation in R/alignActualTrajectoriesToGraph.R
 \name{alignActualTrajectoriesToGraph}
 \alias{alignActualTrajectoriesToGraph}
-\title{Adds numcohortCustom value to graph edges - actual number of people (out of all people who have EVENTNAME) on that edge}
+\title{Adds numcohortCustom value to graph edges - actual number of people (out of all people who have eventId) on that edge}
 \usage{
 alignActualTrajectoriesToGraph(
   connection,
   trajectoryAnalysisArgs,
   trajectoryLocalArgs,
   g,
-  eventname,
+  eventid,
   limit = 1000,
   filename = file.path(getwd(), "trajectories.csv"),
   filename_interpretation = file.path(getwd(), "trajectories_interpretation.txt")
@@ -24,7 +24,7 @@ alignActualTrajectoriesToGraph(
 
 \item{g}{An igrpah object that is created by specific graph functions in this package}
 
-\item{eventname}{Event name (concept name) through which the trajectories are analyzed}
+\item{eventid}{Event name (concept ID) through which the trajectories are analyzed}
 
 \item{limit}{Max number of trajectories to align (to limit the analysis). Set to NA if no limit.}
 
@@ -36,5 +36,5 @@ alignActualTrajectoriesToGraph(
 
 }
 \description{
-Adds numcohortCustom value to graph edges - actual number of people (out of all people who have EVENTNAME) on that edge
+Adds numcohortCustom value to graph edges - actual number of people (out of all people who have eventId) on that edge
 }
