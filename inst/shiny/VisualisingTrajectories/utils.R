@@ -31,6 +31,7 @@ make_links_from_data = function(data) {
     rename(from = E1_CONCEPT_ID, to = E2_CONCEPT_ID) %>%
     mutate(E1_AND_E2_TOGETHER_COUNT_IN_EVENTS = coalesce(E1_AND_E2_TOGETHER_COUNT_IN_EVENTS, 0)) %>%
     mutate(RR = coalesce(RR, 0)) %>%
+    filter(RR >= 1) %>%
     select(from, to, RR, E1_AND_E2_TOGETHER_COUNT_IN_EVENTS)
   print(edges)
   return(as.data.frame(edges))
@@ -52,7 +53,6 @@ make_nodes_from_data = function(data, domain_hash, name_hash) {
       TRUE ~ ""
     )) %>%
     group_by(Chapter) %>%
-
     mutate(ChapterNew = str_c(min(name), " - ", max(name), ": ", Chapter)) %>%
     ungroup() %>%
     mutate(Chapter = ChapterNew) %>%

@@ -82,6 +82,7 @@ server <- function(input, output, session) {
   })
 
   output$network <- renderVisNetwork({
+
     visNetwork(
       nodesandedges()$nodes,
       nodesandedges()$edges,
@@ -107,7 +108,8 @@ server <- function(input, output, session) {
         background = "purple",
         style = ""
       ) %>%
-      visLayout(randomSeed = 11)
+      visLayout(randomSeed = 11) %>%
+      visHierarchicalLayout(direction="LD", enabled=input$use_hierarchical_layout)
   })
 
   output$sankeyNet <- renderPlotly({
@@ -137,7 +139,7 @@ server <- function(input, output, session) {
       sliderInput(
         "RR_effect_value",
         "Relative risk",
-        min = min(edges %>% select(RR), na.rm = TRUE),
+        min = 1,
         max = max(edges %>% select(RR), na.rm = TRUE),
         value = 1
       ),
@@ -198,6 +200,7 @@ server <- function(input, output, session) {
     updateSliderInput(session, 'E1E2Together_effect_value', value = 0)
     updateMultiInput(session, "selected_icd_codes", selected = character(0))
     updateRadioButtons(session, "use_for_weight", selected = "RR")
+    updateCheckboxInput(session, "use_hierarchical_layout", value= FALSE)
   })
 
 }

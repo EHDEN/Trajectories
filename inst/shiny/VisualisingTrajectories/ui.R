@@ -34,6 +34,10 @@ ui <- dashboardPage(
       offLabel = "Sankey view",
     ),
     uiOutput("icd_selectinput"),
+    conditionalPanel(
+      condition = "input.network_view_switch == 1",
+    checkboxInput("use_hierarchical_layout", "Use hierarchical layout", value = FALSE, width = NULL)
+    ),
     uiOutput("weight_radiobox"),
     uiOutput('weight_slider'),
     uiOutput("importance_slider"),

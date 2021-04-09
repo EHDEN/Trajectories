@@ -1,9 +1,8 @@
 create_nodes_and_edges = function(tg) {
-  #Base filtering and remove isolated nodes
+  #Remove isolated nodes
   tg = tg %>%
     activate(edges) %>%
     filter(!is.na(E1_AND_E2_TOGETHER_COUNT_IN_EVENTS)) %>%
-    filter(value > 1.5) %>%
     activate(nodes) %>%
     filter(!node_is_isolated())
 
