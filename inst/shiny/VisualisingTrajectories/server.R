@@ -10,7 +10,6 @@ library(shinythemes)
 library(shinyWidgets)
 library(plotly)
 library("data.table")
-library(icd)
 library(tidyverse)
 library(tidygraph)
 library(readxl)
@@ -27,14 +26,13 @@ appDir <- getwd()
 test_data = get_test_data()
 data  <- getShinyOption("data", test_data)
 data <- format_given_data(data)
-domain_hash <- get_domains_from_given_data(data)
-name_hash <- get_names_from_given_data(data)
+
 # Define server function
 server <- function(input, output, session) {
   logger::log_info("Loading Shiny server")
 
   #create nodes dataframe
-  nodes <- make_nodes_from_data(data, domain_hash, name_hash)
+  nodes <- make_nodes_from_data(data)
   #create links dataframe
   edges <- make_links_from_data(data)
 
@@ -81,8 +79,8 @@ server <- function(input, output, session) {
     data
   })
 
+  #Renders visNetwork graph
   output$network <- renderVisNetwork({
-
     visNetwork(
       nodesandedges()$nodes,
       nodesandedges()$edges,
@@ -109,9 +107,11 @@ server <- function(input, output, session) {
         style = ""
       ) %>%
       visLayout(randomSeed = 11) %>%
-      visHierarchicalLayout(direction="LD", enabled=input$use_hierarchical_layout)
+      visHierarchicalLayout(direction = "LD",
+                            enabled = input$use_hierarchical_layout)
   })
 
+  #Renders Sankey network
   output$sankeyNet <- renderPlotly({
     plot_ly(
       type = "sankey",
@@ -134,6 +134,7 @@ server <- function(input, output, session) {
     )
   })
 
+  #Used for filtering using RR and E1&E2 together count.
   output$weight_slider <- renderUI({
     div(
       sliderInput(
@@ -162,6 +163,7 @@ server <- function(input, output, session) {
 
   })
 
+  #Importance value is used to filter nodes using centrality_edge_betweenness
   output$importance_slider <- renderUI({
     sliderInput(
       "importance_value",
@@ -173,6 +175,7 @@ server <- function(input, output, session) {
     )
   })
 
+  #Selected weight is used for edgeweight.
   output$weight_radiobox <- renderUI({
     radioButtons("use_for_weight",
                  "Use for weight:",
@@ -182,17 +185,19 @@ server <- function(input, output, session) {
   })
 
 
+  #Selects specific node ids
   output$icd_selectinput <- renderUI({
     multiInput(
       inputId = "selected_icd_codes",
       label = h3("Select id codes"),
       choices = NULL,
-      choiceNames = nodes$CodeDescription,
+      choiceNames = nodes$title,
       choiceValues = nodes$id,
       width = "100%"
     )
   })
 
+  #Resets filter options
   observeEvent(input$resetFilter, {
     logger::log_info("Filter has been reset")
     updateSliderInput(session, 'importance_value', value = 1)
@@ -200,7 +205,7 @@ server <- function(input, output, session) {
     updateSliderInput(session, 'E1E2Together_effect_value', value = 0)
     updateMultiInput(session, "selected_icd_codes", selected = character(0))
     updateRadioButtons(session, "use_for_weight", selected = "RR")
-    updateCheckboxInput(session, "use_hierarchical_layout", value= FALSE)
+    updateCheckboxInput(session, "use_hierarchical_layout", value = FALSE)
   })
 
 }

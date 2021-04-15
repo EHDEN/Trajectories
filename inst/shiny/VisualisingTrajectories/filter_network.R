@@ -41,8 +41,7 @@ create_nodes_and_edges = function(tg) {
     )
 
 
-  tg_nodes <- select(tg_nodes,-rowid) %>%
-    mutate(title = CodeDescription)
+  tg_nodes <- select(tg_nodes,-rowid)
 
   print(head(tg_nodes))
   print(head(named_edge_list))
@@ -70,7 +69,7 @@ filter_nodes_and_edges = function(tg, filter, selected_icd_codes) {
     mutate(importance = centrality_edge_betweenness()) %>%
     filter(importance >= importance_value)
 
-  #Filter by icd codes
+  #Filter by id codes
   print(selected_icd_codes)
   if (length(selected_icd_codes)) {
     chosen_nodes = activate(tg, nodes) %>%

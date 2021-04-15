@@ -13,6 +13,8 @@ library(visNetwork)
 library(geomnet)
 library(igraph)
 source("guide.R")
+
+#Define ui
 ui <- dashboardPage(
   dashboardHeader(title = "Trajectories",
                   titleWidth = 350),

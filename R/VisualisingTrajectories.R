@@ -13,7 +13,6 @@ visualize_data_pairs <- function(data) {
   ensure_installed("shinyWidgets")
   ensure_installed("plotly")
   ensure_installed("data.table")
-  ensure_installed("icd")
   ensure_installed("tidyverse")
   ensure_installed("tidygraph")
   ensure_installed("readxl")

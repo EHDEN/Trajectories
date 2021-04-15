@@ -1,9 +1,5 @@
+#Used if given data is missing or invalid
 test_data_source = "Data/event_pairs_tested.xlsx"
-
-load("Data/icd10cm2019.rda", verbose = T) # From icd R package
-icd = icd10cm2019 %>%
-  map( ~ as.character(.x)) %>%
-  as_tibble()
 
 GraphFilter <- setClass(
   "GraphFilter",
@@ -37,42 +33,13 @@ make_links_from_data = function(data) {
   return(as.data.frame(edges))
 }
 
-make_nodes_from_data = function(data, domain_hash, name_hash) {
+make_nodes_from_data = function(data) {
   logger::log_info("Making nodes from data")
 
-  nodes = tibble(name = unique(c(
-    data$E1_CONCEPT_ID, data$E2_CONCEPT_ID
-  )))
+  e1_nodes = tibble(id = data$E1_CONCEPT_ID, title = data$E1_NAME, label = data$E1_NAME, group = data$E1_DOMAIN)
+  e2_nodes = tibble(id = data$E2_CONCEPT_ID, title = data$E2_NAME, label = data$E2_NAME, group = data$E2_DOMAIN)
 
-  #Give icd values to nodes
-  nodes = nodes %>%
-    left_join(icd, by = c("name" = "code")) %>%
-    select(name, Description = short_desc, Chapter = chapter) %>%
-    mutate(CodeDescription = case_when(
-      !is.na(Description) ~ paste(name, " - ", Description),
-      TRUE ~ ""
-    )) %>%
-    group_by(Chapter) %>%
-    mutate(ChapterNew = str_c(min(name), " - ", max(name), ": ", Chapter)) %>%
-    ungroup() %>%
-    mutate(Chapter = ChapterNew) %>%
-    select(-ChapterNew,-Description) %>%
-    rename(id = name) %>%
-    rename(group = Chapter)
-
-  #If node does not belong to icd group add group and description based on info from given data
-  for (r in 1:nrow(nodes))
-  {
-    row = nodes[r, ]
-    if (is.na(row$group)) {
-      row$group = domain_hash[[row$id]]
-    }
-    if (is.na(row$CodeDescription) | row$CodeDescription == "") {
-      row$CodeDescription = name_hash[[row$id]]
-    }
-    nodes[r, ] = row
-  }
-
+  nodes = full_join(e1_nodes, e2_nodes) %>% distinct(id, .keep_all = TRUE)
   nodes = as.data.frame(nodes[order(nodes$id),])
   print(nodes)
   return(nodes)
@@ -84,34 +51,4 @@ format_given_data = function(data) {
     mutate(E2_CONCEPT_ID = as.character(E2_CONCEPT_ID))
 }
 
-get_domains_from_given_data = function(data) {
-  domain_hash <- hash()
-  for (r in 1:nrow(data))
-  {
-    row = data[r, ]
-    if (!has.key(row$E1_CONCEPT_ID, domain_hash)) {
-      domain_hash[[row$E1_CONCEPT_ID]] = row$E1_DOMAIN
-    }
-    if (!has.key(row$E2_CONCEPT_ID, domain_hash)) {
-      domain_hash[[row$E2_CONCEPT_ID]] = row$E2_DOMAIN
-    }
 
-  }
-  return(domain_hash)
-}
-
-get_names_from_given_data = function(data) {
-  name_hash <- hash()
-  for (r in 1:nrow(data))
-  {
-    row = data[r, ]
-    if (!has.key(row$E1_CONCEPT_ID, name_hash)) {
-      name_hash[[row$E1_CONCEPT_ID]] = row$E1_NAME
-    }
-    if (!has.key(row$E2_CONCEPT_ID, name_hash)) {
-      name_hash[[row$E2_CONCEPT_ID]] = row$E2_NAME
-    }
-
-  }
-  return(name_hash)
-}
