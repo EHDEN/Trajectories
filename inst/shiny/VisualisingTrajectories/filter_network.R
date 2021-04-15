@@ -48,7 +48,7 @@ create_nodes_and_edges = function(tg) {
   return(list("nodes" = tg_nodes, "edges" = named_edge_list))
 }
 
-filter_nodes_and_edges = function(tg, filter, selected_icd_codes) {
+filter_nodes_and_edges = function(tg, filter, selected_id_codes, selected_groups) {
   logger::log_info("Filtering dataset")
   use_for_weight <- filter@use_for_weight
   RR_effect_value <- filter@RR_effect_value
@@ -70,11 +70,11 @@ filter_nodes_and_edges = function(tg, filter, selected_icd_codes) {
     filter(importance >= importance_value)
 
   #Filter by id codes
-  print(selected_icd_codes)
-  if (length(selected_icd_codes)) {
+  print(selected_id_codes)
+  if (length(selected_id_codes)) {
     chosen_nodes = activate(tg, nodes) %>%
       pull(id) %>% {
-        which(. %in% selected_icd_codes)
+        which(. %in% selected_id_codes)
       }
 
     tg = tg %>%
@@ -82,6 +82,13 @@ filter_nodes_and_edges = function(tg, filter, selected_icd_codes) {
       mutate(dist_to_node = node_distance_to(nodes = chosen_nodes, mode =
                                                "all")) %>%
       filter(dist_to_node < 3)
+  }
+
+  #Filter by group
+  if(length(selected_groups)){
+    tg = tg %>%
+      activate(nodes) %>%
+      filter(group  %in% selected_groups)
   }
 
   return(create_nodes_and_edges(tg))

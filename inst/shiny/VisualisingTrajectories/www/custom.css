@@ -1,7 +1,7 @@
-#selected_icd_codes ~ .multi-wrapper{
+#selected_id_codes ~ .multi-wrapper{
   color: black;
 }
 
-#selected_icd_codes ~ .multi-wrapper .item{
+#selected_id_codes ~ .multi-wrapper .item{
   color: black;
 }

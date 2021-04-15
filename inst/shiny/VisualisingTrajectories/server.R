@@ -41,7 +41,7 @@ server <- function(input, output, session) {
 
   nodesandedges <-
     reactive({
-      icd_codes = data.frame(input$selected_icd_codes)
+      id_codes = data.frame(input$selected_id_codes)
       graph_filter <-
         new(
           "GraphFilter",
@@ -72,7 +72,7 @@ server <- function(input, output, session) {
           )
         )
 
-      return(filter_nodes_and_edges(tg, graph_filter, input$selected_icd_codes))
+      return(filter_nodes_and_edges(tg, graph_filter, input$selected_id_codes, input$selected_groups))
     })
 
   output$table <- DT::renderDataTable({
@@ -99,11 +99,11 @@ server <- function(input, output, session) {
       visInteraction(navigationButtons = TRUE) %>%
       visLegend(width = 0.3) %>%
       visExport(
-        type = "jpeg",
+        type = "png",
         name = "export-network",
         float = "left",
         label = "Save network",
-        background = "purple",
+        background = "white",
         style = ""
       ) %>%
       visLayout(randomSeed = 11) %>%
@@ -186,13 +186,24 @@ server <- function(input, output, session) {
 
 
   #Selects specific node ids
-  output$icd_selectinput <- renderUI({
+  output$id_selectinput <- renderUI({
     multiInput(
-      inputId = "selected_icd_codes",
-      label = h3("Select id codes"),
+      inputId = "selected_id_codes",
+      label = h4("Select id codes"),
       choices = NULL,
       choiceNames = nodes$title,
       choiceValues = nodes$id,
+      width = "100%"
+    )
+  })
+
+  #Selects specific groups
+  output$groups_selectinput <- renderUI({
+    selectInput(
+      inputId = "selected_groups",
+      label = h4("Select groups"),
+      multiple = TRUE,
+      choices = distinct(nodes, group)$group,
       width = "100%"
     )
   })
@@ -203,9 +214,11 @@ server <- function(input, output, session) {
     updateSliderInput(session, 'importance_value', value = 1)
     updateSliderInput(session, 'RR_effect_value', value = 1)
     updateSliderInput(session, 'E1E2Together_effect_value', value = 0)
-    updateMultiInput(session, "selected_icd_codes", selected = character(0))
+    updateMultiInput(session, "selected_id_codes", selected = character(0))
     updateRadioButtons(session, "use_for_weight", selected = "RR")
     updateCheckboxInput(session, "use_hierarchical_layout", value = FALSE)
   })
+
+
 
 }

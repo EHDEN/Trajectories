@@ -5,7 +5,6 @@ library(shinythemes)
 library(shinyWidgets)
 library(plotly)
 library("data.table")
-library(icd)
 library(tidyverse)
 library(tidygraph)
 library(readxl)
@@ -35,11 +34,12 @@ ui <- dashboardPage(
       onLabel = "Network view",
       offLabel = "Sankey view",
     ),
-    uiOutput("icd_selectinput"),
     conditionalPanel(
       condition = "input.network_view_switch == 1",
-    checkboxInput("use_hierarchical_layout", "Use hierarchical layout", value = FALSE, width = NULL)
+      checkboxInput("use_hierarchical_layout", "Use hierarchical layout", value = FALSE, width = NULL)
     ),
+    uiOutput("id_selectinput"),
+    uiOutput("groups_selectinput"),
     uiOutput("weight_radiobox"),
     uiOutput('weight_slider'),
     uiOutput("importance_slider"),

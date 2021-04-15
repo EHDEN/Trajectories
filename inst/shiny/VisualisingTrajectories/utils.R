@@ -8,7 +8,7 @@ GraphFilter <- setClass(
     RR_effect_value = "numeric",
     E1E2Together_effect_value = "numeric",
     importance_value = "numeric",
-    selected_icd_codes = "list",
+    selected_id_codes = "list",
     use_network_view = "logical"
   )
 )
@@ -39,7 +39,9 @@ make_nodes_from_data = function(data) {
   e1_nodes = tibble(id = data$E1_CONCEPT_ID, title = data$E1_NAME, label = data$E1_NAME, group = data$E1_DOMAIN)
   e2_nodes = tibble(id = data$E2_CONCEPT_ID, title = data$E2_NAME, label = data$E2_NAME, group = data$E2_DOMAIN)
 
-  nodes = full_join(e1_nodes, e2_nodes) %>% distinct(id, .keep_all = TRUE)
+  nodes = full_join(e1_nodes, e2_nodes) %>%
+    distinct(id, .keep_all = TRUE)
+
   nodes = as.data.frame(nodes[order(nodes$id),])
   print(nodes)
   return(nodes)
