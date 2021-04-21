@@ -35,7 +35,6 @@ create_nodes_and_edges = function(tg) {
       to,
       to_row,
       value,
-      importance,
       RR,
       E1_AND_E2_TOGETHER_COUNT_IN_EVENTS
     )
@@ -54,6 +53,7 @@ filter_nodes_and_edges = function(tg, filter, selected_id_codes, selected_groups
   RR_effect_value <- filter@RR_effect_value
   E1E2Together_effect_value <- filter@E1E2Together_effect_value
   importance_value <- filter@importance_value
+  max_distance <- filter@max_distance
 
   #Filter by weight
   tg = tg %>%
@@ -62,15 +62,7 @@ filter_nodes_and_edges = function(tg, filter, selected_id_codes, selected_groups
     filter(E1_AND_E2_TOGETHER_COUNT_IN_EVENTS > E1E2Together_effect_value) %>%
     mutate(value = !!as.symbol(use_for_weight))
 
-
-  #Filter by importance
-  tg = tg %>%
-    activate(edges) %>%
-    mutate(importance = centrality_edge_betweenness()) %>%
-    filter(importance >= importance_value)
-
   #Filter by id codes
-  print(selected_id_codes)
   if (length(selected_id_codes)) {
     chosen_nodes = activate(tg, nodes) %>%
       pull(id) %>% {
@@ -80,9 +72,16 @@ filter_nodes_and_edges = function(tg, filter, selected_id_codes, selected_groups
     tg = tg %>%
       activate(nodes) %>%
       mutate(dist_to_node = node_distance_to(nodes = chosen_nodes, mode =
-                                               "all")) %>%
-      filter(dist_to_node < 3)
+                                        "all")) %>%
+      filter(dist_to_node <= max_distance)
   }
+
+  #Filter by Centrality
+  tg = tg %>%
+    activate(nodes) %>%
+    mutate(importance = centrality_betweenness()) %>%
+    filter(importance >= importance_value) %>%
+  filter(!node_is_isolated())
 
   #Filter by group
   if(length(selected_groups)){

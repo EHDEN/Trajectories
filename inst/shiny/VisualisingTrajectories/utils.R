@@ -9,7 +9,8 @@ GraphFilter <- setClass(
     E1E2Together_effect_value = "numeric",
     importance_value = "numeric",
     selected_id_codes = "list",
-    use_network_view = "logical"
+    use_network_view = "logical",
+    max_distance = "numeric"
   )
 )
 

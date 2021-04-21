@@ -11,7 +11,6 @@ library(readxl)
 library(visNetwork)
 library(geomnet)
 library(igraph)
-source("guide.R")
 
 #Define ui
 ui <- dashboardPage(
@@ -25,8 +24,7 @@ ui <- dashboardPage(
         tabName = "network",
         icon = icon("project-diagram")
       ),
-      menuItem("Raw Data", tabName = "raw_data", icon = icon("table")),
-      menuItem("Guide", tabName = "guide", icon = icon("info-circle"))
+      menuItem("Raw Data", tabName = "raw_data", icon = icon("table"))
     ),
     switchInput(
       inputId = "network_view_switch",
@@ -39,6 +37,7 @@ ui <- dashboardPage(
       checkboxInput("use_hierarchical_layout", "Use hierarchical layout", value = FALSE, width = NULL)
     ),
     uiOutput("id_selectinput"),
+    numericInput("selected_distance", "Maximum distance to selected", 3, min= 0, max = 5),
     uiOutput("groups_selectinput"),
     uiOutput("weight_radiobox"),
     uiOutput('weight_slider'),
@@ -64,8 +63,7 @@ ui <- dashboardPage(
       ),
       tabItem(tabName = "raw_data",
               h1("Data table"),
-              DT::dataTableOutput("table")),
-      guide_tab
+              DT::dataTableOutput("table"))
     )
   )
 )

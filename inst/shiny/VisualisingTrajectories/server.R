@@ -19,7 +19,6 @@ library(igraph)
 library(hash)
 
 
-
 DEFAULT_COLUMNS_FOR_WEIGHT = c("RR", "E1_AND_E2_TOGETHER_COUNT_IN_EVENTS")
 appDir <- getwd()
 
@@ -69,10 +68,18 @@ server <- function(input, output, session) {
             !is.null(input$network_view_switch),
             input$network_view_switch,
             TRUE
-          )
+          ),
+          max_distance = input$selected_distance
         )
 
-      return(filter_nodes_and_edges(tg, graph_filter, input$selected_id_codes, input$selected_groups))
+      return(
+        filter_nodes_and_edges(
+          tg,
+          graph_filter,
+          input$selected_id_codes,
+          input$selected_groups
+        )
+      )
     })
 
   output$table <- DT::renderDataTable({
@@ -107,7 +114,7 @@ server <- function(input, output, session) {
         style = ""
       ) %>%
       visLayout(randomSeed = 11) %>%
-      visHierarchicalLayout(direction = "LD",
+      visHierarchicalLayout(direction = "LR",
                             enabled = input$use_hierarchical_layout)
   })
 
@@ -167,21 +174,51 @@ server <- function(input, output, session) {
   output$importance_slider <- renderUI({
     sliderInput(
       "importance_value",
-      "Importance value",
-      min = 1,
-      max = 5,
+      label = div(class="tooltip-container", h4("Centrality value"),
+                 dropMenu(
+                   actionButton(
+                     inputId = "centrality-tooltip-button",
+                     class = "tooltip-button",
+                     label = "",
+                     icon = icon('info'),
+                   ),
+                   div(
+                     span("Importance value is used to filter nodes using centrality betweenness measure.")
+                   ),
+                   placement = "top-end",
+                   trigger = "mouseenter"
+                 )
+                 ),
+      min = 0,
+      max = 100,
       #max(edges %>% select(!!as.symbol(input$use_for_weight)), na.rm = TRUE)
-      value = 1
+      value = 0
     )
   })
 
   #Selected weight is used for edgeweight.
   output$weight_radiobox <- renderUI({
-    radioButtons("use_for_weight",
-                 "Use for weight:",
-                 colnames(
-                   data %>% select_if(is.numeric) %>% select(RR, E1_AND_E2_TOGETHER_COUNT_IN_EVENTS)
-                 ))
+    radioButtons(
+      "use_for_weight",
+      label = div(class="tooltip-container", h4("Use for edge weight"),
+                          dropMenu(
+                            actionButton(
+                              inputId = "weight-selection-tooltip-button",
+                              class = "tooltip-button",
+                              label = "",
+                              icon = icon('info'),
+                            ),
+                            div(
+                              span("Graph's edge thickness is based on selected value.")
+                            ),
+                            placement = "top-end",
+                            trigger = "mouseenter"
+                          )
+      ),
+      choiceNames = c("Relative Risk", "Events together count"),
+      choiceValues = DEFAULT_COLUMNS_FOR_WEIGHT,
+      width = "100%"
+    )
   })
 
 
@@ -211,14 +248,20 @@ server <- function(input, output, session) {
   #Resets filter options
   observeEvent(input$resetFilter, {
     logger::log_info("Filter has been reset")
-    updateSliderInput(session, 'importance_value', value = 1)
+    updateSliderInput(session, 'importance_value', value = 0)
     updateSliderInput(session, 'RR_effect_value', value = 1)
     updateSliderInput(session, 'E1E2Together_effect_value', value = 0)
     updateMultiInput(session, "selected_id_codes", selected = character(0))
+    updateSelectInput(session, "selected_groups", selected = character(0))
     updateRadioButtons(session, "use_for_weight", selected = "RR")
     updateCheckboxInput(session, "use_hierarchical_layout", value = FALSE)
+    updateNumericInput(session, "selected_distance", value = 3)
   })
 
-
+  observeEvent(input$selected_id_codes, {
+    nodes_selection <- input$selected_id_codes
+    visNetworkProxy("network") %>%
+      visSelectNodes(id = nodes_selection)
+  })
 
 }
