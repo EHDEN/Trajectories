@@ -83,7 +83,9 @@ server <- function(input, output, session) {
     })
 
   output$table <- DT::renderDataTable({
-    data
+    datatable(data, rownames = FALSE, options = list(
+      scrollX = TRUE
+    ))
   })
 
   #Renders visNetwork graph
@@ -175,20 +177,20 @@ server <- function(input, output, session) {
     sliderInput(
       "importance_value",
       label = div(class="tooltip-container", h4("Centrality value"),
-                 dropMenu(
-                   actionButton(
-                     inputId = "centrality-tooltip-button",
-                     class = "tooltip-button",
-                     label = "",
-                     icon = icon('info'),
-                   ),
-                   div(
-                     span("Importance value is used to filter nodes using centrality betweenness measure.")
-                   ),
-                   placement = "top-end",
-                   trigger = "mouseenter"
-                 )
-                 ),
+                  dropMenu(
+                    actionButton(
+                      inputId = "centrality-tooltip-button",
+                      class = "tooltip-button",
+                      label = "",
+                      icon = icon('info'),
+                    ),
+                    div(
+                      span("Importance value is used to filter nodes using centrality betweenness measure.")
+                    ),
+                    placement = "top-end",
+                    trigger = "mouseenter"
+                  )
+      ),
       min = 0,
       max = 100,
       #max(edges %>% select(!!as.symbol(input$use_for_weight)), na.rm = TRUE)
@@ -201,19 +203,19 @@ server <- function(input, output, session) {
     radioButtons(
       "use_for_weight",
       label = div(class="tooltip-container", h4("Use for edge weight"),
-                          dropMenu(
-                            actionButton(
-                              inputId = "weight-selection-tooltip-button",
-                              class = "tooltip-button",
-                              label = "",
-                              icon = icon('info'),
-                            ),
-                            div(
-                              span("Graph's edge thickness is based on selected value.")
-                            ),
-                            placement = "top-end",
-                            trigger = "mouseenter"
-                          )
+                  dropMenu(
+                    actionButton(
+                      inputId = "weight-selection-tooltip-button",
+                      class = "tooltip-button",
+                      label = "",
+                      icon = icon('info'),
+                    ),
+                    div(
+                      span("Graph's edge thickness is based on selected value.")
+                    ),
+                    placement = "top-end",
+                    trigger = "mouseenter"
+                  )
       ),
       choiceNames = c("Relative Risk", "Events together count"),
       choiceValues = DEFAULT_COLUMNS_FOR_WEIGHT,

@@ -25,6 +25,7 @@ visualize_data_pairs <- function(data) {
   #data validation
   if (length(colnames(data)) < 3) {
     logger::log_error("Dataset does not contain enough columns")
+    logger::log_info("Column names: ", colnames(data))
     stop()
   }
   if (!('E1_CONCEPT_ID' %in% colnames(data)) |
