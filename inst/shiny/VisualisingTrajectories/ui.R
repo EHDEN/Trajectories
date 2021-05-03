@@ -1,7 +1,6 @@
 library(DT)
 library(shiny)
 library(shinydashboard)
-library(shinythemes)
 library(shinyWidgets)
 library(plotly)
 library("data.table")
@@ -10,7 +9,6 @@ library(tidygraph)
 library(readxl)
 library(visNetwork)
 library(geomnet)
-library(igraph)
 
 #Define ui
 ui <- dashboardPage(

@@ -6,7 +6,6 @@ source("filter_network.R")
 library(DT)
 library(shiny)
 library(shinydashboard)
-library(shinythemes)
 library(shinyWidgets)
 library(plotly)
 library("data.table")
@@ -14,8 +13,6 @@ library(tidyverse)
 library(tidygraph)
 library(readxl)
 library(visNetwork)
-library(geomnet)
-library(igraph)
 library(hash)
 
 
@@ -106,7 +103,7 @@ server <- function(input, output, session) {
                color = list(highlight = "#C62F4B")) %>%
       visOptions(highlightNearest = list(enabled = T, degree = 2)) %>%
       visInteraction(navigationButtons = TRUE) %>%
-      visLegend(width = 0.3) %>%
+      visLegend(width = 0.2) %>%
       visExport(
         type = "png",
         name = "export-network",

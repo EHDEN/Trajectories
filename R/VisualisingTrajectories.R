@@ -9,7 +9,6 @@ visualize_data_pairs <- function(data) {
   ensure_installed("DT")
   ensure_installed("shiny")
   ensure_installed("shinydashboard")
-  ensure_installed("shinythemes")
   ensure_installed("shinyWidgets")
   ensure_installed("plotly")
   ensure_installed("data.table")
@@ -17,8 +16,6 @@ visualize_data_pairs <- function(data) {
   ensure_installed("tidygraph")
   ensure_installed("readxl")
   ensure_installed("visNetwork")
-  ensure_installed("geomnet")
-  ensure_installed("igraph")
   ensure_installed("hash")
 
   Trajectories::InitLogger(logfile = file.path(".",'log.txt'), threshold = logger:::INFO)
