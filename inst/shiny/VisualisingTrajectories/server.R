@@ -182,7 +182,7 @@ server <- function(input, output, session) {
                       icon = icon('info'),
                     ),
                     div(
-                      span("Importance value is used to filter nodes using centrality betweenness measure.")
+                      span("Centrality value is used to filter nodes using centrality betweenness measure.")
                     ),
                     placement = "top-end",
                     trigger = "mouseenter"

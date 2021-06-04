@@ -1,3 +1,8 @@
+.sidebar{
+  height: 95vh; 
+  overflow-y: auto;
+}
+
 /* selected codes */
 
 #selected_id_codes ~ .multi-wrapper{
