@@ -14,13 +14,13 @@ testthat::test_that("Test alignments to graph", {
   limitToNumPatients(connection,n=500) #in analysis, use 500 patients. Big enough number is needed for having sufficient amount of events on same disharge_date
   limitToConcepts(connection)
   setObservationPeriodForAll(connection,startdate='2010-01-01',enddate='2011-12-31')
-  person_ids<-addConditionEventTrajectory(connection,event_concept_ids=c(317009,255848,4299128),n=20) # Add asthma->pneumonia pair for 20 patients
+  person_ids<-addConditionEventTrajectory(connection,event_concept_ids=c(317009,255848,4299128),n=40) # Add asthma->pneumonia pair for 20 patients
   addRandomEvents(connection,n_per_person_range=c(0,10),exclude_concept_ids=c(317009,255848,4299128)) # Add up to 10 random events per each patient, except events 317009 and 255848
 
 
   trajectoryAnalysisArgs <- Trajectories::createTrajectoryAnalysisArgs(minimumDaysBetweenEvents = 1,
                                                                        maximumDaysBetweenEvents = 365*120,
-                                                                       minPatientsPerEventPair = 19,
+                                                                       minPatientsPerEventPair = 39,
                                                                        addConditions=T,
                                                                        addObservations=F,
                                                                        addProcedures=F,
@@ -69,7 +69,7 @@ testthat::test_that("Test alignments to graph", {
   #Test that the trajectory comes out from the trajectory file
   testthat::expect_equal(nrow(row),1)
   #Test that the trajectory count is 20
-  testthat::expect_equal(row$exact_count,20)
-  testthat::expect_equal(row$total_count,20)
+  testthat::expect_equal(row$exact_count,40)
+  testthat::expect_equal(row$total_count,40)
 
 })

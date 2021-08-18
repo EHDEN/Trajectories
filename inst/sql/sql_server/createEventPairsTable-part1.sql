@@ -107,10 +107,13 @@ IF OBJECT_ID('@resultsSchema.@prefiXevents', 'U') IS NOT NULL
     FROM @cdmDatabaseSchema.observation e
     -- note that the same event may belong to several event periods. It gets multiplied here while doing this INNER JOIN
     INNER JOIN @resultsSchema.@prefiXmycohort c ON e.person_id=c.person_id {@daysBeforeIndexDate == Inf} ? {} : { AND DATEADD(day,@daysBeforeIndexDate,e.observation_date)>=c.eventperiod_start_date } AND e.observation_date>=c.eventperiod_start_date AND e.observation_date<=c.eventperiod_end_date
+    INNER JOIN @vocabDatabaseSchema.concept oc ON e.observation_concept_id=oc.concept_id
     WHERE
       1=@addObservations -- if addObservations is TRUE, then this UNION is ADDED, otherwise this query give 0 rows as result
       AND
       observation_concept_id!=0
+      AND
+      oc.concept_class_id != 'Procedure' -- do not include Observations having class "procedure" to prevent events like 'Hospital admission', 'Admission by GP' etc as if one is interested in them, he/she should look at the visits instead
     GROUP BY c.eventperiod_id,observation_concept_id,e.person_id
 
     UNION ALL -- we use UNION ALL as it does not try to delete duplicates (faster) (although there cant be any anyways)
@@ -353,9 +356,9 @@ IF OBJECT_ID('@resultsSchema.@prefiXpairs', 'U') IS NOT NULL
 
             a.discharge_time,
             a.CONCEPT_ID AS E1_CONCEPT_ID,
-            -- a.date  as date1, -- commented out as this date is never used afterwards
+            a.date as E1_DATE,
             b.CONCEPT_ID AS E2_CONCEPT_ID,
-            -- b.date as date2 -- commented out as this date is never used afterwards
+            b.date as E2_DATE,
             DATEDIFF(DAY,
                     a.date,
                     b.date) AS diff_days

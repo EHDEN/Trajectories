@@ -39,7 +39,8 @@ CREATE TABLE @resultsSchema.@prefiXE1E2_model (
   E1_DOMAIN VARCHAR(20) NULL,
   E2_DOMAIN VARCHAR(20) NULL,
 
-  E1_COUNT_IN_EVENTS INT NULL, -- this is the total number of eventperiods where E1 is present.
+  E1_COUNT_IN_EVENTS INT NULL, -- this is the total number of eventperiods where E1 is present. This is basically a CASE group size
+
   E1_COUNT_IN_PAIRS INT NULL, -- this is the total number of eventperiods that contain E1 (either as E1->smht or smth->E1) The number is smaller than E1_COUNT_IN_EVENTS because there are additional restrictions for making pairs (e.g required day difference)
   E1_COUNT_AS_FIRST_EVENT_OF_PAIRS INT NULL, -- this is the total number of eventperiods containing E1->smth pair
   --E1_COUNT_AS_FIRST_EVENT_OF_EVENTPERIODS INT NULL, -- this is the total number of eventperiods having E1 as the very first event
@@ -50,8 +51,14 @@ CREATE TABLE @resultsSchema.@prefiXE1E2_model (
   E2_COUNT_AS_SECOND_EVENT_OF_PAIRS INT NULL, -- this is the number of eventperiods containing event pairs where E2 is the second event
   E2_COUNT_AS_FIRST_EVENT_OF_EVENTPERIODS INT NULL, -- this is the total number of eventperiods having E2 as the very first event (these eventperiods do not produce any smth->E2 pairs)
 
+  E2_COUNT_IN_CASE_GROUP INT NULL,
+  CASE_GROUP_SIZE INT NULL,
+  E2_COUNT_IN_CONTROL_GROUP INT NULL,
+  CONTROL_GROUP_SIZE INT NULL, -- this is the size of matched CONTROL group
+
   E2_PREVALENCE_IN_CASE_GROUP DECIMAL NULL,
   E2_PREVALENCE_IN_CONTROL_GROUP DECIMAL NULL,
+
 
   RR_IN_PREVIOUS_STUDY DECIMAL NULL,
   RR_POWER DECIMAL NULL,
@@ -61,6 +68,7 @@ CREATE TABLE @resultsSchema.@prefiXE1E2_model (
   RR_CI_UPPER DECIMAL NULL,
 
   RR_PVALUE FLOAT NULL,
+  RR_PVALUE_OLD FLOAT NULL,
   RR_SIGNIFICANT VARCHAR(1) NULL,
 
   AVG_NUMBER_OF_DAYS_BETWEEN_E1_AND_E2 DECIMAL NULL,
@@ -77,6 +85,7 @@ CREATE TABLE @resultsSchema.@prefiXE1E2_model (
 
   DIRECTIONAL_PVALUE FLOAT NULL,
   DIRECTIONAL_SIGNIFICANT VARCHAR(1) NULL,
+  DIRECTIONAL_PVALUE_IF_SAME_DAY_EVENTS_ORDERED FLOAT NULL,
   DIRECTIONAL_SIGNIFICANT_IF_SAME_DAY_EVENTS_ORDERED VARCHAR(1) NULL
 );
 

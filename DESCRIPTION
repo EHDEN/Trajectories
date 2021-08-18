@@ -22,7 +22,9 @@ Depends:
     logger (>= 0.1),
     stringi (>= 1.4.5),
     openxlsx (>= 4.1.4),
-    jsonlite (>= 1.7.1)
+    jsonlite (>= 1.7.1),
+    epiR (>= 2.0.26),
+    ggplot2 (>= 3.3.3)
 Imports:
     igraph (>= 1.2.5)
 Encoding: UTF-8

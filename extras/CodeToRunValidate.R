@@ -18,14 +18,14 @@ connectionDetails = createConnectionDetails(dbms = 'postgresql',#  e.g. oracle, 
 # Setting local system & database parameters - CHANGE ACCORDING TO YOUR SYSTEM & DATABASE:
 trajectoryLocalArgs <- Trajectories::createTrajectoryLocalArgs(oracleTempSchema = "temp_schema",
                                                                prefixForResultTableNames = "sr_", # Alternatively, you could use this to randomly generate the prefix (requires library(stringi) to be loaded): paste0(  if(!is.null(attr(connectionDetails,'user'))) substr(USER,1,2), stri_rand_strings(1, 2, pattern = "[A-Za-z]"), sep="_")
-                                                               cdmDatabaseSchema = 'ohdsi_cdm',
-                                                               vocabDatabaseSchema = 'ohdsi_vocab',
+                                                               cdmDatabaseSchema = 'ohdsi_cdm_next',
+                                                               vocabDatabaseSchema = 'ohdsi_cdm_next',
                                                                resultsSchema = 'ohdsi_temp',
                                                                sqlRole = F, # You may always use 'F'. Setting specific role might be useful in PostgreSQL when you want to create tables by using specific role so that the others also see the results. However, then you must ensure that this role has permissions to read from all necessary schemas and also create tables to resultsSchema
                                                                #cohortTableSchema= 'ohdsi_temp',
                                                                #cohortTable='cohort',
                                                                #cohortId=1, #use 1 for discovery studies
-                                                               inputFolder=system.file("extdata", "influenza-validate", package = "Trajectories"), # Full path to input folder that contains SQL file for cohort definition and optionally also trajectoryAnalysisArgs.json. You can use built-in folders of this package such as: inputFolder=system.file("extdata", "T2D", package = "Trajectories")
+                                                               inputFolder=system.file("extdata", "T2D-validation", package = "Trajectories"), # Full path to input folder that contains SQL file for cohort definition and optionally also trajectoryAnalysisArgs.json. You can use built-in folders of this package such as: inputFolder=system.file("extdata", "T2D", package = "Trajectories")
                                                                mainOutputFolder='/Users/sulevr/temp', #Subfolders to this will be created automatically
                                                                databaseHumanReadableName='RITA.VALIDATE') #Use something short. It will be added to the titles of the graph.
 

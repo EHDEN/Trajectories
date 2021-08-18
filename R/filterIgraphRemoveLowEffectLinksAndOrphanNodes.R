@@ -22,22 +22,25 @@ filterIgraphRemoveLowEffectLinksAndOrphanNodes<-function(g, limitOfLinks=20,edge
 
   #igraph does not support Edge reordering. Therefore, to reorder, we create a new graph (with reordered edges)
   if(edge_param_to_sort_by=='numcohortExact') {
-    #log_debug('Sort by numcohortExact')
+    #logger::log_debug('Sort by numcohortExact')
     o<-order(igraph::E(g)$numcohortExact, decreasing=T)
   } else if(edge_param_to_sort_by=='numcohortCustom') {
-    #log_debug('Sort by numcohortCustom')
+    #logger::log_debug('Sort by numcohortCustom')
     o<-order(igraph::E(g)$numcohortCustom, decreasing=T)
   } else if(edge_param_to_sort_by=='effectCount') {
-    log_debug('Sort by effectCount')
+    logger::log_debug('Sort by effectCount')
     o<-order(igraph::E(g)$effectCount, decreasing=T)
   } else if(edge_param_to_sort_by=='prob') {
-    log_debug('Sort by prob')
+    logger::log_debug('Sort by prob')
     o<-order(igraph::E(g)$prob, decreasing=T)
   } else if(edge_param_to_sort_by=='actualTrajsProb') {
-    log_debug('Sort by actualTrajsProb')
+    logger::log_debug('Sort by actualTrajsProb')
     o<-order(igraph::E(g)$actualTrajsProb, decreasing=T)
+  } else if(edge_param_to_sort_by=='alignedTrajsCount') {
+    logger::log_debug('Sort by alignedTrajsCount')
+    o<-order(igraph::E(g)$alignedTrajsCount, decreasing=T)
   } else {
-    #log_debug('Sort by effect')
+    logger::log_warn('Sort column in filterIgraphRemoveLowEffectLinksAndOrphanNodes not set. Sorting by effect (default) ')
     o<-order(abs(igraph::E(g)$effect-1), decreasing=T)
   }
   #create a new graph from reordered edges (take only first limitOfLinks edges)

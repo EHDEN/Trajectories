@@ -91,7 +91,8 @@ createTrajectoriesGraph<-function(eventPairResultsFilename) {
                     prob=e[i,'E1_BEFORE_E2_COUNT_IN_EVENTS']/e[i,'E1_COUNT_IN_EVENTS'],
                     #weight=1/e[i,'EVENT_PAIR_EFFECT'], #opposite to the effect size. Do not use weight attribute, as it has a special meaning in igraph and we do not want to use this automatically
                     #numcohortExact=e[i,'EVENTPERIOD_COUNT_HAVING_E2_RIGHT_AFTER_E1'] #number of event periods that had E1->E2 as immediate order (no intermediate events)
-                    numcohortExact=NA
+                    numcohortExact=NA,
+                    alignedTrajsProb=NA
                     #numcohort=e[i,'EVENT1_EVENT2_COHORT_COUNT']/e[i,'EVENT1_COUNT']*e[i,'EVENT1_COUNT']/max_event_count #number of cohorts that had E1->E2, adjusted to but may have had intermediate events also
                     #numcohort=e[i,'EVENT1_EVENT2_COHORT_COUNT']/e[i,'EVENT1_COUNT']*e[i,'EVENT1_COUNT']/max_event_count #number of cohorts that had E1->E2, but may have had intermediate events also
       )

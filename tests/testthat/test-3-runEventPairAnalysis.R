@@ -257,7 +257,7 @@ testthat::test_that("Test ability to detect a longer trajectory (consisting of 2
   connection<-eunomia$connection
   trajectoryLocalArgs<-eunomia$trajectoryLocalArgs
   clearConditionsTable(connection)
-  limitToNumPatients(connection,n=500) #in analysis, use 500 patients. Big enough number is needed for having sufficient amount of events on same disharge_date
+  limitToNumPatients(connection,n=200) #in analysis, use 300 patients.
   limitToConcepts(connection)
   setObservationPeriodForAll(connection,startdate='2010-01-01',enddate='2011-12-31')
   person_ids<-addConditionEventTrajectory(connection,event_concept_ids=c(317009,255848,4299128),n=20,days_to_skip_from_obs_period_start=365) # Add asthma->pneumonia pair for 20 patients
