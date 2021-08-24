@@ -1190,7 +1190,7 @@ makeRRPvaluePlot <- function(pairs,filename) {
     geom_text(aes(label=id),hjust=0, vjust=0) +
     annotate("rect", xmin = trajectoryAnalysisArgs$RRrangeToSkip[1], xmax = trajectoryAnalysisArgs$RRrangeToSkip[2], ymin = 0, ymax = max(suppressWarnings(max(pairs_for_plot$RR_PVALUE)),1),
              alpha = .5) +
-    annotate("rect", xmin = 0, xmax = max(suppressWarnings(max(pairs_for_plot$RR)),1), ymin = 0, ymax = min(suppressWarnings(min(pairs_for_plot %>% filter(!is.na(RR_SIGNIFICANT) & RR_SIGNIFICANT=='*') %>% pull(RR_PVALUE))),1),
+    annotate("rect", xmin = 0, xmax = max(suppressWarnings(max(pairs_for_plot$RR)),1), ymin = max(suppressWarnings(min(pairs_for_plot %>% filter(!is.na(RR_SIGNIFICANT) & RR_SIGNIFICANT=='*') %>% pull(RR_PVALUE))),1), ymax = 1,
              alpha = .5) +
     scale_x_continuous(trans='log10') +
     scale_y_continuous(trans='log10') +
