@@ -43,6 +43,6 @@ createValidationSet<-function(
   num.d<-ifelse(length(result[result$COHORT_DEFINITION_ID==1,'COUNT'])==0,0,result[result$COHORT_DEFINITION_ID==1,'COUNT'])
   num.v<-ifelse(length(result[result$COHORT_DEFINITION_ID==2,'COUNT'])==0,0,result[result$COHORT_DEFINITION_ID==2,'COUNT'])
   num.t<-sum(result$COUNT)
-  logger::log_info('{num.t} event-periods of the whole cohort divided into {num.d} pairs in DISCOVERY set and {num.v} in VALIDATION set')
+  logger::log_info('{num.t} event-periods of the whole cohort divided into {num.d} periods in DISCOVERY set and {num.v} in VALIDATION set')
 
 }
