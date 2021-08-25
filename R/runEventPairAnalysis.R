@@ -1018,7 +1018,7 @@ getMatchedCaseControlCounts <- function(connection,trajectoryLocalArgs,diagnosis
 
 
 
-  #get number of E2-s in both groups
+  #get number of E2-s in cases
   sql=paste0('SELECT
 COUNT(DISTINCT m.EVENTPERIOD_ID) as CCC
 FROM @resultsSchema.@prefiXpairs p
@@ -1035,7 +1035,7 @@ WHERE p.E1_CONCEPT_ID=',diagnosis1,'
   E2_count_in_cases<-DatabaseConnector::querySql(connection=connection, sql=RenderedSql)$CCC
 
 
-  #get number of E2-s in both groups
+  #get number of E2-s in controls
   sql=paste0('SELECT
 COUNT(DISTINCT m.EVENTPERIOD_ID) as CCC
 FROM @resultsSchema.@prefiXpairs p
@@ -1185,12 +1185,13 @@ adjustPValues<-function(connection,trajectoryLocalArgs,dbcol.pvalue='RR_PVALUE',
 
 makeRRPvaluePlot <- function(pairs,filename) {
   pairs_for_plot<-pairs %>% mutate(id = row_number()) %>% select(id, RR, RR_PVALUE, RR_SIGNIFICANT)
+  pairs_for_plot <- pairs_for_plot %>% arrange(-RR_PVALUE)
   p<-suppressWarnings(ggplot2::ggplot(pairs_for_plot, aes(x=RR,y=RR_PVALUE)) +
     geom_point() +
-    geom_text(aes(label=id),hjust=0, vjust=0) +
+    geom_text(aes(label=id),hjust=0, vjust=0, size=3) +
     annotate("rect", xmin = trajectoryAnalysisArgs$RRrangeToSkip[1], xmax = trajectoryAnalysisArgs$RRrangeToSkip[2], ymin = 0, ymax = max(suppressWarnings(max(pairs_for_plot$RR_PVALUE)),1),
              alpha = .5) +
-    annotate("rect", xmin = 0, xmax = max(suppressWarnings(max(pairs_for_plot$RR)),1), ymin = max(suppressWarnings(min(pairs_for_plot %>% filter(!is.na(RR_SIGNIFICANT) & RR_SIGNIFICANT=='*') %>% pull(RR_PVALUE))),1), ymax = 1,
+    annotate("rect", xmin = 0, xmax = max(suppressWarnings(max(pairs_for_plot$RR)),1), ymin = min(suppressWarnings(max(pairs_for_plot %>% filter(!is.na(RR_SIGNIFICANT) & RR_SIGNIFICANT=='*') %>% pull(RR_PVALUE))),1), ymax = 1,
              alpha = .5) +
     scale_x_continuous(trans='log10') +
     scale_y_continuous(trans='log10') +
@@ -1203,4 +1204,11 @@ makeRRPvaluePlot <- function(pairs,filename) {
   suppressWarnings(print(p))
   dev.off()
 
+}
+
+makeRRPvalueQQPlot<-function(pairs) {
+  observedPValues <- pairs %>% mutate(id = row_number()) %>% pull(RR_PVALUE)
+  plot(-log10(1:length(observedPValues)/length(observedPValues)),
+       -log10(sort(observedPValues)))
+  abline(0, 1, col = "red")
 }
