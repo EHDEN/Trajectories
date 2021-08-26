@@ -43,7 +43,7 @@ createFilteredFullgraphs<-function(connection,
 
   # Remove low-probability event pairs (keep 20, 50, 100 event pairs with highest probability)
   s=c(20,50,100)
-  s<-s[s<length(E(g))] #if the graph does not have that many edges, skip drawing the plot
+  s<-s[s<length(igraph::E(g))] #if the graph does not have that many edges, skip drawing the plot
 
   for(limitOfLinks in s) {
     logger::log_info('Creating a plot of the same graph, but filtered to {limitOfLinks} high-probability pairs only...')
@@ -86,7 +86,7 @@ createFilteredFullgraphs<-function(connection,
 
   # Remove low-probability event pairs (keep 20, 50, 100 event pairs with highest probability)
   s=c(20,50,100)
-  s<-s[s<length(E(g2))] #if the graph does not have that many edges, skip drawing the plot
+  s<-s[s<length(igraph::E(g2))] #if the graph does not have that many edges, skip drawing the plot
 
   for(limitOfLinks in s) {
     logger::log_info('Creating a plot of the same graph, but filtered to {limitOfLinks} high-probability pairs only...')

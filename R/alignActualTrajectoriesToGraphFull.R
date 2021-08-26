@@ -20,8 +20,6 @@ alignActualTrajectoriesToGraphFull <- function(connection,
 
   DEBUG=F
 
-  if(is.na(limit)) limit=0
-
   logger::log_info(paste0('Aligning actual trajectories to the graph of ',length(igraph::E(g)),' event pairs.'))
 
   #First, put event pairs of the graph into table
@@ -97,8 +95,8 @@ alignActualTrajectoriesToGraphFull <- function(connection,
   actual_event_pairs<-querySql(connection, paste0("SELECT e1_concept_id,e2_concept_id,COUNT(*) AS count FROM ",tablename,' GROUP BY e1_concept_id,e2_concept_id ORDER BY COUNT(*) DESC'))
 
   #Calculate percentages
-  actual_events$PERC <- actual_events$COUNT/INTERPRETER[['cohortsize']]
-  actual_event_pairs$PERC <- actual_event_pairs$COUNT/INTERPRETER[['cohortsize']]
+  actual_events$PERC <- actual_events$COUNT/COHORTSIZE
+  actual_event_pairs$PERC <- actual_event_pairs$COUNT/COHORTSIZE
 
   #clear all alignedTrajsCount values
   igraph::E(g)$alignedTrajsCount<-0

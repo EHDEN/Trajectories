@@ -429,33 +429,6 @@ getPowerDirection<-function(EVENTPERIOD_COUNT_E1_OCCURS_FIRST,EVENTPERIOD_COUNT_
 }
 
 
-# Gets relative risk and 95% CI
-RRandCIDeprecated<-function(cases_with_outcome,cases_total,expected_prob) {
-
-  # Is based on https://sphweb.bumc.bu.edu/otlt/mph-modules/bs/bs704_confidence_intervals/bs704_confidence_intervals8.html
-
-  n1=cases_total
-  x1=cases_with_outcome
-  n2=cases_total #control group counts is a buit tricky. We do not use the actual count as the actual count is not matched to case group. Therefore we use matched "expected prevalence" and we use control count = case count
-  x2=expected_prob*n2 #Seems that rounding to integer is not necessary
-  if(x2>n2) x2=n2
-
-  #Can't calculate if any of the numbers is 0
-  if(any(c(x1,n1,x2,n2,expected_prob)==0)) return(c(NA,NA,NA))
-
-  d<-matrix(c(x1,n1-x1,x2,n2-x2),ncol=2,byrow=T)
-
-  rr <- (x1/n1)/expected_prob
-
-  e_for_ln_rr=1.96*sqrt(((n1-x1)/x1/n1)+((n2-x2)/x2/n2))
-  #the 95% CI for ln(rr) is ln(rr)+-e_for_ln_rr
-  ci_for_ln_rr=c(log(rr)-e_for_ln_rr,log(rr)+e_for_ln_rr)
-  #95% CI for rr is exp() of that
-  ci_for_rr=exp(ci_for_ln_rr)
-
-  return(c(rr,ci_for_rr[1],ci_for_rr[2]))
-
-}
 
 RRandCI<-function(num_observations_in_cases,case_group_size,num_observations_in_controls,control_group_size) {
   r<-suppressWarnings(epiR::epi.mh(ev.trt=num_observations_in_cases,
@@ -485,117 +458,124 @@ calcRRandPower<-function(connection,
   Trajectories::setRole(connection, trajectoryLocalArgs$sqlRole)
 
   #Group pairs by E1_CONCEPT_ID (the same case-control group can be used for all of these pairs)
-
-  pair_counts_starting_with_E1<-pairs %>%
+  E1s<-pairs %>%
     group_by(E1_CONCEPT_ID) %>%
     summarise(n=n()) %>%
     arrange(-n)
-
-  pair_counts_starting_with_E1_and_having_rr_not_calculated<-pairs %>%
-    filter(is.na(RR) | RR==0) %>%
-    group_by(E1_CONCEPT_ID) %>%
-    summarise(n=n())
-
-  logger::log_info("As there are {nrow(pair_counts_starting_with_E1)} different first events within these pairs, {nrow(pair_counts_starting_with_E1)} case-countrol groups are built in total.")
+  num.E1s.total <- nrow(E1s)
+  logger::log_info("As there are {num.E1s.total} different first events within these pairs, {num.E1s.total} case-countrol groups are built in total.")
 
   if(forceRecalculation==F) {
-    #for which pairs all RR-s are not fully calculated
-    E1s_of_pairs_where_rr_not_fully_calculated <- pair_counts_starting_with_E1 %>%
+    #for how many pairs for each E1, the RR is calculated
+    pair_counts_starting_with_E1_and_having_rr_not_calculated<-pairs %>%
+      filter(is.na(RR) | RR==0) %>%
+      group_by(E1_CONCEPT_ID) %>%
+      summarise(n=n()) %>%
+      arrange(-n)
+
+    #for which pairs all RR-s are NOT fully calculated
+    E1s_of_pairs_where_rr_not_fully_calculated <- E1s %>%
       left_join(pair_counts_starting_with_E1_and_having_rr_not_calculated, by = c("E1_CONCEPT_ID")) %>%
       filter(n.y!=0) %>%
       select(E1_CONCEPT_ID)
+    num.E1s.already.calculated=nrow(E1s)-nrow(E1s_of_pairs_where_rr_not_fully_calculated)
+    if(num.E1s.already.calculated>0) logger::log_info("For the pairs of {num.E1s.already.calculated} first events, RR is already calculated. Skipping these from recalculating.")
 
+    #Update pairs and E1s
     pairs <- pairs %>%
-      inner_join(E1s_of_pairs_where_rr_not_fully_calculated, by = c("E1_CONCEPT_ID")) %>%
-      filter(is.na(RR) | RR==0)
+      inner_join(E1s_of_pairs_where_rr_not_fully_calculated, by = c("E1_CONCEPT_ID"))
+    E1s <- pairs %>%
+      group_by(E1_CONCEPT_ID) %>%
+      summarise(n=n()) %>%
+      arrange(-n)
     num.already.calculated=num.pairs-nrow(pairs)
-    if(num.already.calculated>0) logger::log_info("For {num.already.calculated} pairs, RR is already calculated. Skipping these from recalculating.")
+    if(num.already.calculated>0) logger::log_info("Therefore, for {num.already.calculated} pairs, RR is already calculated. Skipping these from recalculating.")
   } else {
+    num.E1s.already.calculated=0
     num.already.calculated=0
   }
 
+
   starttime=Sys.time()
-  # For each event pair, run the analysis
-  if(nrow(pairs)>0) {
-    for(i in 1:nrow(pairs))
-    {
-      diagnosis1        <- pairs[i,'E1_CONCEPT_ID']
-      diagnosis2        <- pairs[i,'E2_CONCEPT_ID']
-      #observation_count <- pairs[i,'E1_COUNT_AS_FIRST_EVENT_OF_PAIRS'] #case group size - eventperiod count where E1 is not the last event
-      #observed_matches  <- pairs[i,'E1_BEFORE_E2_COUNT_IN_EVENTS'] #Number of cases where E1 is followed by E2
+  counter=1
+  # For each E1, create case-control groups
+  if(nrow(E1s)>0) {
+    for(j in 1:nrow(E1s)) {
+      diagnosis1        <- E1s[j,'E1_CONCEPT_ID'] %>% as.numeric
 
-      rr_in_previous_study=pairs[i,'RR_IN_PREVIOUS_STUDY']
-
-      logger::log_info(paste0('Matching control group for event pair ',i+num.already.calculated,'/',num.pairs,': ',diagnosis1,' -> ',diagnosis2,' (total progress ',
-                              round(100*(i+num.already.calculated)/num.pairs),'%, ETA: ',Trajectories::estimatedTimeRemaining(progress_perc=(i-1)/nrow(pairs),starttime=starttime),
+      logger::log_info(paste0('Matching control group ',j+num.E1s.already.calculated,'/',num.E1s.total,' for event pairs starting with ',diagnosis1,' (total progress ',
+                              round(100*(j+num.E1s.already.calculated)/num.E1s.total),'%, ETA: ',Trajectories::estimatedTimeRemaining(progress_perc=(counter-1)/nrow(pairs),starttime=starttime),
                               ')...'))
 
-      # Do Case/Control matching, get the counts
-      counts=Trajectories:::getMatchedCaseControlCounts(connection,trajectoryLocalArgs,diagnosis1,diagnosis2)
-
-      #Get
+      # build case-control groups (create some data to database table 'matching' also which will be used by getMatchedCaseControlCounts() function)
+      matches <- Trajectories:::buildCaseControlGroups(connection,trajectoryLocalArgs,diagnosis1)
 
 
 
-      #if(counts$control_group_size<counts$case_group_size) {
-      #  logger::log_info('Matching failed: not enough event periods without {diagnosis1} for matching all event periods containing {diagnosis1}')
-      #  power=NA
-      #  event_pair_rr=NA
-      #  event_pair_rr_ci_lower=NA
-      #  event_pair_rr_ci_upper=NA
-      #} else {
+      # Conduct the test for each pair starting with that E1
+      E1.pairs <- pairs %>%
+                    filter(E1_CONCEPT_ID==get('diagnosis1'))
+      # For each event pair, run the analysis
+      if(nrow(E1.pairs)>0) {
+        for(i in 1:nrow(E1.pairs))
+        {
+          diagnosis2        <- E1.pairs[i,'E2_CONCEPT_ID']
 
-        # Calculate power - typically power for detecting RR=... but in case RR_IN_PREVIOUS_STUDY is given, then the power to detect RR=RR_IN_PREVIOUS_STUDY
-        #power <- Trajectories:::getPowerRR(case_group_size=counts$case_group_size,
-        #                    control_group_size=counts$control_group_size,
-        #                    num_observations_in_cases=counts$num_observations_in_cases,
-        #                    num_observations_in_controls=counts$num_observations_in_controls,
-        #                    rr.threshold=ifelse(is.na(rr_in_previous_study),relativeRiskForPowerCalculations,rr_in_previous_study)
-        #)
-        power=NA
+          rr_in_previous_study=E1.pairs[i,'RR_IN_PREVIOUS_STUDY']
 
-        #What is the "relative risk" (effect) (how many times the event2_concept_id prevalence in case group is higher than in control group) and its CI
-        rr_and_ci=Trajectories:::RRandCI(counts$num_observations_in_cases,
-                                         counts$case_group_size,
-                                         counts$num_observations_in_controls,
-                                         counts$control_group_size)
+          logger::log_info(paste0('  Calculating RR for event pair ',counter+num.already.calculated,'/',num.pairs,': ',diagnosis1,' -> ',diagnosis2))
 
-        event_pair_rr=rr_and_ci$est
-        event_pair_rr_ci_lower=rr_and_ci$lower
-        event_pair_rr_ci_upper=rr_and_ci$upper
-        event_pair_rr_pvalue=rr_and_ci$p.value
-        if(!is.na(event_pair_rr)) logger::log_debug("Relative risk {round(event_pair_rr,2)} (95%CI {round(event_pair_rr_ci_lower,2)}..{round(event_pair_rr_ci_upper,2)}, p-value={event_pair_rr_pvalue})")
+          # Do Case/Control matching, get the counts
+          counts=Trajectories:::getMatchedCaseControlCounts(connection,trajectoryLocalArgs,matches,diagnosis1,diagnosis2)
 
-      #}
+          #What is the "relative risk" (effect) (how many times the event2_concept_id prevalence in case group is higher than in control group) and its CI
+          rr_and_ci=Trajectories:::RRandCI(counts$num_observations_in_cases,
+                                           counts$case_group_size,
+                                           counts$num_observations_in_controls,
+                                           counts$control_group_size)
+
+          event_pair_rr=rr_and_ci$est
+          event_pair_rr_ci_lower=rr_and_ci$lower
+          event_pair_rr_ci_upper=rr_and_ci$upper
+          event_pair_rr_pvalue=rr_and_ci$p.value
+          if(!is.na(event_pair_rr)) logger::log_debug("Relative risk {round(event_pair_rr,2)} (95%CI {round(event_pair_rr_ci_lower,2)}..{round(event_pair_rr_ci_upper,2)}, p-value={event_pair_rr_pvalue})")
+
+          #}
 
 
-      # Writing the results back to database
-      RenderedSql <- Trajectories::loadRenderTranslateSql("insertDataForPrefilter.sql",
-                                                          packageName=get('TRAJECTORIES_PACKAGE_NAME', envir=TRAJECTORIES.CONSTANTS),
-                                                          dbms=connection@dbms,
-                                                          resultsSchema =   trajectoryLocalArgs$resultsSchema,
-                                                          control_group_size=counts$control_group_size,
-                                                          case_group_size=counts$case_group_size,
-                                                          num_observations_in_controls = counts$num_observations_in_controls,
-                                                          num_observations_in_cases = counts$num_observations_in_cases,
-                                                          rr = ifelse(is.na(event_pair_rr),'NULL',event_pair_rr),
-                                                          rr_ci_lower=ifelse(is.na(event_pair_rr_ci_lower),'NULL',event_pair_rr_ci_lower),
-                                                          rr_ci_upper=ifelse(is.na(event_pair_rr_ci_upper),'NULL',event_pair_rr_ci_upper),
-                                                          rr_pvalue=event_pair_rr_pvalue,
-                                                          expected_prob=counts$expected_prob,
-                                                          actual_prob=counts$actual_prob,
-                                                          diag1 = diagnosis1,
-                                                          diag2 = diagnosis2,
-                                                          prefix =  trajectoryLocalArgs$prefixForResultTableNames
-      )
-      #print(power)
-      #print(RenderedSql)
-      DatabaseConnector::executeSql(connection, sql=RenderedSql, progressBar = FALSE, reportOverallTime = FALSE)
+          # Writing the results back to database
+          RenderedSql <- Trajectories::loadRenderTranslateSql("insertDataForPrefilter.sql",
+                                                              packageName=get('TRAJECTORIES_PACKAGE_NAME', envir=TRAJECTORIES.CONSTANTS),
+                                                              dbms=connection@dbms,
+                                                              resultsSchema =   trajectoryLocalArgs$resultsSchema,
+                                                              control_group_size=counts$control_group_size,
+                                                              case_group_size=counts$case_group_size,
+                                                              num_observations_in_controls = counts$num_observations_in_controls,
+                                                              num_observations_in_cases = counts$num_observations_in_cases,
+                                                              rr = ifelse(is.na(event_pair_rr),'NULL',event_pair_rr),
+                                                              rr_ci_lower=ifelse(is.na(event_pair_rr_ci_lower),'NULL',event_pair_rr_ci_lower),
+                                                              rr_ci_upper=ifelse(is.na(event_pair_rr_ci_upper),'NULL',event_pair_rr_ci_upper),
+                                                              rr_pvalue=event_pair_rr_pvalue,
+                                                              expected_prob=counts$expected_prob,
+                                                              actual_prob=counts$actual_prob,
+                                                              diag1 = diagnosis1,
+                                                              diag2 = diagnosis2,
+                                                              prefix =  trajectoryLocalArgs$prefixForResultTableNames
+          )
+          #print(power)
+          #print(RenderedSql)
+          DatabaseConnector::executeSql(connection, sql=RenderedSql, progressBar = FALSE, reportOverallTime = FALSE)
+          counter=counter+1
+        } # for i
+      } else {
+        logger::log_info('Nothing to analyze.')
+      } #if
 
-    } # for
+    } #for j
   } else {
-    logger::log_info('Nothing to analyze, exit RR calculation function.')
+    logger::log_info('No events to analyze. Exiting RR calculations.')
   } #if
+
 
   logger::log_info('RR calculations done.')
 
@@ -895,40 +875,7 @@ clearOldResultsFromDb<-function(connection,
   DatabaseConnector::executeSql(connection, RenderedSql)
 }
 
-getMatchedCaseControlCounts <- function(connection,trajectoryLocalArgs,diagnosis1,diagnosis2) {
-
-  #create table for matching
-  RenderedSql <- Trajectories::loadRenderTranslateSql('AssignIndexDatesForMatching.sql',
-                                                      packageName=get('TRAJECTORIES_PACKAGE_NAME', envir=TRAJECTORIES.CONSTANTS),
-                                                      dbms=connection@dbms,
-                                                      resultsSchema = trajectoryLocalArgs$resultsSchema,
-                                                      prefiX =  trajectoryLocalArgs$prefixForResultTableNames,
-                                                      diagnosis1 = diagnosis1
-  )
-  DatabaseConnector::executeSql(connection, RenderedSql, progressBar = FALSE, reportOverallTime = FALSE)
-
-  #read data from the table
-  RenderedSql <- SqlRender::render(sql='SELECT * FROM @resultsSchema.@prefiXmatching;',
-                                   resultsSchema = trajectoryLocalArgs$resultsSchema,
-                                   prefiX =  trajectoryLocalArgs$prefixForResultTableNames)
-  RenderedSql <- SqlRender::translate(sql=RenderedSql, targetDialect = connection@dbms)
-  d<-DatabaseConnector::querySql(connection=connection, sql=RenderedSql)
-
-  d<-d %>% Trajectories:::calcPropensityScore()
-
-
-  matches = d %>%
-    Trajectories:::propensityScoreBasedMatch(nn = 1)
-
-  #length(matches$Cases)
-  #length(matches$Controls)
-
-  #distribution of propensity scores after matching
-  #d %>%
-  #  filter(EVENTPERIOD_ID %in% c(matches$Cases, matches$Controls)) %>%
-  #  ggplot(aes(x = PropScore, fill = as.factor(IS_CASE))) +
-  #  geom_density(aes(y = ..count..), alpha = 0.5) +
-  #  theme_bw()
+getMatchedCaseControlCounts <- function(connection,trajectoryLocalArgs,matches,diagnosis1,diagnosis2) {
 
 
 
@@ -1126,4 +1073,41 @@ makeRRPvalueQQPlot<-function(pairs) {
   plot(-log10(1:length(observedPValues)/length(observedPValues)),
        -log10(sort(observedPValues)))
   abline(0, 1, col = "red")
+}
+
+buildCaseControlGroups<-function(connection,trajectoryLocalArgs,diagnosis1) {
+  #create table for matching
+  RenderedSql <- Trajectories::loadRenderTranslateSql('AssignIndexDatesForMatching.sql',
+                                                      packageName=get('TRAJECTORIES_PACKAGE_NAME', envir=TRAJECTORIES.CONSTANTS),
+                                                      dbms=connection@dbms,
+                                                      resultsSchema = trajectoryLocalArgs$resultsSchema,
+                                                      prefiX =  trajectoryLocalArgs$prefixForResultTableNames,
+                                                      diagnosis1 = diagnosis1
+  )
+  DatabaseConnector::executeSql(connection, RenderedSql, progressBar = FALSE, reportOverallTime = FALSE)
+
+  #read data from the table
+  RenderedSql <- SqlRender::render(sql='SELECT * FROM @resultsSchema.@prefiXmatching;',
+                                   resultsSchema = trajectoryLocalArgs$resultsSchema,
+                                   prefiX =  trajectoryLocalArgs$prefixForResultTableNames)
+  RenderedSql <- SqlRender::translate(sql=RenderedSql, targetDialect = connection@dbms)
+  d<-DatabaseConnector::querySql(connection=connection, sql=RenderedSql)
+
+  d<-d %>% Trajectories:::calcPropensityScore()
+
+
+  matches = d %>%
+    Trajectories:::propensityScoreBasedMatch(nn = 1)
+
+  #length(matches$Cases)
+  #length(matches$Controls)
+
+  #distribution of propensity scores after matching
+  #d %>%
+  #  filter(EVENTPERIOD_ID %in% c(matches$Cases, matches$Controls)) %>%
+  #  ggplot(aes(x = PropScore, fill = as.factor(IS_CASE))) +
+  #  geom_density(aes(y = ..count..), alpha = 0.5) +
+  #  theme_bw()
+
+  return(matches)
 }
