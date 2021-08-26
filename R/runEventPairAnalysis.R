@@ -564,36 +564,10 @@ calcRRandPower<-function(connection,
                                                           actual_prob=counts$actual_prob,
                                                           diag1 = diagnosis1,
                                                           diag2 = diagnosis2,
-                                                          power=ifelse(is.na(power),'NULL',power),
                                                           prefix =  trajectoryLocalArgs$prefixForResultTableNames
       )
       #print(power)
       #print(RenderedSql)
-      DatabaseConnector::executeSql(connection, sql=RenderedSql, progressBar = FALSE, reportOverallTime = FALSE)
-
-
-      event_pair_pvalue <- Trajectories:::getPValueForAccociation(counts$expected_prob,counts$case_group_size,counts$num_observations_in_cases)
-
-      #if(event_pair_pvalue < cutoff_pval) {
-      #  logger::log_debug(paste0('Events in pair ',diagnosis1,' -> ',diagnosis2,' are significantly associated in pre-filtering test.'))
-      #  associated_count <- associated_count+1
-      #  significant_str="'*'"
-      #} else {
-      #  logger::log_debug(paste0('Events in pair ',diagnosis1,' -> ',diagnosis2,' are not significantly associated in pre-filtering test.'))
-      #  significant_str="''"
-      #}
-
-      # Writing p-value to database
-      RenderedSql <- Trajectories::loadRenderTranslateSql("PvalInserter.sql",
-                                                          packageName=get('TRAJECTORIES_PACKAGE_NAME', envir=TRAJECTORIES.CONSTANTS),
-                                                          dbms=connection@dbms,
-                                                          resultsSchema =   trajectoryLocalArgs$resultsSchema,
-                                                          pval = event_pair_pvalue,
-                                                          pvalSignificant="''",
-                                                          diag1 = diagnosis1,
-                                                          diag2 = diagnosis2,
-                                                          prefix =  trajectoryLocalArgs$prefixForResultTableNames
-      )
       DatabaseConnector::executeSql(connection, sql=RenderedSql, progressBar = FALSE, reportOverallTime = FALSE)
 
     } # for
@@ -614,87 +588,6 @@ calcRRandPower<-function(connection,
 
 
 
-# Testing whether RR is significantly different from 1 (either lower or higher)
-runRRTests<-function(connection,
-                              trajectoryAnalysisArgs,
-                              trajectoryLocalArgs,
-                              pairs,
-                              forceRecalculation=F) {
-
-  num.pairs=nrow(pairs)
-  logger::log_info("Running RR tests for {num.pairs} event pairs to identify pairs having significant RR...")
-
-  #Set SQL role of the database session
-  Trajectories::setRole(connection, trajectoryLocalArgs$sqlRole)
-
-  if(forceRecalculation==F) {
-    associated_count <- nrow(pairs %>% filter(!is.na(RR_SIGNIFICANT) & RR_SIGNIFICANT=='*'))
-
-    pairs <- pairs %>% filter(is.na(RR_PVALUE))
-    num.already.calculated=num.pairs-nrow(pairs)
-    if(num.already.calculated>0) logger::log_info("For {num.already.calculated} pairs, RR test is already conducted (out of these, {associated_count} have significant RR). Skipping these from recalculating.")
-  } else {
-    num.already.calculated=0
-    associated_count=0
-  }
-
-
-
-  starttime=Sys.time()
-  if(nrow(pairs)>0) {
-    for(i in 1:nrow(pairs)) {
-
-      diagnosis1        <- pairs[i,'E1_CONCEPT_ID']
-      diagnosis2        <- pairs[i,'E2_CONCEPT_ID']
-      observed_matches  <- pairs[i,'E1_BEFORE_E2_COUNT_IN_EVENTS']
-      observation_count <- pairs[i,'E1_COUNT_AS_FIRST_EVENT_OF_PAIRS'] #case group size
-      expected_prob     <- pairs[i,'E2_PREVALENCE_IN_CONTROL_GROUP']
-
-      logger::log_info(paste0('Running RR test ',i+num.already.calculated,'/',num.pairs,': ',diagnosis1,' -> ',diagnosis2,' (total progress ',
-                              round(100*(i+num.already.calculated)/num.pairs),'%, ETA: ',Trajectories::estimatedTimeRemaining(progress_perc=(i-1)/nrow(pairs),starttime=starttime),
-                              ')...'))
-
-      event_pair_pvalue <- Trajectories:::getPValueForAccociation(expected_prob,observation_count,observed_matches)
-
-      if(event_pair_pvalue < cutoff_pval) {
-        logger::log_debug(paste0('Events in pair ',diagnosis1,' -> ',diagnosis2,' are significantly associated in pre-filtering test.'))
-        associated_count <- associated_count+1
-        significant_str="'*'"
-      } else {
-        logger::log_debug(paste0('Events in pair ',diagnosis1,' -> ',diagnosis2,' are not significantly associated in pre-filtering test.'))
-        significant_str="''"
-      }
-
-      # Writing p-value to database
-      RenderedSql <- Trajectories::loadRenderTranslateSql("PvalInserter.sql",
-                                                          packageName=get('TRAJECTORIES_PACKAGE_NAME', envir=TRAJECTORIES.CONSTANTS),
-                                                          dbms=connection@dbms,
-                                                          resultsSchema =   trajectoryLocalArgs$resultsSchema,
-                                                          pval = event_pair_pvalue,
-                                                          pvalSignificant=significant_str,
-                                                          diag1 = diagnosis1,
-                                                          diag2 = diagnosis2,
-                                                          prefix =  trajectoryLocalArgs$prefixForResultTableNames
-      )
-      DatabaseConnector::executeSql(connection, sql=RenderedSql, progressBar = FALSE, reportOverallTime = FALSE)
-
-    }
-  } else {
-    logger::log_info('Nothing to analyze, exit analysis function.')
-  } #if
-
-  logger::log_info('...done.')
-
-  logger::log_info('{associated_count} event pairs out of {num.pairs} passed the statistical tests of RR.')
-
-
-  #Get updated pairs
-  pairs<-Trajectories:::getAllPairs(connection,
-                                    trajectoryAnalysisArgs,
-                                    trajectoryLocalArgs)
-  return(pairs)
-
-}
 
 runDirectionTests<-function(connection,
                               trajectoryAnalysisArgs,

@@ -1,8 +1,8 @@
-context("Creating event pair tables")
+testthat:context("Creating event pair tables")
 
 library(Trajectories)
 
-testthat::test_that("Filling in cohort table with fulldb buit-in study (no events)", {
+testthat::test_that("Filling in cohort table with fulldb built-in study (no events)", {
 
 
   eunomia <-setUpEunomia() #also fills in trajectoryLocalArgs
@@ -44,7 +44,7 @@ testthat::test_that("Filling in cohort table with fulldb buit-in study (no event
 
 
   # There are no events in conditions table, all summary tables should be empty
-  res<-querySql(connection, glue::glue('SELECT COUNT(*) AS TOTAL FROM {trajectoryLocalArgs$resultsSchema}.{trajectoryLocalArgs$prefixForResultTableNames}E2_summary'))
+  res<-querySql(connection, glue::glue('SELECT COUNT(*) AS TOTAL FROM {trajectoryLocalArgs$resultsSchema}.{trajectoryLocalArgs$prefixForResultTableNames}E1E2_model'))
   testthat::expect_equal(res$TOTAL, 0)
 
 

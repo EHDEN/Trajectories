@@ -1,4 +1,4 @@
-context("Testing runEventPairAnalysis")
+testthat::context("Testing runEventPairAnalysis")
 library(Trajectories)
 library(DatabaseConnector)
 library(stringr)

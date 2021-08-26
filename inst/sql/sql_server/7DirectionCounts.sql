@@ -47,16 +47,10 @@ IF OBJECT_ID('@resultsSchema.@prefixeventperiods_with_E1', 'U') IS NOT NULL
 
 -- add counts to results
 UPDATE @resultsSchema.@prefixE1E2_model SET E1_BEFORE_E2_COUNT_IN_EVENTS = (select count(*) from @resultsSchema.@prefixeventperiods_with_E1E2 where date1<date2),
-                                AVG_AGE_OF_E1_BEFORE_E2_IN_EVENTS = (select avg(E1_age) from @resultsSchema.@prefixeventperiods_with_E1E2 where date1<date2),
                                 E1_AFTER_E2_COUNT_IN_EVENTS = (select count(*) from @resultsSchema.@prefixeventperiods_with_E1E2 where date2<date1),
                                 E1_AND_E2_ON_SAME_DAY_COUNT_IN_EVENTS = (select count(*) from @resultsSchema.@prefixeventperiods_with_E1E2 where date1=date2)
 WHERE E1_CONCEPT_ID = @diag1 and E2_CONCEPT_ID = @diag2;
 
-
--- add event1 age distribution for cases where event1 occurs before event2 also to results
-UPDATE @resultsSchema.@prefixE1E2_model SET
-                                AVG_AGE_OF_E1_BEFORE_E2_IN_EVENTS = (select avg(E1_age) from @resultsSchema.@prefixeventperiods_with_E1E2 where date1<date2)
-WHERE E1_CONCEPT_ID = @diag1 and E2_CONCEPT_ID = @diag2;
 
 -- drop calculation table
 IF OBJECT_ID('@resultsSchema.@prefixeventperiods_with_E1E2', 'U') IS NOT NULL

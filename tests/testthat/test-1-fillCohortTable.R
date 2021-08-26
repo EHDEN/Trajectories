@@ -1,4 +1,4 @@
-context("Filling in cohor table")
+testthat::context("Filling in cohor table")
 
 
 testthat::test_that("Filling in cohort table with fulldb buit-in study", {

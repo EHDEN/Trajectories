@@ -61,14 +61,12 @@ CREATE TABLE @resultsSchema.@prefiXE1E2_model (
 
 
   RR_IN_PREVIOUS_STUDY DECIMAL NULL,
-  RR_POWER DECIMAL NULL,
 
   RR DECIMAL NULL,
   RR_CI_LOWER DECIMAL NULL,
   RR_CI_UPPER DECIMAL NULL,
 
   RR_PVALUE FLOAT NULL,
-  RR_PVALUE_OLD FLOAT NULL,
   RR_SIGNIFICANT VARCHAR(1) NULL,
 
   AVG_NUMBER_OF_DAYS_BETWEEN_E1_AND_E2 DECIMAL NULL,
@@ -79,7 +77,6 @@ CREATE TABLE @resultsSchema.@prefiXE1E2_model (
   E1_BEFORE_E2_COUNT_IN_EVENTS INT NULL,
   E1_AND_E2_ON_SAME_DAY_COUNT_IN_EVENTS INT NULL,
   E1_AFTER_E2_COUNT_IN_EVENTS INT NULL,
-  AVG_AGE_OF_E1_BEFORE_E2_IN_EVENTS DECIMAL NULL,
 
   DIRECTIONAL_POWER DECIMAL NULL,
 
@@ -349,134 +346,36 @@ IF OBJECT_ID('@resultsSchema.@prefiXpairs_stat', 'U') IS NOT NULL
   DROP TABLE @resultsSchema.@prefiXpairs_stat;
 
 
+--- Calculating E1_AND_E2_TOGETHER_COUNT_IN_EVENTS - CURRENTLY COMMENTED OUT BECAUSE IT IS NOT NEEDED BY THE ANALYSIS AND IT IS TERRIBLY SLOW WITH SQLITE. A FASTER VERSION FOR SQLITE IS THEN SLOW FOR POSTGRESQL.
+--          IF OBJECT_ID('@resultsSchema.@prefiXevents_tmp', 'U') IS NOT NULL
+--          DROP TABLE @resultsSchema.@prefiXevents_tmp;
+--
+--          CREATE TABLE
+--              @resultsSchema.@prefiXevents_tmp AS
+--              SELECT eventperiod_id,concept_id FROM @resultsSchema.@prefiXevents
+--                  WHERE concept_id in (SELECT DISTINCT E1_CONCEPT_ID as concept_id FROM @resultsSchema.@prefiXE1E2_model
+--                      UNION --union removes duplicates
+--                  SELECT DISTINCT E2_CONCEPT_ID as concept_id FROM @resultsSchema.@prefiXE1E2_model
+--                      );
+
+--          CREATE INDEX @prefiXevents_tmp_concept_idx ON @resultsSchema.@prefiXevents_tmp (concept_id);
+
+--          UPDATE @resultsSchema.@prefiXE1E2_model
+--          SET E1_AND_E2_TOGETHER_COUNT_IN_EVENTS = (
+--              SELECT COUNT(*)
+--              FROM @resultsSchema.@prefiXevents_tmp
+--              where concept_id = @prefiXE1E2_model.e2_concept_id
+--                AND eventperiod_id IN
+--                    (SELECT eventperiod_id
+--                     FROM @resultsSchema.@prefiXevents_tmp
+--                     where concept_id = @prefiXE1E2_model.e1_concept_id)
+--          );
+
+--          IF OBJECT_ID('@resultsSchema.@prefiXevents_tmp', 'U') IS NOT NULL
+--            DROP TABLE @resultsSchema.@prefiXevents_tmp;
 
 
 
---- Calculating E1_AND_E2_TOGETHER_COUNT_IN_EVENTS
-IF OBJECT_ID('@resultsSchema.@prefiXevents_tmp', 'U') IS NOT NULL
-  DROP TABLE @resultsSchema.@prefiXevents_tmp;
-
-CREATE TABLE
-    @resultsSchema.@prefiXevents_tmp AS
-    SELECT eventperiod_id,concept_id FROM @resultsSchema.@prefiXevents
-        WHERE concept_id in (SELECT DISTINCT E1_CONCEPT_ID as concept_id FROM @resultsSchema.@prefiXE1E2_model
-            UNION --union removes duplicates
-        SELECT DISTINCT E2_CONCEPT_ID as concept_id FROM @resultsSchema.@prefiXE1E2_model
-            );
-
-CREATE INDEX @prefiXevents_tmp_concept_idx ON @resultsSchema.@prefiXevents_tmp (concept_id);
-
-UPDATE @resultsSchema.@prefiXE1E2_model
-SET E1_AND_E2_TOGETHER_COUNT_IN_EVENTS = (
-    SELECT COUNT(*)
-    FROM @resultsSchema.@prefiXevents_tmp
-    where concept_id = @prefiXE1E2_model.e2_concept_id
-      AND eventperiod_id IN
-          (SELECT eventperiod_id
-           FROM @resultsSchema.@prefiXevents_tmp
-           where concept_id = @prefiXE1E2_model.e1_concept_id)
-);
-
-IF OBJECT_ID('@resultsSchema.@prefiXevents_tmp', 'U') IS NOT NULL
-  DROP TABLE @resultsSchema.@prefiXevents_tmp;
 
 
 
----------------------------------------------------------------------
--- Create gender,age,discharge-time summary table for each E1_CONCEPT_ID->E2_CONCEPT_ID pairs
-----------------------------------------------------------------------
-
-INSERT INTO @resultsSchema.@prefiXdebug (entry) VALUES ('Creating @resultsSchema.@prefiXE1E2_summary...');
-
-IF OBJECT_ID('@resultsSchema.@prefiXE1E2_summary', 'U') IS NOT NULL
-  DROP TABLE @resultsSchema.@prefiXE1E2_summary;
-
---CREATE TABLE @resultsSchema.@prefiXE1E2_summary as
-    SELECT
-      a.E1_CONCEPT_ID AS E1_CONCEPT_ID,
-      a.E2_CONCEPT_ID AS E2_CONCEPT_ID,
-      gender,
-      age,
-      discharge_time,
-      count(*) AS eventperiod_count -- as there can't be duplicate event1_concept_id->event2_concept_id event pairs per eventperiod, count(*) in this table gives the eventperiod count
-    INTO @resultsSchema.@prefiXE1E2_summary
-    FROM @resultsSchema.@prefiXpairs a
-      INNER JOIN @resultsSchema.@prefiXE1E2_model b ON a.E1_CONCEPT_ID=b.E1_CONCEPT_ID AND a.E2_CONCEPT_ID=b.E2_CONCEPT_ID -- limit the table to event pairs only that are going to be analyzed
-    GROUP BY a.E1_CONCEPT_ID, a.E2_CONCEPT_ID, gender, age, discharge_time
-    ORDER BY E1_CONCEPT_ID, E2_CONCEPT_ID, gender, age, discharge_time;
-
-INSERT INTO @resultsSchema.@prefiXdebug (entry) VALUES (CONCAT('..done. There are ',CAST((SELECT COUNT(*) FROM @resultsSchema.@prefiXE1E2_summary) AS VARCHAR),' rows in @resultsSchema.@prefiXE1E2_summary'));
-
-
----------------------------------------------------------------------
--- Create gender,age,discharge-time summary table for all event pairs
-----------------------------------------------------------------------
-
-
-INSERT INTO @resultsSchema.@prefiXdebug (entry) VALUES ('Creating @resultsSchema.@prefiXsummary...');
-
-IF OBJECT_ID('@resultsSchema.@prefiXsummary', 'U') IS NOT NULL
-  DROP TABLE @resultsSchema.@prefiXsummary;
-
---CREATE TABLE @resultsSchema.@prefiXsummary as
-    SELECT
-      gender,
-      age,
-      discharge_time,
-      count(DISTINCT eventperiod_id) AS eventperiod_count
-    INTO @resultsSchema.@prefiXsummary
-    FROM @resultsSchema.@prefiXpairs
-    GROUP BY gender, age, discharge_time
-    ORDER BY gender, age, discharge_time;
-
-INSERT INTO @resultsSchema.@prefiXdebug (entry) VALUES (CONCAT('..done. There are ',CAST((SELECT COUNT(*) FROM @resultsSchema.@prefiXsummary) AS VARCHAR),' rows in @resultsSchema.@prefiXsummary'));
-
-
-
--------------------------------------------------------
-
----------------------------------------------------------------------
--- Create gender,age,discharge-time summary table for E1_CONCEPT_ID
-----------------------------------------------------------------------
-
-INSERT INTO @resultsSchema.@prefiXdebug (entry) VALUES ('Creating @resultsSchema.@prefiXE1_summary...');
-
-IF OBJECT_ID('@resultsSchema.@prefiXE1_summary', 'U') IS NOT NULL
-  DROP TABLE @resultsSchema.@prefiXE1_summary;
-
---CREATE TABLE @resultsSchema.@prefiXE1_summary as
-    SELECT
-      a.E1_CONCEPT_ID,
-      gender,
-      age,
-      discharge_time,
-      count(DISTINCT eventperiod_id) AS eventperiod_count
-    INTO @resultsSchema.@prefiXE1_summary
-    FROM @resultsSchema.@prefiXpairs a
-    INNER JOIN (SELECT DISTINCT E1_CONCEPT_ID FROM @resultsSchema.@prefiXE1E2_model) b ON a.E1_CONCEPT_ID=b.E1_CONCEPT_ID -- limit the table to event pairs only that are going to be analyzed
-    GROUP BY a.E1_CONCEPT_ID, gender, age, discharge_time;
-
-INSERT INTO @resultsSchema.@prefiXdebug (entry) VALUES (CONCAT('..done. There are ',CAST((SELECT COUNT(*) FROM @resultsSchema.@prefiXE1_summary) AS VARCHAR),' rows in @resultsSchema.@prefiXE1_summary'));
-
-
----------------------------------------------------------------------
--- Create gender,age,discharge-time summary table for E2_CONCEPT_ID
-----------------------------------------------------------------------
-
-INSERT INTO @resultsSchema.@prefiXdebug (entry) VALUES ('Creating @resultsSchema.@prefiXE2_summary...');
-
-IF OBJECT_ID('@resultsSchema.@prefiXE2_summary', 'U') IS NOT NULL
-  DROP TABLE @resultsSchema.@prefiXE2_summary;
---CREATE TABLE @resultsSchema.@prefiXE2_summary as
-    SELECT
-      a.E2_CONCEPT_ID,
-      gender,
-      age,
-      discharge_time,
-      count(DISTINCT eventperiod_id) AS eventperiod_count
-    INTO @resultsSchema.@prefiXE2_summary
-    FROM @resultsSchema.@prefiXpairs a
-    INNER JOIN (SELECT DISTINCT E2_CONCEPT_ID FROM @resultsSchema.@prefiXE1E2_model) b ON a.E2_CONCEPT_ID=b.E2_CONCEPT_ID -- limit the table to event pairs only that are going to be analyzed
-    GROUP BY a.E2_CONCEPT_ID, gender, age, discharge_time;
-
-INSERT INTO @resultsSchema.@prefiXdebug (entry) VALUES (CONCAT('..done. There are ',CAST((SELECT COUNT(*) FROM @resultsSchema.@prefiXE2_summary) AS VARCHAR),' rows in @resultsSchema.@prefiXE2_summary'));
