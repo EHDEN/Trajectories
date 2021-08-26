@@ -1,4 +1,4 @@
-testthat:context("Creating event pair tables")
+testthat::context("Creating event pair tables")
 
 library(Trajectories)
 

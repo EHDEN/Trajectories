@@ -81,7 +81,7 @@ runDiscoveryAnalysis<-function(connection,
   pairs=Trajectories:::getAllPairs(connection,
                                    trajectoryAnalysisArgs,
                                    trajectoryLocalArgs)
-  Trajectories:::makeRRPvaluePlot(pairs,RRPvaluePlotFilename)
+  Trajectories:::makeRRPvaluePlot(pairs,RRPvaluePlotFilename,trajectoryAnalysisArgs)
 
   #get Pairs that are having significant RR
   pairs <- pairs %>% filter(!is.na(RR_SIGNIFICANT) & RR_SIGNIFICANT=='*')
@@ -208,7 +208,7 @@ runValidationAnalysis<-function(connection,
   pairs=Trajectories:::getAllPairs(connection,
                                    trajectoryAnalysisArgs,
                                    trajectoryLocalArgs)
-  Trajectories:::makeRRPvaluePlot(pairs,RRPvaluePlotFilename)
+  Trajectories:::makeRRPvaluePlot(pairs,RRPvaluePlotFilename,trajectoryAnalysisArgs)
 
   #get Pairs that are having significant RR
   pairs <- pairs %>% filter(!is.na(RR_SIGNIFICANT) & RR_SIGNIFICANT=='*')
@@ -1076,7 +1076,7 @@ adjustPValues<-function(connection,trajectoryLocalArgs,dbcol.pvalue='RR_PVALUE',
 
 }
 
-makeRRPvaluePlot <- function(pairs,filename) {
+makeRRPvaluePlot <- function(pairs,filename,trajectoryAnalysisArgs) {
   pairs_for_plot<-pairs %>% mutate(id = row_number()) %>% select(id, RR, RR_PVALUE, RR_SIGNIFICANT)
   pairs_for_plot <- pairs_for_plot %>% arrange(-RR_PVALUE)
   p<-suppressWarnings(ggplot2::ggplot(pairs_for_plot, aes(x=RR,y=RR_PVALUE)) +
