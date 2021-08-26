@@ -484,8 +484,30 @@ calcRRandPower<-function(connection,
   #Set SQL role of the database session
   Trajectories::setRole(connection, trajectoryLocalArgs$sqlRole)
 
+  #Group pairs by E1_CONCEPT_ID (the same case-control group can be used for all of these pairs)
+
+  pair_counts_starting_with_E1<-pairs %>%
+    group_by(E1_CONCEPT_ID) %>%
+    summarise(n=n()) %>%
+    arrange(-n)
+
+  pair_counts_starting_with_E1_and_having_rr_not_calculated<-pairs %>%
+    filter(is.na(RR) | RR==0) %>%
+    group_by(E1_CONCEPT_ID) %>%
+    summarise(n=n())
+
+  logger::log_info("As there are {nrow(pair_counts_starting_with_E1)} different first events within these pairs, {nrow(pair_counts_starting_with_E1)} case-countrol groups are built in total.")
+
   if(forceRecalculation==F) {
-    pairs <- pairs %>% filter(is.na(RR) | RR==0)
+    #for which pairs all RR-s are not fully calculated
+    E1s_of_pairs_where_rr_not_fully_calculated <- pair_counts_starting_with_E1 %>%
+      left_join(pair_counts_starting_with_E1_and_having_rr_not_calculated, by = c("E1_CONCEPT_ID")) %>%
+      filter(n.y!=0) %>%
+      select(E1_CONCEPT_ID)
+
+    pairs <- pairs %>%
+      inner_join(E1s_of_pairs_where_rr_not_fully_calculated, by = c("E1_CONCEPT_ID")) %>%
+      filter(is.na(RR) | RR==0)
     num.already.calculated=num.pairs-nrow(pairs)
     if(num.already.calculated>0) logger::log_info("For {num.already.calculated} pairs, RR is already calculated. Skipping these from recalculating.")
   } else {
