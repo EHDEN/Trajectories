@@ -1151,7 +1151,7 @@ adjustPValues<-function(connection,trajectoryLocalArgs,dbcol.pvalue='RR_PVALUE',
     logger::log_info("  ...done.")
   }
 
-  logger::log_info('...done. Out of {num_sign_values} event pairs, {num_values_to_adjust} were significant after the multiple testing correction.')
+  logger::log_info('...done. Out of {num_values_to_adjust} event pairs, {num_sign_values} were significant after the multiple testing correction.')
 
 }
 
