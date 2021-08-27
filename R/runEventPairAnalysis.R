@@ -420,7 +420,7 @@ getPowerDirection<-function(EVENTPERIOD_COUNT_E1_OCCURS_FIRST,EVENTPERIOD_COUNT_
                    EVENTPERIOD_COUNT_E1_E2_OCCUR_ON_SAME_DAY=rep(EVENTPERIOD_COUNT_E1_E2_OCCUR_ON_SAME_DAY,n))
   #hist(p.vals,breaks=1000)
 
-  #Calculate power: how many p-values are belo threshold?
+  #Calculate power: how many p-values are below threshold?
   #Note that we do not use corrected threshold here as we select the true threshold AFTER the power analysis. Therefore, conservatively, we use 0.05 here to leave out event pairs that do not exceed the threshold even without correction.
   #power=sum(p.vals<cutoff_pval)/n
   power=sum(p.vals<0.05)/n
@@ -433,6 +433,7 @@ getPowerDirection<-function(EVENTPERIOD_COUNT_E1_OCCURS_FIRST,EVENTPERIOD_COUNT_
 
 
 RRandCI<-function(num_observations_in_cases,case_group_size,num_observations_in_controls,control_group_size) {
+
   r<-suppressWarnings(epiR::epi.mh(ev.trt=num_observations_in_cases,
          n.trt=case_group_size,
          ev.ctrl=num_observations_in_controls,
@@ -440,7 +441,24 @@ RRandCI<-function(num_observations_in_cases,case_group_size,num_observations_in_
          names=c('1'),
          method = "risk.ratio",
          alternative = "two.sided", conf.level = 0.95))
-  return(c(r$RR,r$effect))
+
+
+  a=num_observations_in_cases
+  b=case_group_size
+  c=num_observations_in_controls
+  d=control_group_size
+
+  dat <- matrix(c(a,b-a,c,d-c), nrow = 2, byrow = TRUE)
+  rownames(dat) <- c("E1+", "E1-"); colnames(dat) <- c("E2+", "E2-"); dat
+  r<-suppressWarnings(epi.2by2(dat = as.table(dat), method = "cohort.count",
+              conf.level = 0.95, units = 100, interpret = TRUE,
+              outcome = "as.columns"))
+  pvalue=r$massoc.detail$chi2.strata.uncor$p.value.2s
+  res=r$massoc.detail$RR.strata.wald #RR
+  res$pvalue=pvalue
+
+
+  return(res)
 }
 
 
@@ -479,7 +497,7 @@ calcRRandPower<-function(connection,
     E1s_of_pairs_where_rr_not_fully_calculated <- E1s %>%
       left_join(pair_counts_starting_with_E1_and_having_rr_not_calculated, by = c("E1_CONCEPT_ID")) %>%
       filter(n.y!=0) %>%
-      select(E1_CONCEPT_ID)
+      dplyr::select(E1_CONCEPT_ID)
     num.E1s.already.calculated=nrow(E1s)-nrow(E1s_of_pairs_where_rr_not_fully_calculated)
     if(num.E1s.already.calculated>0) logger::log_info("For the pairs of {num.E1s.already.calculated} first events, RR is already calculated. Skipping these from recalculating.")
 
@@ -516,23 +534,32 @@ calcRRandPower<-function(connection,
       E1.pairs <- pairs %>%
         filter(E1_CONCEPT_ID==get('diagnosis1'))
 
+
+
+
       sql=paste0('
 
       IF OBJECT_ID(\'@resultsSchema.@prefiXpairs_of_matching\', \'U\') IS NOT NULL
   DROP TABLE @resultsSchema.@prefiXpairs_of_matching;
 
       SELECT
-        IS_CASE,
+        *
+      INTO @resultsSchema.@prefiXpairs_of_matching
+      FROM
+      (SELECT
+        m.IS_CASE,
         p.E2_CONCEPT_ID,
         p.EVENTPERIOD_ID
-      INTO @resultsSchema.@prefiXpairs_of_matching
-      FROM @resultsSchema.@prefiXpairs p
+      FROM
+      @resultsSchema.@prefiXpairs p
       INNER JOIN @resultsSchema.@prefiXmatching m ON p.EVENTPERIOD_ID=m.EVENTPERIOD_ID
       WHERE
       p.E1_DATE=m.INDEX_DATE -- all pairs where the first event occurs on INDEX date
       AND p.E2_CONCEPT_ID IN (',paste(E1.pairs %>% pull(E2_CONCEPT_ID),collapse=","),')
       AND (m.IS_CASE=1 OR p.EVENTPERIOD_ID IN (',paste(matches$Controls,collapse=","),'))
-      AND DATEDIFF(DAY,m.index_date, p.E2_DATE)>=0') #E2 occurs AFTER index date
+      AND DATEDIFF(DAY,m.index_date, p.E2_DATE)>=0 --E2 occurs AFTER index date
+      ) a;')
+
 
   #read data from the table
   RenderedSql <- SqlRender::render(sql=sql,
@@ -542,17 +569,19 @@ calcRRandPower<-function(connection,
   DatabaseConnector::executeSql(connection=connection, sql=RenderedSql)
 
 
+
+
   sql='SELECT
         E2_CONCEPT_ID,
         IS_CASE,
-        COUNT(DISTINCT EVENTPERIOD_ID)
+        COUNT(DISTINCT EVENTPERIOD_ID) AS COUNT
       FROM
         @resultsSchema.@prefiXpairs_of_matching
       GROUP BY
         E2_CONCEPT_ID,
         IS_CASE
       ORDER BY
-        E2_CONCEPT_ID, IS_CASE'
+        E2_CONCEPT_ID, IS_CASE;'
 
   #read data from the table
   RenderedSql <- SqlRender::render(sql=sql,
@@ -585,10 +614,10 @@ calcRRandPower<-function(connection,
                                            counts$num_observations_in_controls,
                                            counts$control_group_size)
 
-          event_pair_rr=rr_and_ci$est
-          event_pair_rr_ci_lower=rr_and_ci$lower
-          event_pair_rr_ci_upper=rr_and_ci$upper
-          event_pair_rr_pvalue=rr_and_ci$p.value
+          event_pair_rr=ifelse(rr_and_ci$est==Inf,999,ifelse(rr_and_ci$est==-Inf,0,rr_and_ci$est))
+          event_pair_rr_ci_lower=ifelse(rr_and_ci$lower==Inf,999,ifelse(rr_and_ci$lower==-Inf,0,rr_and_ci$lower))
+          event_pair_rr_ci_upper=ifelse(rr_and_ci$upper==Inf,999,ifelse(rr_and_ci$upper==-Inf,0,rr_and_ci$upper))
+          event_pair_rr_pvalue=rr_and_ci$pvalue
           if(!is.na(event_pair_rr)) logger::log_debug("Relative risk {round(event_pair_rr,2)} (95%CI {round(event_pair_rr_ci_lower,2)}..{round(event_pair_rr_ci_upper,2)}, p-value={event_pair_rr_pvalue})")
 
           #}
@@ -606,7 +635,7 @@ calcRRandPower<-function(connection,
                                                               rr = ifelse(is.na(event_pair_rr),'NULL',event_pair_rr),
                                                               rr_ci_lower=ifelse(is.na(event_pair_rr_ci_lower),'NULL',event_pair_rr_ci_lower),
                                                               rr_ci_upper=ifelse(is.na(event_pair_rr_ci_upper),'NULL',event_pair_rr_ci_upper),
-                                                              rr_pvalue=event_pair_rr_pvalue,
+                                                              rr_pvalue=ifelse(is.na(event_pair_rr_pvalue),'NULL',event_pair_rr_pvalue),
                                                               expected_prob=counts$expected_prob,
                                                               actual_prob=counts$actual_prob,
                                                               diag1 = diagnosis1,
@@ -828,7 +857,7 @@ annotateDiscoveryResults<-function(pairs,trajectoryAnalysisArgs,verbose=F) {
   #show up nicely
   df<-data.frame(res=names(table(pairs$TEXTUAL_RESULT)),
                  count=table(pairs$TEXTUAL_RESULT),
-                 perc=round(prop.table(table(pairs$TEXTUAL_RESULT))*100,1)) %>% select(res,count=count.Freq,freq=perc.Freq) %>% arrange(-freq)
+                 perc=round(prop.table(table(pairs$TEXTUAL_RESULT))*100,1)) %>% dplyr::select(res,count=count.Freq,freq=perc.Freq) %>% arrange(-freq)
   if(verbose) print(df)
 
 #  df<-data.frame(res=names(table(pairs$FAILED_FILTER)),
@@ -887,7 +916,7 @@ annotateValidationResults<-function(pairs,trajectoryAnalysisArgs,verbose=F) {
   #show up nicely
   df<-data.frame(res=names(table(pairs$TEXTUAL_RESULT)),
                  count=table(pairs$TEXTUAL_RESULT),
-                 perc=round(prop.table(table(pairs$TEXTUAL_RESULT))*100,1)) %>% select(res,count=count.Freq,freq=perc.Freq) %>% arrange(res)
+                 perc=round(prop.table(table(pairs$TEXTUAL_RESULT))*100,1)) %>% dplyr::select(res,count=count.Freq,freq=perc.Freq) %>% arrange(res)
   if(verbose) {
     logger::log_info('Total number of event pairs validated: {nrow(pairs)}')
     print(df)
@@ -1024,7 +1053,7 @@ calcPropensityScore<-function(d) {
   #calculate propensity scores for all
   d = d %>%
     mutate(PropScore = predict(m, type = "response")) %>%
-    select(EVENTPERIOD_ID, PropScore, everything()) %>%
+    dplyr::select(EVENTPERIOD_ID, PropScore, everything()) %>%
     arrange(desc(PropScore))
 
 
@@ -1123,7 +1152,7 @@ adjustPValues<-function(connection,trajectoryLocalArgs,dbcol.pvalue='RR_PVALUE',
 }
 
 makeRRPvaluePlot <- function(pairs,filename,trajectoryAnalysisArgs) {
-  pairs_for_plot<-pairs %>% mutate(id = row_number()) %>% select(id, RR, RR_PVALUE, RR_SIGNIFICANT)
+  pairs_for_plot<-pairs %>% mutate(id = row_number()) %>% dplyr::select(id, RR, RR_PVALUE, RR_SIGNIFICANT)
   pairs_for_plot <- pairs_for_plot %>% arrange(-RR_PVALUE)
   p<-suppressWarnings(ggplot2::ggplot(pairs_for_plot, aes(x=RR,y=RR_PVALUE)) +
     geom_point() +

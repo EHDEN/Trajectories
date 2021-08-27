@@ -2,7 +2,6 @@
 -- This scripts creates 2 tables:
 -- 1) @resultsSchema.@prefiXpairs - all event pairs for each person
 -- 2) @resultsSchema.@prefiXE1E2_model - contains all event pair counts + empty columns for p-val calculations
--- 3) @resultsSchema.@prefiXevent_summary - gender, age, discharge_time, person_count based on events_person_pairs
 ---------------------------------
 
 
@@ -289,8 +288,7 @@ SELECT
                END AS gender,
   p.year_of_birth,
   o.daydiff_from_beginning_of_op,
-  YEAR(e.date)-p.year_of_birth AS age,
-  CONCAT(YEAR(date), MONTH(date)) AS discharge_time
+  YEAR(e.date)-p.year_of_birth AS age
 INTO
   @resultsSchema.@prefiXevents_in_eventperiods
 FROM @resultsSchema.@prefiXevents e
@@ -341,20 +339,7 @@ IF OBJECT_ID('@resultsSchema.@prefiXpairs', 'U') IS NOT NULL
     SELECT  a.eventperiod_id,
             a.gender,
 
-           case when a.age <= 1 then '0-1'
-                  when a.age <= 5 then '2-5'
-                  when a.age <= 10 then '6-10'
-                  when a.age <= 20 then '11-20'
-                  when a.age <= 30 then '21-30'
-                  when a.age <= 40 then '31-40'
-                  when a.age <= 50 then '41-50'
-                  when a.age <= 60 then '51-60'
-                  when a.age <= 70 then '61-70'
-                  when a.age <= 80 then '71-80'
-                  when a.age > 80 then '80+'
-                  end as age,
-
-            a.discharge_time,
+            a.age,
             a.CONCEPT_ID AS E1_CONCEPT_ID,
             a.date as E1_DATE,
             b.CONCEPT_ID AS E2_CONCEPT_ID,

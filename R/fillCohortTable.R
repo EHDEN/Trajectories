@@ -37,8 +37,7 @@ fillCohortTable<-function(connection,
 
     #translate into right dialect
     sql <- SqlRender::translate(sql = sql,
-                                targetDialect=attr(connection, "dbms"),
-                                oracleTempSchema = trajectoryLocalArgs$oracleTempSchema)
+                                targetDialect=attr(connection, "dbms"))
     #execute translated SQL
     DatabaseConnector::executeSql(connection, sql)
 
