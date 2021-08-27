@@ -27,7 +27,7 @@ alignActualTrajectoriesToGraphFull <- function(connection,
   logger::log_info(paste0('Putting ',length(igraph::E(g)),' event pairs of the graph into database.'))
 
   e<-igraph::as_data_frame(g,what="edges")
-  edges<- e %>% select(e1_concept_id,e2_concept_id)
+  edges<- e %>% dplyr::select(e1_concept_id,e2_concept_id)
 
 
   #but before actual TABLE CREATE there is an extra step: if sqlRole is given, set session to correct role before creating the table
@@ -107,8 +107,8 @@ alignActualTrajectoriesToGraphFull <- function(connection,
   #update alignedTrajsCount values
   v<-igraph::as_data_frame(g,what="vertices")
   e<-igraph::as_data_frame(g,what="edges")
-  if('COUNT' %in% colnames(v)) v <- v %>% select(-COUNT) #remove this to prevent old COUNT existing and leading to multiple COUNT columns after join
-  if('count' %in% colnames(v)) v <- v %>% select(-count) #remove this to prevent old COUNT existing and leading to multiple COUNT columns after join
+  if('COUNT' %in% colnames(v)) v <- v %>% dplyr::select(-COUNT) #remove this to prevent old COUNT existing and leading to multiple COUNT columns after join
+  if('count' %in% colnames(v)) v <- v %>% dplyr::select(-count) #remove this to prevent old COUNT existing and leading to multiple COUNT columns after join
   v <- v %>%
     left_join(actual_events, by=c('concept_id'='CONCEPT_ID')) %>%
     mutate() %>%

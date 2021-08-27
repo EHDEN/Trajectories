@@ -1046,9 +1046,13 @@ calcPropensityScore<-function(d) {
   #d is a data.frame of the following columns:
   #  eventperiod_id, gender, DateOfBirth, ObservationPeriodStart, ObservationPeriodEnd, e1_date
 
+  #add some additional columns (need to do it in R as in SQLite these numbers are given as characters, not integers, and that breaks everything)
+  d <- d %>%
+        mutate(YEAR_OF_INDEXDATE= lubridate::year(INDEX_DATE),
+               MONTH_OF_INDEXDATE= lubridate::month(INDEX_DATE))
 
   #train model
-  m = suppressWarnings( glm(IS_CASE ~ GENDER + scale(AGE) + scale(LEN_HISTORY_DAYS) + scale(LEN_FOLLOWUP_DAYS), family = binomial(), data = d) )
+  m = suppressWarnings( glm(IS_CASE ~ GENDER + scale(AGE) + scale(YEAR_OF_INDEXDATE) + scale(MONTH_OF_INDEXDATE) + scale(LEN_HISTORY_DAYS) + scale(LEN_FOLLOWUP_DAYS), family = binomial(), data = d) )
 
   #calculate propensity scores for all
   d = d %>%

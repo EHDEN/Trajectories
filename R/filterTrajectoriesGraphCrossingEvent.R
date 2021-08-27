@@ -66,7 +66,7 @@ filterTrajectoriesGraphCrossingEvent <-function(g, eventname=4283892,limitOfNode
                                                    effect=y$effect,
                                                    prob=y$prob,
                                                    #totalprob=y$prob*(data.frame(event=as.character(stack$event), prob=stack$totalprob, stringsAsFactors=F) %>% right_join( data.frame(from=ends(g,y, names=T)[,2], stringsAsFactors=F), by=c('event'='from')) %>% select(totalprob=prob)),
-                                                   totalprob=y$prob*(stack %>% filter(direction %in% c('both','ancestor')) %>% select (event,prob) %>% right_join( data.frame(from=as.character(igraph::ends(g,y, names=T)[,2]), stringsAsFactors=F), by=c('event'='from')) %>% select(totalprob=prob)),
+                                                   totalprob=y$prob*(stack %>% filter(direction %in% c('both','ancestor')) %>% dplyr::select (event,prob) %>% right_join( data.frame(from=as.character(igraph::ends(g,y, names=T)[,2]), stringsAsFactors=F), by=c('event'='from')) %>% dplyr::select(totalprob=prob)),
                                                    numcohortExact=y$numcohortExact,
                                                    effectCount=y$effectCount,
                                                    direction='ancestor'))
@@ -91,7 +91,7 @@ filterTrajectoriesGraphCrossingEvent <-function(g, eventname=4283892,limitOfNode
                                                    effect=y$effect,
                                                    prob=y$prob,
                                                    #totalprob=y$prob*(data.frame(event=as.character(stack$event), prob=stack$totalprob, stringsAsFactors=F) %>% right_join( data.frame(from=ends(g,y, names=T)[,1], stringsAsFactors=F), by=c('event'='from')) %>% select(totalprob=prob)),
-                                                   totalprob=y$prob*(stack %>% filter(direction %in% c('both','descendant')) %>% select (event,prob) %>% right_join( data.frame(from=as.character(igraph::ends(g,y, names=T)[,1]), stringsAsFactors=F), by=c('event'='from')) %>% select(totalprob=prob)),
+                                                   totalprob=y$prob*(stack %>% filter(direction %in% c('both','descendant')) %>% dplyr::select (event,prob) %>% right_join( data.frame(from=as.character(igraph::ends(g,y, names=T)[,1]), stringsAsFactors=F), by=c('event'='from')) %>% dplyr::select(totalprob=prob)),
                                                    numcohortExact=y$numcohortExact,
                                                    effectCount=y$effectCount,
                                                    direction='descendant'))

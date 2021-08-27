@@ -24,9 +24,10 @@ Depends:
     openxlsx (>= 4.1.4),
     jsonlite (>= 1.7.1),
     epiR (>= 2.0.26),
-    ggplot2 (>= 3.3.3)
+    ggplot2 (>= 3.3.3),
+    igraph (>= 1.2.5),
+    lubridate (>= 1.7.10)
 Imports:
-    igraph (>= 1.2.5)
 Encoding: UTF-8
 RoxygenNote: 7.1.1
 Suggests: 

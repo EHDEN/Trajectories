@@ -43,7 +43,7 @@ alignActualTrajectoriesToGraph <- function(connection,
   logger::log_info(paste0('Putting ',length(igraph::E(g)),' event pairs of the graph into database to align to: {eventname}...'))
 
   e<-igraph::as_data_frame(g,what="edges")
-  edges<- e %>% select(e1_concept_id,e2_concept_id)
+  edges<- e %>% dplyr::select(e1_concept_id,e2_concept_id)
 
 
   #but before actual TABLE CREATE there is an extra step: if sqlRole is given, set session to correct role before creating the table
@@ -155,7 +155,7 @@ alignActualTrajectoriesToGraph <- function(connection,
   igraph::V(g)$alignedTrajsCount<-0
 
   #Create a list of concept names (for faster search later)
-  Node.names<-igraph::as_data_frame(g, what="vertices") %>% select(concept_id,name)
+  Node.names<-igraph::as_data_frame(g, what="vertices") %>% dplyr::select(concept_id,name)
 
   logger::log_info("Aligning trajectories to the graph of '{eventname}'...")
   all_trajs<-data.frame()
@@ -189,10 +189,10 @@ alignActualTrajectoriesToGraph <- function(connection,
       d <-d[order(-(d$E1_IS_INDEXEVENT+d$E2_IS_INDEXEVENT), abs(d$cohort_day_relative_to_indexevent)),]
       #for debugging:
       if(DEBUG) {
-        v<-igraph::as_data_frame(g, what="vertices") %>% select(concept_id,name)
+        v<-igraph::as_data_frame(g, what="vertices") %>% dplyr::select(concept_id,name)
         w<-d %>% left_join(v, by=c("E1_CONCEPT_ID"="concept_id")) %>% rename(E1=name)
         w<-w %>% left_join(v, by=c("E2_CONCEPT_ID"="concept_id")) %>% rename(E2=name)
-        x<-graph_from_data_frame(w %>% select(E1,E2), directed = TRUE, vertices = NULL)
+        x<-graph_from_data_frame(w %>% dplyr::select(E1,E2), directed = TRUE, vertices = NULL)
         #plot(x,layout=layout_)
         plot(x,main=paste0("Actual trajectories of eventperiod ",cohort_id))
       }
@@ -252,8 +252,8 @@ alignActualTrajectoriesToGraph <- function(connection,
       visited_edges_ordered<-d %>%
                                 arrange(E1_COHORT_DAY) %>%
                                 filter(E1_CONCEPT_ID %in% visitednodes & E2_CONCEPT_ID %in% visitednodes)
-      e1_days<-visited_edges_ordered %>% select(DAYNO=E1_COHORT_DAY,CONCEPT_ID=E1_CONCEPT_ID)
-      e2_days<-visited_edges_ordered %>% select(DAYNO=E2_COHORT_DAY,CONCEPT_ID=E2_CONCEPT_ID)
+      e1_days<-visited_edges_ordered %>% dplyr::select(DAYNO=E1_COHORT_DAY,CONCEPT_ID=E1_CONCEPT_ID)
+      e2_days<-visited_edges_ordered %>% dplyr::select(DAYNO=E2_COHORT_DAY,CONCEPT_ID=E2_CONCEPT_ID)
       visited_nodes_ordered<-rbind(e1_days,e2_days) %>% unique() %>% arrange(DAYNO,CONCEPT_ID) %>% group_by(DAYNO) %>% summarise(CONCEPT_GROUPED=paste(CONCEPT_ID,collapse="&")) %>% pull(CONCEPT_GROUPED)
       #for 0-length trajectories, add eventid manually to visitednodes (do not come automatically as there is no event pair in that case)
       if(length(visited_nodes_ordered)==0) visited_nodes_ordered=c(eventid)
@@ -342,7 +342,7 @@ alignActualTrajectoriesToGraph <- function(connection,
   logger::log_info('Finding actual counts of each trajectory by considering also sub-trajectories...')
   d<-d %>% arrange(-exact_count,-length)
   d <- d %>% mutate(id=row_number())
-  d <- d %>% select(id,trajectory,trajectory.str,exact_count,total_count,length,is_subtrajectory_of,trajectory.names.str)
+  d <- d %>% dplyr::select(id,trajectory,trajectory.str,exact_count,total_count,length,is_subtrajectory_of,trajectory.names.str)
   if(nrow(d)>1) {
     for(i in 1:(nrow(d)-1)) {
       #print(i)
