@@ -30,7 +30,7 @@ createFilteredFullgraphs<-function(connection,
 
 
   # create a plot of all event pairs (no filtering)
-  title=paste0('All significant directional event pairs among ',cohortName,' patients')
+  title=paste0('All significant directional event pairs among ',cohortName,' patients, probability')
   #Truncate the title for file name if it is too long
   truncated_title=ifelse(stri_length(title)<=200,title,paste(substr(title,1,200)))
   Trajectories::plotTrajectoriesGraph(g,
@@ -41,6 +41,17 @@ createFilteredFullgraphs<-function(connection,
                                       title=paste0(title,"\n",format(Sys.time(), '%d %B %Y %H:%M'))
                                       )
 
+  title=paste0('All significant directional event pairs among ',cohortName,' patients, RR')
+  #Truncate the title for file name if it is too long
+  truncated_title=ifelse(stri_length(title)<=200,title,paste(substr(title,1,200)))
+  Trajectories::plotTrajectoriesGraph(g,
+                                      layout=igraph::layout_with_graphopt(g),
+                                      linknumbers=round(100*igraph::E(g)$effect),
+                                      linklabels=paste0(round(igraph::E(g)$effect,1),'x'),
+                                      outputPdfFullpath=file.path(outputFolder,'figures',paste0(make.names(truncated_title),'.pdf')),
+                                      title=paste0(title,"\n",format(Sys.time(), '%d %B %Y %H:%M'))
+  )
+
   # Remove low-probability event pairs (keep 20, 50, 100 event pairs with highest probability)
   s=c(20,50,100)
   s<-s[s<length(igraph::E(g))] #if the graph does not have that many edges, skip drawing the plot
@@ -48,7 +59,7 @@ createFilteredFullgraphs<-function(connection,
   for(limitOfLinks in s) {
     logger::log_info('Creating a plot of the same graph, but filtered to {limitOfLinks} high-probability pairs only...')
     #limitOfLinks=50
-    title=paste0(limitOfLinks,' high-probability event pairs among ',cohortName,' patients')
+    title=paste0(limitOfLinks,' high-probability event pairs among ',cohortName,' patients, probability')
     h<-Trajectories::filterIgraphRemoveLowEffectLinksAndOrphanNodes(g, limitOfLinks=limitOfLinks,edge_param_to_sort_by='prob')
     #Truncate the title for file name if it is too long
     truncated_title=ifelse(stri_length(title)<=200,title,paste(substr(title,1,200)))
@@ -59,6 +70,18 @@ createFilteredFullgraphs<-function(connection,
                                         outputPdfFullpath=file.path(outputFolder,'figures',paste0(make.names(truncated_title),'.pdf')),
                                         title=paste0(title,"\n",
                                         format(Sys.time(), '%d %B %Y %H:%M')))
+
+    title=paste0(limitOfLinks,' high-probability event pairs among ',cohortName,' patients, RR')
+    h<-Trajectories::filterIgraphRemoveLowEffectLinksAndOrphanNodes(g, limitOfLinks=limitOfLinks,edge_param_to_sort_by='prob')
+    #Truncate the title for file name if it is too long
+    truncated_title=ifelse(stri_length(title)<=200,title,paste(substr(title,1,200)))
+    Trajectories::plotTrajectoriesGraph(h,
+                                        layout=igraph::layout_with_graphopt(h),
+                                        linknumbers=round(100*igraph::E(h)$effect),
+                                        linklabels=paste0(round(igraph::E(h)$effect,1),'x'),
+                                        outputPdfFullpath=file.path(outputFolder,'figures',paste0(make.names(truncated_title),'.pdf')),
+                                        title=paste0(title,"\n",
+                                                     format(Sys.time(), '%d %B %Y %H:%M')))
   }
 
 

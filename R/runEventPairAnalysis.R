@@ -1169,7 +1169,7 @@ makeRRPvaluePlot <- function(pairs,filename,trajectoryAnalysisArgs) {
     scale_y_continuous(trans='log10') +
     #scale_y_reverse() +
     annotation_logticks(sides="trbl") +
-    labs(title='RR/p-value plot of all tested event pairs. Shaded areas indicate non-significant p-values and RR values in skip range.') +
+    labs(title='RR/p-value plot of all tested event pairs. Shaded areas indicate insignificant p-values and RR values in skip range.') +
     theme_bw()
   )
   pdf(filename)
