@@ -32,6 +32,7 @@ runDiscoveryAnalysis<-function(connection,
   if(file.exists(allResultsFilenameTsv)) file.remove(allResultsFilenameTsv)
   if(file.exists(allResultsFilenameXls)) file.remove(allResultsFilenameXls)
   if(file.exists(directionalResultsFilenameTsv)) file.remove(directionalResultsFilenameTsv)
+  if(file.exists(directionalResultsFilenameXls)) file.remove(directionalResultsFilenameXls)
   if(file.exists(RRPvaluePlotFilename)) file.remove(RRPvaluePlotFilename)
   if(file.exists(processDiagramfilename)) file.remove(processDiagramfilename)
 
@@ -154,6 +155,7 @@ runValidationAnalysis<-function(connection,
   if(file.exists(allResultsFilenameTsv)) file.remove(allResultsFilenameTsv)
   if(file.exists(allResultsFilenameXls)) file.remove(allResultsFilenameXls)
   if(file.exists(directionalResultsFilenameTsv)) file.remove(directionalResultsFilenameTsv)
+  if(file.exists(directionalResultsFilenameXls)) file.remove(directionalResultsFilenameXls)
   if(file.exists(RRPvaluePlotFilename)) file.remove(RRPvaluePlotFilename)
   if(file.exists(processDiagramfilename)) file.remove(processDiagramfilename)
 
@@ -510,11 +512,56 @@ calcRRandPower<-function(connection,
       # build case-control groups (create some data to database table 'matching' also which will be used by getMatchedCaseControlCounts() function)
       matches <- Trajectories:::buildCaseControlGroups(connection,trajectoryLocalArgs,diagnosis1)
 
-
-
       # Conduct the test for each pair starting with that E1
       E1.pairs <- pairs %>%
-                    filter(E1_CONCEPT_ID==get('diagnosis1'))
+        filter(E1_CONCEPT_ID==get('diagnosis1'))
+
+      sql=paste0('
+
+      IF OBJECT_ID(\'@resultsSchema.@prefiXpairs_of_matching\', \'U\') IS NOT NULL
+  DROP TABLE @resultsSchema.@prefiXpairs_of_matching;
+
+      SELECT
+        IS_CASE,
+        p.E2_CONCEPT_ID,
+        p.EVENTPERIOD_ID
+      INTO @resultsSchema.@prefiXpairs_of_matching
+      FROM @resultsSchema.@prefiXpairs p
+      INNER JOIN @resultsSchema.@prefiXmatching m ON p.EVENTPERIOD_ID=m.EVENTPERIOD_ID
+      WHERE
+      p.E1_DATE=m.INDEX_DATE -- all pairs where the first event occurs on INDEX date
+      AND p.E2_CONCEPT_ID IN (',paste(E1.pairs %>% pull(E2_CONCEPT_ID),collapse=","),')
+      AND (m.IS_CASE=1 OR p.EVENTPERIOD_ID IN (',paste(matches$Controls,collapse=","),'))
+      AND DATEDIFF(DAY,m.index_date, p.E2_DATE)>=0') #E2 occurs AFTER index date
+
+  #read data from the table
+  RenderedSql <- SqlRender::render(sql=sql,
+                                   resultsSchema = trajectoryLocalArgs$resultsSchema,
+                                   prefiX =  trajectoryLocalArgs$prefixForResultTableNames)
+  RenderedSql <- SqlRender::translate(sql=RenderedSql, targetDialect = connection@dbms)
+  DatabaseConnector::executeSql(connection=connection, sql=RenderedSql)
+
+
+  sql='SELECT
+        E2_CONCEPT_ID,
+        IS_CASE,
+        COUNT(DISTINCT EVENTPERIOD_ID)
+      FROM
+        @resultsSchema.@prefiXpairs_of_matching
+      GROUP BY
+        E2_CONCEPT_ID,
+        IS_CASE
+      ORDER BY
+        E2_CONCEPT_ID, IS_CASE'
+
+  #read data from the table
+  RenderedSql <- SqlRender::render(sql=sql,
+                                   resultsSchema = trajectoryLocalArgs$resultsSchema,
+                                   prefiX =  trajectoryLocalArgs$prefixForResultTableNames)
+  RenderedSql <- SqlRender::translate(sql=RenderedSql, targetDialect = connection@dbms)
+  E2counts.in.groups<-DatabaseConnector::querySql(connection=connection, sql=RenderedSql)
+
+
       # For each event pair, run the analysis
       if(nrow(E1.pairs)>0) {
         for(i in 1:nrow(E1.pairs))
@@ -526,6 +573,10 @@ calcRRandPower<-function(connection,
           logger::log_info(paste0('  Calculating RR for event pair ',counter+num.already.calculated,'/',num.pairs,': ',diagnosis1,' -> ',diagnosis2))
 
           # Do Case/Control matching, get the counts
+          r=E2counts.in.groups %>% filter(E2_CONCEPT_ID==get('diagnosis2') & IS_CASE==1) %>% pull(COUNT)
+          matches$E2_count_in_cases=ifelse(length(r)==0,0,r)
+          r=E2counts.in.groups %>% filter(E2_CONCEPT_ID==get('diagnosis2') & IS_CASE==0) %>% pull(COUNT)
+          matches$E2_count_in_controls=ifelse(length(r)==0,0,r)
           counts=Trajectories:::getMatchedCaseControlCounts(connection,trajectoryLocalArgs,matches,diagnosis1,diagnosis2)
 
           #What is the "relative risk" (effect) (how many times the event2_concept_id prevalence in case group is higher than in control group) and its CI
@@ -878,6 +929,32 @@ clearOldResultsFromDb<-function(connection,
 getMatchedCaseControlCounts <- function(connection,trajectoryLocalArgs,matches,diagnosis1,diagnosis2) {
 
 
+  if(length(matches$Controls)==0) {
+    expected_prob=0
+  } else {
+    expected_prob=matches$E2_count_in_controls/length(matches$Controls)
+  }
+
+  if(length(matches$Cases)==0) {
+    actual_prob=0
+  } else {
+    actual_prob=matches$E2_count_in_cases/length(matches$Cases)
+  }
+
+  return(list(
+    case_group_size=length(matches$Cases),
+    control_group_size=length(matches$Controls),
+    num_observations_in_cases=matches$E2_count_in_cases,
+    num_observations_in_controls=matches$E2_count_in_controls,
+    actual_prob=actual_prob,
+    expected_prob=expected_prob
+  ))
+
+}
+
+getMatchedCaseControlCountsDeprecated <- function(connection,trajectoryLocalArgs,matches,diagnosis1,diagnosis2) {
+
+
 
 
   #get number of E2-s in cases
@@ -1085,6 +1162,8 @@ buildCaseControlGroups<-function(connection,trajectoryLocalArgs,diagnosis1) {
                                                       diagnosis1 = diagnosis1
   )
   DatabaseConnector::executeSql(connection, RenderedSql, progressBar = FALSE, reportOverallTime = FALSE)
+
+
 
   #read data from the table
   RenderedSql <- SqlRender::render(sql='SELECT * FROM @resultsSchema.@prefiXmatching;',
