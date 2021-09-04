@@ -18,7 +18,7 @@ testthat::test_that("Test alignments to graph", {
   addRandomEvents(connection,n_per_person_range=c(0,10),exclude_concept_ids=c(317009,255848,4299128)) # Add up to 10 random events per each patient, except events 317009 and 255848
 
 
-  trajectoryAnalysisArgs <- Trajectories::createTrajectoryAnalysisArgs(minimumDaysBetweenEvents = 1,
+  trajectoryAnalysisArgs <- Trajectories:::createTrajectoryAnalysisArgs(minimumDaysBetweenEvents = 1,
                                                                        maximumDaysBetweenEvents = 365*120,
                                                                        minPatientsPerEventPair = 39,
                                                                        addConditions=T,
@@ -34,31 +34,31 @@ testthat::test_that("Test alignments to graph", {
 
 
   #Create output folder for this analysis
-  outputFolder<-Trajectories::GetOutputFolder(trajectoryLocalArgs,trajectoryAnalysisArgs,createIfMissing=T)
+  outputFolder<-Trajectories:::GetOutputFolder(trajectoryLocalArgs,trajectoryAnalysisArgs,createIfMissing=T)
 
   # Set up logger
-  Trajectories::InitLogger(logfile = file.path(outputFolder,'log.txt'), threshold = logger:::INFO)
+  Trajectories:::InitLogger(logfile = file.path(outputFolder,'log.txt'), threshold = 'INFO' )
 
   #Remove output files (if exist from previous run)
   removeTestableOutputFiles(trajectoryLocalArgs,trajectoryAnalysisArgs)
   removeTrajectoryFile(trajectoryLocalArgs,trajectoryAnalysisArgs,concept_id=317009,concept_name='Asthma')
 
   # Create new cohort table for this package to results schema & fill it in (all having cohort_id=1 in cohort data)
-  Trajectories::createAndFillCohortTable(connection=connection,
+  Trajectories:::createAndFillCohortTable(connection=connection,
                                          trajectoryAnalysisArgs=trajectoryAnalysisArgs,
                                          trajectoryLocalArgs=trajectoryLocalArgs)
 
   # Create database tables of all event pairs (patient level data + summary statistics)
-  Trajectories::createEventPairsTable(connection=connection,
+  Trajectories:::createEventPairsTable(connection=connection,
                                       trajectoryAnalysisArgs=trajectoryAnalysisArgs,
                                       trajectoryLocalArgs=trajectoryLocalArgs)
 
-  Trajectories::runDiscoveryAnalysis(connection=connection,
+  Trajectories:::runDiscoveryAnalysis(connection=connection,
                                      trajectoryAnalysisArgs=trajectoryAnalysisArgs,
                                      trajectoryLocalArgs=trajectoryLocalArgs)
 
   # Draw plots for specific events (uses database connection and result tables in the database for trajectory alignments)
-  Trajectories::PlotTrajectoriesGraphForEvents(connection,
+  Trajectories:::PlotTrajectoriesGraphForEvents(connection,
                                                trajectoryAnalysisArgs,
                                                trajectoryLocalArgs,
                                                eventIds=c(317009),

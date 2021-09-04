@@ -1,0 +1,11 @@
+	E1_CONCEPT_ID	E2_CONCEPT_ID	E1_NAME	E2_NAME	E1_DOMAIN	E2_DOMAIN	RR_IN_PREVIOUS_STUDY
+1	80180	192671	Osteoarthritis	Gastrointestinal hemorrhage	Condition	Condition	999
+2	1125315	260139	Acetaminophen	Acute bronchitis	Drug	Condition	999
+3	4027663	30753	Peptic ulcer	Esophagitis	Condition	Condition	999
+4	4027663	81893	Peptic ulcer	Ulcerative colitis	Condition	Condition	999
+5	4027663	4310024	Peptic ulcer	Angiodysplasia of stomach	Condition	Condition	999
+6	4283893	257012	Sinusitis	Chronic sinusitis	Condition	Condition	18.625
+7	4116491	920293	Escherichia coli urinary tract infection	Nitrofurantoin	Condition	Drug	16.348
+8	4116491	933724	Escherichia coli urinary tract infection	Phenazopyridine	Condition	Drug	16.348
+9	4294548	257012	Acute bacterial sinusitis	Chronic sinusitis	Condition	Condition	11.267
+10	1118084	192671	celecoxib	Gastrointestinal hemorrhage	Drug	Condition	9.795

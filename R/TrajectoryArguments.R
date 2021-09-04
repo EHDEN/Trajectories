@@ -1,3 +1,4 @@
+requireNamespace("jsonlite", quietly = TRUE)
 
 #' Creates an object to hold analysis-specific data
 #'
@@ -20,7 +21,6 @@
 #' @param eventIdsForGraph List of exact concept ID-s of the events that are used to align actual trajectories in the end of analysis. Can be left not defined (NA)
 #'
 #' @return TrajectoryAnalysisArgs object
-#' @export
 #'
 #' @examples
 createTrajectoryAnalysisArgs <- function(mode='DISCOVERY',
@@ -45,16 +45,8 @@ createTrajectoryAnalysisArgs <- function(mode='DISCOVERY',
 
   if(addDrugExposures==T & addDrugEras==T) stop("Error in createTrajectoryAnalysisArgs(): parameters values for 'addDrugExposures' and 'addDrugEras' are TRUE but both of them cannot be TRUE at the same time (choose one of them or set both to FALSE)")
 
-  if(mode=='VALIDATION') {
-    f=file.path(trajectoryLocalArgs$inputFolder,'event_pairs_for_validation.tsv')
-    if(!file.exists(f)) {
-      logger::log_error(paste0("The package is run in VALIDATION mode, but file 'event_pairs_for_validation.tsv' does not exist in input folder ",trajectoryLocalArgs$inputFolder,"."))
-      stop()
-    }
-  }
-
   if(RRrangeToSkip[2]<RRrangeToSkip[1]) {
-    logger::log_error(paste0("Error in RRrangeToSkip=c(",RRrangeToSkip[1],",",RRrangeToSkip[2],") value: the start value of the range ('",RRrangeToSkip[1],"') can't be larger than the end value ('",RRrangeToSkip[2],"'). Check your analysis parameters."))
+    ParallelLogger::logError("Error in RRrangeToSkip=c(",RRrangeToSkip[1],",",RRrangeToSkip[2],") value: the start value of the range ('",RRrangeToSkip[1],"') can't be larger than the end value ('",RRrangeToSkip[2],"'). Check your analysis parameters.")
     stop()
   }
 
@@ -126,7 +118,6 @@ createTrajectoryLocalArgs <- function(cdmDatabaseSchema,
 #' @param x Any R object
 #'
 #' @return
-#' @export
 #'
 #' @examples
 is.TrajectoryLocalArgs <- function(x) {
@@ -138,7 +129,6 @@ is.TrajectoryLocalArgs <- function(x) {
 #' @param x Any R object
 #'
 #' @return
-#' @export
 #'
 #' @examples
 is.TrajectoryAnalysisArgs <- function(x) {
@@ -147,26 +137,24 @@ is.TrajectoryAnalysisArgs <- function(x) {
 
 #' Writes trajectoryAnalysisArgs object to JSON file
 #'
-#' @param trajectoryAnalysisArgs Object created by Trajectories::createTrajectoryAnalysisArgs() method
+#' @param trajectoryAnalysisArgs Object created by Trajectories:::createTrajectoryAnalysisArgs() method
 #' @param filepath Full path to the output file. Should have .json extension as this is actually a JSON file.
 #'
 #' @return
-#' @export
 #'
 #' @examples
 TrajectoryAnalysisArgsToJson<-function(trajectoryAnalysisArgs, filepath) {
-  logger::log_info(paste0("Saving 'trajectoryAnalysisArgs' data in JSON format to ",filepath,"..."))
+  ParallelLogger::logInfo("Saving 'trajectoryAnalysisArgs' data in JSON format to ",filepath,"...")
 
-  if(!Trajectories::is.TrajectoryAnalysisArgs(trajectoryAnalysisArgs)) stop("Something is not right. 'trajectoryAnalysisArgs' is not an object from class 'TrajectoryAnalysisArgs'")
+  if(!Trajectories:::is.TrajectoryAnalysisArgs(trajectoryAnalysisArgs)) stop("Something is not right. 'trajectoryAnalysisArgs' is not an object from class 'TrajectoryAnalysisArgs'")
 
-  library(jsonlite)
   json<-jsonlite::toJSON(trajectoryAnalysisArgs, force=T, pretty=T)
 
   fileConn<-file(filepath)
   writeLines(json, fileConn)
   close(fileConn)
 
-  logger::log_info("...done.")
+  ParallelLogger::logInfo("...done.")
 }
 
 #' Reads trajectoryAnalysisArgs object from JSON file
@@ -174,14 +162,12 @@ TrajectoryAnalysisArgsToJson<-function(trajectoryAnalysisArgs, filepath) {
 #' @param filepath Full path to JSON file
 #'
 #' @return TrajectoryAnalysisArgs object
-#' @export
 #'
 #' @examples
 TrajectoryAnalysisArgsFromJson<-function(filepath) {
-  library(jsonlite)
 
-  logger::log_info(paste0("Loading 'trajectoryAnalysisArgs' object from JSON file ",filepath,"..."))
-  r.obj<-fromJSON(filepath)
+  ParallelLogger::logInfo("Loading 'trajectoryAnalysisArgs' object from JSON file ",filepath,"...")
+  r.obj<-jsonlite::fromJSON(filepath)
 
   #defaulting parameters if missing from JSON
   defaults=list(
@@ -206,14 +192,14 @@ TrajectoryAnalysisArgsFromJson<-function(filepath) {
   vals_for_obj=list()
   for(param in names(defaults)) {
     if(!param %in% names(r.obj)) {
-      logger::log_warn("'{param}' parameter not given in JSON. Defaulting its value to {defaults[param]}")
+      ParallelLogger::logWarn("'",param,"' parameter not given in JSON. Defaulting its value to ",defaults[param])
       vals_for_obj[[param]]=defaults[[param]]
     } else {
       vals_for_obj[[param]]=r.obj[[param]]
     }
   }
 
-  trajectoryAnalysisArgs<-Trajectories::createTrajectoryAnalysisArgs(
+  trajectoryAnalysisArgs<-Trajectories:::createTrajectoryAnalysisArgs(
                               mode=vals_for_obj[['mode']],
                               minimumDaysBetweenEvents=vals_for_obj[['minimumDaysBetweenEvents']],
                                maximumDaysBetweenEvents=vals_for_obj[['maximumDaysBetweenEvents']],
@@ -230,7 +216,7 @@ TrajectoryAnalysisArgsFromJson<-function(filepath) {
                                cohortName=vals_for_obj[['cohortName']],
                                description=vals_for_obj[['description']],
                                eventIdsForGraphs=vals_for_obj[['eventIdsForGraphs']])
-  logger::log_info('...done.')
+  ParallelLogger::logInfo('...done.')
   return(trajectoryAnalysisArgs)
 }
 
@@ -239,19 +225,25 @@ TrajectoryAnalysisArgsFromJson<-function(filepath) {
 #' @inheritParams GetOutputFolder
 #'
 #' @return TrajectoryLocalArgs object
-#' @export
 #'
 #' @examples
 TrajectoryAnalysisArgsFromInputFolder<-function(trajectoryLocalArgs) {
-  trajectoryAnalysisArgs<-Trajectories::TrajectoryAnalysisArgsFromJson(file.path(trajectoryLocalArgs$inputFolder,"trajectoryAnalysisArgs.json"))
+  trajectoryAnalysisArgs<-Trajectories:::TrajectoryAnalysisArgsFromJson(file.path(trajectoryLocalArgs$inputFolder,"trajectoryAnalysisArgs.json"))
 
-  Trajectories::IsValidationMode(trajectoryAnalysisArgs,verbose=T)
+  if(Trajectories:::IsValidationMode(trajectoryAnalysisArgs,verbose=T)) {
+    f=file.path(trajectoryLocalArgs$inputFolder,'event_pairs_for_validation.tsv')
+    if(!file.exists(f)) {
+      ParallelLogger::logError("The package is run in VALIDATION mode, but file 'event_pairs_for_validation.tsv' does not exist in input folder ",trajectoryLocalArgs$inputFolder,".")
+      stop()
+    }
+  }
+
 
   #Create output folder for this analysis
-  outputFolder<-Trajectories::GetOutputFolder(trajectoryLocalArgs,trajectoryAnalysisArgs,createIfMissing=T)
+  outputFolder<-Trajectories:::GetOutputFolder(trajectoryLocalArgs,trajectoryAnalysisArgs,createIfMissing=T)
 
   # Set up logger
-  Trajectories::InitLogger(logfile = file.path(outputFolder,'logs',paste0(format(Sys.time(), "%Y%m%d-%H%M%S"),"-log.txt")), threshold = logger:::INFO)
+  Trajectories:::InitLogger(logfile = file.path(outputFolder,'logs',paste0(format(Sys.time(), "%Y%m%d-%H%M%S"),"-log.txt")), threshold = 'INFO')
 
   return(trajectoryAnalysisArgs)
 }
@@ -260,12 +252,11 @@ TrajectoryAnalysisArgsFromInputFolder<-function(trajectoryLocalArgs) {
 #'
 #' Basically combines the value of mainOutputFolder, database name, and analysis name to get the output folder. Checks also that the folder exists. If createIfMissing=T, then creates the necessary subfolders under mainOutputFolder.
 #'
-#' @param trajectoryLocalArgs  Object created by Trajectories::createTrajectoryLocalArgs() method
-#' @param trajectoryAnalysisArgs  Object created by Trajectories::createTrajectoryAnalysisArgs() method
+#' @param trajectoryLocalArgs  Object created by Trajectories:::createTrajectoryLocalArgs() method
+#' @param trajectoryAnalysisArgs  Object created by Trajectories:::createTrajectoryAnalysisArgs() method
 #' @param createIfMissing If TRUE, then creates necessary folder if missing.
 #'
 #' @return Full output path
-#' @export
 #'
 #' @examples
 GetOutputFolder<-function(trajectoryLocalArgs,trajectoryAnalysisArgs,createIfMissing=F) {
@@ -308,7 +299,7 @@ GetOutputFolder<-function(trajectoryLocalArgs,trajectoryAnalysisArgs,createIfMis
     #print(paste0('Folder for analysis results already exists: ',outputFolder))
   }
 
-  if(createIfMissing==T) logger::log_info(paste0("Output folder set to ",outputFolder))
+  if(createIfMissing==T) ParallelLogger::logInfo("Output folder set to ",outputFolder)
 
   #subfolders
 
@@ -352,19 +343,18 @@ GetOutputFolder<-function(trajectoryLocalArgs,trajectoryAnalysisArgs,createIfMis
 
 #' Returns TRUE if the package is run in validation mode.
 #'
-#' @param trajectoryAnalysisArgs Object created by Trajectories::createTrajectoryAnalysisArgs() method
+#' @param trajectoryAnalysisArgs Object created by Trajectories:::createTrajectoryAnalysisArgs() method
 #' @param verbose If TRUE, outputs some info in INFO/DEBUG log level. Otherwise, returns the results silently.
 #'
 #' @return
-#' @export
 #'
 #' @examples
 IsValidationMode<-function(trajectoryAnalysisArgs, verbose=F) {
   if(verbose) {
     if(trajectoryAnalysisArgs$mode=='VALIDATION') {
-      logger::log_info("The package is run in VALIDATION MODE")
+      ParallelLogger::logInfo("The package is run in VALIDATION MODE")
     } else {
-      logger::log_info("The package is run in DISCOVERY MODE")
+      ParallelLogger::logInfo("The package is run in DISCOVERY MODE")
     }
   }
   return(trajectoryAnalysisArgs$mode=='VALIDATION')

@@ -1,10 +1,9 @@
 #Load required libraries
 library(Trajectories)
 library(DatabaseConnector)
-library(logger)
 
 # ##################################################
-# SETTING UP THE PARAMETER VALUES
+# SETTING UP THE PARAMETER VALUES, CONNECT TO DATABASE
 # ##################################################
 
 # Change the values of the following parameters according to your database setup
@@ -13,102 +12,39 @@ connectionDetails = createConnectionDetails(dbms = 'postgresql',#  e.g. oracle, 
                                             password = Sys.getenv('DB_PASSWORD'), #Currently takes the value form .Renviron file in the package folder
                                             connectionString = "jdbc:postgresql://localhost:63333/maitt"
 )
+connection <- DatabaseConnector::connect(connectionDetails)
+on.exit(DatabaseConnector::disconnect(connection)) #Close db connection on error or exit
+
 
 
 # Setting local system & database parameters - CHANGE ACCORDING TO YOUR SYSTEM & DATABASE:
 trajectoryLocalArgs <- Trajectories::createTrajectoryLocalArgs(oracleTempSchema = "temp_schema",
-                                                               prefixForResultTableNames = "sr_", # Alternatively, you could use this to randomly generate the prefix (requires library(stringi) to be loaded): paste0(  if(!is.null(attr(connectionDetails,'user'))) substr(USER,1,2), stri_rand_strings(1, 2, pattern = "[A-Za-z]"), sep="_")
+                                                               prefixForResultTableNames = "sr2_", # Alternatively, you could use this to randomly generate the prefix (requires library(stringi) to be loaded): paste0(  if(!is.null(attr(connectionDetails,'user'))) substr(USER,1,2), stri_rand_strings(1, 2, pattern = "[A-Za-z]"), sep="_")
                                                                cdmDatabaseSchema = 'ohdsi_cdm_next',
                                                                vocabDatabaseSchema = 'ohdsi_cdm_next',
                                                                resultsSchema = 'ohdsi_temp',
                                                                sqlRole = F, # You may always use 'F'. Setting specific role might be useful in PostgreSQL when you want to create tables by using specific role so that the others also see the results. However, then you must ensure that this role has permissions to read from all necessary schemas and also create tables to resultsSchema
-                                                               #cohortTableSchema= 'ohdsi_temp',
-                                                               #cohortTable='cohort',
-                                                               #cohortId=1, #use 1 for discovery studies
                                                                inputFolder=system.file("extdata", "T2D-validation", package = "Trajectories"), # Full path to input folder that contains SQL file for cohort definition and optionally also trajectoryAnalysisArgs.json. You can use built-in folders of this package such as: inputFolder=system.file("extdata", "T2D", package = "Trajectories")
-                                                               mainOutputFolder='/Users/sulevr/temp', #Subfolders to this will be created automatically
-                                                               databaseHumanReadableName='RITA.VALIDATE') #Use something short. It will be added to the titles of the graph.
+                                                               mainOutputFolder='/Users/sulevr/temp', #Subfolders will be created automatically
+                                                               databaseHumanReadableName='RITA.BRUNAK.VALIDATE') #Use something short. This will be used as a folder name an it will be added to the titles of the graph.
 
 
-# Setting analysis parameters. Two options here:
-# a) either to to load them automatically from inputFolder via:
-
-#Comment the following line in if you are running the package in validation mode. Comment it out if you are running the package in exploratory mode.
-#trajectoryLocalArgs$inputFolder<-'/here/your/path/to/validation_setup'
-
-trajectoryAnalysisArgs<-Trajectories::TrajectoryAnalysisArgsFromInputFolder(trajectoryLocalArgs)
-
-# and note that you can still make changes to the parameters after loading it from file like this:
-# trajectoryAnalysisArgs$minPatientsPerEventPair=1000
-
-# b) or set them manually:
-#trajectoryAnalysisArgs <- Trajectories::createTrajectoryAnalysisArgs(minimumDaysBetweenEvents = 1,
-#                                                                     maximumDaysBetweenEvents = 3650,
-#                                                                     minPatientsPerEventPair = 100,
-#                                                                     addConditions=T,
-#                                                                     addObservations=T,
-#                                                                     addProcedures=T,
-#                                                                     addDrugExposures=F, # NB! DO NOT USE BOTH addDrugEras=T and addDrugExposures=T (not both) as it leads to analysis duplication and breaks some code... (same "drug" event may occur several times which is not allowed)
-#                                                                     addDrugEras=T, # NB! DO NOT USE BOTH addDrugEras=T and addDrugExposures=T (not both) as it leads to analysis duplication and breaks some code... (same "drug" event may occur several times which is not allowed)
-#                                                                     addBirths=T,
-#                                                                     addDeaths=T,
-#                                                                     daysBeforeIndexDate=Inf,
-#                                                                     packageName='Trajectories',
-#                                                                     cohortName="Rheumatoid.arthritis")
-
-#trajectoryAnalysisArgs$addDrugEras=F
 
 # ##################################################
-# End of setting parameters. The actual code follows.
-
-# ##################################################
-# Connect to database
+# RUN DISCOVERY ANALYSIS
 # ##################################################
 
-connection <- DatabaseConnector::connect(connectionDetails)
-on.exit(DatabaseConnector::disconnect(connection)) #Close db connection on error or exit
+Trajectories::validate(connection,
+                       trajectoryLocalArgs,
+                       createCohort=T,
+                       createEventPairsTable=T,
+                       runValidationAnalysis=T,
+                       createFilteredFullgraphs=T,
+                       cleanup=T)
 
-########################################################################
-
-
-
-
-
-
-
-# Create new cohort table for this package to results schema & fill it in (all having cohort_id=1 in cohort data)
-Trajectories::createAndFillCohortTable(connection=connection,
-                                       trajectoryAnalysisArgs=trajectoryAnalysisArgs,
-                                       trajectoryLocalArgs=trajectoryLocalArgs)
-
-
-# Assign 100% of the event-periods from the cohort to validation set (discovery set=data in cohort table where cohort_id=1; validation set=data in cohort table where cohort_id=2)
-Trajectories::createValidationSet(connection=connection,
-                                  trajectoryAnalysisArgs,
-                                  trajectoryLocalArgs,
-                                  size=1)
-
-# Create database tables of all event pairs (patient level data + summary statistics). Uses cohort_id depending on the running mode of the package
-Trajectories::createEventPairsTable(connection=connection,
-                                    trajectoryAnalysisArgs=trajectoryAnalysisArgs,
-                                    trajectoryLocalArgs=trajectoryLocalArgs)
-
-
-# Validate statistically significant directional event pairs and write the results to eventPairResultsFilename
-Trajectories::runValidationAnalysis(connection,
-                                    trajectoryAnalysisArgs,
-                                    trajectoryLocalArgs,
-                                    forceRecalculation=F)
-
-
-
-
-########### CLEANUP: DROP ANALYSIS TABLES IF THERE IS NO NEED FOR THESE RESULTS ANYMORE ###########
-
-# Cleanup database after analysis
-Trajectories::dbCleanup(connection=connection,
-                        trajectoryAnalysisArgs=trajectoryAnalysisArgs,
-                        trajectoryLocalArgs=trajectoryLocalArgs)
+# ##################################################
+# DISCONNECT FROM DATABASE
+# ##################################################
 
 DatabaseConnector::disconnect(connection)
 

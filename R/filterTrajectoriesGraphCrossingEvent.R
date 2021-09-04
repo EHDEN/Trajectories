@@ -7,20 +7,19 @@
 #' @param edge_param_to_sort_by edge_param_to_sort_by
 #'
 #' @return
-#' @export
 #'
 #' @examples
 filterTrajectoriesGraphCrossingEvent <-function(g, eventname=4283892,limitOfNodes=F, edge_param_to_sort_by=c('effect','numcohortExact','numcohortCustom','effectCount','prob')) {
 
-  logger::log_info(paste0("Filtering trajectories from the graph that occur before or after {eventname} (sorted by ",edge_param_to_sort_by,')...'))
-  if(limitOfNodes!=F) {log_info(paste0('  (also limiting to ',limitOfNodes,' nodes)'))}
+  ParallelLogger::logInfo("Filtering trajectories from the graph that occur before or after ",eventname," (sorted by ",edge_param_to_sort_by,')...')
+  if(limitOfNodes!=F) {ParallelLogger::logInfo('  (also limiting to ',limitOfNodes,' nodes)')}
 
   if(!inherits(g, 'TrajectoriesGraph')) stop('Error in filterTrajectoriesGraphCrossingEvent(): object g is not class TrajectoriesGraph object')
 
   #check that event concept_id is present in g
   eventname=as.character(eventname)
   if(!eventname %in% names(igraph::V(g))) {
-    logger::log_warn(paste0('Cannot filter trajectories through {eventname} as the graph does not contain any links with that event. Return unfiltered graph.'))
+    ParallelLogger::logWarn('Cannot filter trajectories through ',eventname,' as the graph does not contain any links with that event. Return unfiltered graph.')
     return(g)
   }
 
@@ -40,10 +39,9 @@ filterTrajectoriesGraphCrossingEvent <-function(g, eventname=4283892,limitOfNode
                     stringsAsFactors=FALSE)
   edge.ids<-c()
   i=1
-  #logger::log_level(logger:::DEBUG)
   nodelist=data.frame()
   while(i<=nrow(stack) & i<limitOfNodes) {
-    logger::log_debug(paste0('Stack size: ',i,'. Total probability of last element: ',round(100*tail(stack,n=1)$totalprob),'%'))
+    ParallelLogger::logDebug('Stack size: ',i,'. Total probability of last element: ',round(100*tail(stack,n=1)$totalprob),'%')
     #print(stack)
     #print(paste('i=',i))
     #if(i==30) stop()
@@ -66,7 +64,7 @@ filterTrajectoriesGraphCrossingEvent <-function(g, eventname=4283892,limitOfNode
                                                    effect=y$effect,
                                                    prob=y$prob,
                                                    #totalprob=y$prob*(data.frame(event=as.character(stack$event), prob=stack$totalprob, stringsAsFactors=F) %>% right_join( data.frame(from=ends(g,y, names=T)[,2], stringsAsFactors=F), by=c('event'='from')) %>% select(totalprob=prob)),
-                                                   totalprob=y$prob*(stack %>% filter(direction %in% c('both','ancestor')) %>% dplyr::select (event,prob) %>% right_join( data.frame(from=as.character(igraph::ends(g,y, names=T)[,2]), stringsAsFactors=F), by=c('event'='from')) %>% dplyr::select(totalprob=prob)),
+                                                   totalprob=y$prob*(stack %>% dplyr::filter(direction %in% c('both','ancestor')) %>% dplyr::select (event,prob) %>% dplyr::right_join( data.frame(from=as.character(igraph::ends(g,y, names=T)[,2]), stringsAsFactors=F), by=c('event'='from')) %>% dplyr::select(totalprob=prob)),
                                                    numcohortExact=y$numcohortExact,
                                                    effectCount=y$effectCount,
                                                    direction='ancestor'))
@@ -91,7 +89,7 @@ filterTrajectoriesGraphCrossingEvent <-function(g, eventname=4283892,limitOfNode
                                                    effect=y$effect,
                                                    prob=y$prob,
                                                    #totalprob=y$prob*(data.frame(event=as.character(stack$event), prob=stack$totalprob, stringsAsFactors=F) %>% right_join( data.frame(from=ends(g,y, names=T)[,1], stringsAsFactors=F), by=c('event'='from')) %>% select(totalprob=prob)),
-                                                   totalprob=y$prob*(stack %>% filter(direction %in% c('both','descendant')) %>% dplyr::select (event,prob) %>% right_join( data.frame(from=as.character(igraph::ends(g,y, names=T)[,1]), stringsAsFactors=F), by=c('event'='from')) %>% dplyr::select(totalprob=prob)),
+                                                   totalprob=y$prob*(stack %>% dplyr::filter(direction %in% c('both','descendant')) %>% dplyr::select (event,prob) %>% dplyr::right_join( data.frame(from=as.character(igraph::ends(g,y, names=T)[,1]), stringsAsFactors=F), by=c('event'='from')) %>% dplyr::select(totalprob=prob)),
                                                    numcohortExact=y$numcohortExact,
                                                    effectCount=y$effectCount,
                                                    direction='descendant'))
@@ -100,12 +98,12 @@ filterTrajectoriesGraphCrossingEvent <-function(g, eventname=4283892,limitOfNode
     }
     if(nrow(nodelist)>0) {
       #sorts nodes by decreasing order of effect/effectCount/numcohortsCustom or numcohortsExact
-      nodelist<-nodelist %>% arrange(-totalprob)
+      nodelist<-nodelist %>% dplyr::arrange(-totalprob)
       #avoid duplicates - if duplicate nodes exist, take the one with larger probability
       #Update: duplicates are allowed!
       #nodelist <- nodelist %>% group_by(event) %>% mutate(max_prob=max(totalprob)) %>% ungroup() %>% filter(totalprob==max_prob) %>% select(-max_prob)
       #remove edges that are already added to edgelist
-      nodelist <- nodelist %>% filter(!edgeid %in% edge.ids)
+      nodelist <- nodelist %>% dplyr::filter(!edgeid %in% edge.ids)
 
       if(nrow(nodelist)>0) {
         for(j in 1:nrow(nodelist)) {
@@ -137,14 +135,14 @@ filterTrajectoriesGraphCrossingEvent <-function(g, eventname=4283892,limitOfNode
   #create a new graph of selected edges
   g2 <- igraph::subgraph.edges(g, edge.ids[edge.ids>0], delete.vertices = T)
 
-  log_info(paste0('...done. The resulting graph contains ',length(igraph::V(g2)),' events and ',length(igraph::E(g2)),' links between them.'))
+  ParallelLogger::logInfo('...done. The resulting graph contains ',length(igraph::V(g2)),' events and ',length(igraph::E(g2)),' links between them.')
 
   #the length of longest path is the diameter of the graph
   f<-igraph::farthest_vertices(g2, directed = TRUE, weights=NA)
   if(limitOfNodes==F) {
-    logger::log_info(paste0('The longest trajectory has a length ',f$distance," (between '{f$vertices[1]$name}' and '{f$vertices[2]$name}')"))
+    ParallelLogger::logInfo('The longest trajectory has a length ',f$distance," (between '",f$vertices[1]$name,"' and '",f$vertices[2]$name,"')")
   } else {
-    logger::log_info(paste0('The longest trajectory (within the limit of ',limitOfNodes,' edges) has a length ',f$distance," (between '{f$vertices[1]$name}' and '{f$vertices[2]$name}')"))
+    ParallelLogger::logInfo('The longest trajectory (within the limit of ',limitOfNodes,' edges) has a length ',f$distance," (between '",f$vertices[1]$name,"' and '",f$vertices[2]$name,"')")
   }
   #print(paste(shortest_paths(g2,from=V(g2)[f$vertices[1]],to=V(g2)[f$vertices[2]])$vpath))
 

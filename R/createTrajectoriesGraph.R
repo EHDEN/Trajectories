@@ -11,12 +11,11 @@
 #' @param eventPairResultsFilename Full path to event pairs file
 #'
 #' @return
-#' @export
 #'
 #' @examples
 createTrajectoriesGraph<-function(eventPairResultsFilename) {
 
-  logger::log_info('Creating TrajectoriesGraph object based on event pairs data from the following file: {eventPairResultsFilename}...')
+  ParallelLogger::logInfo('Creating TrajectoriesGraph object based on event pairs data from the following file: ',eventPairResultsFilename,'...')
 
   # Links are coming from eventPairResultsFilename (event1->event2 pairs)
   e = read.csv2(file = eventPairResultsFilename, sep = '\t', header = TRUE, as.is=T)
@@ -26,8 +25,8 @@ createTrajectoriesGraph<-function(eventPairResultsFilename) {
   #e$AVG_NUMBER_OF_DAYS_BETWEEN_E1_AND_E2<-as.numeric(e$AVG_NUMBER_OF_DAYS_BETWEEN_E1_AND_E2)
 
   #apply minimum RR threshold (there is no sense to draw graphs for decreasing risks - hard to interpret)
-  e <- e %>% filter(RR > 1)
-  logger::log_info('Applying relative risk filter: only pairs having relative risk > 1 are used for building the trajectories graph.')
+  e <- e %>% dplyr::filter(RR > 1)
+  ParallelLogger::logInfo('Applying relative risk filter: only pairs having relative risk > 1 are used for building the trajectories graph.')
 
   # calculate max event count for scaling
   max_event_count<-max(e$E1_COUNT_IN_EVENTS,e$E2_COUNT_IN_EVENTS)
@@ -99,7 +98,7 @@ createTrajectoriesGraph<-function(eventPairResultsFilename) {
     }
   }
 
-  logger::log_info(paste('Full graph contains',igraph::gsize(g),'links between',igraph::gorder(g),'events'))
+  ParallelLogger::logInfo('Full graph contains',igraph::gsize(g),'links between',igraph::gorder(g),'events')
 
   #Normalized numcohortExact
   igraph::E(g)$normalizedNumcohortExact = (igraph::E(g)$numcohortExact-min(igraph::E(g)$numcohortExact))/(max(igraph::E(g)$numcohortExact)-min(igraph::E(g)$numcohortExact))

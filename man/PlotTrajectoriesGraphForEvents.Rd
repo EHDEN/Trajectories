@@ -30,7 +30,7 @@ PlotTrajectoriesGraphForEvents(
 
 }
 \description{
-Analysis results, obtained by runEventPairAnalysis(), have to exist in output folder, set by Trajectories::GetOutputFolder(trajectoryLocalArgs,trajectoryAnalysisArgs).
+Analysis results, obtained by runEventPairAnalysis(), have to exist in output folder, set by Trajectories:::GetOutputFolder(trajectoryLocalArgs,trajectoryAnalysisArgs).
 This function also alignes actual trajectories to the graph, therefore it requires database connection.
 If you provide an eventName (OMOP concept name) or list of event names as input, the graph that crosses that event is shown. If you do not provide it (eventName=NA), the function automatically takes
 most prevalent top5 events and builds graph for each of them.

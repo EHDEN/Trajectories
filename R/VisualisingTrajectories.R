@@ -1,7 +1,6 @@
 #' Visualize data pairs using Shiny application
 #'
 #' @param data Data in xlsx format used for visualization. Has to contain columns E1_CONCEPT_ID and E2_CONCEPT_ID
-#' @export
 #' @examples
 #' data <- as.data.frame(read.xlsx("inst/shiny/VisualisingTrajectories/Data/event_pairs_tested.xlsx"))
 #' Trajectories::visualize_data_pairs(data)
@@ -21,16 +20,16 @@ visualize_data_pairs <- function(data) {
   ensure_installed("geomnet")
   ensure_installed("igraph")
   ensure_installed("hash")
-  Trajectories::InitLogger(logfile = file.path(".",'log.txt'), threshold = logger:::INFO)
+  Trajectories::InitLogger(logfile = file.path(".",'log.txt'), threshold = 'INFO')
   #data validation
   if (length(colnames(data)) < 3) {
-    logger::log_error("Dataset does not contain enough columns")
+    ParallelLogger::logError("Dataset does not contain enough columns")
     stop()
   }
   if (!('E1_CONCEPT_ID' %in% colnames(data)) |
       !('E2_CONCEPT_ID' %in% colnames(data))) {
-    logger::log_error("Dataset does not contain needed column E1_CONCEPT_ID or E2_CONCEPT_ID")
-    logger::log_info("Column names: ", colnames(data))
+    ParallelLogger::logError("Dataset does not contain needed column E1_CONCEPT_ID or E2_CONCEPT_ID")
+    ParallelLogger::logInfo("Column names: ", colnames(data))
     stop()
   }
 

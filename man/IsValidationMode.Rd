@@ -7,7 +7,7 @@
 IsValidationMode(trajectoryAnalysisArgs, verbose = F)
 }
 \arguments{
-\item{trajectoryAnalysisArgs}{Object created by Trajectories::createTrajectoryAnalysisArgs() method}
+\item{trajectoryAnalysisArgs}{Object created by Trajectories:::createTrajectoryAnalysisArgs() method}
 
 \item{verbose}{If TRUE, outputs some info in INFO/DEBUG log level. Otherwise, returns the results silently.}
 }

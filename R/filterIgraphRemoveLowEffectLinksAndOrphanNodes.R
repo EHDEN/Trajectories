@@ -5,11 +5,10 @@
 #' @param edge_param_to_sort_by edge_param_to_sort_by
 #'
 #' @return
-#' @export
 #'
 #' @examples
 filterIgraphRemoveLowEffectLinksAndOrphanNodes<-function(g, limitOfLinks=20,edge_param_to_sort_by=c('effect','numcohortExact','numcohortCustom','effectCount','prob')) {
-  logger::log_info('Filtering graph by removing links with small effect/people size and orphan nodes...')
+  ParallelLogger::logInfo('Filtering graph by removing links with small effect/people size and orphan nodes...')
 
   if(!inherits(g, 'TrajectoriesGraph')) stop('Error in filterIgraphRemoveLowEffectLinksAndOrphanNodes(): object g is not class TrajectoriesGraph object')
 
@@ -18,29 +17,29 @@ filterIgraphRemoveLowEffectLinksAndOrphanNodes<-function(g, limitOfLinks=20,edge
 
   if(limitOfLinks>length(igraph::E(g))) limitOfLinks=length(igraph::E(g))
 
-  logger::log_info(paste0('...The original graph contains ',length(igraph::V(g)),' events and ',length(igraph::E(g)),' links between them...'))
+  ParallelLogger::logInfo('...The original graph contains ',length(igraph::V(g)),' events and ',length(igraph::E(g)),' links between them...')
 
   #igraph does not support Edge reordering. Therefore, to reorder, we create a new graph (with reordered edges)
   if(edge_param_to_sort_by=='numcohortExact') {
-    #logger::log_debug('Sort by numcohortExact')
+    #ParallelLogger::logDebug('Sort by numcohortExact')
     o<-order(igraph::E(g)$numcohortExact, decreasing=T)
   } else if(edge_param_to_sort_by=='numcohortCustom') {
-    #logger::log_debug('Sort by numcohortCustom')
+    #ParallelLogger::logDebug('Sort by numcohortCustom')
     o<-order(igraph::E(g)$numcohortCustom, decreasing=T)
   } else if(edge_param_to_sort_by=='effectCount') {
-    logger::log_debug('Sort by effectCount')
+    ParallelLogger::logDebug('Sort by effectCount')
     o<-order(igraph::E(g)$effectCount, decreasing=T)
   } else if(edge_param_to_sort_by=='prob') {
-    logger::log_debug('Sort by prob')
+    ParallelLogger::logDebug('Sort by prob')
     o<-order(igraph::E(g)$prob, decreasing=T)
   } else if(edge_param_to_sort_by=='actualTrajsProb') {
-    logger::log_debug('Sort by actualTrajsProb')
+    ParallelLogger::logDebug('Sort by actualTrajsProb')
     o<-order(igraph::E(g)$actualTrajsProb, decreasing=T)
   } else if(edge_param_to_sort_by=='alignedTrajsCount') {
-    logger::log_debug('Sort by alignedTrajsCount')
+    ParallelLogger::logDebug('Sort by alignedTrajsCount')
     o<-order(igraph::E(g)$alignedTrajsCount, decreasing=T)
   } else {
-    logger::log_warn('Sort column in filterIgraphRemoveLowEffectLinksAndOrphanNodes not set. Sorting by effect (default) ')
+    ParallelLogger::logWarn('Sort column in filterIgraphRemoveLowEffectLinksAndOrphanNodes not set. Sorting by effect (default) ')
     o<-order(abs(igraph::E(g)$effect-1), decreasing=T)
   }
   #create a new graph from reordered edges (take only first limitOfLinks edges)
@@ -54,7 +53,7 @@ filterIgraphRemoveLowEffectLinksAndOrphanNodes<-function(g, limitOfLinks=20,edge
   degrees<-igraph::degree(g, v=igraph::V(g), mode='all')
   g <- g - igraph::V(g)[which(degrees==0)]
 
-  logger::log_info(paste0('...done. The resulting graph contains ',length(igraph::V(g)),' events and ',length(igraph::E(g)),' links between them.'))
+  ParallelLogger::logInfo('...done. The resulting graph contains ',length(igraph::V(g)),' events and ',length(igraph::E(g)),' links between them.')
 
   class(g)<-c('TrajectoriesGraph','igraph')
   return(g)

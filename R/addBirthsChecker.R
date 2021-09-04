@@ -1,4 +1,3 @@
-library(SqlRender)
 #' Checks whether person.birth_datetime is recorded in the data if addBirths is set to TRUE
 #'
 #' @param connection Database connection object created by createConnectionDetails() method in DatabaseConnector package
@@ -6,13 +5,12 @@ library(SqlRender)
 #' @param trajectoryLocalArgs TrajectoryLocalArgs object that must be created by createTrajectoryLocalArgs() method
 #'
 #' @return
-#' @export
 #'
 #' @examples
 addBirthsChecker <- function(connection,
                              trajectoryAnalysisArgs,
                              trajectoryLocalArgs) {
-  logger::log_info('Parameter addBirths is set to TRUE. Check whether person.birth_datetime is actually recorded in the data...')
+  ParallelLogger::logInfo('Parameter addBirths is set to TRUE. Check whether person.birth_datetime is actually recorded in the data...')
   births_sql <- SqlRender::loadRenderTranslateSql("addBirthsChecker.sql",
                                                 packageName=get('TRAJECTORIES_PACKAGE_NAME', envir=TRAJECTORIES.CONSTANTS),
                                                 dbms=connection@dbms,
@@ -20,9 +18,9 @@ addBirthsChecker <- function(connection,
                                                 )
   birthDateTimeCount = DatabaseConnector::querySql(connection, births_sql)
   if(birthDateTimeCount$BIRTHCOUNTS<1) {
-    logger::log_warn("The column person.birth_datetime is empty, setting addBirths to FALSE")
+    ParallelLogger::logWarn("The column person.birth_datetime is empty in the database (cannot use it), therefore setting addBirths to FALSE")
     trajectoryAnalysisArgs$addBirths=F
   } else {
-    logger::log_info('...OK')
+    ParallelLogger::logInfo('...OK')
   }
 }

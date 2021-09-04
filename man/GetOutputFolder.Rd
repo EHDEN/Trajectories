@@ -11,9 +11,9 @@ GetOutputFolder(
 )
 }
 \arguments{
-\item{trajectoryLocalArgs}{Object created by Trajectories::createTrajectoryLocalArgs() method}
+\item{trajectoryLocalArgs}{Object created by Trajectories:::createTrajectoryLocalArgs() method}
 
-\item{trajectoryAnalysisArgs}{Object created by Trajectories::createTrajectoryAnalysisArgs() method}
+\item{trajectoryAnalysisArgs}{Object created by Trajectories:::createTrajectoryAnalysisArgs() method}
 
 \item{createIfMissing}{If TRUE, then creates necessary folder if missing.}
 }

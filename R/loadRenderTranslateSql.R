@@ -1,6 +1,3 @@
-library(SqlRender)
-library(logger)
-
 #' Copy of SqlRender::loadRenderTranslateSql() method to corrrectly solve pathToSql inside Trajectories package
 #'
 #' @param sqlFilename
@@ -11,7 +8,6 @@ library(logger)
 #' @param warnOnMissingParameters
 #'
 #' @return
-#' @export
 #'
 #' @examples
 loadRenderTranslateSql<-function(sqlFilename,

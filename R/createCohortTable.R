@@ -11,12 +11,12 @@ createCohortTable<-function(connection,
                             trajectoryAnalysisArgs,
                             trajectoryLocalArgs) {
 
-  logger::log_info(paste0('Creating cohort table <',paste0(trajectoryLocalArgs$prefixForResultTableNames,'cohort'),'> to <',trajectoryLocalArgs$resultsSchema,'> schema...'))
+  ParallelLogger::logInfo('Creating cohort table ',trajectoryLocalArgs$resultsSchema,'.',trajectoryLocalArgs$prefixForResultTableNames,'cohort ...')
 
   #Set SQL role of the database session
-  Trajectories::setRole(connection,trajectoryLocalArgs$sqlRole)
+  Trajectories:::setRole(connection,trajectoryLocalArgs$sqlRole)
 
-  RenderedSql <- Trajectories::loadRenderTranslateSql('createCohortTable.sql',
+  RenderedSql <- Trajectories:::loadRenderTranslateSql('createCohortTable.sql',
                                                       packageName=get('TRAJECTORIES_PACKAGE_NAME', envir=TRAJECTORIES.CONSTANTS),
                                                       dbms=connection@dbms,
                                                       resultsSchema=trajectoryLocalArgs$resultsSchema,
@@ -24,5 +24,5 @@ createCohortTable<-function(connection,
   )
   DatabaseConnector::executeSql(connection, RenderedSql)
 
-  logger::log_info('...done.')
+  ParallelLogger::logInfo('...done.')
 }

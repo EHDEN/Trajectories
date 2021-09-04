@@ -1,0 +1,19 @@
+{
+  "mode": ["VALIDATION"],
+  "minimumDaysBetweenEvents": [1],
+  "maximumDaysBetweenEvents": [1826],
+  "minPatientsPerEventPair": [20],
+  "addConditions": [true],
+  "addObservations": [false],
+  "addProcedures": [false],
+  "addDrugExposures": [false],
+  "addDrugEras": [false],
+  "addBirths": [false],
+  "addDeaths": [true],
+  "daysBeforeIndexDate": ["Inf"],
+  "packageName": ["Trajectories"],
+  "cohortName": ["Full database"],
+  "description": ["Brunak validation study"],
+  "eventIdsForGraphs": [null],
+  "RRrangeToSkip": [0.8, 1.2]
+}

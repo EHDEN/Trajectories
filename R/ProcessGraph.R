@@ -6,7 +6,7 @@ RECT.YMARGIN=100
 
 drawProcessGraph<-function(annotated.pairs,filename='myplot.pdf',trajectoryAnalysisArgs, title='General process') {
 
-  logger::log_info('Drawing process graph...')
+  ParallelLogger::logInfo('Drawing process graph...')
 
   require(grDevices)
 
@@ -15,8 +15,8 @@ drawProcessGraph<-function(annotated.pairs,filename='myplot.pdf',trajectoryAnaly
   NUM.PAIRS=nrow(pairs)
 
   # identify filters
-  stat<-pairs %>% group_by(FAILED_FILTER) %>% summarise(n=n())
-  filters<-stat %>% filter(FAILED_FILTER!='') %>% arrange(FAILED_FILTER)
+  stat<-pairs %>% dplyr::group_by(FAILED_FILTER) %>% dplyr::summarise(n=dplyr::n())
+  filters<-stat %>% dplyr::filter(FAILED_FILTER!='') %>% dplyr::arrange(FAILED_FILTER)
   NUM.SPLITS=nrow(filters)
 
 
@@ -58,9 +58,9 @@ drawProcessGraph<-function(annotated.pairs,filename='myplot.pdf',trajectoryAnaly
   }
 
   # FINAL NODE
-  n=stat %>% filter(FAILED_FILTER=='')
+  n=stat %>% dplyr::filter(FAILED_FILTER=='')
   if(nrow(n)>0) {
-    n<-n %>% pull(n)
+    n<-n %>% dplyr::pull(n)
   } else {
     #no directional pairs found
    n=0
@@ -75,7 +75,7 @@ drawProcessGraph<-function(annotated.pairs,filename='myplot.pdf',trajectoryAnaly
   # Close the pdf file
   dev.off()
 
-  logger::log_info('...done. Process graph saved as PNG image to {filename}.')
+  ParallelLogger::logInfo('...done. Process graph saved as PNG image to ',filename,'.')
 
 }
 

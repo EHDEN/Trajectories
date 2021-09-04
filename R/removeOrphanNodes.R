@@ -3,7 +3,6 @@
 #' @param g igraph object
 #'
 #' @return
-#' @export
 #'
 #' @examples
 removeOrphanNodes<-function(g) {

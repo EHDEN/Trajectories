@@ -5,7 +5,6 @@
 #' @inheritParams GetOutputFolder
 #'
 #' @return
-#' @export
 #'
 #' @examples
 getCohortSize<-function(connection,
@@ -17,7 +16,7 @@ getCohortSize<-function(connection,
   sql <- SqlRender::render("SELECT COUNT(*) AS CCC FROM @resultsSchema.@prefiXcohort WHERE cohort_definition_id = @cohortId;",
                            resultsSchema = trajectoryLocalArgs$resultsSchema,
                            prefiX = trajectoryLocalArgs$prefixForResultTableNames,
-                           cohortId=ifelse(Trajectories::IsValidationMode(trajectoryAnalysisArgs),2,1))
+                           cohortId=ifelse(Trajectories:::IsValidationMode(trajectoryAnalysisArgs),2,1))
 
   #translate SQL into right dialect
   sql <- SqlRender::translate(sql = sql,

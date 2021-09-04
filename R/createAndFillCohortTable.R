@@ -10,18 +10,17 @@
 #' @param connection DatabaseConnectorConnection object that is used to connect with database
 #'
 #' @return
-#' @export
 #'
 #' @examples
 createAndFillCohortTable<-function(connection,
                           trajectoryAnalysisArgs,
                           trajectoryLocalArgs) {
 
-  createCohortTable(connection,
+  Trajectories:::createCohortTable(connection,
                     trajectoryAnalysisArgs,
                     trajectoryLocalArgs)
 
-  fillCohortTable(connection,
+  Trajectories:::fillCohortTable(connection,
                     trajectoryAnalysisArgs,
                     trajectoryLocalArgs)
 

@@ -106,8 +106,6 @@ addRandomEventForPeson<-function(connection,person_id=6,exclude_concept_ids=c(),
              concept_id,",",
              getSQLiteRealFromDateSQLstring(eventDate),");")
 
-  #logger::log_info(sql)
-
   executeSql(connection, sql=sql, progressBar = F,
              reportOverallTime=F)
 }
@@ -157,7 +155,7 @@ setUpEunomia<-function() {
 
   #on.exit(DatabaseConnector::disconnect(connection)) #Close db connection on error or exit
 
-  trajectoryLocalArgs <- Trajectories::createTrajectoryLocalArgs(
+  trajectoryLocalArgs <- Trajectories:::createTrajectoryLocalArgs(
                                                                  oracleTempSchema = "temp_schema",
                                                                  prefixForResultTableNames = "test_",
                                                                  cdmDatabaseSchema = 'main',
@@ -256,7 +254,7 @@ limitToConcepts<-function(connection,concept_ids=c(9201, #inpatient visit
 
 getEventPairsTableAsDataFrame<-function(trajectoryLocalArgs,trajectoryAnalysisArgs,filename='event_pairs_tested.tsv') {
   #Get output folder for this analysis
-  outputFolder<-Trajectories::GetOutputFolder(trajectoryLocalArgs,trajectoryAnalysisArgs,createIfMissing=F)
+  outputFolder<-Trajectories:::GetOutputFolder(trajectoryLocalArgs,trajectoryAnalysisArgs,createIfMissing=F)
   eventPairResultsFilename = file.path(outputFolder,'tables',filename)
   #Get event_pairs.csv table
   event_pairs_data = read.csv2(file = eventPairResultsFilename, sep = '\t', header = TRUE, as.is=T)
@@ -265,13 +263,13 @@ getEventPairsTableAsDataFrame<-function(trajectoryLocalArgs,trajectoryAnalysisAr
 
 getEventPairFromEventPairsTable<-function(event1_concept_id,event2_concept_id,trajectoryLocalArgs,trajectoryAnalysisArgs,filename='event_pairs_tested.tsv') {
   e<-getEventPairsTableAsDataFrame(trajectoryLocalArgs,trajectoryAnalysisArgs,filename=filename)
-  res<-e %>% filter(E1_CONCEPT_ID==event1_concept_id & E2_CONCEPT_ID==event2_concept_id)
+  res<-e %>% dplyr::filter(E1_CONCEPT_ID==event1_concept_id & E2_CONCEPT_ID==event2_concept_id)
   return(res)
 }
 
 getTrajectoryFileAsDataFrame<-function(trajectoryLocalArgs,trajectoryAnalysisArgs,concept_id,concept_name) {
   #Get output folder for this analysis
-  outputFolder<-Trajectories::GetOutputFolder(trajectoryLocalArgs,trajectoryAnalysisArgs,createIfMissing=F)
+  outputFolder<-Trajectories:::GetOutputFolder(trajectoryLocalArgs,trajectoryAnalysisArgs,createIfMissing=F)
   filename = file.path(outputFolder,'tables',paste0(concept_name,concept_id,'.constructed.limit30.events.trajs.csv'))
   #Get event_pairs.csv table
   d = read.csv2(file = filename, sep = '\t', header = TRUE, as.is=T)
@@ -279,20 +277,20 @@ getTrajectoryFileAsDataFrame<-function(trajectoryLocalArgs,trajectoryAnalysisArg
 }
 
 removeTrajectoryFile<-function(trajectoryLocalArgs,trajectoryAnalysisArgs,concept_id,concept_name) {
-  outputFolder<-Trajectories::GetOutputFolder(trajectoryLocalArgs,trajectoryAnalysisArgs,createIfMissing=F)
+  outputFolder<-Trajectories:::GetOutputFolder(trajectoryLocalArgs,trajectoryAnalysisArgs,createIfMissing=F)
   filename = file.path(outputFolder,'tables',paste0(concept_name,concept_id,'.constructed.limit30.events.trajs.csv'))
   if(file.exists(filename)) file.remove(filename)
 }
 
 getTrajectoryFromTrajectoryFile<-function(trajectoryLocalArgs,trajectoryAnalysisArgs,concept_id,concept_name,trajectory_concept_ids=c()) {
   d<-getTrajectoryFileAsDataFrame(trajectoryLocalArgs,trajectoryAnalysisArgs,concept_id,concept_name)
-  d<-d %>% filter(trajectory.str==paste0(trajectory_concept_ids,collapse="-") )
+  d<-d %>% dplyr::filter(trajectory.str==paste0(trajectory_concept_ids,collapse="-") )
   return(d)
 }
 
 removeTestableOutputFiles<-function(trajectoryLocalArgs,trajectoryAnalysisArgs) {
   #Get output folder for this analysis
-  outputFolder<-Trajectories::GetOutputFolder(trajectoryLocalArgs,trajectoryAnalysisArgs,createIfMissing=F)
+  outputFolder<-Trajectories:::GetOutputFolder(trajectoryLocalArgs,trajectoryAnalysisArgs,createIfMissing=F)
 
   filename="event_pairs_directional.tsv"
   if(file.exists(file.path(outputFolder,'tables',filename))) file.remove(file.path(outputFolder,'tables',filename))

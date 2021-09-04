@@ -30,7 +30,7 @@ testthat::test_that("No significant event pairs in random data", {
   #library(stringi)
 
 
-  trajectoryAnalysisArgs <- Trajectories::createTrajectoryAnalysisArgs(minimumDaysBetweenEvents = 1,
+  trajectoryAnalysisArgs <- Trajectories:::createTrajectoryAnalysisArgs(minimumDaysBetweenEvents = 1,
                                                                        maximumDaysBetweenEvents = 365*120,
                                                                        minPatientsPerEventPair = 5,
                                                                        addConditions=T,
@@ -46,29 +46,29 @@ testthat::test_that("No significant event pairs in random data", {
 
 
   #Create output folder for this analysis
-  outputFolder<-Trajectories::GetOutputFolder(trajectoryLocalArgs,trajectoryAnalysisArgs,createIfMissing=T)
+  outputFolder<-Trajectories:::GetOutputFolder(trajectoryLocalArgs,trajectoryAnalysisArgs,createIfMissing=T)
   print(paste0('Test that output folder ',outputFolder,' exists: ',dir.exists(outputFolder)))
   testthat::expect_equal(dir.exists(outputFolder), TRUE)
 
   # Set up logger
-  Trajectories::InitLogger(logfile = file.path(outputFolder,'log.txt'), threshold = logger:::INFO)
+  Trajectories:::InitLogger(logfile = file.path(outputFolder,'log.txt'), threshold = 'INFO')
 
   #Remove output files (if exist from previous run)
   removeTestableOutputFiles(trajectoryLocalArgs,trajectoryAnalysisArgs)
 
   # Create new cohort table for this package to results schema & fill it in (all having cohort_id=1 in cohort data)
-  Trajectories::createAndFillCohortTable(connection=connection,
+  Trajectories:::createAndFillCohortTable(connection=connection,
                                          trajectoryAnalysisArgs=trajectoryAnalysisArgs,
                                          trajectoryLocalArgs=trajectoryLocalArgs)
 
   # Create database tables of all event pairs (patient level data + summary statistics)
-  Trajectories::createEventPairsTable(connection=connection,
+  Trajectories:::createEventPairsTable(connection=connection,
                                       trajectoryAnalysisArgs=trajectoryAnalysisArgs,
                                       trajectoryLocalArgs=trajectoryLocalArgs)
 
   #querySql(connection, glue::glue('SELECT COUNT(*) AS TOTAL FROM {trajectoryLocalArgs$resultsSchema}.{trajectoryLocalArgs$prefixForResultTableNames}E1E2_model'))
 
-  Trajectories::runDiscoveryAnalysis(connection=connection,
+  Trajectories:::runDiscoveryAnalysis(connection=connection,
                                      trajectoryAnalysisArgs=trajectoryAnalysisArgs,
                                      trajectoryLocalArgs=trajectoryLocalArgs)
 
@@ -101,7 +101,7 @@ testthat::test_that("Test ability to detect a synthetic event pair in data", {
   addRandomEvents(connection,n_per_person_range=c(0,10),exclude_concept_ids=c(317009,255848)) # Add up to 10 random events per each patient, except events 317009 and 255848
 
 
-  trajectoryAnalysisArgs <- Trajectories::createTrajectoryAnalysisArgs(minimumDaysBetweenEvents = 1,
+  trajectoryAnalysisArgs <- Trajectories:::createTrajectoryAnalysisArgs(minimumDaysBetweenEvents = 1,
                                                                        maximumDaysBetweenEvents = 365*120,
                                                                        minPatientsPerEventPair = 10,
                                                                        addConditions=T,
@@ -116,22 +116,22 @@ testthat::test_that("Test ability to detect a synthetic event pair in data", {
 
 
   #Create output folder for this analysis
-  outputFolder<-Trajectories::GetOutputFolder(trajectoryLocalArgs,trajectoryAnalysisArgs,createIfMissing=T)
+  outputFolder<-Trajectories:::GetOutputFolder(trajectoryLocalArgs,trajectoryAnalysisArgs,createIfMissing=T)
 
   #Remove output files (if exist from previous run)
   removeTestableOutputFiles(trajectoryLocalArgs,trajectoryAnalysisArgs)
 
   # Create new cohort table for this package to results schema & fill it in (all having cohort_id=1 in cohort data)
-  Trajectories::createAndFillCohortTable(connection=connection,
+  Trajectories:::createAndFillCohortTable(connection=connection,
                                          trajectoryAnalysisArgs=trajectoryAnalysisArgs,
                                          trajectoryLocalArgs=trajectoryLocalArgs)
 
   # Create database tables of all event pairs (patient level data + summary statistics)
-  Trajectories::createEventPairsTable(connection=connection,
+  Trajectories:::createEventPairsTable(connection=connection,
                                       trajectoryAnalysisArgs=trajectoryAnalysisArgs,
                                       trajectoryLocalArgs=trajectoryLocalArgs)
 
-  Trajectories::runDiscoveryAnalysis(connection=connection,
+  Trajectories:::runDiscoveryAnalysis(connection=connection,
                                      trajectoryAnalysisArgs=trajectoryAnalysisArgs,
                                      trajectoryLocalArgs=trajectoryLocalArgs)
 
@@ -183,7 +183,7 @@ testthat::test_that("Test ability to detect a synthetic event pair association (
   addRandomEvents(connection,n_per_person_range=c(0,10),exclude_concept_ids=c(317009,255848)) # Add up to 10 random events per each patient, except events 317009 and 255848
 
 
-  trajectoryAnalysisArgs <- Trajectories::createTrajectoryAnalysisArgs(minimumDaysBetweenEvents = 1,
+  trajectoryAnalysisArgs <- Trajectories:::createTrajectoryAnalysisArgs(minimumDaysBetweenEvents = 1,
                                                                        maximumDaysBetweenEvents = 365*120,
                                                                        minPatientsPerEventPair = 20,
                                                                        addConditions=T,
@@ -198,22 +198,22 @@ testthat::test_that("Test ability to detect a synthetic event pair association (
 
 
   #Create output folder for this analysis
-  outputFolder<-Trajectories::GetOutputFolder(trajectoryLocalArgs,trajectoryAnalysisArgs,createIfMissing=T)
+  outputFolder<-Trajectories:::GetOutputFolder(trajectoryLocalArgs,trajectoryAnalysisArgs,createIfMissing=T)
 
   #Remove output files (if exist from previous run)
   removeTestableOutputFiles(trajectoryLocalArgs,trajectoryAnalysisArgs)
 
   # Create new cohort table for this package to results schema & fill it in (all having cohort_id=1 in cohort data)
-  Trajectories::createAndFillCohortTable(connection=connection,
+  Trajectories:::createAndFillCohortTable(connection=connection,
                                          trajectoryAnalysisArgs=trajectoryAnalysisArgs,
                                          trajectoryLocalArgs=trajectoryLocalArgs)
 
   # Create database tables of all event pairs (patient level data + summary statistics)
-  Trajectories::createEventPairsTable(connection=connection,
+  Trajectories:::createEventPairsTable(connection=connection,
                                       trajectoryAnalysisArgs=trajectoryAnalysisArgs,
                                       trajectoryLocalArgs=trajectoryLocalArgs)
 
-  Trajectories::runDiscoveryAnalysis(connection=connection,
+  Trajectories:::runDiscoveryAnalysis(connection=connection,
                                      trajectoryAnalysisArgs=trajectoryAnalysisArgs,
                                      trajectoryLocalArgs=trajectoryLocalArgs)
 
@@ -264,7 +264,7 @@ testthat::test_that("Test ability to detect a longer trajectory (consisting of 2
   addRandomEvents(connection,n_per_person_range=c(0,10),exclude_concept_ids=c(317009,255848,4299128)) # Add up to 10 random events per each patient, except events 317009 and 255848
 
 
-  trajectoryAnalysisArgs <- Trajectories::createTrajectoryAnalysisArgs(minimumDaysBetweenEvents = 1,
+  trajectoryAnalysisArgs <- Trajectories:::createTrajectoryAnalysisArgs(minimumDaysBetweenEvents = 1,
                                                                        maximumDaysBetweenEvents = 365*120,
                                                                        minPatientsPerEventPair = 19,
                                                                        addConditions=T,
@@ -279,24 +279,24 @@ testthat::test_that("Test ability to detect a longer trajectory (consisting of 2
 
 
   #Create output folder for this analysis
-  outputFolder<-Trajectories::GetOutputFolder(trajectoryLocalArgs,trajectoryAnalysisArgs,createIfMissing=T)
+  outputFolder<-Trajectories:::GetOutputFolder(trajectoryLocalArgs,trajectoryAnalysisArgs,createIfMissing=T)
 
   # Set up logger (when debugging only)
-  #Trajectories::InitLogger(logfile = file.path(outputFolder,'log.txt'), threshold = logger:::DEBUG)
+  #Trajectories:::InitLogger(logfile = file.path(outputFolder,'log.txt'), threshold = 'DEBUG')
 
   #Remove output files (if exist from previous run)
   removeTestableOutputFiles(trajectoryLocalArgs,trajectoryAnalysisArgs)
 
   # Create new cohort table for this package to results schema & fill it in (all having cohort_id=1 in cohort data)
-  Trajectories::createAndFillCohortTable(connection=connection,
+  Trajectories:::createAndFillCohortTable(connection=connection,
                                          trajectoryAnalysisArgs=trajectoryAnalysisArgs,
                                          trajectoryLocalArgs=trajectoryLocalArgs)
 
   # Create database tables of all event pairs (patient level data + summary statistics)
-  Trajectories::createEventPairsTable(connection=connection,
+  Trajectories:::createEventPairsTable(connection=connection,
                                       trajectoryAnalysisArgs=trajectoryAnalysisArgs,
                                       trajectoryLocalArgs=trajectoryLocalArgs)
-  Trajectories::runDiscoveryAnalysis(connection=connection,
+  Trajectories:::runDiscoveryAnalysis(connection=connection,
                                      trajectoryAnalysisArgs=trajectoryAnalysisArgs,
                                      trajectoryLocalArgs=trajectoryLocalArgs)
 
@@ -369,7 +369,7 @@ testthat::test_that("Test that forceRecalculation=F does not cause any error", {
   addRandomEvents(connection,n_per_person_range=c(0,10),exclude_concept_ids=c(317009,255848)) # Add up to 10 random events per each patient, except events 317009 and 255848
 
 
-  trajectoryAnalysisArgs <- Trajectories::createTrajectoryAnalysisArgs(minimumDaysBetweenEvents = 1,
+  trajectoryAnalysisArgs <- Trajectories:::createTrajectoryAnalysisArgs(minimumDaysBetweenEvents = 1,
                                                                        maximumDaysBetweenEvents = 365*120,
                                                                        minPatientsPerEventPair = 10,
                                                                        addConditions=T,
@@ -384,23 +384,23 @@ testthat::test_that("Test that forceRecalculation=F does not cause any error", {
 
 
   #Create output folder for this analysis
-  outputFolder<-Trajectories::GetOutputFolder(trajectoryLocalArgs,trajectoryAnalysisArgs,createIfMissing=T)
+  outputFolder<-Trajectories:::GetOutputFolder(trajectoryLocalArgs,trajectoryAnalysisArgs,createIfMissing=T)
 
   #Remove output files (if exist from previous run)
   removeTestableOutputFiles(trajectoryLocalArgs,trajectoryAnalysisArgs)
 
   # Create new cohort table for this package to results schema & fill it in (all having cohort_id=1 in cohort data)
-  Trajectories::createAndFillCohortTable(connection=connection,
+  Trajectories:::createAndFillCohortTable(connection=connection,
                                          trajectoryAnalysisArgs=trajectoryAnalysisArgs,
                                          trajectoryLocalArgs=trajectoryLocalArgs)
 
   # Create database tables of all event pairs (patient level data + summary statistics)
-  Trajectories::createEventPairsTable(connection=connection,
+  Trajectories:::createEventPairsTable(connection=connection,
                                       trajectoryAnalysisArgs=trajectoryAnalysisArgs,
                                       trajectoryLocalArgs=trajectoryLocalArgs)
 
   #no previous results
-  Trajectories::runDiscoveryAnalysis(connection=connection,
+  Trajectories:::runDiscoveryAnalysis(connection=connection,
                                      trajectoryAnalysisArgs=trajectoryAnalysisArgs,
                                      trajectoryLocalArgs=trajectoryLocalArgs,
                                      forceRecalculation = F)
@@ -410,7 +410,7 @@ testthat::test_that("Test that forceRecalculation=F does not cause any error", {
   testthat::expect_gte(num.pairs.significant,1)
 
   #create new results
-  Trajectories::runDiscoveryAnalysis(connection=connection,
+  Trajectories:::runDiscoveryAnalysis(connection=connection,
                                      trajectoryAnalysisArgs=trajectoryAnalysisArgs,
                                      trajectoryLocalArgs=trajectoryLocalArgs,
                                      forceRecalculation = T)
@@ -418,7 +418,7 @@ testthat::test_that("Test that forceRecalculation=F does not cause any error", {
   testthat::expect_equal(nrow(tested_event_pairs),num.pairs.significant)
 
   #overwrite results
-  Trajectories::runDiscoveryAnalysis(connection=connection,
+  Trajectories:::runDiscoveryAnalysis(connection=connection,
                                      trajectoryAnalysisArgs=trajectoryAnalysisArgs,
                                      trajectoryLocalArgs=trajectoryLocalArgs,
                                      forceRecalculation = F)

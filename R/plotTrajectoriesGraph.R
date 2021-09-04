@@ -9,7 +9,6 @@
 #' @param title Title of the graph
 #'
 #' @return
-#' @export
 #'
 #' @examples
 plotTrajectoriesGraph<-function(g,layout=igraph::layout_nicely(g),outputPdfFullpath=F,nodesizes=igraph::V(g)$count,linknumbers=igraph::E(g)$numcohortExact, linklabels=NA, title="") {
@@ -25,7 +24,7 @@ plotTrajectoriesGraph<-function(g,layout=igraph::layout_nicely(g),outputPdfFullp
   }
 
   if(length(igraph::E(g))==0) {
-    logger::log_warn('There are 0 edges on that graph. Nothing to plot.')
+    ParallelLogger::logWarn('There are 0 edges on that graph. Nothing to plot.')
     return()
   }
 
@@ -103,7 +102,7 @@ plotTrajectoriesGraph<-function(g,layout=igraph::layout_nicely(g),outputPdfFullp
 
   if(outputPdfFullpath!=F) {
     dev.off()
-    logger::log_info(paste0('PDF graph was written to ',outputPdfFullpath))
+    ParallelLogger::logInfo('PDF graph was written to ',outputPdfFullpath)
   }
 
 }

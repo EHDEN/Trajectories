@@ -7,7 +7,7 @@
 TrajectoryAnalysisArgsFromInputFolder(trajectoryLocalArgs)
 }
 \arguments{
-\item{trajectoryLocalArgs}{Object created by Trajectories::createTrajectoryLocalArgs() method}
+\item{trajectoryLocalArgs}{Object created by Trajectories:::createTrajectoryLocalArgs() method}
 }
 \value{
 TrajectoryLocalArgs object

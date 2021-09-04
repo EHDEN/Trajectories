@@ -1,6 +1,7 @@
 requireNamespace("SqlRender", quietly = TRUE)
 requireNamespace("logger", quietly = TRUE)
 requireNamespace("openxlsx", quietly = TRUE)
+requireNamespace("dplyr", quietly = TRUE)
 
 
 #' Runs the analysis that detects statistically significant directional event pairs and writes the results to file. Data is taken from database and it is expected that the tables are created by function createEventPairsTable()
@@ -10,7 +11,6 @@ requireNamespace("openxlsx", quietly = TRUE)
 #' @param trajectoryLocalArgs TrajectoryLocalArgs object that must be created by createTrajectoryLocalArgs() method
 #' @param forceRecalculation Set to TRUE if you wish to recalculate p-values for all pairs again. If it is set to FALSE, it avoids overcalculating p-values for pairs that have been analyzed already.
 #' @return
-#' @export
 #'
 #' @examples
 runDiscoveryAnalysis<-function(connection,
@@ -18,11 +18,11 @@ runDiscoveryAnalysis<-function(connection,
                                trajectoryLocalArgs,
                                forceRecalculation=F) {
 
-  logger::log_info("Begin the analysis of detecting statistically significant directional event pairs...")
+  ParallelLogger::logInfo("Begin the analysis of detecting statistically significant directional event pairs...")
 
 
   #Delete the old results files if exist
-  outputFolder<-Trajectories::GetOutputFolder(trajectoryLocalArgs,trajectoryAnalysisArgs)
+  outputFolder<-Trajectories:::GetOutputFolder(trajectoryLocalArgs,trajectoryAnalysisArgs)
   allResultsFilenameTsv = file.path(outputFolder,'tables','event_pairs_tested.tsv')
   allResultsFilenameXls = file.path(outputFolder,'tables','event_pairs_tested.xlsx')
   directionalResultsFilenameTsv = file.path(outputFolder,'tables','event_pairs_directional.tsv')
@@ -37,20 +37,20 @@ runDiscoveryAnalysis<-function(connection,
   if(file.exists(processDiagramfilename)) file.remove(processDiagramfilename)
 
   #Set SQL role of the database session
-  Trajectories::setRole(connection, trajectoryLocalArgs$sqlRole)
+  Trajectories:::setRole(connection, trajectoryLocalArgs$sqlRole)
 
   #Get pairs
   pairs=Trajectories:::getAllPairs(connection,
                                    trajectoryAnalysisArgs,
                                    trajectoryLocalArgs)
 
-  logger::log_info("Number of event pairs to analyze: {nrow(pairs)}")
+  ParallelLogger::logInfo("Number of event pairs to analyze: ",nrow(pairs))
   if(nrow(pairs)==0) {
-    logger::log_info("Nothing to analyze. Exiting.")
+    ParallelLogger::logInfo("Nothing to analyze. Exiting.")
     return()
   }
 
-  logger::log_info("Matching case and control groups for calculating relative risk (RR), its p-value and power...")
+  ParallelLogger::logInfo("Matching case and control groups for calculating relative risk (RR), its p-value and power...")
   pairs<-Trajectories:::calcRRandPower(connection,
                                        trajectoryAnalysisArgs,
                                        trajectoryLocalArgs,
@@ -59,21 +59,6 @@ runDiscoveryAnalysis<-function(connection,
                                        #powerPvalCutoff=0.05, #no correction here
                                        forceRecalculation = forceRecalculation
   )
-
-  #get Pairs that are having R outside of range RRrangeToSkip and sufficient power for detecting RR=10
-  #pairs <- pairs %>% filter((RR < trajectoryAnalysisArgs$RRrangeToSkip[1] | RR >= trajectoryAnalysisArgs$RRrangeToSkip[2]))
-  #logger::log_info("Number of event pairs having RR outside of range [{trajectoryAnalysisArgs$RRrangeToSkip[1]},{trajectoryAnalysisArgs$RRrangeToSkip[2]}): {nrow(pairs)}")
-  #pairs <- pairs %>% filter(RR_POWER>0.8)
-  #logger::log_info("Number of event pairs having RR outside of range [{trajectoryAnalysisArgs$RRrangeToSkip[1]},{trajectoryAnalysisArgs$RRrangeToSkip[2]}) and sufficient power to detect RR=10: {nrow(pairs)}")
-  #logger::log_info("Difference of RR from 1.0 of these pairs will be tested.")
-
-  #RR tests
-  ##logger::log_info("Running significance tests for RR values (to eliminate such event pairs from the directionality analysis where relative risk is too close to 1)...")
-  #pairs<-Trajectories:::runRRTests(connection,
-  #                                 trajectoryAnalysisArgs,
-  #                                 trajectoryLocalArgs,
-  #                                 pairs,
-  #                                 forceRecalculation=forceRecalculation)
 
   #Multple testing correction for p-values of RR
   Trajectories:::adjustPValues(connection,trajectoryLocalArgs,dbcol.pvalue='RR_PVALUE',dbcol.pval.signficiant='RR_SIGNIFICANT')
@@ -85,15 +70,15 @@ runDiscoveryAnalysis<-function(connection,
   Trajectories:::makeRRPvaluePlot(pairs,RRPvaluePlotFilename,trajectoryAnalysisArgs)
 
   #get Pairs that are having significant RR
-  pairs <- pairs %>% filter(!is.na(RR_SIGNIFICANT) & RR_SIGNIFICANT=='*')
-  logger::log_info("Number of event pairs having significant RR: {nrow(pairs)}")
+  pairs <- pairs %>% dplyr::filter(!is.na(RR_SIGNIFICANT) & RR_SIGNIFICANT=='*')
+  ParallelLogger::logInfo("Number of event pairs having significant RR: ",nrow(pairs))
 
   #Pairs that have RR outside skipped range
-  pairs <- pairs %>% filter(RR < trajectoryAnalysisArgs$RRrangeToSkip[1] | RR >= trajectoryAnalysisArgs$RRrangeToSkip[2])
-  logger::log_info("Out of these, number of event pairs having RR outside of range [{trajectoryAnalysisArgs$RRrangeToSkip[1]},{trajectoryAnalysisArgs$RRrangeToSkip[2]}): {nrow(pairs)}")
+  pairs <- pairs %>% dplyr::filter(RR < trajectoryAnalysisArgs$RRrangeToSkip[1] | RR >= trajectoryAnalysisArgs$RRrangeToSkip[2])
+  ParallelLogger::logInfo("Out of these, number of event pairs having RR outside of range [",trajectoryAnalysisArgs$RRrangeToSkip[1],",",trajectoryAnalysisArgs$RRrangeToSkip[2],"): ",nrow(pairs))
 
   #Run directionality test for pairs having significant RR and RR outside skip-range
-  logger::log_info("Running direction tests for {nrow(pairs)} event pairs...")
+  ParallelLogger::logInfo("Running direction tests for ",nrow(pairs)," event pairs...")
   pairs<-Trajectories:::runDirectionTests(connection,
                                           trajectoryAnalysisArgs,
                                           trajectoryLocalArgs,
@@ -109,15 +94,15 @@ runDiscoveryAnalysis<-function(connection,
   #write results to file
   write.table(pairs, file=allResultsFilenameTsv, quote=FALSE, sep='\t', col.names = NA)
   openxlsx::write.xlsx(pairs, allResultsFilenameXls)
-  logger::log_info('All tested pairs were written to {allResultsFilenameTsv} and {allResultsFilenameXls}.')
+  ParallelLogger::logInfo('All tested pairs were written to ',allResultsFilenameTsv,' and ',allResultsFilenameXls,'.')
 
-  p<-pairs %>% filter(!is.na(DIRECTIONAL_SIGNIFICANT) & DIRECTIONAL_SIGNIFICANT=='*')
+  p<-pairs %>% dplyr::filter(!is.na(DIRECTIONAL_SIGNIFICANT) & DIRECTIONAL_SIGNIFICANT=='*')
   write.table(p, file=directionalResultsFilenameTsv, quote=FALSE, sep='\t', col.names = NA)
   openxlsx::write.xlsx(p, directionalResultsFilenameXls)
-  logger::log_info('All directional pairs were written to {directionalResultsFilenameTsv} and {directionalResultsFilenameXls}')
+  ParallelLogger::logInfo('All directional pairs were written to ',directionalResultsFilenameTsv,' and ',directionalResultsFilenameXls)
 
   # Create validation setup for validating the results in another database
-  Trajectories::createValidationSetup(trajectoryAnalysisArgs,
+  Trajectories:::createValidationSetup(trajectoryAnalysisArgs,
                                       trajectoryLocalArgs)
 
 
@@ -133,7 +118,6 @@ runDiscoveryAnalysis<-function(connection,
 #' @param minRelativeRiskToValidate Relative risk that is used as a minimum threshold for filtering pairs from DISCOVERY STUDY that are being validated
 #'
 #' @return
-#' @export
 #'
 #' @examples
 runValidationAnalysis<-function(connection,
@@ -141,11 +125,11 @@ runValidationAnalysis<-function(connection,
                                trajectoryLocalArgs,
                                forceRecalculation=F) {
 
-  logger::log_info("Begin the analysis of validation given directional event pairs...")
+  ParallelLogger::logInfo("Begin the analysis of validation given directional event pairs...")
 
 
   #Delete the old results files if exist
-  outputFolder<-Trajectories::GetOutputFolder(trajectoryLocalArgs,trajectoryAnalysisArgs)
+  outputFolder<-Trajectories:::GetOutputFolder(trajectoryLocalArgs,trajectoryAnalysisArgs)
   allResultsFilenameTsv = file.path(outputFolder,'tables','event_pairs_tested.tsv')
   allResultsFilenameXls = file.path(outputFolder,'tables','event_pairs_tested.xlsx')
   directionalResultsFilenameTsv = file.path(outputFolder,'tables','event_pairs_directional.tsv')
@@ -161,7 +145,7 @@ runValidationAnalysis<-function(connection,
 
 
   #Set SQL role of the database session
-  Trajectories::setRole(connection, trajectoryLocalArgs$sqlRole)
+  Trajectories:::setRole(connection, trajectoryLocalArgs$sqlRole)
 
   #clear previous results
   if(forceRecalculation==T) Trajectories:::clearOldResultsFromDb(connection,
@@ -172,28 +156,28 @@ runValidationAnalysis<-function(connection,
   pairs=Trajectories:::getAllPairs(connection,
                                    trajectoryAnalysisArgs,
                                    trajectoryLocalArgs)
-  logger::log_info("Number of event pairs to validate: {nrow(pairs)}")
+  ParallelLogger::logInfo("Number of event pairs to validate: ",nrow(pairs))
   if(nrow(pairs)==0) {
-    logger::log_info("Nothing to analyze. Exiting.")
+    ParallelLogger::logInfo("Nothing to analyze. Exiting.")
     return()
   }
 
   #get pairs that are having RR_IN_PREVIOUS_STUDY outside the range of trajectoryAnalysisArgs$RRrangeToSkip
-  pairs <- pairs %>% filter(RR_IN_PREVIOUS_STUDY < trajectoryAnalysisArgs$RRrangeToSkip[1] | RR_IN_PREVIOUS_STUDY >= trajectoryAnalysisArgs$RRrangeToSkip[2])
-  logger::log_info("Number of event pairs having RR_IN_PREVIOUS_STUDY outside the range [{trajectoryAnalysisArgs$RRrangeToSkip[1]},{trajectoryAnalysisArgs$RRrangeToSkip[2]}): {nrow(pairs)}")
+  pairs <- pairs %>% dplyr::filter(RR_IN_PREVIOUS_STUDY < trajectoryAnalysisArgs$RRrangeToSkip[1] | RR_IN_PREVIOUS_STUDY >= trajectoryAnalysisArgs$RRrangeToSkip[2])
+  ParallelLogger::logInfo("Number of event pairs having RR_IN_PREVIOUS_STUDY outside the range [",trajectoryAnalysisArgs$RRrangeToSkip[1],",",trajectoryAnalysisArgs$RRrangeToSkip[2],"): ",nrow(pairs))
 
   #get pairs that have E1_COUNT_IN_EVENTS=0 or E2_COUNT_IN_EVENTS=0
-  num.zerocount.events <- nrow(pairs %>% filter(E1_COUNT_IN_EVENTS == 0 | E2_COUNT_IN_EVENTS == 0))
-  pairs <- pairs %>% filter(E1_COUNT_IN_EVENTS > 0 & E2_COUNT_IN_EVENTS > 0)
-  logger::log_info("From those, the number of event pairs where at least one event never occurs in our data: {num.zerocount.events}")
+  num.zerocount.events <- nrow(pairs %>% dplyr::filter(E1_COUNT_IN_EVENTS == 0 | E2_COUNT_IN_EVENTS == 0))
+  pairs <- pairs %>% dplyr::filter(E1_COUNT_IN_EVENTS > 0 & E2_COUNT_IN_EVENTS > 0)
+  ParallelLogger::logInfo("From those, the number of event pairs where at least one event never occurs in our data: ",num.zerocount.events)
 
   #get pairs that have E1_BEFORE_E2_COUNT_IN_EVENTS>0
-  num.zerocount.pairs <- nrow(pairs %>% filter(E1_BEFORE_E2_COUNT_IN_EVENTS==0))
-  pairs <- pairs %>% filter(E1_BEFORE_E2_COUNT_IN_EVENTS > 0)
-  logger::log_info("From the remaining pairs, the number of event pairs that never happen in E1->E2 order in our data (even if such sequences exist, these do not satisfy the analysis requirements for the pairs): {num.zerocount.pairs}")
+  num.zerocount.pairs <- nrow(pairs %>% dplyr::filter(E1_BEFORE_E2_COUNT_IN_EVENTS==0))
+  pairs <- pairs %>% dplyr::filter(E1_BEFORE_E2_COUNT_IN_EVENTS > 0)
+  ParallelLogger::logInfo("From the remaining pairs, the number of event pairs that never happen in E1->E2 order in our data (even if such sequences exist, these do not satisfy the analysis requirements for the pairs): ",num.zerocount.pairs)
 
 
-  logger::log_info("Matching case and control groups for calculating relative risk (RR) and p-value...")
+  ParallelLogger::logInfo("Matching case and control groups for calculating relative risk (RR) and p-value...")
   pairs<-Trajectories:::calcRRandPower(connection,
                                        trajectoryAnalysisArgs,
                                        trajectoryLocalArgs,
@@ -213,20 +197,20 @@ runValidationAnalysis<-function(connection,
   Trajectories:::makeRRPvaluePlot(pairs,RRPvaluePlotFilename,trajectoryAnalysisArgs)
 
   #get Pairs that are having significant RR
-  pairs <- pairs %>% filter(!is.na(RR_SIGNIFICANT) & RR_SIGNIFICANT=='*')
-  logger::log_info("Number of event pairs having significant RR: {nrow(pairs)}")
+  pairs <- pairs %>% dplyr::filter(!is.na(RR_SIGNIFICANT) & RR_SIGNIFICANT=='*')
+  ParallelLogger::logInfo("Number of event pairs having significant RR: ",nrow(pairs))
 
   #Pairs that have RR outside skipped range
-  pairs <- pairs %>% filter(!is.na(RR) & (RR < trajectoryAnalysisArgs$RRrangeToSkip[1] | RR >= trajectoryAnalysisArgs$RRrangeToSkip[2]))
-  logger::log_info("Out of these, number of event pairs having RR outside of range [{trajectoryAnalysisArgs$RRrangeToSkip[1]},{trajectoryAnalysisArgs$RRrangeToSkip[2]}): {nrow(pairs)}")
+  pairs <- pairs %>% dplyr::filter(!is.na(RR) & (RR < trajectoryAnalysisArgs$RRrangeToSkip[1] | RR >= trajectoryAnalysisArgs$RRrangeToSkip[2]))
+  ParallelLogger::logInfo("Out of these, number of event pairs having RR outside of range [",trajectoryAnalysisArgs$RRrangeToSkip[1],",",trajectoryAnalysisArgs$RRrangeToSkip[2],"): ",nrow(pairs))
 
   #get pairs having significant RR but having the opposite RR direction
-  pairs.with.opposite.rr <- nrow(pairs %>% filter(!is.na(RR_SIGNIFICANT) & RR_SIGNIFICANT=='*' & sign(1-RR_IN_PREVIOUS_STUDY)!=sign(1-RR)))
-  pairs <- pairs %>% filter(!is.na(RR_SIGNIFICANT) & RR_SIGNIFICANT=='*' & sign(1-RR_IN_PREVIOUS_STUDY)==sign(1-RR))
-  logger::log_info("Number of event pairs having significant RR outside the skip range [{trajectoryAnalysisArgs$RRrangeToSkip[1]},{trajectoryAnalysisArgs$RRrangeToSkip[2]}) but the direction of RR is different from discovery study: {pairs.with.opposite.rr} (these will be skipped from the remaining of the analysis)")
+  pairs.with.opposite.rr <- nrow(pairs %>% dplyr::filter(!is.na(RR_SIGNIFICANT) & RR_SIGNIFICANT=='*' & sign(1-RR_IN_PREVIOUS_STUDY)!=sign(1-RR)))
+  pairs <- pairs %>% dplyr::filter(!is.na(RR_SIGNIFICANT) & RR_SIGNIFICANT=='*' & sign(1-RR_IN_PREVIOUS_STUDY)==sign(1-RR))
+  ParallelLogger::logInfo("Number of event pairs having significant RR outside the skip range [",trajectoryAnalysisArgs$RRrangeToSkip[1],",",trajectoryAnalysisArgs$RRrangeToSkip[2],") but the direction of RR is different from discovery study: ",pairs.with.opposite.rr," (these will be skipped from the remaining of the analysis)")
 
   #Run directionality test for pairs having significant RR and RR outside skip-range
-  logger::log_info("Running direction tests for {nrow(pairs)} event pairs...")
+  ParallelLogger::logInfo("Running direction tests for ",nrow(pairs)," event pairs...")
   pairs<-Trajectories:::runDirectionTests(connection,
                                           trajectoryAnalysisArgs,
                                           trajectoryLocalArgs,
@@ -244,16 +228,16 @@ runValidationAnalysis<-function(connection,
   #write results to file
   write.table(pairs, file=allResultsFilenameTsv, quote=FALSE, sep='\t', col.names = NA)
   openxlsx::write.xlsx(pairs, allResultsFilenameXls)
-  logger::log_info('All tested pairs were written to {allResultsFilenameTsv} and {allResultsFilenameXls}.')
+  ParallelLogger::logInfo('All tested pairs were written to ',allResultsFilenameTsv,' and ',allResultsFilenameXls)
 
-  p<-pairs %>% filter(!is.na(DIRECTIONAL_SIGNIFICANT) & DIRECTIONAL_SIGNIFICANT=='*')
+  p<-pairs %>% dplyr::filter(!is.na(DIRECTIONAL_SIGNIFICANT) & DIRECTIONAL_SIGNIFICANT=='*')
   write.table(p, file=directionalResultsFilenameTsv, quote=FALSE, sep='\t', col.names = NA)
   openxlsx::write.xlsx(p, directionalResultsFilenameXls)
-  logger::log_info('All directional pairs were written to {directionalResultsFilenameTsv} and {directionalResultsFilenameXls}')
+  ParallelLogger::logInfo('All directional pairs were written to ',directionalResultsFilenameTsv,' and ',directionalResultsFilenameXls)
 
 
   # Create validation setup for validating the (validation) results in another database
-  Trajectories::createValidationSetup(trajectoryAnalysisArgs,
+  Trajectories:::createValidationSetup(trajectoryAnalysisArgs,
                                       trajectoryLocalArgs)
 
 
@@ -271,15 +255,15 @@ addSignalToBackground <- function(case_control, alpha=0.2){
 
   expected_prevalence=sum(case_control$group_prob * case_control$match_prob)
   if(expected_prevalence*(1+alpha)>1) {
-    logger::log_info('Prevalence in control group is already {round(expected_prevalence*100)}%, cannot increase it by {round(alpha*100)}% to calculate power.')
+    ParallelLogger::logInfo('Prevalence in control group is already ',round(expected_prevalence*100),'%, cannot increase it by {',round(alpha*100),'% to calculate power.')
     return(NA)
   }
 
   extra_total=ceiling(alpha*sum(case_control$CONTROL_D2))
 
   case_control<-case_control %>%
-      mutate(CONTROL_D2_ELEVATED=round((1+alpha)*CONTROL_D2)) %>% #note that some bins might be overfilled after this step - need to limit them (next command)
-      mutate(CONTROL_D2_ELEVATED=ifelse(CONTROL_D2_ELEVATED<=CONTROL_COUNT,CONTROL_D2_ELEVATED,CONTROL_COUNT))
+    dplyr::mutate(CONTROL_D2_ELEVATED=round((1+alpha)*CONTROL_D2)) %>% #note that some bins might be overfilled after this step - need to limit them (next command)
+    dplyr::mutate(CONTROL_D2_ELEVATED=ifelse(CONTROL_D2_ELEVATED<=CONTROL_COUNT,CONTROL_D2_ELEVATED,CONTROL_COUNT))
 
   #How many additional E2 counts do we need to add
   extra_left = extra_total - (sum(case_control$CONTROL_D2_ELEVATED)-sum(case_control$CONTROL_D2))
@@ -297,7 +281,7 @@ addSignalToBackground <- function(case_control, alpha=0.2){
 
   if(sum(case_control$CONTROL_D2_ELEVATED>case_control$CONTROL_COUNT)>0) stop('Error in addSignalToBackground. Increased E2 count in some bins > total count')
 
-  logger::log_debug(paste0('Increased E2 counts in CONTROL group of case_control dataframe by 20%. Old count: ',sum(case_control$CONTROL_D2),'. New count: ',sum(case_control$CONTROL_D2_ELEVATED),'.'))
+  ParallelLogger::logDebug('Increased E2 counts in CONTROL group of case_control dataframe by 20%. Old count: ',sum(case_control$CONTROL_D2),'. New count: ',sum(case_control$CONTROL_D2_ELEVATED),'.')
   return(case_control$CONTROL_D2_ELEVATED)
 
 }
@@ -311,8 +295,8 @@ getPValueForAccociation<-function(expected_prob,observation_count,observed_match
 
     #if relative risk > 1
 
-    logger::log_debug('Actual prevalence of E2 in (adjusted) control group is {round(expected_prob*100)}% (and in case group {round(observed_matches*100/observation_count)}%). If the expected prevalence of E2 in case group is {round(expected_prob*100)}%, what is the probability that we observe E2 in case group more than {observed_matches-1} (we actually did {observed_matches})?')
-    logger::log_debug('If the expected prevalence of event2_concept_id in case group is {round(expected_prob*100)}%, what is the probability that we observe event2_concept_id in case group more than {observed_matches-1}?')
+    ParallelLogger::logDebug('Actual prevalence of E2 in (adjusted) control group is ',round(expected_prob*100),'% (and in case group ',round(observed_matches*100/observation_count),'%). If the expected prevalence of E2 in case group is ',round(expected_prob*100),'%, what is the probability that we observe E2 in case group more than ',(observed_matches-1),' (we actually did ',observed_matches,')?')
+    ParallelLogger::logDebug('If the expected prevalence of event2_concept_id in case group is ',round(expected_prob*100),'%, what is the probability that we observe event2_concept_id in case group more than ',(observed_matches-1),'?')
     event_pair_pvalue <- pbinom(q = ifelse(observed_matches==0,0,observed_matches-1), size = observation_count, prob = expected_prob, lower.tail=FALSE)
     return(event_pair_pvalue)
 
@@ -320,8 +304,8 @@ getPValueForAccociation<-function(expected_prob,observation_count,observed_match
 
     #if relative risk <= 1
 
-    logger::log_debug('Actual prevalence of E2 in (adjusted) control group is {round(expected_prob*100)}% (and in case group {round(observed_matches*100/observation_count)}%). If the expected prevalence of E2 in case group is {round(expected_prob*100)}%, what is the probability that we observe E2 in case group less than {observed_matches} (as we actually did)?')
-    logger::log_debug('If the expected prevalence of event2_concept_id in case group is {round(expected_prob*100)}%, what is the probability that we observe event2_concept_id in case group more than {observed_matches}?')
+    ParallelLogger::logDebug('Actual prevalence of E2 in (adjusted) control group is ',round(expected_prob*100),'% (and in case group ',round(observed_matches*100/observation_count),'). If the expected prevalence of E2 in case group is ',round(expected_prob*100),'%, what is the probability that we observe E2 in case group less than ',observed_matches,' (as we actually did)?')
+    ParallelLogger::logDebug('If the expected prevalence of event2_concept_id in case group is ',round(expected_prob*100),'%, what is the probability that we observe event2_concept_id in case group more than ',observed_matches,'?')
     event_pair_pvalue <- pbinom(q = ifelse(observed_matches==0,0,observed_matches), size = observation_count, prob = expected_prob)
     return(event_pair_pvalue)
 
@@ -332,12 +316,12 @@ getPValueForAccociation<-function(expected_prob,observation_count,observed_match
 #pbinom(q = ifelse(eventperiod_count_event1_occurs_first_for_test==0,0,eventperiod_count_event1_occurs_first_for_test-1), size = total_tests, prob = 0.5, lower.tail=FALSE)
 getPValueForDirection<-function(EVENTPERIOD_COUNT_E1_OCCURS_FIRST,EVENTPERIOD_COUNT_E2_OCCURS_FIRST,EVENTPERIOD_COUNT_E1_E2_OCCUR_ON_SAME_DAY) {
   total_tests = EVENTPERIOD_COUNT_E1_OCCURS_FIRST + EVENTPERIOD_COUNT_E2_OCCURS_FIRST + EVENTPERIOD_COUNT_E1_E2_OCCUR_ON_SAME_DAY #We also take into account the number of events on the same day to prevent problem, when 1000 events occur on same day, but 10 times E1 is before E2 and 1 times vice verca and this is significant.
-  logger::log_debug('In case group, event1 occurs {EVENTPERIOD_COUNT_E1_OCCURS_FIRST} times as the first event and {EVENTPERIOD_COUNT_E2_OCCURS_FIRST} as the second event.')
-  logger::log_debug('Both events occur on same day {EVENTPERIOD_COUNT_E1_E2_OCCUR_ON_SAME_DAY} times.')
+  ParallelLogger::logDebug('In case group, event1 occurs ',EVENTPERIOD_COUNT_E1_OCCURS_FIRST,' times as the first event and ',EVENTPERIOD_COUNT_E2_OCCURS_FIRST,' as the second event.')
+  ParallelLogger::logDebug('Both events occur on same day ',EVENTPERIOD_COUNT_E1_E2_OCCUR_ON_SAME_DAY,' times.')
   eventperiod_count_event1_occurs_first_for_test=EVENTPERIOD_COUNT_E1_OCCURS_FIRST + round(EVENTPERIOD_COUNT_E1_E2_OCCUR_ON_SAME_DAY/2)
-  logger::log_debug('If the expected probability of event1 being the first diagnosis is 0.5, what is the probability that we observe event1 as the first event more than {EVENTPERIOD_COUNT_E1_OCCURS_FIRST}+{EVENTPERIOD_COUNT_E1_E2_OCCUR_ON_SAME_DAY}/2-1={eventperiod_count_event1_occurs_first_for_test-1} times out of {total_tests} trials?')
+  ParallelLogger::logDebug('If the expected probability of event1 being the first diagnosis is 0.5, what is the probability that we observe event1 as the first event more than ',EVENTPERIOD_COUNT_E1_OCCURS_FIRST,'+',EVENTPERIOD_COUNT_E1_E2_OCCUR_ON_SAME_DAY,'/2-1=',(eventperiod_count_event1_occurs_first_for_test-1),' times out of ',total_tests,' trials?')
   event_pair_pvalue <- pbinom(q = ifelse(eventperiod_count_event1_occurs_first_for_test==0,0,eventperiod_count_event1_occurs_first_for_test-1), size = total_tests, prob = 0.5, lower.tail=FALSE)
-  logger::log_debug('Answer: p-val={event_pair_pvalue}')
+  ParallelLogger::logDebug('Answer: p-val=',event_pair_pvalue)
   return(event_pair_pvalue)
 }
 
@@ -393,7 +377,7 @@ getPowerRR<-function(case_group_size,control_group_size,num_observations_in_case
   }
 
 
-  logger::log_debug('If E1 increased the prevalence of E2 by {round(rr.threshold,3)}x, we would detect it with given case group size n={case_group_size} with probability {round(power*100)}% (=power).')
+  ParallelLogger::logDebug('If E1 increased the prevalence of E2 by ',round(rr.threshold,3),'x, we would detect it with given case group size n=',case_group_size,' with probability ',round(power*100),'% (=power).')
   return(power)
 
 }
@@ -425,7 +409,7 @@ getPowerDirection<-function(EVENTPERIOD_COUNT_E1_OCCURS_FIRST,EVENTPERIOD_COUNT_
   #power=sum(p.vals<cutoff_pval)/n
   power=sum(p.vals<0.05)/n
 
-  logger::log_debug('If direction E1->E2 were overrepresented {round(rr.threshold,3)}x when compared to E2->E1, we would detect it with probability {round(power*100)}% (=power)')
+  ParallelLogger::logDebug('If direction E1->E2 were overrepresented ',round(rr.threshold,3),'x when compared to E2->E1, we would detect it with probability ',round(power*100),'% (=power)')
   return(power)
 
 }
@@ -434,29 +418,27 @@ getPowerDirection<-function(EVENTPERIOD_COUNT_E1_OCCURS_FIRST,EVENTPERIOD_COUNT_
 
 RRandCI<-function(num_observations_in_cases,case_group_size,num_observations_in_controls,control_group_size) {
 
-  r<-suppressWarnings(epiR::epi.mh(ev.trt=num_observations_in_cases,
-         n.trt=case_group_size,
-         ev.ctrl=num_observations_in_controls,
-         n.ctrl=control_group_size,
-         names=c('1'),
-         method = "risk.ratio",
-         alternative = "two.sided", conf.level = 0.95))
-
-
   a=num_observations_in_cases
   b=case_group_size
   c=num_observations_in_controls
   d=control_group_size
 
-  dat <- matrix(c(a,b-a,c,d-c), nrow = 2, byrow = TRUE)
-  rownames(dat) <- c("E1+", "E1-"); colnames(dat) <- c("E2+", "E2-"); dat
-  r<-suppressWarnings(epi.2by2(dat = as.table(dat), method = "cohort.count",
-              conf.level = 0.95, units = 100, interpret = TRUE,
-              outcome = "as.columns"))
-  pvalue=r$massoc.detail$chi2.strata.uncor$p.value.2s
-  res=r$massoc.detail$RR.strata.wald #RR
-  res$pvalue=pvalue
+  if(d==0) {
+    res=list(est=NA, lower=0, upper=Inf, pvalue=1)
+  } else {
 
+    dat <- matrix(c(a,b-a,c,d-c), nrow = 2, byrow = TRUE)
+    #print(dat)
+    rownames(dat) <- c("E1+", "E1-"); colnames(dat) <- c("E2+", "E2-"); dat
+    r<-suppressWarnings(fisher.test(dat))
+    if(b==0 | c==0) {
+      RR=Inf
+    } else {
+      RR=a/b / (c/d)
+    }
+    res=list(est=RR , lower=NA, upper=NA, pvalue=r$p.value)
+
+  }
 
   return(res)
 }
@@ -472,44 +454,44 @@ calcRRandPower<-function(connection,
                             forceRecalculation=T) {
 
   num.pairs=nrow(pairs)
-  logger::log_info("Calculating relative risk for {num.pairs} event pairs...")
+  ParallelLogger::logInfo('Calculating relative risk for ',num.pairs,' event pairs...')
 
   #Set SQL role of the database session
-  Trajectories::setRole(connection, trajectoryLocalArgs$sqlRole)
+  Trajectories:::setRole(connection, trajectoryLocalArgs$sqlRole)
 
   #Group pairs by E1_CONCEPT_ID (the same case-control group can be used for all of these pairs)
   E1s<-pairs %>%
-    group_by(E1_CONCEPT_ID) %>%
-    summarise(n=n()) %>%
-    arrange(-n)
+    dplyr::group_by(E1_CONCEPT_ID) %>%
+    dplyr::summarise(n=dplyr::n()) %>%
+    dplyr::arrange(-n)
   num.E1s.total <- nrow(E1s)
-  logger::log_info("As there are {num.E1s.total} different first events within these pairs, {num.E1s.total} case-countrol groups are built in total.")
+  ParallelLogger::logInfo('As there are ',num.E1s.total,' different first events within these pairs, ',num.E1s.total,' case-countrol groups are built in total.')
 
   if(forceRecalculation==F) {
     #for how many pairs for each E1, the RR is calculated
     pair_counts_starting_with_E1_and_having_rr_not_calculated<-pairs %>%
-      filter(is.na(RR) | RR==0) %>%
-      group_by(E1_CONCEPT_ID) %>%
-      summarise(n=n()) %>%
-      arrange(-n)
+      dplyr::filter(is.na(RR) | RR==0) %>%
+      dplyr::group_by(E1_CONCEPT_ID) %>%
+      dplyr::summarise(n=dplyr::n()) %>%
+      dplyr::arrange(-n)
 
     #for which pairs all RR-s are NOT fully calculated
     E1s_of_pairs_where_rr_not_fully_calculated <- E1s %>%
-      left_join(pair_counts_starting_with_E1_and_having_rr_not_calculated, by = c("E1_CONCEPT_ID")) %>%
-      filter(n.y!=0) %>%
+      dplyr::left_join(pair_counts_starting_with_E1_and_having_rr_not_calculated, by = c("E1_CONCEPT_ID")) %>%
+      dplyr::filter(n.y!=0) %>%
       dplyr::select(E1_CONCEPT_ID)
     num.E1s.already.calculated=nrow(E1s)-nrow(E1s_of_pairs_where_rr_not_fully_calculated)
-    if(num.E1s.already.calculated>0) logger::log_info("For the pairs of {num.E1s.already.calculated} first events, RR is already calculated. Skipping these from recalculating.")
+    if(num.E1s.already.calculated>0) ParallelLogger::logInfo('For the pairs of ',num.E1s.already.calculated,' first events, RR is already calculated. Skipping these from recalculating.')
 
     #Update pairs and E1s
     pairs <- pairs %>%
-      inner_join(E1s_of_pairs_where_rr_not_fully_calculated, by = c("E1_CONCEPT_ID"))
+      dplyr::inner_join(E1s_of_pairs_where_rr_not_fully_calculated, by = c("E1_CONCEPT_ID"))
     E1s <- pairs %>%
-      group_by(E1_CONCEPT_ID) %>%
-      summarise(n=n()) %>%
-      arrange(-n)
+      dplyr::group_by(E1_CONCEPT_ID) %>%
+      dplyr::summarise(n=dplyr::n()) %>%
+      dplyr::arrange(-n)
     num.already.calculated=num.pairs-nrow(pairs)
-    if(num.already.calculated>0) logger::log_info("Therefore, for {num.already.calculated} pairs, RR is already calculated. Skipping these from recalculating.")
+    if(num.already.calculated>0) ParallelLogger::logInfo('Therefore, for ',num.already.calculated,' pairs, RR is already calculated. Skipping these from recalculating.')
   } else {
     num.E1s.already.calculated=0
     num.already.calculated=0
@@ -521,18 +503,18 @@ calcRRandPower<-function(connection,
   # For each E1, create case-control groups
   if(nrow(E1s)>0) {
     for(j in 1:nrow(E1s)) {
-      diagnosis1        <- E1s[j,'E1_CONCEPT_ID'] %>% as.numeric
+      diagnosis1        <- as.data.frame(E1s)[j,'E1_CONCEPT_ID'] # as.data.frame() is used here to get single value instead of 1x1 tibble
 
-      logger::log_info(paste0('Matching control group ',j+num.E1s.already.calculated,'/',num.E1s.total,' for event pairs starting with ',diagnosis1,' (total progress ',
-                              round(100*(j+num.E1s.already.calculated)/num.E1s.total),'%, ETA: ',Trajectories::estimatedTimeRemaining(progress_perc=(counter-1)/nrow(pairs),starttime=starttime),
-                              ')...'))
+      ParallelLogger::logInfo('Matching control group ',j+num.E1s.already.calculated,'/',num.E1s.total,' for event pairs starting with ',diagnosis1,' (total progress ',
+                              round(100*(j+num.E1s.already.calculated)/num.E1s.total),'%, ETA: ',Trajectories:::estimatedTimeRemaining(progress_perc=(j-1)/nrow(E1s),starttime=starttime),
+                              ')...')
 
       # build case-control groups (create some data to database table 'matching' also which will be used by getMatchedCaseControlCounts() function)
       matches <- Trajectories:::buildCaseControlGroups(connection,trajectoryLocalArgs,diagnosis1)
 
       # Conduct the test for each pair starting with that E1
       E1.pairs <- pairs %>%
-        filter(E1_CONCEPT_ID==get('diagnosis1'))
+        dplyr::filter(E1_CONCEPT_ID==diagnosis1)
 
 
 
@@ -555,10 +537,11 @@ calcRRandPower<-function(connection,
       INNER JOIN @resultsSchema.@prefiXmatching m ON p.EVENTPERIOD_ID=m.EVENTPERIOD_ID
       WHERE
       p.E1_DATE=m.INDEX_DATE -- all pairs where the first event occurs on INDEX date
-      AND p.E2_CONCEPT_ID IN (',paste(E1.pairs %>% pull(E2_CONCEPT_ID),collapse=","),')
+      AND p.E2_CONCEPT_ID IN (',paste(DBI::dbQuoteString(connection,as.character(E1.pairs %>% dplyr::pull(E2_CONCEPT_ID))),collapse=","),')
       AND (m.IS_CASE=1 OR p.EVENTPERIOD_ID IN (',paste(matches$Controls,collapse=","),'))
       AND DATEDIFF(DAY,m.index_date, p.E2_DATE)>=0 --E2 occurs AFTER index date
       ) a;')
+
 
 
   #read data from the table
@@ -595,16 +578,16 @@ calcRRandPower<-function(connection,
       if(nrow(E1.pairs)>0) {
         for(i in 1:nrow(E1.pairs))
         {
-          diagnosis2        <- E1.pairs[i,'E2_CONCEPT_ID']
+          diagnosis2        <- as.data.frame(E1.pairs)[i,'E2_CONCEPT_ID'] # as.data.frame() is used here to get single value instead of 1x1 tibble
 
           rr_in_previous_study=E1.pairs[i,'RR_IN_PREVIOUS_STUDY']
 
-          logger::log_info(paste0('  Calculating RR for event pair ',counter+num.already.calculated,'/',num.pairs,': ',diagnosis1,' -> ',diagnosis2))
+          ParallelLogger::logInfo('  Calculating RR for event pair ',counter+num.already.calculated,'/',num.pairs,': ',diagnosis1,' -> ',diagnosis2)
 
           # Do Case/Control matching, get the counts
-          r=E2counts.in.groups %>% filter(E2_CONCEPT_ID==get('diagnosis2') & IS_CASE==1) %>% pull(COUNT)
+          r=E2counts.in.groups %>% dplyr::filter(E2_CONCEPT_ID==get('diagnosis2') & IS_CASE==1) %>% dplyr::pull(COUNT)
           matches$E2_count_in_cases=ifelse(length(r)==0,0,r)
-          r=E2counts.in.groups %>% filter(E2_CONCEPT_ID==get('diagnosis2') & IS_CASE==0) %>% pull(COUNT)
+          r=E2counts.in.groups %>% dplyr::filter(E2_CONCEPT_ID==get('diagnosis2') & IS_CASE==0) %>% dplyr::pull(COUNT)
           matches$E2_count_in_controls=ifelse(length(r)==0,0,r)
           counts=Trajectories:::getMatchedCaseControlCounts(connection,trajectoryLocalArgs,matches,diagnosis1,diagnosis2)
 
@@ -615,16 +598,18 @@ calcRRandPower<-function(connection,
                                            counts$control_group_size)
 
           event_pair_rr=ifelse(rr_and_ci$est==Inf,999,ifelse(rr_and_ci$est==-Inf,0,rr_and_ci$est))
-          event_pair_rr_ci_lower=ifelse(rr_and_ci$lower==Inf,999,ifelse(rr_and_ci$lower==-Inf,0,rr_and_ci$lower))
-          event_pair_rr_ci_upper=ifelse(rr_and_ci$upper==Inf,999,ifelse(rr_and_ci$upper==-Inf,0,rr_and_ci$upper))
+          event_pair_rr_ci_lower=NA
+          event_pair_rr_ci_upper=NA
+          #event_pair_rr_ci_lower=ifelse(rr_and_ci$lower==Inf,999,ifelse(rr_and_ci$lower==-Inf,0,rr_and_ci$lower))
+          #event_pair_rr_ci_upper=ifelse(rr_and_ci$upper==Inf,999,ifelse(rr_and_ci$upper==-Inf,0,rr_and_ci$upper))
           event_pair_rr_pvalue=rr_and_ci$pvalue
-          if(!is.na(event_pair_rr)) logger::log_debug("Relative risk {round(event_pair_rr,2)} (95%CI {round(event_pair_rr_ci_lower,2)}..{round(event_pair_rr_ci_upper,2)}, p-value={event_pair_rr_pvalue})")
+          if(!is.na(event_pair_rr)) ParallelLogger::logDebug('Relative risk ',round(event_pair_rr,2),' (95%CI ',round(event_pair_rr_ci_lower,2),'..',round(event_pair_rr_ci_upper,2),', p-value=',event_pair_rr_pvalue,')')
 
           #}
 
 
           # Writing the results back to database
-          RenderedSql <- Trajectories::loadRenderTranslateSql("insertDataForPrefilter.sql",
+          RenderedSql <- Trajectories:::loadRenderTranslateSql("insertDataForPrefilter.sql",
                                                               packageName=get('TRAJECTORIES_PACKAGE_NAME', envir=TRAJECTORIES.CONSTANTS),
                                                               dbms=connection@dbms,
                                                               resultsSchema =   trajectoryLocalArgs$resultsSchema,
@@ -648,16 +633,16 @@ calcRRandPower<-function(connection,
           counter=counter+1
         } # for i
       } else {
-        logger::log_info('Nothing to analyze.')
+        ParallelLogger::logInfo('Nothing to analyze.')
       } #if
 
     } #for j
   } else {
-    logger::log_info('No events to analyze. Exiting RR calculations.')
+    ParallelLogger::logInfo('No events to analyze. Exiting RR calculations.')
   } #if
 
 
-  logger::log_info('RR calculations done.')
+  ParallelLogger::logInfo('RR calculations done.')
 
 
   #Get updated pairs
@@ -679,21 +664,18 @@ runDirectionTests<-function(connection,
                             forceRecalculation=F) {
 
   num.pairs=nrow(pairs)
-  logger::log_info("Running directionality tests for {num.pairs} event pairs to identify pairs where events have significant temporal order...")
+  ParallelLogger::logInfo('Running directionality tests for ',num.pairs,' event pairs to identify pairs where events have significant temporal order...')
 
   #Set SQL role of the database session
-  Trajectories::setRole(connection, trajectoryLocalArgs$sqlRole)
-
-  #cutoff_pval = 0.05/num.pairs
-  #logger::log_info(paste0('We use Bonferroni multiple test correction, therefore p-value threshold 0.05/',num.pairs,'=',cutoff_pval,' is used in directionality tests.'))
+  Trajectories:::setRole(connection, trajectoryLocalArgs$sqlRole)
 
   if(forceRecalculation==F) {
-    directional_count <- nrow(pairs %>% filter(!is.na(DIRECTIONAL_SIGNIFICANT) & DIRECTIONAL_SIGNIFICANT=='*'))
+    directional_count <- nrow(pairs %>% dplyr::filter(!is.na(DIRECTIONAL_SIGNIFICANT) & DIRECTIONAL_SIGNIFICANT=='*'))
 
-    pairs <- pairs %>% filter(is.na(DIRECTIONAL_PVALUE))
+    pairs <- pairs %>% dplyr::filter(is.na(DIRECTIONAL_PVALUE))
     num.already.calculated=num.pairs-nrow(pairs)
 
-    if(num.already.calculated>0) logger::log_info("For {num.already.calculated} pairs, RR test is already conducted (out of these, {directional_count} have significant direction). Skipping these from recalculating.")
+    if(num.already.calculated>0) ParallelLogger::logInfo('For ',num.already.calculated,' pairs, RR test is already conducted (out of these, ',directional_count,' have significant direction). Skipping these from recalculating.')
   } else {
     num.already.calculated=0
     directional_count=0
@@ -710,13 +692,13 @@ runDirectionTests<-function(connection,
       diagnosis1        <- pairs[i,'E1_CONCEPT_ID']
       diagnosis2        <- pairs[i,'E2_CONCEPT_ID']
 
-      logger::log_info(paste0('Running direction test ',i+num.already.calculated,'/',num.pairs,': ',diagnosis1,' -> ',diagnosis2,' (total progress ',
-                              round(100*(i+num.already.calculated)/num.pairs),'%, ETA: ',Trajectories::estimatedTimeRemaining(progress_perc=(i-1)/nrow(pairs),starttime=starttime),
-                              ')...'))
+      ParallelLogger::logInfo('Running direction test ',i+num.already.calculated,'/',num.pairs,': ',diagnosis1,' -> ',diagnosis2,' (total progress ',
+                              round(100*(i+num.already.calculated)/num.pairs),'%, ETA: ',Trajectories:::estimatedTimeRemaining(progress_perc=(i-1)/nrow(pairs),starttime=starttime),
+                              ')...')
 
 
       #Calculate in database: among people that have event1_concept_id and event2_concept_id pair, how many have date1<date2, date1=date2, date1>date2
-      RenderedSql <- Trajectories::loadRenderTranslateSql("7DirectionCounts.sql",
+      RenderedSql <- Trajectories:::loadRenderTranslateSql("7DirectionCounts.sql",
                                                           packageName=get('TRAJECTORIES_PACKAGE_NAME', envir=TRAJECTORIES.CONSTANTS),
                                                           dbms=connection@dbms,
                                                           resultsSchema =   trajectoryLocalArgs$resultsSchema,
@@ -727,12 +709,12 @@ runDirectionTests<-function(connection,
       DatabaseConnector::executeSql(connection, sql=RenderedSql, progressBar = FALSE, reportOverallTime = FALSE)
 
       # Get calculation results from database
-      RenderedSql <- Trajectories::loadRenderTranslateSql("8DpairReader.sql",
+      RenderedSql <- Trajectories:::loadRenderTranslateSql("8DpairReader.sql",
                                                           packageName=get('TRAJECTORIES_PACKAGE_NAME', envir=TRAJECTORIES.CONSTANTS),
                                                           dbms=connection@dbms,
                                                           resultsSchema =   trajectoryLocalArgs$resultsSchema,
-                                                          diag1=diagnosis1,
-                                                          diag2=diagnosis2,
+                                                          diag1 = if(is.character(diagnosis1)) {paste0("'",diagnosis1,"'",sep="")} else {diagnosis1}, #if-then hocus-pocus is to handle character-based diagnosis codes when using some non-standard concept codes. Should never happen normally.
+                                                          diag2 = if(is.character(diagnosis2)) {paste0("'",diagnosis2,"'",sep="")} else {diagnosis2},  #if-then hocus-pocus is to handle character-based diagnosis codes when using some non-standard concept codes. Should never happen normally.
                                                           prefix =  trajectoryLocalArgs$prefixForResultTableNames
       )
       direction_counts = DatabaseConnector::querySql(connection, RenderedSql)
@@ -762,33 +744,8 @@ runDirectionTests<-function(connection,
                                                         rr.threshold=1.2)
 
 
-    #  if (event_pair_pvalue < cutoff_pval){
-#
- #       directional_count <- directional_count + 1
-  ##     logger::log_debug(paste0('The direction of event pair ',diagnosis1,' -> ',diagnosis2,' is significant.'))
-
-    #  } else {
-
-     #   logger::log_debug(paste0('The direction of event pair ',diagnosis1,' -> ',diagnosis2,' is not significant.'))
-      #  significant_str="''"
-
-      #}
-
-      #if (event_pair_pvalue_same_day_ok < cutoff_pval){
-#
- #       significant_same_day_str="'*'"
-  #      logger::log_debug(paste0('The direction of event pair ',diagnosis1,' -> ',diagnosis2,' would be significant if in ',direction_counts$E1_AND_E2_ON_SAME_DAY_COUNT_IN_EVENTS,' cases where both events occur on a same day actually had the order ',diagnosis1,' -> ',diagnosis2,' within the same day.'))
-
-   #   } else {
-
-    #    logger::log_debug(paste0('The direction of event pair ',diagnosis1,' -> ',diagnosis2,' would not be significant even if in ',direction_counts$E1_AND_E2_ON_SAME_DAY_COUNT_IN_EVENTS,' cases where both events occur on a same day actually had the order ',diagnosis1,' -> ',diagnosis2,' within the same day.'))
-     #   significant_same_day_str="''"
-
-    #  }
-
-
       # Store the pvalue to database
-      RenderedSql <- Trajectories::loadRenderTranslateSql("9PvalInserterDirection.sql",
+      RenderedSql <- Trajectories:::loadRenderTranslateSql("9PvalInserterDirection.sql",
                                                           packageName=get('TRAJECTORIES_PACKAGE_NAME', envir=TRAJECTORIES.CONSTANTS),
                                                           dbms=connection@dbms,
                                                           resultsSchema =   trajectoryLocalArgs$resultsSchema,
@@ -806,9 +763,8 @@ runDirectionTests<-function(connection,
 
     }
   } else {
-    logger::log_info('Nothing to analyze, exit directionality tests calculation function.')
+    ParallelLogger::logInfo('Nothing to analyze, exit directionality tests calculation function.')
   } #if
-  #logger::log_info('Events in {directional_count} event pairs out of {num.pairs} have a significant direction.')
 
   #update significance p-value
   Trajectories:::adjustPValues(connection,trajectoryLocalArgs,dbcol.pvalue='DIRECTIONAL_PVALUE',dbcol.pval.signficiant='DIRECTIONAL_SIGNIFICANT', method=p.value.adjust.method)
@@ -833,7 +789,7 @@ annotateDiscoveryResults<-function(pairs,trajectoryAnalysisArgs,verbose=F) {
 
 
   pairs <- pairs %>%
-    mutate(TEXTUAL_RESULT = case_when(
+    dplyr::mutate(TEXTUAL_RESULT = dplyr::case_when(
       is.na(RR_SIGNIFICANT) | RR_SIGNIFICANT==''                                                                              ~ 'RR not significantly different from 1.',
       !is.na(RR) & (RR>=trajectoryAnalysisArgs$RRrangeToSkip[1] & RR<trajectoryAnalysisArgs$RRrangeToSkip[2])                 ~ paste0('Not tested (RR in skipped range [',trajectoryAnalysisArgs$RRrangeToSkip[1],',',trajectoryAnalysisArgs$RRrangeToSkip[2],')).'),
       #!is.na(RR_POWER) & RR_POWER<=0.8                                                                                        ~ 'Not tested (low power for detecting RR=10).',
@@ -844,7 +800,7 @@ annotateDiscoveryResults<-function(pairs,trajectoryAnalysisArgs,verbose=F) {
     ))
 
   pairs <- pairs %>%
-    mutate(FAILED_FILTER = case_when(
+    dplyr::mutate(FAILED_FILTER = dplyr::case_when(
       is.na(RR_SIGNIFICANT) | RR_SIGNIFICANT==''                                                               ~ '1. Have RR significantly different from 1',
       !is.na(RR) & (RR>=trajectoryAnalysisArgs$RRrangeToSkip[1] & RR<trajectoryAnalysisArgs$RRrangeToSkip[2]) ~ paste0('2. Have RR<',trajectoryAnalysisArgs$RRrangeToSkip[1],' or RR>=',trajectoryAnalysisArgs$RRrangeToSkip[2]),
       #!is.na(RR_POWER) & RR_POWER<=0.8                                                                        ~ '2. Have power >80% for detecting RR=10',
@@ -857,7 +813,7 @@ annotateDiscoveryResults<-function(pairs,trajectoryAnalysisArgs,verbose=F) {
   #show up nicely
   df<-data.frame(res=names(table(pairs$TEXTUAL_RESULT)),
                  count=table(pairs$TEXTUAL_RESULT),
-                 perc=round(prop.table(table(pairs$TEXTUAL_RESULT))*100,1)) %>% dplyr::select(res,count=count.Freq,freq=perc.Freq) %>% arrange(-freq)
+                 perc=round(prop.table(table(pairs$TEXTUAL_RESULT))*100,1)) %>% dplyr::select(res,count=count.Freq,freq=perc.Freq) %>% dplyr::arrange(-freq)
   if(verbose) print(df)
 
 #  df<-data.frame(res=names(table(pairs$FAILED_FILTER)),
@@ -886,7 +842,7 @@ annotateValidationResults<-function(pairs,trajectoryAnalysisArgs,verbose=F) {
   pairs$FAILED_FILTER=NA
 
   pairs <- pairs %>%
-    mutate(TEXTUAL_RESULT = case_when(
+    dplyr::mutate(TEXTUAL_RESULT = dplyr::case_when(
       !is.na(RR_IN_PREVIOUS_STUDY)  & (RR_IN_PREVIOUS_STUDY>=trajectoryAnalysisArgs$RRrangeToSkip[1] & RR_IN_PREVIOUS_STUDY<trajectoryAnalysisArgs$RRrangeToSkip[2])  ~ paste0('Not tested (RR in previous study in skipped range [',trajectoryAnalysisArgs$RRrangeToSkip[1],',',trajectoryAnalysisArgs$RRrangeToSkip[2],')).'),
       E1_COUNT_IN_EVENTS==0 | E2_COUNT_IN_EVENTS==0                                                                                                                   ~ '1. Count of any of these events is 0.',
       E1_BEFORE_E2_COUNT_IN_EVENTS==0                                                                                                                                 ~ '2. Both events occur but never in given order.',
@@ -901,7 +857,7 @@ annotateValidationResults<-function(pairs,trajectoryAnalysisArgs,verbose=F) {
     ))
 
   pairs <- pairs %>%
-    mutate(FAILED_FILTER = case_when(
+    dplyr::mutate(FAILED_FILTER = dplyr::case_when(
       !is.na(RR_IN_PREVIOUS_STUDY)  & (RR_IN_PREVIOUS_STUDY>=trajectoryAnalysisArgs$RRrangeToSkip[1] & RR_IN_PREVIOUS_STUDY<trajectoryAnalysisArgs$RRrangeToSkip[2])  ~ paste0('1. Have RR in previous study <',trajectoryAnalysisArgs$RRrangeToSkip[1],' or >=',trajectoryAnalysisArgs$RRrangeToSkip[2]),
       E1_COUNT_IN_EVENTS==0 | E2_COUNT_IN_EVENTS==0 | E1_BEFORE_E2_COUNT_IN_EVENTS==0 ~ '2. Occurs at least once',
       RR_SIGNIFICANT==''                                                                                      ~ '3. Have RR significantly different from 1',
@@ -916,9 +872,9 @@ annotateValidationResults<-function(pairs,trajectoryAnalysisArgs,verbose=F) {
   #show up nicely
   df<-data.frame(res=names(table(pairs$TEXTUAL_RESULT)),
                  count=table(pairs$TEXTUAL_RESULT),
-                 perc=round(prop.table(table(pairs$TEXTUAL_RESULT))*100,1)) %>% dplyr::select(res,count=count.Freq,freq=perc.Freq) %>% arrange(res)
+                 perc=round(prop.table(table(pairs$TEXTUAL_RESULT))*100,1)) %>% dplyr::select(res,count=count.Freq,freq=perc.Freq) %>% dplyr::arrange(res)
   if(verbose) {
-    logger::log_info('Total number of event pairs validated: {nrow(pairs)}')
+    ParallelLogger::logInfo('Total number of event pairs validated: ',nrow(pairs))
     print(df)
   }
 
@@ -933,7 +889,7 @@ annotateValidationResults<-function(pairs,trajectoryAnalysisArgs,verbose=F) {
 getAllPairs<-function(connection,
                       trajectoryAnalysisArgs,
                       trajectoryLocalArgs) {
-  RenderedSql <- Trajectories::loadRenderTranslateSql('d1d2_model_reader.sql',
+  RenderedSql <- Trajectories:::loadRenderTranslateSql('d1d2_model_reader.sql',
                                                       packageName=get('TRAJECTORIES_PACKAGE_NAME', envir=TRAJECTORIES.CONSTANTS),
                                                       dbms=connection@dbms,
                                                       resultsSchema =   trajectoryLocalArgs$resultsSchema,
@@ -946,7 +902,7 @@ getAllPairs<-function(connection,
 clearOldResultsFromDb<-function(connection,
                       trajectoryAnalysisArgs,
                       trajectoryLocalArgs) {
-  RenderedSql <- Trajectories::loadRenderTranslateSql('clear_e1e2_model_results.sql',
+  RenderedSql <- Trajectories:::loadRenderTranslateSql('clear_e1e2_model_results.sql',
                                                       packageName=get('TRAJECTORIES_PACKAGE_NAME', envir=TRAJECTORIES.CONSTANTS),
                                                       dbms=connection@dbms,
                                                       resultsSchema =   trajectoryLocalArgs$resultsSchema,
@@ -1048,24 +1004,38 @@ calcPropensityScore<-function(d) {
 
   #add some additional columns (need to do it in R as in SQLite these numbers are given as characters, not integers, and that breaks everything)
   d <- d %>%
-        mutate(YEAR_OF_INDEXDATE= lubridate::year(INDEX_DATE),
+    dplyr::mutate(YEAR_OF_INDEXDATE= lubridate::year(INDEX_DATE),
                MONTH_OF_INDEXDATE= lubridate::month(INDEX_DATE))
 
   #train model
-  m = suppressWarnings( glm(IS_CASE ~ GENDER + scale(AGE) + scale(YEAR_OF_INDEXDATE) + scale(MONTH_OF_INDEXDATE) + scale(LEN_HISTORY_DAYS) + scale(LEN_FOLLOWUP_DAYS), family = binomial(), data = d) )
+  d$GENDER<-factor(d$GENDER, levels<-c('M','F'))
+  #print(str(d))
+  #print(d)
 
-  #calculate propensity scores for all
-  d = d %>%
-    mutate(PropScore = predict(m, type = "response")) %>%
-    dplyr::select(EVENTPERIOD_ID, PropScore, everything()) %>%
-    arrange(desc(PropScore))
+  if(all(d$IS_CASE==1)) {
+    ParallelLogger::logWarn('All eventperiods are in case group (no controls), cannot build propensity score for the first event')
+    d$PropScore=NA
+  } else {
+    m = suppressWarnings( glm(IS_CASE ~ GENDER + scale(AGE) + scale(YEAR_OF_INDEXDATE) + scale(MONTH_OF_INDEXDATE) + scale(LEN_HISTORY_DAYS) + scale(LEN_FOLLOWUP_DAYS), family = binomial(), data = d) )
+
+    m1<-data.frame(n=names(m$coefficients)[2:length(m$coefficients)], b=signif(m$coefficients[2:length(m$coefficients)],2))
+    ParallelLogger::logInfo('Betas of matching model: IS CASE ~ ',paste(m1$b, as.character(m1$n),  sep =" x ", collapse=" + "))
+
+    #calculate propensity scores for all
+    d = d %>%
+      dplyr::mutate(PropScore = predict(m, type = "response")) %>%
+      dplyr::select(EVENTPERIOD_ID, PropScore, everything()) %>%
+      dplyr::arrange(desc(PropScore))
+  }
+
+
 
 
   #distribution of propensity scores before matching
   #library(ggplot2)
   #d %>%
-  #  ggplot(aes(x = PropScore, fill = as.factor(IS_CASE))) +
-  #  geom_density(aes(y = ..count..), alpha = 0.5) +
+  #  ggplot(ggplot2::aes(x = PropScore, fill = as.factor(IS_CASE))) +
+  #  geom_density(ggplot2::aes(y = ..count..), alpha = 0.5) +
   #  theme_bw()
 
   return(d)
@@ -1073,11 +1043,11 @@ calcPropensityScore<-function(d) {
 
 propensityScoreBasedMatch = function(d, nn = 2){
   e = d %>%
-    filter(IS_CASE == 1)
+    dplyr::filter(IS_CASE == 1)
 
   u = d %>%
-    filter(IS_CASE ==  0) %>%
-    filter(!(EVENTPERIOD_ID %in% e$EVENTPERIOD_ID))
+    dplyr::filter(IS_CASE ==  0) %>%
+    dplyr::filter(!(EVENTPERIOD_ID %in% e$EVENTPERIOD_ID))
 
   controls = integer(0)
   for(i in 1:nrow(e)){
@@ -1088,7 +1058,7 @@ propensityScoreBasedMatch = function(d, nn = 2){
       controls = c(controls, u[r %in% 1:nn, "EVENTPERIOD_ID", drop = T])
 
       u = u %>%
-        filter(!(r %in% 1:nn))
+        dplyr::filter(!(r %in% 1:nn))
     }
   }
 
@@ -1097,7 +1067,7 @@ propensityScoreBasedMatch = function(d, nn = 2){
 
 adjustPValues<-function(connection,trajectoryLocalArgs,dbcol.pvalue='RR_PVALUE',dbcol.pval.signficiant='RR_SIGNIFICANT',method='fdr') {
 
-  logger::log_info('Adjusting p-values by using method={method}...')
+  ParallelLogger::logInfo('Adjusting p-values by using method=',method,'...')
 
   #get p-values
   sql="SELECT E1_CONCEPT_ID, E2_CONCEPT_ID, @dbcol FROM @resultsSchema.@prefiXE1E2_model WHERE @dbcol IS NOT NULL";
@@ -1109,7 +1079,7 @@ adjustPValues<-function(connection,trajectoryLocalArgs,dbcol.pvalue='RR_PVALUE',
   d<-DatabaseConnector::querySql(connection=connection, sql=RenderedSql)
   num_values_to_adjust<-nrow(d)
 
-  logger::log_info('  Number of p-values (tests) to adjust: {num_values_to_adjust}...')
+  ParallelLogger::logInfo('  Number of p-values (tests) to adjust: ',num_values_to_adjust,'...')
   d$adjusted.pvalues=p.adjust(d[[dbcol.pvalue]], method = method)
 
 
@@ -1121,56 +1091,56 @@ adjustPValues<-function(connection,trajectoryLocalArgs,dbcol.pvalue='RR_PVALUE',
   RenderedSql <- SqlRender::translate(sql=RenderedSql, targetDialect = connection@dbms)
   DatabaseConnector::executeSql(connection, RenderedSql, progressBar = FALSE, reportOverallTime = FALSE)
 
-  d<-d %>% filter(adjusted.pvalues<0.05)
+  d<-d %>% dplyr::filter(adjusted.pvalues<0.05)
   num_sign_values<-nrow(d)
 
   if(nrow(d)>0) {
 
     tablename<-paste0(trajectoryLocalArgs$resultsSchema,'.',trajectoryLocalArgs$prefixForResultTableNames,'E1E2_MODEL')
-    logger::log_info("  Filling {tablename} with adjusted p-values as 100-size-chunks)...")
+    ParallelLogger::logInfo("  Filling ",tablename," with adjusted p-values as 100-size-chunks)...")
     d$sql <- paste0("UPDATE ",
                     tablename,
                     " SET ",
                     dbcol.pval.signficiant,
                     "='*' WHERE E1_CONCEPT_ID=",
-                    DBI::dbQuoteString(connection, d %>% mutate(E1_CONCEPT_ID=if_else(is.na(E1_CONCEPT_ID),'NULL',as.character(E1_CONCEPT_ID))) %>% pull(E1_CONCEPT_ID)  ),
+                    DBI::dbQuoteString(connection, d %>% dplyr::mutate(E1_CONCEPT_ID=dplyr::if_else(is.na(E1_CONCEPT_ID),'NULL',as.character(E1_CONCEPT_ID))) %>% dplyr::pull(E1_CONCEPT_ID)  ),
                     " AND E2_CONCEPT_ID=",
-                    DBI::dbQuoteString(connection, d %>% mutate(E2_CONCEPT_ID=if_else(is.na(E2_CONCEPT_ID),'NULL',as.character(E2_CONCEPT_ID))) %>% pull(E2_CONCEPT_ID)  ),
+                    DBI::dbQuoteString(connection, d %>% dplyr::mutate(E2_CONCEPT_ID=dplyr::if_else(is.na(E2_CONCEPT_ID),'NULL',as.character(E2_CONCEPT_ID))) %>% dplyr::pull(E2_CONCEPT_ID)  ),
                     ";")
     #create chunks - in each chunk, 100 inserts
     chunks<-split(d$sql, ceiling(seq_along(d$sql)/100))
     for(i in 1:length(chunks)) {
       #print(paste('i=',i))
       chunk<-chunks[[i]]
-      if(length(chunks)>5) logger::log_info(paste0('   ...chunk ',i,'/',length(chunks),'...'))
+      if(length(chunks)>5) ParallelLogger::logInfo('   ...chunk ',i,'/',length(chunks),'...')
       insertSql=paste0(chunk,collapse="")
       RenderedSql <- SqlRender::translate(insertSql,targetDialect=attr(connection, "dbms"))
       #print(RenderedSql)
       DatabaseConnector::executeSql(connection, sql=RenderedSql, profile=F, progressBar = F, reportOverallTime = F)
     }
-    logger::log_info("  ...done.")
+    ParallelLogger::logInfo("  ...done.")
   }
 
-  logger::log_info('...done. Out of {num_values_to_adjust} event pairs, {num_sign_values} were significant after the multiple testing correction.')
+  ParallelLogger::logInfo('...done. Out of ',num_values_to_adjust,' event pairs, ',num_sign_values,' were significant after the multiple testing correction.')
 
 }
 
 makeRRPvaluePlot <- function(pairs,filename,trajectoryAnalysisArgs) {
-  pairs_for_plot<-pairs %>% mutate(id = row_number()) %>% dplyr::select(id, RR, RR_PVALUE, RR_SIGNIFICANT)
-  pairs_for_plot <- pairs_for_plot %>% arrange(-RR_PVALUE)
-  p<-suppressWarnings(ggplot2::ggplot(pairs_for_plot, aes(x=RR,y=RR_PVALUE)) +
-    geom_point() +
-    geom_text(aes(label=id),hjust=0, vjust=0, size=3) +
-    annotate("rect", xmin = trajectoryAnalysisArgs$RRrangeToSkip[1], xmax = trajectoryAnalysisArgs$RRrangeToSkip[2], ymin = 0, ymax = max(suppressWarnings(max(pairs_for_plot$RR_PVALUE)),1),
+  pairs_for_plot<-pairs %>% dplyr::mutate(id = dplyr::row_number()) %>% dplyr::select(id, RR, RR_PVALUE, RR_SIGNIFICANT)
+  pairs_for_plot <- pairs_for_plot %>% dplyr::arrange(-RR_PVALUE)
+  p<-suppressWarnings(ggplot2::ggplot(pairs_for_plot, ggplot2::aes(x=RR,y=RR_PVALUE)) +
+                        ggplot2::geom_point() +
+                        ggplot2::geom_text(ggplot2::aes(label=id),hjust=0, vjust=0, size=3) +
+                        ggplot2::annotate("rect", xmin = trajectoryAnalysisArgs$RRrangeToSkip[1], xmax = trajectoryAnalysisArgs$RRrangeToSkip[2], ymin = 0, ymax = max(suppressWarnings(max(pairs_for_plot$RR_PVALUE)),1),
              alpha = .5) +
-    annotate("rect", xmin = 0, xmax = max(suppressWarnings(max(pairs_for_plot$RR)),1), ymin = min(suppressWarnings(max(pairs_for_plot %>% filter(!is.na(RR_SIGNIFICANT) & RR_SIGNIFICANT=='*') %>% pull(RR_PVALUE))),1), ymax = 1,
+               ggplot2::annotate("rect", xmin = 0, xmax = max(suppressWarnings(max(pairs_for_plot$RR)),1), ymin = min(suppressWarnings(max(pairs_for_plot %>% dplyr::filter(!is.na(RR_SIGNIFICANT) & RR_SIGNIFICANT=='*') %>% dplyr::pull(RR_PVALUE))),1), ymax = 1,
              alpha = .5) +
-    scale_x_continuous(trans='log10') +
-    scale_y_continuous(trans='log10') +
-    #scale_y_reverse() +
-    annotation_logticks(sides="trbl") +
-    labs(title='RR/p-value plot of all tested event pairs. Shaded areas indicate insignificant p-values and RR values in skip range.') +
-    theme_bw()
+               ggplot2::scale_x_continuous(trans='log10') +
+               ggplot2::scale_y_continuous(trans='log10') +
+    #ggplot2::scale_y_reverse() +
+      ggplot2::annotation_logticks(sides="trbl") +
+      ggplot2::labs(title='RR/p-value plot of all tested event pairs. Shaded areas indicate insignificant p-values and RR values in skip range.') +
+      ggplot2::theme_bw()
   )
   pdf(filename)
   suppressWarnings(print(p))
@@ -1179,7 +1149,7 @@ makeRRPvaluePlot <- function(pairs,filename,trajectoryAnalysisArgs) {
 }
 
 makeRRPvalueQQPlot<-function(pairs) {
-  observedPValues <- pairs %>% mutate(id = row_number()) %>% pull(RR_PVALUE)
+  observedPValues <- pairs %>% dplyr::mutate(id = dplyr::row_number()) %>% dplyr::pull(RR_PVALUE)
   plot(-log10(1:length(observedPValues)/length(observedPValues)),
        -log10(sort(observedPValues)))
   abline(0, 1, col = "red")
@@ -1187,7 +1157,7 @@ makeRRPvalueQQPlot<-function(pairs) {
 
 buildCaseControlGroups<-function(connection,trajectoryLocalArgs,diagnosis1) {
   #create table for matching
-  RenderedSql <- Trajectories::loadRenderTranslateSql('AssignIndexDatesForMatching.sql',
+  RenderedSql <- Trajectories:::loadRenderTranslateSql('AssignIndexDatesForMatching.sql',
                                                       packageName=get('TRAJECTORIES_PACKAGE_NAME', envir=TRAJECTORIES.CONSTANTS),
                                                       dbms=connection@dbms,
                                                       resultsSchema = trajectoryLocalArgs$resultsSchema,
@@ -1207,9 +1177,13 @@ buildCaseControlGroups<-function(connection,trajectoryLocalArgs,diagnosis1) {
 
   d<-d %>% Trajectories:::calcPropensityScore()
 
-
-  matches = d %>%
-    Trajectories:::propensityScoreBasedMatch(nn = 1)
+  if(all(is.na(d$PropScore))) {
+    #cant build propensity score, all controls are empty
+    matches=list(Cases = d$EVENTPERIOD_ID, Controls = c())
+  } else {
+    matches = d %>%
+      Trajectories:::propensityScoreBasedMatch(nn = 1)
+  }
 
   #length(matches$Cases)
   #length(matches$Controls)
@@ -1217,8 +1191,8 @@ buildCaseControlGroups<-function(connection,trajectoryLocalArgs,diagnosis1) {
   #distribution of propensity scores after matching
   #d %>%
   #  filter(EVENTPERIOD_ID %in% c(matches$Cases, matches$Controls)) %>%
-  #  ggplot(aes(x = PropScore, fill = as.factor(IS_CASE))) +
-  #  geom_density(aes(y = ..count..), alpha = 0.5) +
+  #  ggplot(ggplot2::aes(x = PropScore, fill = as.factor(IS_CASE))) +
+  #  geom_density(ggplot2::aes(y = ..count..), alpha = 0.5) +
   #  theme_bw()
 
   return(matches)

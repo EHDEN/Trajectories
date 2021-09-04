@@ -28,10 +28,10 @@ testthat::test_that("Filling in cohort table with fulldb built-in study (no even
 
 
   #Create output folder for this analysis
-  outputFolder<-GetOutputFolder(trajectoryLocalArgs,trajectoryAnalysisArgs,createIfMissing=T)
+  outputFolder<-Trajectories:::GetOutputFolder(trajectoryLocalArgs,trajectoryAnalysisArgs,createIfMissing=T)
 
   # Create new cohort table for this package to results schema & fill it in (all having cohort_id=1 in cohort data)
-  Trajectories::createAndFillCohortTable(connection=connection,
+  Trajectories:::createAndFillCohortTable(connection=connection,
                                          trajectoryAnalysisArgs=trajectoryAnalysisArgs,
                                          trajectoryLocalArgs=trajectoryLocalArgs)
 
@@ -77,10 +77,10 @@ testthat::test_that("Filling in cohort table with fulldb buit-in study (there ar
 
 
   #Create output folder for this analysis
-  outputFolder<-GetOutputFolder(trajectoryLocalArgs,trajectoryAnalysisArgs,createIfMissing=T)
+  outputFolder<-Trajectories:::GetOutputFolder(trajectoryLocalArgs,trajectoryAnalysisArgs,createIfMissing=T)
 
   # Create new cohort table for this package to results schema & fill it in (all having cohort_id=1 in cohort data)
-  Trajectories::createAndFillCohortTable(connection=connection,
+  Trajectories:::createAndFillCohortTable(connection=connection,
                                          trajectoryAnalysisArgs=trajectoryAnalysisArgs,
                                          trajectoryLocalArgs=trajectoryLocalArgs)
 
@@ -115,7 +115,7 @@ testthat::test_that("Test that in case of no significant order between E1 and E2
   addRandomEvents(connection,n_per_person_range=c(0,10),exclude_concept_ids=c(317009,255848)) # Add up to 10 random events per each patient, except events 317009 and 255848
 
 
-  trajectoryAnalysisArgs <- Trajectories::createTrajectoryAnalysisArgs(minimumDaysBetweenEvents = 1,
+  trajectoryAnalysisArgs <- Trajectories:::createTrajectoryAnalysisArgs(minimumDaysBetweenEvents = 1,
                                                                        maximumDaysBetweenEvents = 365*120,
                                                                        minPatientsPerEventPair = 10,
                                                                        addConditions=T,
@@ -130,26 +130,26 @@ testthat::test_that("Test that in case of no significant order between E1 and E2
 
 
   #Create output folder for this analysis
-  outputFolder<-Trajectories::GetOutputFolder(trajectoryLocalArgs,trajectoryAnalysisArgs,createIfMissing=T)
+  outputFolder<-Trajectories:::GetOutputFolder(trajectoryLocalArgs,trajectoryAnalysisArgs,createIfMissing=T)
 
   #Remove output files (if exist from previous run)
   removeTestableOutputFiles(trajectoryLocalArgs,trajectoryAnalysisArgs)
 
   # Create new cohort table for this package to results schema & fill it in (all having cohort_id=1 in cohort data)
-  Trajectories::createAndFillCohortTable(connection=connection,
+  Trajectories:::createAndFillCohortTable(connection=connection,
                                          trajectoryAnalysisArgs=trajectoryAnalysisArgs,
                                          trajectoryLocalArgs=trajectoryLocalArgs)
 
   # Create database tables of all event pairs (patient level data + summary statistics)
-  Trajectories::createEventPairsTable(connection=connection,
+  Trajectories:::createEventPairsTable(connection=connection,
                                       trajectoryAnalysisArgs=trajectoryAnalysisArgs,
                                       trajectoryLocalArgs=trajectoryLocalArgs)
 
 
   # Get number of rows from E1E2_model table (should be >10 rows)
   res<-querySql(connection, glue::glue('SELECT * FROM {trajectoryLocalArgs$resultsSchema}.{trajectoryLocalArgs$prefixForResultTableNames}E1E2_model'))
-  rows.E1.E2<-res %>% filter(E1_CONCEPT_ID==317009 & E2_CONCEPT_ID==255848) %>% nrow()
-  rows.E2.E1<-res %>% filter(E1_CONCEPT_ID==255848 & E2_CONCEPT_ID==317009) %>% nrow()
+  rows.E1.E2<-res %>% dplyr::filter(E1_CONCEPT_ID==317009 & E2_CONCEPT_ID==255848) %>% nrow()
+  rows.E2.E1<-res %>% dplyr::filter(E1_CONCEPT_ID==255848 & E2_CONCEPT_ID==317009) %>% nrow()
   testthat::expect_equal(rows.E1.E2, 1)
   testthat::expect_equal(rows.E2.E1, 1)
 

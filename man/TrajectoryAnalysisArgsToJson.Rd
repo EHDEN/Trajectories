@@ -7,7 +7,7 @@
 TrajectoryAnalysisArgsToJson(trajectoryAnalysisArgs, filepath)
 }
 \arguments{
-\item{trajectoryAnalysisArgs}{Object created by Trajectories::createTrajectoryAnalysisArgs() method}
+\item{trajectoryAnalysisArgs}{Object created by Trajectories:::createTrajectoryAnalysisArgs() method}
 
 \item{filepath}{Full path to the output file. Should have .json extension as this is actually a JSON file.}
 }

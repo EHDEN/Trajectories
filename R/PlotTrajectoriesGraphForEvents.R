@@ -1,6 +1,6 @@
 #' Creates plots for the analysis results obtained by runEventPairAnalysis()
 #'
-#' Analysis results, obtained by runEventPairAnalysis(), have to exist in output folder, set by Trajectories::GetOutputFolder(trajectoryLocalArgs,trajectoryAnalysisArgs).
+#' Analysis results, obtained by runEventPairAnalysis(), have to exist in output folder, set by Trajectories:::GetOutputFolder(trajectoryLocalArgs,trajectoryAnalysisArgs).
 #' This function also alignes actual trajectories to the graph, therefore it requires database connection.
 #' If you provide an eventName (OMOP concept name) or list of event names as input, the graph that crosses that event is shown. If you do not provide it (eventName=NA), the function automatically takes
 #' most prevalent top5 events and builds graph for each of them.
@@ -14,7 +14,6 @@
 #' @inheritParams createTrajectoriesGraph
 #'
 #' @return
-#' @export
 #'
 #' @examples
 PlotTrajectoriesGraphForEvents<-function(connection,
@@ -26,27 +25,26 @@ PlotTrajectoriesGraphForEvents<-function(connection,
                        ) {
 
 
-  library(stringi)
-  outputFolder<-Trajectories::GetOutputFolder(trajectoryLocalArgs,trajectoryAnalysisArgs)
+  outputFolder<-Trajectories:::GetOutputFolder(trajectoryLocalArgs,trajectoryAnalysisArgs)
   eventPairResultsFilename = file.path(outputFolder,'tables','event_pairs_directional.tsv')
 
   # create TrajectoriesGraph object from event pairs
-  g<-Trajectories::createTrajectoriesGraph(eventPairResultsFilename=eventPairResultsFilename)
+  g<-Trajectories:::createTrajectoriesGraph(eventPairResultsFilename=eventPairResultsFilename)
 
   cohortName=trajectoryAnalysisArgs$cohortName
 
 
   if(is.na(eventIds[1])) {
-    logger::log_info('Going to plot graphs for 5 most-prevalent events...')
-    eventIds<-getTop5Events(g)$concept_id
+    ParallelLogger::logInfo('Going to plot graphs for 5 most-prevalent events...')
+    eventIds<-Trajectories:::getTop5Events(g)$concept_id
   } else {
-    logger::log_info('Going to plot graphs for {length(eventIds)} selected events...')
+    ParallelLogger::logInfo('Going to plot graphs for ',length(eventIds),' selected events...')
   }
 
   #build graphs for the selected events
   for(eventId in eventIds) {
 
-    logger::log_info(paste0('Building graph for the folloing event id: {eventId}'))
+    ParallelLogger::logInfo('Building graph for the folloing event id: ',eventId)
 
     #check that event id is present in g
     if(eventId %in% igraph::V(g)$concept_id) {
@@ -59,11 +57,11 @@ PlotTrajectoriesGraphForEvents<-function(connection,
                                     skipOutputTables=skipOutputTables)
 
     } else {
-      logger::log_warn('Cannot plot trajectories through {eventId} as there is no such event in the graph (skipping).')
+      ParallelLogger::logWarn('Cannot plot trajectories through ',eventId,' as there is no such event in the graph (skipping).')
     }
 
   } #for eventIds
 
-  logger::log_info('All graphs saved.')
+  ParallelLogger::logInfo('All graphs saved.')
 
 }

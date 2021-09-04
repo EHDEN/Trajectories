@@ -14,9 +14,9 @@ createValidationSet(
 \arguments{
 \item{connection}{DatabaseConnectorConnection object that is used to connect with database}
 
-\item{trajectoryAnalysisArgs}{Object created by Trajectories::createTrajectoryAnalysisArgs() method}
+\item{trajectoryAnalysisArgs}{Object created by Trajectories:::createTrajectoryAnalysisArgs() method}
 
-\item{trajectoryLocalArgs}{Object created by Trajectories::createTrajectoryLocalArgs() method}
+\item{trajectoryLocalArgs}{Object created by Trajectories:::createTrajectoryLocalArgs() method}
 
 \item{size}{Ratio for assigning event pairs from the cohort to validation set.}
 }

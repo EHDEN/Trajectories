@@ -6,7 +6,6 @@
 #' @param starttime Time when current task was started
 #'
 #' @return
-#' @export
 #'
 #' @examples
 estimatedTimeRemaining<-function(progress_perc=0.25,starttime=Sys.time()) {

@@ -4,12 +4,12 @@
 \alias{InitLogger}
 \title{Initializes logger for Trajectories package}
 \usage{
-InitLogger(logfile, threshold = logger:::INFO)
+InitLogger(logfile, threshold = "INFO")
 }
 \arguments{
 \item{logfile}{Full path to log file}
 
-\item{threshold}{log_threshold values from "logger" package. DEBUG, INFO, WARN, ERROR}
+\item{threshold}{log_threshold values from "ParallelLogger" package: TRACE, DEBUG, INFO, WARN, ERROR}
 }
 \value{
 
