@@ -98,7 +98,7 @@ createTrajectoriesGraph<-function(eventPairResultsFilename) {
     }
   }
 
-  ParallelLogger::logInfo('Full graph contains',igraph::gsize(g),'links between',igraph::gorder(g),'events')
+  ParallelLogger::logInfo('Full graph contains ',igraph::gsize(g),' links between ',igraph::gorder(g),' events')
 
   #Normalized numcohortExact
   igraph::E(g)$normalizedNumcohortExact = (igraph::E(g)$numcohortExact-min(igraph::E(g)$numcohortExact))/(max(igraph::E(g)$numcohortExact)-min(igraph::E(g)$numcohortExact))

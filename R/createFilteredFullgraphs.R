@@ -57,7 +57,7 @@ createFilteredFullgraphs<-function(connection,
   s<-s[s<length(igraph::E(g))] #if the graph does not have that many edges, skip drawing the plot
 
   for(limitOfLinks in s) {
-    ParallelLogger::logInfo('Creating a plot of the same graph, but filtered to {limitOfLinks} high-probability pairs only...')
+    ParallelLogger::logInfo('Creating a plot of the same graph, but filtered to ',limitOfLinks,' high-probability pairs only...')
     #limitOfLinks=50
     title=paste0(limitOfLinks,' high-probability event pairs among ',cohortName,' patients, probability')
     h<-Trajectories:::filterIgraphRemoveLowEffectLinksAndOrphanNodes(g, limitOfLinks=limitOfLinks,edge_param_to_sort_by='prob')

@@ -115,10 +115,10 @@ alignActualTrajectoriesToGraphFull <- function(connection,
   if('count' %in% colnames(v)) v <- v %>% dplyr::select(-count) #remove this to prevent old COUNT existing and leading to multiple COUNT columns after join
   v <- v %>%
     dplyr::left_join(actual_events, by=c('concept_id'='CONCEPT_ID')) %>%
-    dplyr::mutate(alignedTrajsCount=dplyr::if_else(is.na(COUNT),as.integer(0),COUNT))
+    dplyr::mutate(alignedTrajsCount=dplyr::if_else(is.na(COUNT),as.integer(0),as.integer(COUNT)))
   e <- e %>%
     dplyr::left_join(actual_event_pairs, by=c('e1_concept_id'='E1_CONCEPT_ID', 'e2_concept_id'='E2_CONCEPT_ID')) %>%
-    dplyr::mutate(alignedTrajsCount=dplyr::if_else(is.na(COUNT),as.integer(0),COUNT))
+    dplyr::mutate(alignedTrajsCount=dplyr::if_else(is.na(COUNT),as.integer(0),as.integer(COUNT)))
   g2 <- igraph::graph_from_data_frame(e, directed=TRUE, vertices=v)
 
 

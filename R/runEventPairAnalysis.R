@@ -1128,20 +1128,31 @@ adjustPValues<-function(connection,trajectoryLocalArgs,dbcol.pvalue='RR_PVALUE',
 makeRRPvaluePlot <- function(pairs,filename,trajectoryAnalysisArgs) {
   pairs_for_plot<-pairs %>% dplyr::mutate(id = dplyr::row_number()) %>% dplyr::select(id, RR, RR_PVALUE, RR_SIGNIFICANT)
   pairs_for_plot <- pairs_for_plot %>% dplyr::arrange(-RR_PVALUE)
-  p<-suppressWarnings(ggplot2::ggplot(pairs_for_plot, ggplot2::aes(x=RR,y=RR_PVALUE)) +
+  pairs_for_plot <- pairs_for_plot %>% dplyr::filter(!is.na(RR) & !is.na(RR_PVALUE) & RR_PVALUE>0 & RR>0 & RR_PVALUE!=Inf & RR != Inf)
+
+  MIN_RR_VALUE=dplyr::coalesce(suppressWarnings(min(pairs_for_plot$RR,na.rm=T)),0.001)
+  MAX_RR_VALUE=dplyr::coalesce(suppressWarnings(max(pairs_for_plot$RR,na.rm=T)),999)
+  MIN_PVALUE=min(pairs_for_plot$RR_PVALUE,na.rm=T)
+  MAX_PVALUE=1
+  MAX_SIGNIFICANT_PVALUE=max(pairs_for_plot %>% dplyr::filter(!is.na(RR_SIGNIFICANT) & RR_SIGNIFICANT=='*') %>% dplyr::pull(RR_PVALUE),na.rm=T)
+
+  pairs_for_plot$LOG_RR=log10(pairs_for_plot$RR)
+  pairs_for_plot$LOG_RR_PVAL=log10(pairs_for_plot$RR_PVALUE)
+
+
+  p<-suppressWarnings(ggplot2::ggplot(pairs_for_plot, ggplot2::aes(x=LOG_RR,y=LOG_RR_PVAL)) +
                         ggplot2::geom_point() +
-                        ggplot2::geom_text(ggplot2::aes(label=id),hjust=0, vjust=0, size=3) +
-                        ggplot2::annotate("rect", xmin = trajectoryAnalysisArgs$RRrangeToSkip[1], xmax = trajectoryAnalysisArgs$RRrangeToSkip[2], ymin = 0, ymax = max(suppressWarnings(max(pairs_for_plot$RR_PVALUE)),1),
-             alpha = .5) +
-               ggplot2::annotate("rect", xmin = 0, xmax = max(suppressWarnings(max(pairs_for_plot$RR)),1), ymin = min(suppressWarnings(max(pairs_for_plot %>% dplyr::filter(!is.na(RR_SIGNIFICANT) & RR_SIGNIFICANT=='*') %>% dplyr::pull(RR_PVALUE))),1), ymax = 1,
-             alpha = .5) +
-               ggplot2::scale_x_continuous(trans='log10') +
-               ggplot2::scale_y_continuous(trans='log10') +
-    #ggplot2::scale_y_reverse() +
+                        #ggrepel::geom_text_repel(aes(label=model)) +
+                        ggplot2::geom_text(ggplot2::aes(label=id),size=3) +
+                        ggplot2::annotate("rect", xmin = log10(trajectoryAnalysisArgs$RRrangeToSkip[1]), xmax = log10(trajectoryAnalysisArgs$RRrangeToSkip[2]), ymin = log10(MIN_PVALUE), ymax = log(min(MAX_PVALUE,1)), alpha = .5) +
+               ggplot2::annotate("rect", xmin = log10(MIN_RR_VALUE), xmax = log10(MAX_RR_VALUE), ymin = log10(MAX_SIGNIFICANT_PVALUE), ymax = 1, alpha = .5) +
+               #ggplot2::scale_x_continuous(trans='log10') +
+               #ggplot2::scale_y_continuous(trans='log10') +
       ggplot2::annotation_logticks(sides="trbl") +
       ggplot2::labs(title='RR/p-value plot of all tested event pairs. Shaded areas indicate insignificant p-values and RR values in skip range.') +
       ggplot2::theme_bw()
   )
+  p
   pdf(filename)
   suppressWarnings(print(p))
   dev.off()

@@ -52,7 +52,9 @@ alignActualTrajectoriesToGraph <- function(connection,
   #insertTable(connection, tablename, edges, tempTable=F, progressBar=T)
 
   #Create empty table manually
-  RenderedSql <- Trajectories:::loadRenderTranslateSql("create_mylinks_table.sql",
+  sqlfilename="create_mylinks_table.sql"
+  if(is.character(edges$e1_concept_id)) sqlfilename="create_mylinks_table-brunak.sql" # This hocus-pocus is just for handling character-based CONCEP_ID-s.
+  RenderedSql <- Trajectories:::loadRenderTranslateSql(sqlfilename,
                                                   packageName=get('TRAJECTORIES_PACKAGE_NAME', envir=TRAJECTORIES.CONSTANTS),
                                                    dbms=attr(connection, "dbms"),
                                                    resultsSchema =  trajectoryLocalArgs$resultsSchema,
@@ -67,7 +69,7 @@ alignActualTrajectoriesToGraph <- function(connection,
                      " (e1_concept_id, e2_concept_id) VALUES ",
                      paste(paste0("(",paste(
                        #edges$e1_concept_id,
-                       #if(is.character(edges$e1_concept_id)) {paste0("'",edges$e1_concept_id,"'")} else {edges$e1_concept_id}, #this hocus-pocus is just for handling character-based CONCEP_ID-s. This normally does not happen, but in case someone is tricking a bit and tries to use source_values for tha analysis, then here we want to make sure that the code does not break
+                       #if(is.character(edges$e1_concept_id)) {paste0("'",edges$e1_concept_id,"'")} else {edges$e1_concept_id}, #this hocus-pocus is just for handling character-based CONCEP_ID-s. This normally does not happen, but in case someone is tricking a bit and tries to use source_values for the analysis, then here we want to make sure that the code does not break
                        DBI::dbQuoteString(connection, edges %>% dplyr::mutate(e1_concept_id=dplyr::if_else(is.na(e1_concept_id),'NULL',as.character(e1_concept_id))) %>% dplyr::pull(e1_concept_id)  ),
                        #edges$e2_concept_id,
                        #if(is.character(edges$e2_concept_id)) {paste0("'",edges$e2_concept_id,"'")} else {edges$e2_concept_id},

@@ -42,3 +42,9 @@ IF OBJECT_ID('@resultsSchema.@prefiXpairs_of_model', 'U') IS NOT NULL
   DROP TABLE @resultsSchema.@prefiXpairs_of_model;
 IF OBJECT_ID('@resultsSchema.@prefiXpairs_stat', 'U') IS NOT NULL
   DROP TABLE @resultsSchema.@prefiXpairs_stat;
+IF OBJECT_ID('@resultsSchema.@prefiXdaydiff_from_beginning_of_op', 'U') IS NOT NULL
+  DROP TABLE @resultsSchema.@prefiXdaydiff_from_beginning_of_op;
+IF OBJECT_ID('@resultsSchema.@prefiXmatching', 'U') IS NOT NULL
+  DROP TABLE @resultsSchema.@prefiXmatching;
+IF OBJECT_ID('@resultsSchema.@prefiXpairs_of_matching', 'U') IS NOT NULL
+  DROP TABLE @resultsSchema.@prefiXpairs_of_matching;
