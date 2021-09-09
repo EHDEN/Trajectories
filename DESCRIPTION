@@ -15,10 +15,10 @@ Authors@R: c(
 Maintainer: Kadri Künnapuu <kadri.kunnapuu@stacc.ee>
 License: GPL-3
 Depends:
-    R (>= 3.2.2)
+    R (>= 3.2.2),
+    dplyr (>= 0.8.5)
 Imports:
     DatabaseConnector (>= 2.2.0),
-    dplyr (>= 0.8.5),
     SqlRender (>= 1.5.2),
     stringi (>= 1.4.5),
     openxlsx (>= 4.1.4),
@@ -27,7 +27,8 @@ Imports:
     ggplot2 (>= 3.3.3),
     igraph (>= 1.2.5),
     lubridate (>= 1.7.10),
-    ParallelLogger (>= 2.0.1)
+    ParallelLogger (>= 2.0.1),
+    MatchIt (>= 4.2.0)
 Encoding: UTF-8
 RoxygenNote: 7.1.1
 Suggests: 

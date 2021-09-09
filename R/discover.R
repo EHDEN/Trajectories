@@ -4,8 +4,9 @@
 #' @param trajectoryLocalArgs TrajectoryLocalArgs object that must be created by createTrajectoryLocalArgs() method
 #' @param createCohort Builds a study cohort in the database. If validationSetSize is set to non-zero, splits the cohort into disovery and validation set.
 #' @param validationSetSize If set to non-zero, splits the whole cohort into discovery and (self-)validation set. Is meaningful only if selfValidate=T. Allowed values are in range 0..1.
-#' @param createEventPairsTable Builds all event pairs and necessary data tables in the database for the analysis.
+#' @param createEventPairsTable Builds all event pairs and necessary data tables in the database for the analysis. Also clears all results from the database if they exist.
 #' @param runDiscoveryAnalysis Run the actual directionality analysis of all event pairs.
+#' @param forceRecalculationOfAnalysis Forces deleting previous results from the database and rerunning the whole discovery analysis. Useful mostly in case something goes wrong and you need to force the recalculation (it is, when debugging). In normal circumstances using F is safe.
 #' @param createFilteredFullgraphs Builds graphs based on the results.
 #' @param createGraphsForSelectedEvents Builds graphs for selected events (event ID-s taken from trajectoryAnalysisArgs$eventIdsForGraphs).
 #' @param selfValidate Normally, set to F/FALSE as it is always better to validate your results in another database. However, if you want to validate your results in your own database, then set selfValidate=T and validationSetSize=some meaningful proportion (for example, 0.5). In such case, the discovery analysis is actually conducted on half of the data and the results are then validated on another half.
@@ -21,6 +22,7 @@ discover <- function(connection,
                      validationSetSize=0.5,  # used only if createCohort=T (validation set created while building cohort)
                      createEventPairsTable=T,
                      runDiscoveryAnalysis=T,
+                     forceRecalculationOfAnalysis=F,
                      createFilteredFullgraphs=T,
                      createGraphsForSelectedEvents=T,
                      selfValidate=F,
@@ -73,7 +75,7 @@ discover <- function(connection,
   if(runDiscoveryAnalysis) Trajectories:::runDiscoveryAnalysis(connection,
                                      trajectoryAnalysisArgs,
                                      trajectoryLocalArgs,
-                                     forceRecalculation=F)
+                                     forceRecalculation=forceRecalculationOfAnalysis)
 
 
 

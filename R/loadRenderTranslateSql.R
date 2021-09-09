@@ -37,10 +37,10 @@ loadRenderTranslateSql<-function(sqlFilename,
   }
   parameterizedSql <- readChar(pathToSql, file.info(pathToSql)$size)
 
-  renderedSql <- render(sql = parameterizedSql[1], warnOnMissingParameters = warnOnMissingParameters, ...)
+  renderedSql <- SqlRender::render(sql = parameterizedSql[1], warnOnMissingParameters = warnOnMissingParameters, ...)
 
   if (mustTranslate)
-    renderedSql <- translate(sql = renderedSql, targetDialect = dbms, oracleTempSchema = oracleTempSchema)
+    renderedSql <- SqlRender::translate(sql = renderedSql, targetDialect = dbms, oracleTempSchema = oracleTempSchema)
 
   renderedSql
 }

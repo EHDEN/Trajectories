@@ -50,6 +50,8 @@ CREATE TABLE @resultsSchema.@prefiXE1E2_model (
   E2_COUNT_IN_PAIRS INT NULL,
   E2_COUNT_AS_SECOND_EVENT_OF_PAIRS INT NULL, -- this is the number of eventperiods containing event pairs where E2 is the second event
   E2_COUNT_AS_FIRST_EVENT_OF_EVENTPERIODS INT NULL, -- this is the total number of eventperiods having E2 as the very first event (these eventperiods do not produce any smth->E2 pairs)
+  CASE_CONTROL_GROUPS_IMBALANCED INT NULL, -- is filled in when case-control group matching does not result in balanced groups. Used for infromation only, does not affect the analysis.
+  CASE_CONTROL_GROUPS_IMBALANCE_COMMENT VARCHAR(255) NULL, -- is filled in when case-control group matching does not result in balanced groups. Used for infromation only, does not affect the analysis.
 
   E2_COUNT_IN_CASE_GROUP INT NULL,
   CASE_GROUP_SIZE INT NULL,

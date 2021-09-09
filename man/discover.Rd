@@ -11,6 +11,7 @@ discover(
   validationSetSize = 0.5,
   createEventPairsTable = T,
   runDiscoveryAnalysis = T,
+  forceRecalculationOfAnalysis = F,
   createFilteredFullgraphs = T,
   createGraphsForSelectedEvents = T,
   selfValidate = F,
@@ -26,9 +27,11 @@ discover(
 
 \item{validationSetSize}{If set to non-zero, splits the whole cohort into discovery and (self-)validation set. Is meaningful only if selfValidate=T. Allowed values are in range 0..1.}
 
-\item{createEventPairsTable}{Builds all event pairs and necessary data tables in the database for the analysis.}
+\item{createEventPairsTable}{Builds all event pairs and necessary data tables in the database for the analysis. Also clears all results from the database if they exist.}
 
 \item{runDiscoveryAnalysis}{Run the actual directionality analysis of all event pairs.}
+
+\item{forceRecalculationOfAnalysis}{Forces deleting previous results from the database and rerunning the whole discovery analysis. Useful mostly in case something goes wrong and you need to force the recalculation (it is, when debugging). In normal circumstances using F is safe.}
 
 \item{createFilteredFullgraphs}{Builds graphs based on the results.}
 

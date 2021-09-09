@@ -11,7 +11,6 @@
 #' @param trajectoryLocalArgs TrajectoryLocalArgs object that must be created by createTrajectoryLocalArgs() method
 #' @param limitOfNodes Max number of events in the consrtructed graph. Used to limit the analysis to most important events only.
 #' @param skipOutputTables If set to TRUE, no output data tables are made (the PDF graphs only).
-#' @inheritParams createTrajectoriesGraph
 #'
 #' @return
 #'
