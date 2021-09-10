@@ -169,6 +169,11 @@ setUpEunomia<-function() {
                                                                  )
 
 
+  #update all patients so that they belong to the same age group (set all birthdates to 1 Jan 1980)
+  sql<-translate(paste0("UPDATE PERSON SET BIRTH_DATETIME=",getSQLiteRealFromDateSQLstring('1980-01-01'),";"), targetDialect=connection@dbms)
+  executeSql(connection, sql, progressBar = F,
+             reportOverallTime=F)
+
   return(list(connection=connection,trajectoryLocalArgs=trajectoryLocalArgs))
 }
 

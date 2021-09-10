@@ -100,23 +100,28 @@ createTrajectoriesGraph<-function(eventPairResultsFilename) {
 
   ParallelLogger::logInfo('Full graph contains ',igraph::gsize(g),' links between ',igraph::gorder(g),' events')
 
-  #Normalized numcohortExact
-  igraph::E(g)$normalizedNumcohortExact = (igraph::E(g)$numcohortExact-min(igraph::E(g)$numcohortExact))/(max(igraph::E(g)$numcohortExact)-min(igraph::E(g)$numcohortExact))
+  # if there are at least 1 edge
+  if(igraph::gsize(g)>0) {
+    #Normalized numcohortExact
+    igraph::E(g)$normalizedNumcohortExact = (igraph::E(g)$numcohortExact-min(igraph::E(g)$numcohortExact, na.rm=T))/(max(igraph::E(g)$numcohortExact, na.rm=T)-min(igraph::E(g)$numcohortExact, na.rm=T))
 
-  #Effect*event1_count
-  igraph::E(g)$effectCount=igraph::E(g)$e1_count*igraph::E(g)$effect
+    #Effect*event1_count
+    igraph::E(g)$effectCount=igraph::E(g)$e1_count*igraph::E(g)$effect
 
-  #make edge color equal to target node color
-  edge.end <- igraph::ends(g, es=igraph::E(g), names=F)[,2] #outputs the end node id of each edge
-  igraph::E(g)$color <- igraph::V(g)$color[edge.end]
-  #but make it a bit lighter
-  rgb1<-sapply(igraph::E(g)$color ,col2rgb)
+    #make edge color equal to target node color
+    edge.end <- igraph::ends(g, es=igraph::E(g), names=F)[,2] #outputs the end node id of each edge
+    igraph::E(g)$color <- igraph::V(g)$color[edge.end]
+    #but make it a bit lighter
+    rgb1<-sapply(igraph::E(g)$color ,col2rgb)
 
-  rgb1<-rgb1*1.2
-  rgb1<-ifelse(rgb1>255,255,rgb1)
+    rgb1<-rgb1*1.2
+    rgb1<-ifelse(rgb1>255,255,rgb1)
 
-  rgb2<-rgb(rgb1[1,],rgb1[2,],rgb1[3,],alpha=1,maxColorValue=255)
-  igraph::E(g)$color <- rgb2
+    rgb2<-rgb(rgb1[1,],rgb1[2,],rgb1[3,],alpha=1,maxColorValue=255)
+    igraph::E(g)$color <- rgb2
+  }
+
+
 
   # make it of the class TrajectoriesGraph which is derived from the class igraph
   class(g) <- c("TrajectoriesGraph","igraph")

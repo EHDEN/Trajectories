@@ -1190,14 +1190,22 @@ makeRRPvaluePlot <- function(pairs,filename,trajectoryAnalysisArgs) {
   pairs_for_plot <- pairs_for_plot %>% dplyr::arrange(-RR_PVALUE)
   pairs_for_plot <- pairs_for_plot %>% dplyr::filter(!is.na(RR) & !is.na(RR_PVALUE) & RR_PVALUE>0 & RR>0 & RR_PVALUE!=Inf & RR != Inf)
 
-  print(table(pairs_for_plot$RR))
-  print(table(pairs_for_plot$RR_PVALUE))
+  #print(table(pairs_for_plot$RR))
+  #print(table(pairs_for_plot$RR_PVALUE))
 
   MIN_RR_VALUE=dplyr::coalesce(suppressWarnings(min(pairs_for_plot$RR,na.rm=T)),0.001)
   MAX_RR_VALUE=dplyr::coalesce(suppressWarnings(max(pairs_for_plot$RR,na.rm=T)),999)
   MIN_PVALUE=min(pairs_for_plot$RR_PVALUE,na.rm=T)
   MAX_PVALUE=1
-  MAX_SIGNIFICANT_PVALUE=max(pairs_for_plot %>% dplyr::filter(!is.na(RR_SIGNIFICANT) & RR_SIGNIFICANT=='*') %>% dplyr::pull(RR_PVALUE),na.rm=T)
+  pvals.of.significant.pairs<-pairs_for_plot %>% dplyr::filter(!is.na(RR_SIGNIFICANT) & RR_SIGNIFICANT=='*') %>% dplyr::pull(RR_PVALUE)
+  if(length(pvals.of.significant.pairs[!is.na(pvals.of.significant.pairs)])==0) {
+    MAX_SIGNIFICANT_PVALUE=0
+  } else {
+    MAX_SIGNIFICANT_PVALUE=max(
+      pvals.of.significant.pairs,
+      na.rm=T)
+  }
+
 
   pairs_for_plot$LOG_RR=suppressWarnings(log10(pairs_for_plot$RR))
   pairs_for_plot$LOG_RR_PVAL=suppressWarnings(log10(pairs_for_plot$RR_PVALUE))
@@ -1230,48 +1238,6 @@ makeRRPvalueQQPlot<-function(pairs) {
   abline(0, 1, col = "red")
 }
 
-buildCaseControlGroupsOld<-function(connection,trajectoryLocalArgs,diagnosis1,diagnosis1name) {
-  #create table for matching
-  RenderedSql <- Trajectories:::loadRenderTranslateSql('AssignIndexDatesForMatching.sql',
-                                                      packageName=get('TRAJECTORIES_PACKAGE_NAME', envir=TRAJECTORIES.CONSTANTS),
-                                                      dbms=connection@dbms,
-                                                      resultsSchema = trajectoryLocalArgs$resultsSchema,
-                                                      prefiX =  trajectoryLocalArgs$prefixForResultTableNames,
-                                                      diagnosis1 = diagnosis1
-  )
-  DatabaseConnector::executeSql(connection, RenderedSql, progressBar = FALSE, reportOverallTime = FALSE)
-
-
-
-  #read data from the table
-  RenderedSql <- SqlRender::render(sql='SELECT * FROM @resultsSchema.@prefiXmatching;',
-                                   resultsSchema = trajectoryLocalArgs$resultsSchema,
-                                   prefiX =  trajectoryLocalArgs$prefixForResultTableNames)
-  RenderedSql <- SqlRender::translate(sql=RenderedSql, targetDialect = connection@dbms)
-  d<-DatabaseConnector::querySql(connection=connection, sql=RenderedSql)
-
-  d<-d %>% Trajectories:::calcPropensityScore()
-
-  if(all(is.na(d$PropScore))) {
-    #cant build propensity score, all controls are empty
-    matches=list(Cases = d$EVENTPERIOD_ID, Controls = c())
-  } else {
-    matches = d %>%
-      Trajectories:::propensityScoreBasedMatch(nn = 1)
-  }
-
-  #length(matches$Cases)
-  #length(matches$Controls)
-
-  #distribution of propensity scores after matching
-  #d %>%
-  #  filter(EVENTPERIOD_ID %in% c(matches$Cases, matches$Controls)) %>%
-  #  ggplot(ggplot2::aes(x = PropScore, fill = as.factor(IS_CASE))) +
-  #  geom_density(ggplot2::aes(y = ..count..), alpha = 0.5) +
-  #  theme_bw()
-
-  return(matches)
-}
 
 
 buildCaseControlGroups<-function(connection,trajectoryLocalArgs,diagnosis1,diagnosis1name,outputFolder) {
@@ -1294,34 +1260,57 @@ buildCaseControlGroups<-function(connection,trajectoryLocalArgs,diagnosis1,diagn
   RenderedSql <- SqlRender::translate(sql=RenderedSql, targetDialect = connection@dbms)
   d<-DatabaseConnector::querySql(connection=connection, sql=RenderedSql)
 
+  num.cases.original<-sum(d$IS_CASE==1)
+  num.noncases.original<-sum(d$IS_CASE==0)
+
+
   #Prepare data from propensity score based matching
   d <- d %>%
     dplyr::mutate(YEAR_OF_INDEXDATE= lubridate::year(INDEX_DATE),
                   MONTH_OF_INDEXDATE= lubridate::month(INDEX_DATE))
 
   d$GENDER<-factor(d$GENDER, levels<-c('M','F'))
-
+  #remove rows with incorrect gender
+  d <- d %>% filter(!is.na(GENDER))
 
   if(all(d$IS_CASE==1)) {
-    ParallelLogger::logWarn('All eventperiods are in case group (no controls), cannot build propensity score for the first event')
+    ParallelLogger::logWarn('All eventperiods are in case group (no controls), cannot build case-control groups for the first event')
     return(list(Cases = sort(d$EVENTPERIOD_ID), Controls = c()), IsImbalanced=1, ImbalanceComment='All eventperiods are in case group (no controls), cannot build propensity score for the first event')
 
   }
 
+  # For age group stratification on propensity score matching, create age group bins
+  d$AGEGROUP<-cut(d$AGE, breaks=c(0,1,2,5,10,20,30,40,50,60,70,80,150),right=F)
+  #remove rows with incorrect agegroup (e.g the age is <0 or >150)
+  d <- d %>% filter(!is.na(AGEGROUP))
 
-  #Depending on which group is smaller - cases or non-cases, we search for matches from larger group
-  d$IS_CONTROL=ifelse(d$IS_CASE==1,0,1)
+  #Get season of INDEXDATE
+  d$SEASON_OF_INDEXDATE=Trajectories:::getSeason(as.Date(d$INDEX_DATE))
+  d <- d %>% filter(!is.na(SEASON_OF_INDEXDATE))
 
-  if(sum(d$IS_CASE==1) <= sum(d$IS_CONTROL==1)) {
-    #There are more non-cases than cases. Therefore, find matches for each case (leave out non-cases where no matching case can be found)
-    f=IS_CASE ~ I(GENDER=='M') + scale(AGE) + scale(YEAR_OF_INDEXDATE) + scale(MONTH_OF_INDEXDATE) + scale(LEN_HISTORY_DAYS) + scale(LEN_FOLLOWUP_DAYS)
+  #table(d$IS_CASE)
+
+  f=IS_CASE ~ SEASON_OF_INDEXDATE + scale(LEN_HISTORY_DAYS) + scale(LEN_FOLLOWUP_DAYS)
+  m.out1 <- suppressWarnings( MatchIt::matchit(formula=f, #formula for logistic regression
+                             data=d,
+                             method = "nearest", # Find a patient with nearest propensity score for a matching control
+                             distance = "glm", #Use logistic regression based propensity score
+                             exact=c("GENDER","AGEGROUP","YEAR_OF_INDEXDATE"), #Gender, age group and year of index date must be match in case/control group
+                             discard="both", # discard cases or controls where no good matching is found
+                             reestimate=T) #After discarding some cases/controls, re-estimate the propensity scores
+  )
+  summary(m.out1)
+
+  control.ids<-as.numeric(m.out1$match.matrix[,1][!is.na(m.out1$match.matrix[,1])])
+  case.ids<-as.numeric(rownames(m.out1$match.matrix)[!is.na(m.out1$match.matrix[,1])])
+
+  if(length(control.ids)==0 | length(case.ids)==0) {
+    ParallelLogger::logWarn('After matching, the number of cases or controls is 0 - cannot build case-control groups for the first event')
+    return(list(Cases = case.ids, Controls = c()), IsImbalanced=1, ImbalanceComment='After matching, the number of cases or controls is 0 - cannot build case-control groups for the first event')
+
   } else {
-    #There are more cases than non-cases. Therefore, find matches for each non-case (leave out cases where no matching control can be found)
-    f=IS_CONTROL ~ I(GENDER=='M') + scale(AGE) + scale(YEAR_OF_INDEXDATE) + scale(MONTH_OF_INDEXDATE) + scale(LEN_HISTORY_DAYS) + scale(LEN_FOLLOWUP_DAYS)
+    ParallelLogger::logInfo('Out of ',num.cases.original,' cases and ',num.noncases.original,' non-cases, ',length(case.ids),' were selected for cases and ',length(control.ids),' for controls.')
   }
-
-  m.out1 <- MatchIt::matchit(formula=f, data=d, method = "nearest", distance = "glm")
-
 
   #propensity score covariate plot before and after matching
   #plot(summary(m.out1))
@@ -1337,6 +1326,7 @@ buildCaseControlGroups<-function(connection,trajectoryLocalArgs,diagnosis1,diagn
     filename=file.path(outputFolder,'figures',paste0('PropensityScoreSMDfor.',diagnosis1,'.pdf'))
     pdf(filename)
     plot(summary(m.out1), main=paste0('Imbalanced ctrl group matching for ',diagnosis1,' ',diagnosis1name))
+    #plot(m.out1, type = "qq", interactive = FALSE)
     dev.off()
 
   } else {
@@ -1344,14 +1334,16 @@ buildCaseControlGroups<-function(connection,trajectoryLocalArgs,diagnosis1,diagn
     imbalance_comment=NULL
   }
 
-  if(sum(d$IS_CASE==1) <= sum(d$IS_CONTROL==1)) {
-    control.ids<-as.numeric(m.out1$match.matrix[,1])
-    case.ids<-as.numeric(rownames(m.out1$match.matrix))
-  } else {
-    case.ids<-as.numeric(m.out1$match.matrix[,1])
-    control.ids<-as.numeric(rownames(m.out1$match.matrix))
-  }
 
 
   return(list(Cases = sort(d[case.ids,'EVENTPERIOD_ID']), Controls = sort(d[control.ids,'EVENTPERIOD_ID']), IsImbalanced=is_imbalanced, ImbalanceComment=imbalance_comment))
+}
+
+getSeason <- function(input.date){
+  numeric.date <- 100*lubridate::month(input.date)+lubridate::day(input.date)
+  ## input Seasons upper limits in the form MMDD in the "break =" option:
+  cuts <- base::cut(numeric.date, breaks = c(0,319,0620,0921,1220,1231))
+  # rename the resulting groups (could've been done within cut(...levels=) if "Winter" wasn't double
+  levels(cuts) <- c("Winter","Spring","Summer","Fall","Winter")
+  return(cuts)
 }
