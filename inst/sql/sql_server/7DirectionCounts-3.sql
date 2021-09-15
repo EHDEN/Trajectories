@@ -1,22 +1,3 @@
--- crete temporary tables for calculation
-
-IF OBJECT_ID('@resultsSchema.@prefixeventperiods_with_E1', 'U') IS NOT NULL
-  DROP TABLE @resultsSchema.@prefixeventperiods_with_E1;
-
-    SELECT
-               EVENTPERIOD_ID,
-               -- CONCEPT_ID,
-               date
-
-        INTO @resultsSchema.@prefixeventperiods_with_E1
-        FROM
-             @resultsSchema.@prefixevents_in_eventperiods
-        WHERE
-            CONCEPT_ID = (@diag1)
-        ORDER BY EVENTPERIOD_ID,date;
-
-
-
 IF OBJECT_ID('@resultsSchema.@prefixeventperiods_with_E1E2', 'U') IS NOT NULL
   DROP TABLE @resultsSchema.@prefixeventperiods_with_E1E2;
 
@@ -28,32 +9,16 @@ IF OBJECT_ID('@resultsSchema.@prefixeventperiods_with_E1E2', 'U') IS NOT NULL
             WHEN
             a.date>b.date THEN -1
           END AS E1E2_ORDER
---
---
---SELECT
---               a.eventperiod_id as EVENTPERIOD_ID,
---               b.CONCEPT_ID as E1_CONCEPT_ID,
---               a.CONCEPT_ID as E2_CONCEPT_ID,
---               b.date as date1,
---               a.date as date2,
---               a.age as E1_age
+
         INTO @resultsSchema.@prefixeventperiods_with_E1E2
         FROM
-             @resultsSchema.@prefixevents_in_eventperiods b
+             @resultsSchema.@prefixtemp2_for_direction_counts b
                  INNER JOIN @resultsSchema.@prefixeventperiods_with_E1 a
                 ON a.EVENTPERIOD_ID = b.EVENTPERIOD_ID
         WHERE
             b.CONCEPT_ID = (@diag2)
         --ORDER BY EVENTPERIOD_ID
         ;
-
-IF OBJECT_ID('@resultsSchema.@prefixeventperiods_with_E1', 'U') IS NOT NULL
-  DROP TABLE @resultsSchema.@prefixeventperiods_with_E1;
-
-
-
-
-
 
 
 -- add counts to results

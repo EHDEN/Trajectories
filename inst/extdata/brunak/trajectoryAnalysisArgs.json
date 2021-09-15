@@ -4,8 +4,8 @@
   "maximumDaysBetweenEvents": [3650],
   "minPatientsPerEventPair": [20],
   "addConditions": [true],
-  "addObservations": [false],
-  "addProcedures": [false],
+  "addObservations": [true],
+  "addProcedures": [true],
   "addDrugExposures": [false],
   "addDrugEras": [false],
   "addBirths": [false],
@@ -15,5 +15,5 @@
   "cohortName": ["Full database"],
   "description": ["Brunak replication study"],
   "eventIdsForGraphs": [null],
-  "RRrangeToSkip": [0.8, 1.2]
+  "RRrangeToSkip": [1, 1]
 }

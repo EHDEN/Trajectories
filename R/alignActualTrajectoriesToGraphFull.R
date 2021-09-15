@@ -32,40 +32,14 @@ alignActualTrajectoriesToGraphFull <- function(connection,
   #but before actual TABLE CREATE there is an extra step: if sqlRole is given, set session to correct role before creating the table
   Trajectories:::setRole(connection,trajectoryLocalArgs$sqlRole)
 
-  #26 Sep 2020: Can't use simply insertTable here because in Eunomia package it does not solve schema name correctly. That's why this is commented out and we manually create SQL here :(
-  #insertTable(connection, tablename, edges, tempTable=F, progressBar=T)
-
-  #Create empty table manually
-  if(is.character(as.data.frame(edges)$e1_concept_id[1])) { #if-then hocus-pocus is to handle character-based diagnosis codes when using some non-standard concept codes. Should never happen normally.
-    sqlfile='create_mylinks_table-brunak.sql'
-  } else {
-    sqlfile='create_mylinks_table.sql'
-  }
-  RenderedSql <- Trajectories:::loadRenderTranslateSql(sqlfile,
-                                                    packageName=get('TRAJECTORIES_PACKAGE_NAME', envir=TRAJECTORIES.CONSTANTS),
-                                                     dbms=attr(connection, "dbms"),
-                                                     resultsSchema =  trajectoryLocalArgs$resultsSchema,
-                                                     prefiX = trajectoryLocalArgs$prefixForResultTableNames
-    )
-  DatabaseConnector::executeSql(connection, RenderedSql)
-
-  #Fill with data
-  tablename<-paste0(trajectoryLocalArgs$resultsSchema,'.',trajectoryLocalArgs$prefixForResultTableNames,'mylinks')
-  insertSql <- paste("INSERT INTO ",
-                     tablename,
-                     " (e1_concept_id, e2_concept_id) VALUES ",
-                     paste(paste0("(",paste(
-                       #edges$e1_concept_id,
-                       #if(is.character(edges$e1_concept_id)) {paste0("'",edges$e1_concept_id,"'")} else {edges$e1_concept_id}, #this hocus-pocus is just for handling character-based CONCEP_ID-s. This normally does not happen, but in case someone is tricking a bit and tries to use source_values for the analysis, then here we want to make sure that the code does not break
-                       DBI::dbQuoteString(connection, edges %>% dplyr::mutate(e1_concept_id=dplyr::if_else(is.na(e1_concept_id),'NULL',as.character(e1_concept_id))) %>% dplyr::pull(e1_concept_id)  ),
-                       #edges$e2_concept_id,
-                       #if(is.character(edges$e2_concept_id)) {paste0("'",edges$e2_concept_id,"'")} else {edges$e2_concept_id},
-                       DBI::dbQuoteString(connection, edges %>% dplyr::mutate(e2_concept_id=dplyr::if_else(is.na(e2_concept_id),'NULL',as.character(e2_concept_id))) %>% dplyr::pull(e2_concept_id)  ),
-                       sep=","),")") , collapse=","),
-                     ";",
-                     sep = "")
-  RenderedSql <- SqlRender::translate(insertSql,targetDialect=attr(connection, "dbms"))
-  DatabaseConnector::executeSql(connection, RenderedSql)
+  #26 Sep 2020: Can't use simply insertTable here because in Eunomia package it does not solve schema name correctly. Therefore, currently using workaround function from Trajectories package
+  Trajectories:::insertTable(connection=connection,
+                             databaseSchema=trajectoryLocalArgs$resultsSchema,
+                             tableName=paste0(trajectoryLocalArgs$prefixForResultTableNames,'mylinks'),
+                             data=edges,
+                             dropTableIfExists=T,
+                             tempTable=F,
+                             progressBar=T)
 
   #querySql(connection, paste0("SELECT COUNT(*) FROM ",tablename))
 

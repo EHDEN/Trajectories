@@ -485,7 +485,7 @@ calcRRandPower<-function(connection,
       dplyr::filter(n.y!=0) %>%
       dplyr::select(E1_CONCEPT_ID)
     num.E1s.already.calculated=nrow(E1s)-nrow(E1s_of_pairs_where_rr_not_fully_calculated)
-    if(num.E1s.already.calculated>0) ParallelLogger::logInfo('For the pairs of ',num.E1s.already.calculated,' first events, RR is already calculated. Skipping these from recalculating.')
+    if(num.E1s.already.calculated>0) ParallelLogger::logInfo('For the pairs of ',num.E1s.already.calculated,' first events, RR is already calculated. Skipping these from recalculation.')
 
     #Update pairs and E1s
     pairs <- pairs %>%
@@ -495,7 +495,7 @@ calcRRandPower<-function(connection,
       dplyr::summarise(n=dplyr::n()) %>%
       dplyr::arrange(-n)
     num.already.calculated=num.pairs-nrow(pairs)
-    if(num.already.calculated>0) ParallelLogger::logInfo('Therefore, for ',num.already.calculated,' pairs, RR is already calculated. Skipping these from recalculating.')
+    if(num.already.calculated>0) ParallelLogger::logInfo('Therefore, for ',num.already.calculated,' pairs, RR is already calculated. Skipping these from recalculation.')
   } else {
 
     #Clear all previous results from database
@@ -566,6 +566,15 @@ SET
           dplyr::filter(E1_CONCEPT_ID==diagnosis1)
 
 
+        eventperiod.ids<-data.frame(EVENTPERIOD_ID=c(matches$Cases,matches$Controls))
+        Trajectories:::insertTable(connection = connection,
+                                       databaseSchema=trajectoryLocalArgs$resultsSchema,
+                                       tableName = paste0(trajectoryLocalArgs$prefixForResultTableNames,'matching_ep_ids'),
+                                       data = eventperiod.ids,
+                                       dropTableIfExists=T)
+
+
+
 
 
         sql=paste0('
@@ -583,11 +592,11 @@ SET
         p.EVENTPERIOD_ID
       FROM
       @resultsSchema.@prefiXpairs p
+      INNER JOIN @resultsSchema.@prefiXmatching_ep_ids e ON p.EVENTPERIOD_ID=e.EVENTPERIOD_ID
       INNER JOIN @resultsSchema.@prefiXmatching m ON p.EVENTPERIOD_ID=m.EVENTPERIOD_ID
       WHERE
       p.E1_DATE=m.INDEX_DATE -- all pairs where the first event occurs on INDEX date
       AND p.E2_CONCEPT_ID IN (',paste(DBI::dbQuoteString(connection,as.character(E1.pairs %>% dplyr::pull(E2_CONCEPT_ID))),collapse=","),')
-      AND (p.EVENTPERIOD_ID IN (',paste(c(matches$Cases,matches$Controls),collapse=","),'))
       AND DATEDIFF(DAY,m.index_date, p.E2_DATE)>=0 --E2 occurs AFTER index date
       ) a;')
 
@@ -718,26 +727,159 @@ runDirectionTests<-function(connection,
                             p.value.adjust.method='fdr', #for validation, use 'bonferroni'
                             forceRecalculation=F) {
 
+
   num.pairs=nrow(pairs)
   ParallelLogger::logInfo('Running directionality tests for ',num.pairs,' event pairs to identify pairs where events have significant temporal order...')
 
   #Set SQL role of the database session
   Trajectories:::setRole(connection, trajectoryLocalArgs$sqlRole)
 
+  #Group pairs by E1_CONCEPT_ID
+  E1s<-pairs %>%
+    dplyr::group_by(E1_CONCEPT_ID) %>%
+    dplyr::summarise(n=dplyr::n()) %>%
+    dplyr::arrange(-n)
+  num.E1s.total <- nrow(E1s)
+  ParallelLogger::logInfo('Calculating counts for ',num.E1s.total,' different first events within these pairs.')
+
   if(forceRecalculation==F) {
-    directional_count <- nrow(pairs %>% dplyr::filter(!is.na(DIRECTIONAL_SIGNIFICANT) & DIRECTIONAL_SIGNIFICANT=='*'))
+    #for how many pairs for each E1, the directionality counts are not calculated (but should)
+    pair_counts_starting_with_E1_and_having_counts_not_calculated<-pairs %>%
+      dplyr::filter(is.na(E1_AND_E2_ON_SAME_DAY_COUNT_IN_EVENTS)) %>%
+      dplyr::group_by(E1_CONCEPT_ID) %>%
+      dplyr::summarise(n=dplyr::n()) %>%
+      dplyr::arrange(-n)
 
-    pairs <- pairs %>% dplyr::filter(is.na(DIRECTIONAL_PVALUE))
+    #for which pairs starting with E1 all counts are not FULLY calculated
+    E1s_of_pairs_where_counts_not_fully_calculated <- E1s %>%
+      dplyr::left_join(pair_counts_starting_with_E1_and_having_counts_not_calculated, by = c("E1_CONCEPT_ID")) %>%
+      dplyr::filter(n.y!=0) %>%
+      dplyr::select(E1_CONCEPT_ID)
+    num.E1s.already.calculated=nrow(E1s)-nrow(E1s_of_pairs_where_counts_not_fully_calculated)
+    if(num.E1s.already.calculated>0) ParallelLogger::logInfo('For the pairs of ',num.E1s.already.calculated,' first events, counts for directionality tests are already calculated. Skipping these from recalculation.')
+
+    #Update pairs and E1s
+    pairs <- pairs %>%
+      dplyr::inner_join(E1s_of_pairs_where_counts_not_fully_calculated, by = c("E1_CONCEPT_ID"))
+    E1s <- pairs %>%
+      dplyr::group_by(E1_CONCEPT_ID) %>%
+      dplyr::summarise(n=dplyr::n()) %>%
+      dplyr::arrange(-n)
     num.already.calculated=num.pairs-nrow(pairs)
-
-    if(num.already.calculated>0) ParallelLogger::logInfo('For ',num.already.calculated,' pairs, RR test is already conducted (out of these, ',directional_count,' have significant direction). Skipping these from recalculating.')
+    if(num.already.calculated>0) ParallelLogger::logInfo('Therefore, for ',num.already.calculated,' pairs, counts are already calculated. Skipping these from recalculation.')
   } else {
-    num.already.calculated=0
-    directional_count=0
 
+    #Clear all previous results from database
+    sql='UPDATE @resultsSchema.@prefiXE1E2_model
+SET
+  E1_BEFORE_E2_COUNT_IN_EVENTS=NULL,
+  E1_AFTER_E2_COUNT_IN_EVENTS=NULL,
+  E1_AND_E2_ON_SAME_DAY_COUNT_IN_EVENTS=NULL,
+  DIRECTIONAL_PVALUE=NULL,
+  DIRECTIONAL_SIGNIFICANT=NULL,
+  DIRECTIONAL_PVALUE_IF_SAME_DAY_EVENTS_ORDERED=NULL,
+  DIRECTIONAL_SIGNIFICANT_IF_SAME_DAY_EVENTS_ORDERED=NULL,
+  DIRECTIONAL_POWER=NULL'
+
+    #read data from the table
+    RenderedSql <- SqlRender::render(sql=sql,
+                                     resultsSchema = trajectoryLocalArgs$resultsSchema,
+                                     prefiX =  trajectoryLocalArgs$prefixForResultTableNames)
+    RenderedSql <- SqlRender::translate(sql=RenderedSql, targetDialect = connection@dbms)
+    DatabaseConnector::executeSql(connection=connection, sql=RenderedSql, progressBar = FALSE, reportOverallTime = FALSE)
+
+
+    num.E1s.already.calculated=0
+    num.already.calculated=0
   }
 
 
+  starttime=Sys.time()
+  counter=1
+  # For each E1, create case-control groups
+  if(nrow(E1s)>0) {
+    for(j in 1:nrow(E1s)) {
+      diagnosis1        <- as.data.frame(E1s)[j,'E1_CONCEPT_ID'] # as.data.frame() is used here to get single value instead of 1x1 tibble
+      diagnosis1name    <- c(pairs %>% dplyr::filter(E1_CONCEPT_ID==diagnosis1) %>% pull(E1_NAME))[1]
+
+      ParallelLogger::logInfo('Getting counts ',j+num.E1s.already.calculated,'/',num.E1s.total,' for event pairs starting with ',diagnosis1,' (total progress ',
+                              round(100*(j+num.E1s.already.calculated)/num.E1s.total),'%, ETA: ',Trajectories:::estimatedTimeRemaining(progress_perc=(j-1)/nrow(E1s),starttime=starttime),
+                              ')...')
+
+      #Step 1. Get eventperiods that contain E1 (get also E1 dates) - put this to db as we use it for all pairs starting with the same E1.
+      RenderedSql <- Trajectories:::loadRenderTranslateSql("7DirectionCounts-1.sql",
+                                                           packageName=get('TRAJECTORIES_PACKAGE_NAME', envir=TRAJECTORIES.CONSTANTS),
+                                                           dbms=connection@dbms,
+                                                           resultsSchema =   trajectoryLocalArgs$resultsSchema,
+                                                           diag1 = if(is.character(diagnosis1)) {paste0("'",diagnosis1,"'",sep="")} else {diagnosis1}, #if-then hocus-pocus is to handle character-based diagnosis codes when using some non-standard concept codes. Should never happen normally.
+                                                           prefix =  trajectoryLocalArgs$prefixForResultTableNames
+      )
+      DatabaseConnector::executeSql(connection, sql=RenderedSql, progressBar = FALSE, reportOverallTime = FALSE)
+
+      #Step 2. Prepare a temporary table of all E2 events for that E1
+      E1.pairs <- pairs %>% dplyr::filter(E1_CONCEPT_ID==get('diagnosis1')) %>% dplyr::arrange(E2_CONCEPT_ID)
+
+      E2.concept.ids<-data.frame(CONCEPT_ID=c(E1.pairs %>% dplyr::pull(E2_CONCEPT_ID)))
+      Trajectories:::insertTable(connection = connection,
+                                 databaseSchema=trajectoryLocalArgs$resultsSchema,
+                                 tableName = paste0(trajectoryLocalArgs$prefixForResultTableNames,'temp1_for_direction_counts'),
+                                 data = E2.concept.ids,
+                                 dropTableIfExists=T)
+      RenderedSql <- Trajectories:::loadRenderTranslateSql("7DirectionCounts-2.sql",
+                                                           packageName=get('TRAJECTORIES_PACKAGE_NAME', envir=TRAJECTORIES.CONSTANTS),
+                                                           dbms=connection@dbms,
+                                                           resultsSchema =   trajectoryLocalArgs$resultsSchema,
+                                                           prefix =  trajectoryLocalArgs$prefixForResultTableNames
+      )
+      DatabaseConnector::executeSql(connection, sql=RenderedSql, progressBar = FALSE, reportOverallTime = FALSE)
+
+      #Step 3. For each event pair starting with E1, calculate the counts
+      if(nrow(E1.pairs)>0) {
+        for(i in 1:nrow(E1.pairs))
+        {
+          diagnosis2        <- as.data.frame(E1.pairs)[i,'E2_CONCEPT_ID'] # as.data.frame() is used here to get single value instead of 1x1 tibble
+
+          ParallelLogger::logInfo('  Calculating direction counts ',counter+num.already.calculated,'/',num.pairs,': ',diagnosis1,' -> ',diagnosis2)
+
+          #Calculate in database: among people that have event1_concept_id and event2_concept_id pair, how many have date1<date2, date1=date2, date1>date2
+          RenderedSql <- Trajectories:::loadRenderTranslateSql("7DirectionCounts-3.sql",
+                                                               packageName=get('TRAJECTORIES_PACKAGE_NAME', envir=TRAJECTORIES.CONSTANTS),
+                                                               dbms=connection@dbms,
+                                                               resultsSchema =   trajectoryLocalArgs$resultsSchema,
+                                                               diag1 = if(is.character(diagnosis1)) {paste0("'",diagnosis1,"'",sep="")} else {diagnosis1},  #if-then hocus-pocus is to handle character-based diagnosis codes when using some non-standard concept codes. Should never happen normally.
+                                                               diag2 = if(is.character(diagnosis2)) {paste0("'",diagnosis2,"'",sep="")} else {diagnosis2},  #if-then hocus-pocus is to handle character-based diagnosis codes when using some non-standard concept codes. Should never happen normally.
+                                                               prefix =  trajectoryLocalArgs$prefixForResultTableNames
+          )
+          DatabaseConnector::executeSql(connection, sql=RenderedSql, progressBar = FALSE, reportOverallTime = FALSE)
+
+          counter=counter+1
+
+        } #for i
+      } #if nrow(E1.pairs)>0
+
+    } #for j
+  } #if (nrow(E1s)>0
+
+
+
+  #By now, all counts are be calculated in Database and we can run the actual tests.
+
+  # We load all pairs (and their counts) from database but we look at the pairs only that have the counts calculated
+  pairs <- Trajectories:::getAllPairs(connection,
+                                            trajectoryAnalysisArgs,
+                                            trajectoryLocalArgs)
+  pairs <- pairs %>% dplyr::filter(!is.na(E1_AND_E2_ON_SAME_DAY_COUNT_IN_EVENTS))
+  num.pairs<-nrow(pairs)
+  ParallelLogger::logInfo('Running statistical direction tests for ',num.pairs,' event pairs...')
+
+  if(forceRecalculation==F) {
+    #Update pairs (get pairs that have no DIRECTIONAL_PVALUE value)
+    pairs <- pairs %>% dplyr::filter(is.na(DIRECTIONAL_PVALUE))
+    num.already.calculated=num.pairs-nrow(pairs)
+    if(num.already.calculated>0) ParallelLogger::logInfo('For ',num.already.calculated,' pairs, statistical directionality tests are already conducted. Skipping these from recalculation.')
+  } else {
+    num.already.calculated=0
+  }
 
   starttime=Sys.time()
   if(nrow(pairs)>0) {
@@ -751,29 +893,7 @@ runDirectionTests<-function(connection,
                               round(100*(i+num.already.calculated)/num.pairs),'%, ETA: ',Trajectories:::estimatedTimeRemaining(progress_perc=(i-1)/nrow(pairs),starttime=starttime),
                               ')...')
 
-
-      #Calculate in database: among people that have event1_concept_id and event2_concept_id pair, how many have date1<date2, date1=date2, date1>date2
-      RenderedSql <- Trajectories:::loadRenderTranslateSql("7DirectionCounts.sql",
-                                                          packageName=get('TRAJECTORIES_PACKAGE_NAME', envir=TRAJECTORIES.CONSTANTS),
-                                                          dbms=connection@dbms,
-                                                          resultsSchema =   trajectoryLocalArgs$resultsSchema,
-                                                          diag1 = if(is.character(diagnosis1)) {paste0("'",diagnosis1,"'",sep="")} else {diagnosis1}, #if-then hocus-pocus is to handle character-based diagnosis codes when using some non-standard concept codes. Should never happen normally.
-                                                          diag2 = if(is.character(diagnosis2)) {paste0("'",diagnosis2,"'",sep="")} else {diagnosis2},  #if-then hocus-pocus is to handle character-based diagnosis codes when using some non-standard concept codes. Should never happen normally.
-                                                          prefix =  trajectoryLocalArgs$prefixForResultTableNames
-      )
-      DatabaseConnector::executeSql(connection, sql=RenderedSql, progressBar = FALSE, reportOverallTime = FALSE)
-
-      # Get calculation results from database
-      RenderedSql <- Trajectories:::loadRenderTranslateSql("8DpairReader.sql",
-                                                          packageName=get('TRAJECTORIES_PACKAGE_NAME', envir=TRAJECTORIES.CONSTANTS),
-                                                          dbms=connection@dbms,
-                                                          resultsSchema =   trajectoryLocalArgs$resultsSchema,
-                                                          diag1 = if(is.character(diagnosis1)) {paste0("'",diagnosis1,"'",sep="")} else {diagnosis1}, #if-then hocus-pocus is to handle character-based diagnosis codes when using some non-standard concept codes. Should never happen normally.
-                                                          diag2 = if(is.character(diagnosis2)) {paste0("'",diagnosis2,"'",sep="")} else {diagnosis2},  #if-then hocus-pocus is to handle character-based diagnosis codes when using some non-standard concept codes. Should never happen normally.
-                                                          prefix =  trajectoryLocalArgs$prefixForResultTableNames
-      )
-      direction_counts = DatabaseConnector::querySql(connection, RenderedSql)
-
+      direction_counts <- pairs[i,]
 
       # If there is no significant direction in event pair event1_concept_id and event2_concept_id, then we expect to see event1_concept_id->event2_concept_id and event2_concept_id->event1_concept_id sequences
       # with the same frequency. Say, we would expect that event1_concept_id is the first diagnosis in 50% cases (prob=0.5).
@@ -823,8 +943,6 @@ runDirectionTests<-function(connection,
 
   #update significance p-value
   Trajectories:::adjustPValues(connection,trajectoryLocalArgs,dbcol.pvalue='DIRECTIONAL_PVALUE',dbcol.pval.signficiant='DIRECTIONAL_SIGNIFICANT', method=p.value.adjust.method)
-  #Trajectories:::adjustPValues(connection,trajectoryLocalArgs,dbcol.pvalue='DIRECTIONAL_PVALUE_IF_SAME_DAY_EVENTS_ORDERED',dbcol.pval.signficiant='DIRECTIONAL_SIGNIFICANT_IF_SAME_DAY_EVENTS_ORDERED', method=p.value.adjust.method)
-
 
 
   #Get updated pairs
@@ -1151,37 +1269,30 @@ adjustPValues<-function(connection,trajectoryLocalArgs,dbcol.pvalue='RR_PVALUE',
   RenderedSql <- SqlRender::translate(sql=RenderedSql, targetDialect = connection@dbms)
   DatabaseConnector::executeSql(connection, RenderedSql, progressBar = FALSE, reportOverallTime = FALSE)
 
-  d<-d %>% dplyr::filter(adjusted.pvalues<0.05)
-  num_sign_values<-nrow(d)
+  #which is the largest RR_PVALUE which is significant after adjustment
+  sign_rr_pvalues<-data.frame(d %>% dplyr::filter(adjusted.pvalues<0.05))[[dbcol.pvalue]]
+  non_sign_rr_pvalues<-data.frame(d %>% dplyr::filter(adjusted.pvalues>=0.05))[[dbcol.pvalue]]
+  num_sign_values<-length(sign_rr_pvalues)
 
-  if(nrow(d)>0) {
-
-    tablename<-paste0(trajectoryLocalArgs$resultsSchema,'.',trajectoryLocalArgs$prefixForResultTableNames,'E1E2_MODEL')
-    ParallelLogger::logInfo("  Filling ",tablename," with adjusted p-values as 100-size-chunks)...")
-    d$sql <- paste0("UPDATE ",
-                    tablename,
-                    " SET ",
-                    dbcol.pval.signficiant,
-                    "='*' WHERE E1_CONCEPT_ID=",
-                    DBI::dbQuoteString(connection, d %>% dplyr::mutate(E1_CONCEPT_ID=dplyr::if_else(is.na(E1_CONCEPT_ID),'NULL',as.character(E1_CONCEPT_ID))) %>% dplyr::pull(E1_CONCEPT_ID)  ),
-                    " AND E2_CONCEPT_ID=",
-                    DBI::dbQuoteString(connection, d %>% dplyr::mutate(E2_CONCEPT_ID=dplyr::if_else(is.na(E2_CONCEPT_ID),'NULL',as.character(E2_CONCEPT_ID))) %>% dplyr::pull(E2_CONCEPT_ID)  ),
-                    ";")
-    #create chunks - in each chunk, 100 inserts
-    chunks<-split(d$sql, ceiling(seq_along(d$sql)/100))
-    for(i in 1:length(chunks)) {
-      #print(paste('i=',i))
-      chunk<-chunks[[i]]
-      if(length(chunks)>5) ParallelLogger::logInfo('   ...chunk ',i,'/',length(chunks),'...')
-      insertSql=paste0(chunk,collapse="")
-      RenderedSql <- SqlRender::translate(insertSql,targetDialect=attr(connection, "dbms"))
-      #print(RenderedSql)
-      DatabaseConnector::executeSql(connection, sql=RenderedSql, profile=F, progressBar = F, reportOverallTime = F)
+  if(num_sign_values>0) {
+    if(length(non_sign_rr_pvalues)>0) {
+      MIN_NON_SIGN_RR_PVALUE=min(non_sign_rr_pvalues)
+    } else {
+      MIN_NON_SIGN_RR_PVALUE=1.0
     }
-    ParallelLogger::logInfo("  ...done.")
+
+
+    sql=paste0("UPDATE @resultsSchema.@prefiXE1E2_model SET ",dbcol.pval.signficiant,"='*' WHERE @dbcol<@pval;")
+    RenderedSql <- SqlRender::render(sql=sql,
+                                     dbcol=dbcol.pvalue,
+                                     pval=MIN_NON_SIGN_RR_PVALUE,
+                                     resultsSchema = trajectoryLocalArgs$resultsSchema,
+                                     prefiX =  trajectoryLocalArgs$prefixForResultTableNames)
+    RenderedSql <- SqlRender::translate(sql=RenderedSql, targetDialect = connection@dbms)
+    DatabaseConnector::executeSql(connection, RenderedSql, progressBar = FALSE, reportOverallTime = FALSE)
   }
 
-  ParallelLogger::logInfo('...done. Out of ',num_values_to_adjust,' event pairs, ',num_sign_values,' were significant after the multiple testing correction.')
+  ParallelLogger::logInfo('...done. Out of ',num_values_to_adjust,' event pairs, ',num_sign_values,' were significant after multiple testing correction.')
 
 }
 
@@ -1309,14 +1420,14 @@ buildCaseControlGroups<-function(connection,trajectoryLocalArgs,diagnosis1,diagn
     return(list(Cases = case.ids, Controls = c()), IsImbalanced=1, ImbalanceComment='After matching, the number of cases or controls is 0 - cannot build case-control groups for the first event')
 
   } else {
-    ParallelLogger::logInfo('Out of ',num.cases.original,' cases and ',num.noncases.original,' non-cases, ',length(case.ids),' were selected for cases and ',length(control.ids),' for controls.')
+    ParallelLogger::logInfo('Out of ',num.cases.original,' cases and ',num.noncases.original,' non-cases, ',length(case.ids),'+',length(control.ids),' were selected for matched cases and controls.')
   }
 
   #propensity score covariate plot before and after matching
   #plot(summary(m.out1))
 
   #Assess the quality of matching (check that Std. Mean Diff. for all covariates is <0.15)
-  MAX_ALLOWED_SDM=0.25
+  MAX_ALLOWED_SDM=0.15
   if( max(abs(summary(m.out1)$sum.matched[,'Std. Mean Diff.']))>MAX_ALLOWED_SDM ) {
     ParallelLogger::logInfo('Propensity score based matching resulted in imbalanced groups: Std. Mean Diff. of the following covariates is >',MAX_ALLOWED_SDM,' after matching: ',paste(rownames(summary(m.out1)$sum.matched)[abs(summary(m.out1)$sum.matched[,'Std. Mean Diff.'])>MAX_ALLOWED_SDM], collapse=","))
 

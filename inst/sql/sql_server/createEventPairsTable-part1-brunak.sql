@@ -96,6 +96,40 @@ IF OBJECT_ID('@resultsSchema.@prefiXevents', 'U') IS NOT NULL
 
     UNION ALL -- we use UNION ALL as it does not try to delete duplicates (faster) (although there cant be any anyways)
 
+    -- observations
+    SELECT
+      e.person_id               AS person_id,
+      c.eventperiod_id          AS eventperiod_id,
+      e.observation_source_value  AS CONCEPT_ID,
+      min(e.observation_date)   AS date
+    FROM @resultsSchema.observation_brunak e
+    INNER JOIN @resultsSchema.@prefiXmycohort c ON e.person_id=c.person_id {@daysBeforeIndexDate == Inf} ? {} : { AND DATEADD(day,@daysBeforeIndexDate,e.observation_date)>=c.eventperiod_start_date } AND e.observation_date>=c.eventperiod_start_date AND e.observation_date<=c.eventperiod_end_date
+    WHERE
+      1=@addObservations -- if addObservations is TRUE, then this UNION is ADDED, otherwise this query give 0 rows as result
+      --AND
+      --observation_concept_id!=0
+      --AND
+      --oc.concept_class_id != 'Procedure' -- do not include Observations having class "procedure" to prevent events like 'Hospital admission', 'Admission by GP' etc as if one is interested in them, he/she should look at the visits instead
+    GROUP BY c.eventperiod_id,e.person_id,e.observation_source_value
+
+    UNION ALL -- we use UNION ALL as it does not try to delete duplicates (faster) (although there cant be any anyways)
+
+    -- procedures
+    SELECT
+      e.person_id             AS person_id,
+      c.eventperiod_id        AS eventperiod_id,
+      e.procedure_source_value AS CONCEPT_ID,
+      min(e.procedure_date)   AS date
+    FROM @resultsSchema.procedure_occurrence_brunak e
+    -- note that the same event may belong to several event periods. It gets multiplied here while doing this INNER JOIN
+    INNER JOIN @resultsSchema.@prefiXmycohort c ON e.person_id=c.person_id {@daysBeforeIndexDate == Inf} ? {} : { AND DATEADD(day,@daysBeforeIndexDate,e.procedure_date)>=c.eventperiod_start_date } AND e.procedure_date>=c.eventperiod_start_date AND e.procedure_date<=c.eventperiod_end_date
+    WHERE
+      1=@addProcedures -- if addProcedures is TRUE, then this UNION is ADDED, otherwise this query give 0 rows as result
+    GROUP BY c.eventperiod_id,e.procedure_source_value,e.person_id
+
+    UNION ALL -- we use UNION ALL as it does not try to delete duplicates (faster) (although there cant be any anyways)
+
+
     -- deaths
     SELECT
       e.person_id           AS person_id,
