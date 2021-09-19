@@ -50,7 +50,7 @@ runDiscoveryAnalysis<-function(connection,
     return()
   }
 
-  ParallelLogger::logInfo("Matching case and control groups for calculating relative risk (RR), its p-value and power...")
+  ParallelLogger::logInfo("Matching case and control groups for calculating relative risk (RR) and its p-value...")
   pairs<-Trajectories:::calcRRandPower(connection,
                                        trajectoryAnalysisArgs,
                                        trajectoryLocalArgs,
@@ -474,7 +474,7 @@ calcRRandPower<-function(connection,
     #for how many pairs for each E1, the RR is not calculated (but should)
     pair_counts_starting_with_E1_and_having_rr_not_calculated<-pairs %>%
       dplyr::filter(is.na(CASE_GROUP_SIZE) | !is.na(CONTROL_GROUP_SIZE) ) %>% #means that composing a control group has not failed
-      dplyr::filter(is.na(RR) | RR==0) %>%
+      dplyr::filter(is.na(RR)) %>%
       dplyr::group_by(E1_CONCEPT_ID) %>%
       dplyr::summarise(n=dplyr::n()) %>%
       dplyr::arrange(-n)
