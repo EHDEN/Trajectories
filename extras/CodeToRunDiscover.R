@@ -39,10 +39,10 @@ Trajectories::discover(connection,
                        createCohort=F,
                        validationSetSize=0, #set to 0 if you are you going to validate the results in another databaase anyways
                        createEventPairsTable=F,
-                       runDiscoveryAnalysis=T,
+                       runDiscoveryAnalysis=F,
                        forceRecalculationOfAnalysis=F, #used only if runDiscoveryAnalysis=T
                        createFilteredFullgraphs=T,
-                       createGraphsForSelectedEvents=T,
+                       createGraphsForSelectedEvents=F,
                        selfValidate=F, #set to F if you are you going to validate the results in another databaase anyways
                        cleanup=F)
 

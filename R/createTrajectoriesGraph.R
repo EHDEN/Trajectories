@@ -22,90 +22,85 @@ createTrajectoriesGraph<-function(eventPairResultsFilename) {
 
   # convert chr columns to numeric
   e$RR<-as.numeric(e$RR)
-  #e$AVG_NUMBER_OF_DAYS_BETWEEN_E1_AND_E2<-as.numeric(e$AVG_NUMBER_OF_DAYS_BETWEEN_E1_AND_E2)
+
+  ParallelLogger::logInfo('There are ',nrow(e),' event pairs in the file.')
 
   #apply minimum RR threshold (there is no sense to draw graphs for decreasing risks - hard to interpret)
   e <- e %>% dplyr::filter(RR > 1)
-  ParallelLogger::logInfo('Applying relative risk filter: only pairs having relative risk > 1 are used for building the trajectories graph.')
+  ParallelLogger::logInfo(nrow(e),' pairs remained after applying relative risk > 1 filter.')
 
-  # calculate max event count for scaling
-  max_event_count<-max(e$E1_COUNT_IN_EVENTS,e$E2_COUNT_IN_EVENTS)
+  ParallelLogger::logInfo('Building TrajectoriesGraph object from these pairs...')
 
+
+  edges <- e %>%
+    dplyr::mutate(from=as.character(E1_CONCEPT_ID),
+                  to=as.character(E2_CONCEPT_ID),
+                  prob=E1_BEFORE_E2_COUNT_IN_EVENTS/E1_COUNT_IN_EVENTS,
+                  numcohortExact=NA,
+                  alignedTrajsProb=NA) %>%
+      dplyr::select(from,
+                    to,
+                    e1_concept_id=E1_CONCEPT_ID,
+                    e2_concept_id=E2_CONCEPT_ID,
+                    e1=E1_NAME,
+                    e2=E2_NAME,
+                    e1_count=E1_COUNT_IN_EVENTS,
+                    prob,
+                    effect=RR,
+                    numcohortExact,
+                    alignedTrajsProb)
+
+  e1s <- e %>%
+    dplyr::select(
+      concept_id=E1_CONCEPT_ID,
+      concept_name=E1_NAME,
+      domain=E1_DOMAIN,
+      count=E1_COUNT_IN_EVENTS) %>%
+    unique()
+
+  e2s <- e %>%
+    dplyr::select(
+      concept_id=E2_CONCEPT_ID,
+      concept_name=E2_NAME,
+      domain=E2_DOMAIN,
+      count=E2_COUNT_IN_EVENTS) %>%
+    unique()
+
+  vertices <- rbind(e1s,e2s) %>%
+    dplyr::group_by(concept_id, concept_name, domain) %>% #we could also do simply unique() here to get one row per the same event as the numbers should be the same,
+    dplyr::summarise(count=max(count), .groups = "drop")  #but to avoid any surprises we do group_by and count=max()
+
+  #Add colors
   # predefined colors
   COLORS=list(Condition='#F1948A', #red
               Observation='#85C1E9', #blue
               Procedure='#ccc502',#yellow
               Drug='#8fba75', #green
               Unknown='#bbbbbb') #gray
-              #Drug='#ABEBC6') #green
+  #Drug='#ABEBC6') #green
   LABELCOLORS=list(Condition='#7B241C',
                    Observation='#21618C',
                    Procedure='#7D6608',
                    Drug='#145A32', #green
                    Unknown='#666666')
+  vertices <- vertices %>%
+     dplyr::mutate(name=as.character(concept_id),
+                   concept_id=concept_id, #this is needed, otherwise somehow the concept_id column disappears
+                   color = recode(domain, !!!COLORS, .default = '#bbbbbb', .missing='#bbbbbb'),
+                   labelcolor = recode(domain, !!!LABELCOLORS, .default = '#666666', .missing='#666666')
+                   ) %>%
+    dplyr::select(name,concept_id,concept_name,domain,count,color,labelcolor)
 
-  # BUILD A GRAPH!
-  # create empty graph
-  requireNamespace("igraph", quietly = TRUE)
-  g <- igraph::make_empty_graph(directed = TRUE)
-  #add edges between these nodes
-  if(nrow(e)>0) {
-    for(i in seq(1,nrow(e))) {
-      e1_concept_id=e[i,'E1_CONCEPT_ID']
-      e2_concept_id=e[i,'E2_CONCEPT_ID']
-      e1<-ifelse(is.na(e[i,'E1_NAME']),'NA',e[i,'E1_NAME']) #if the name is missing from vocabulary, it is possible that we have NA as name. This if-else-then here is for ensuring that things do not break in that case
-      e2<-ifelse(is.na(e[i,'E2_NAME']),'NA',e[i,'E2_NAME']) #if the name is missing from vocabulary, it is possible that we have NA as name. This if-else-then here is for ensuring that things do not break in that case
-      # add vertexes if not exist already
-      if(!as.character(e1_concept_id) %in% igraph::V(g)$name) {g <- g + igraph::vertices(
-                                                as.character(e1_concept_id), #"name" of the object is CONCEPT_ID
-                                                concept_name=e1,
-                                                concept_id=e1_concept_id,
-                                                count=e[i,'E1_COUNT_IN_EVENTS'],
-                                                #size=e[i,'E1_COUNT']/max_event_count,
-                                                color=if(is.na(e[i,'E1_DOMAIN']) | !e[i,'E1_DOMAIN'] %in% names(COLORS)) {COLORS[['Unknown']]} else {COLORS[[e[i,'E1_DOMAIN']]]},
-                                                labelcolor=if(is.na(e[i,'E1_DOMAIN']) | !e[i,'E1_DOMAIN'] %in% names(LABELCOLORS)) {LABELCOLORS[['Unknown']]} else {LABELCOLORS[[e[i,'E1_DOMAIN']]]}
-                                                #, age=AGES[AGES$event==e1,'AGE_FOR_GRAPH']
-                                                )
-      }
-      if(!as.character(e2_concept_id) %in% igraph::V(g)$name) {g <- g + igraph::vertices(
-                                                as.character(e2_concept_id), #"name" of the object is CONCEPT_ID
-                                                concept_name=e2,
-                                                concept_id=e2_concept_id,
-                                                count=e[i,'E2_COUNT_IN_EVENTS'],
-                                                #size=e[i,'E2_COUNT']/max_event_count,
-                                                color=if(is.na(e[i,'E2_DOMAIN']) | !e[i,'E2_DOMAIN'] %in% names(COLORS)) {COLORS[['Unknown']]} else {COLORS[[e[i,'E2_DOMAIN']]]},
-                                                labelcolor=if(is.na(e[i,'E2_DOMAIN']) | !e[i,'E2_DOMAIN'] %in% names(LABELCOLORS)) {LABELCOLORS[['Unknown']]} else {LABELCOLORS[[e[i,'E2_DOMAIN']]]}
-                                                #, age=AGES[AGES$event==e2,'AGE_FOR_GRAPH']
-                                                )
-      }
-      # add edge
-      g <- g + igraph::edge(as.character(e[i,'E1_CONCEPT_ID']),
-                            as.character(e[i,'E2_CONCEPT_ID']),
-                    e1=e1,
-                    e1_concept_id=e1_concept_id,
-                    e2_concept_id=e2_concept_id,
-                    e2=e2,
-                    e1_count=e[i,'E1_COUNT_IN_EVENTS'],
-                    effect=e[i,'RR'],
-                    prob=e[i,'E1_BEFORE_E2_COUNT_IN_EVENTS']/e[i,'E1_COUNT_IN_EVENTS'],
-                    #weight=1/e[i,'EVENT_PAIR_EFFECT'], #opposite to the effect size. Do not use weight attribute, as it has a special meaning in igraph and we do not want to use this automatically
-                    #numcohortExact=e[i,'EVENTPERIOD_COUNT_HAVING_E2_RIGHT_AFTER_E1'] #number of event periods that had E1->E2 as immediate order (no intermediate events)
-                    numcohortExact=NA,
-                    alignedTrajsProb=NA
-                    #numcohort=e[i,'EVENT1_EVENT2_COHORT_COUNT']/e[i,'EVENT1_COUNT']*e[i,'EVENT1_COUNT']/max_event_count #number of cohorts that had E1->E2, adjusted to but may have had intermediate events also
-                    #numcohort=e[i,'EVENT1_EVENT2_COHORT_COUNT']/e[i,'EVENT1_COUNT']*e[i,'EVENT1_COUNT']/max_event_count #number of cohorts that had E1->E2, but may have had intermediate events also
-      )
-    }
-  }
 
-  ParallelLogger::logInfo('Full graph contains ',igraph::gsize(g),' links between ',igraph::gorder(g),' events')
+  #Build a graph object from edges and vertices
+  g<-igraph::graph_from_data_frame(edges, directed=T, vertices=vertices)
+
+
+  # ADD COLORS TO EDGES ALSO (based on the end node of the edge)
 
   # if there are at least 1 edge
   if(igraph::gsize(g)>0) {
-    #Normalized numcohortExact
-    igraph::E(g)$normalizedNumcohortExact = (igraph::E(g)$numcohortExact-min(igraph::E(g)$numcohortExact, na.rm=T))/(max(igraph::E(g)$numcohortExact, na.rm=T)-min(igraph::E(g)$numcohortExact, na.rm=T))
 
-    #Effect*event1_count
     igraph::E(g)$effectCount=igraph::E(g)$e1_count*igraph::E(g)$effect
 
     #make edge color equal to target node color
@@ -121,7 +116,7 @@ createTrajectoriesGraph<-function(eventPairResultsFilename) {
     igraph::E(g)$color <- rgb2
   }
 
-
+  ParallelLogger::logInfo('...done. Full graph contains ',igraph::gsize(g),' links between ',igraph::gorder(g),' events.')
 
   # make it of the class TrajectoriesGraph which is derived from the class igraph
   class(g) <- c("TrajectoriesGraph","igraph")

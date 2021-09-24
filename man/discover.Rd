@@ -13,6 +13,7 @@ discover(
   runDiscoveryAnalysis = T,
   forceRecalculationOfAnalysis = F,
   createFilteredFullgraphs = T,
+  runTrajectoryAnalysis = T,
   createGraphsForSelectedEvents = T,
   selfValidate = F,
   cleanup = T
@@ -34,6 +35,8 @@ discover(
 \item{forceRecalculationOfAnalysis}{Forces deleting previous results from the database and rerunning the whole discovery analysis. Useful mostly in case something goes wrong and you need to force the recalculation (it is, when debugging). In normal circumstances using F is safe.}
 
 \item{createFilteredFullgraphs}{Builds graphs based on the results.}
+
+\item{runTrajectoryAnalysis}{If TRUE, runs the trajectory analysis - puts the actual trajectories to the graph}
 
 \item{createGraphsForSelectedEvents}{Builds graphs for selected events (event ID-s taken from trajectoryAnalysisArgs$eventIdsForGraphs).}
 

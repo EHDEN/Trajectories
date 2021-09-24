@@ -43,6 +43,10 @@ IF OBJECT_ID('@resultsSchema.@prefiXgraph_event_pairs', 'U') IS NOT NULL
            JOIN  @resultsSchema.@prefiXgraph_events b -- full join!
               ON  a.EVENTPERIOD_ID = b.EVENTPERIOD_ID
                   AND a.cohort_day + 1 = b.cohort_day -- only combine events that occur next to each other
+           -- Inner join added on 17 Sep 2021 to remove pairs that are not given in mylinks table
+           INNER JOIN @resultsSchema.@prefiXmylinks l ON
+              a.e=l.e1_concept_id AND b.e=l.e2_concept_id
+                  --The following CONCAT condition was commented out as the check for edge existense was done in R
                   --AND CONCAT(a.event,'-',b.event) IN (SELECT CONCAT(e1_concept_id,'-',e2_concept_id) FROM @resultsSchema.@prefiXmylinks) --do not create event pairs that are not given in the original graph
     -- NB! No time limitations here between the events anymore...
     WHERE

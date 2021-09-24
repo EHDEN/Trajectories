@@ -8,6 +8,7 @@
 #' @param runDiscoveryAnalysis Run the actual directionality analysis of all event pairs.
 #' @param forceRecalculationOfAnalysis Forces deleting previous results from the database and rerunning the whole discovery analysis. Useful mostly in case something goes wrong and you need to force the recalculation (it is, when debugging). In normal circumstances using F is safe.
 #' @param createFilteredFullgraphs Builds graphs based on the results.
+#' @param runTrajectoryAnalysis If TRUE, runs the trajectory analysis - puts the actual trajectories to the graph
 #' @param createGraphsForSelectedEvents Builds graphs for selected events (event ID-s taken from trajectoryAnalysisArgs$eventIdsForGraphs).
 #' @param selfValidate Normally, set to F/FALSE as it is always better to validate your results in another database. However, if you want to validate your results in your own database, then set selfValidate=T and validationSetSize=some meaningful proportion (for example, 0.5). In such case, the discovery analysis is actually conducted on half of the data and the results are then validated on another half.
 #' @param cleanup Drops tables from the database that were created during various stages of the analysis.
@@ -24,6 +25,7 @@ discover <- function(connection,
                      runDiscoveryAnalysis=T,
                      forceRecalculationOfAnalysis=F,
                      createFilteredFullgraphs=T,
+                     runTrajectoryAnalysis=T,
                      createGraphsForSelectedEvents=T,
                      selfValidate=F,
                      cleanup=T
@@ -83,6 +85,11 @@ discover <- function(connection,
   if(createFilteredFullgraphs) Trajectories:::createFilteredFullgraphs(connection,
                                          trajectoryAnalysisArgs,
                                          trajectoryLocalArgs)
+
+  # Run trajectory analysis
+  if(runTrajectoryAnalysis) Trajectories:::align(connection,
+                                                 trajectoryAnalysisArgs,
+                                                 trajectoryLocalArgs)
 
   # Draw graphs for selected events (event ID-s taken from trajectoryAnalysisArgs$eventIdsForGraphs)
   if(createGraphsForSelectedEvents) Trajectories:::PlotTrajectoriesGraphForEvents(connection,

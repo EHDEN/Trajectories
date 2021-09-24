@@ -58,7 +58,7 @@ validate <- function(connection,
 
 
   # Create database tables of all event pairs (patient level data + summary statistics). Uses cohort_id depending on the running mode of the package
-  if(createEventPairsTable) Trajectories:::createEventPairsTable(connection=connection,
+  if(createEventPairsTable) Trajectories:::createEventPairsTableBrunak(connection=connection,
                                       trajectoryAnalysisArgs=trajectoryAnalysisArgs,
                                       trajectoryLocalArgs=trajectoryLocalArgs)
 

@@ -75,8 +75,8 @@ runDiscoveryAnalysis<-function(connection,
   ParallelLogger::logInfo("Number of event pairs having significant RR: ",nrow(pairs))
 
   #Pairs that have RR outside skipped range
-  pairs <- pairs %>% dplyr::filter(RR < trajectoryAnalysisArgs$RRrangeToSkip[1] | RR >= trajectoryAnalysisArgs$RRrangeToSkip[2])
-  ParallelLogger::logInfo("Out of these, number of event pairs having RR outside of range [",trajectoryAnalysisArgs$RRrangeToSkip[1],",",trajectoryAnalysisArgs$RRrangeToSkip[2],"): ",nrow(pairs))
+  pairs <- pairs %>% dplyr::filter(RR_CI_UPPER < trajectoryAnalysisArgs$RRrangeToSkip[1] | RR_CI_LOWER >= trajectoryAnalysisArgs$RRrangeToSkip[2])
+  ParallelLogger::logInfo("Out of these, number of event pairs having CI of RR outside of range [",trajectoryAnalysisArgs$RRrangeToSkip[1],",",trajectoryAnalysisArgs$RRrangeToSkip[2],"): ",nrow(pairs))
 
   #Run directionality test for pairs having significant RR and RR outside skip-range
   ParallelLogger::logInfo("Running direction tests for ",nrow(pairs)," event pairs...")
@@ -94,12 +94,12 @@ runDiscoveryAnalysis<-function(connection,
 
   #write results to file
   write.table(pairs, file=allResultsFilenameTsv, quote=FALSE, sep='\t', col.names = NA)
-  openxlsx::write.xlsx(pairs, allResultsFilenameXls)
+  openxlsx::write.xlsx(pairs, allResultsFilenameXls, overwrite=T)
   ParallelLogger::logInfo('All tested pairs were written to ',allResultsFilenameTsv,' and ',allResultsFilenameXls,'.')
 
   p<-pairs %>% dplyr::filter(!is.na(DIRECTIONAL_SIGNIFICANT) & DIRECTIONAL_SIGNIFICANT=='*')
   write.table(p, file=directionalResultsFilenameTsv, quote=FALSE, sep='\t', col.names = NA)
-  openxlsx::write.xlsx(p, directionalResultsFilenameXls)
+  openxlsx::write.xlsx(p, directionalResultsFilenameXls, overwrite=T)
   ParallelLogger::logInfo('All directional pairs were written to ',directionalResultsFilenameTsv,' and ',directionalResultsFilenameXls)
 
   # Create validation setup for validating the results in another database
@@ -203,7 +203,7 @@ runValidationAnalysis<-function(connection,
   ParallelLogger::logInfo("Number of event pairs having significant RR: ",nrow(pairs))
 
   #Pairs that have RR outside skipped range
-  pairs <- pairs %>% dplyr::filter(!is.na(RR) & (RR < trajectoryAnalysisArgs$RRrangeToSkip[1] | RR >= trajectoryAnalysisArgs$RRrangeToSkip[2]))
+  pairs <- pairs %>% dplyr::filter(!is.na(RR) & (RR_CI_UPPER < trajectoryAnalysisArgs$RRrangeToSkip[1] | RR_CI_LOWER >= trajectoryAnalysisArgs$RRrangeToSkip[2]))
   ParallelLogger::logInfo("Out of these, number of event pairs having RR outside of range [",trajectoryAnalysisArgs$RRrangeToSkip[1],",",trajectoryAnalysisArgs$RRrangeToSkip[2],"): ",nrow(pairs))
 
   #get pairs having significant RR but having the opposite RR direction
@@ -432,13 +432,19 @@ RRandCI<-function(num_observations_in_cases,case_group_size,num_observations_in_
     dat <- matrix(c(a,b-a,c,d-c), nrow = 2, byrow = TRUE)
     rownames(dat) <- c("E1+", "E1-"); colnames(dat) <- c("E2+", "E2-"); dat
     #print(dat)
-    r<-suppressWarnings(fisher.test(dat))
+    r<-suppressWarnings(epitools::riskratio(dat, rev="both")) #rev=both is required here as the riskratio() requires the cells to be in the right irder
     if(b==0 | c==0) {
       RR=Inf
+      RR.lower=0
+      RR.upper=Inf
+      p.val=1
     } else {
-      RR=a/b / (c/d)
+      RR=r$measure[2,1]
+      RR.lower=r$measure[2,2]
+      RR.upper=r$measure[2,3]
+      p.val=r$p.value[2,2]
     }
-    res=list(est=RR , lower=NA, upper=NA, pvalue=r$p.value)
+    res=list(est=RR , lower=RR.lower, upper=RR.upper, pvalue=p.val)
 
   }
 
@@ -658,8 +664,8 @@ SET
             event_pair_rr=ifelse(rr_and_ci$est==Inf,999,ifelse(rr_and_ci$est==-Inf,0,rr_and_ci$est))
             event_pair_rr_ci_lower=NA
             event_pair_rr_ci_upper=NA
-            #event_pair_rr_ci_lower=ifelse(rr_and_ci$lower==Inf,999,ifelse(rr_and_ci$lower==-Inf,0,rr_and_ci$lower))
-            #event_pair_rr_ci_upper=ifelse(rr_and_ci$upper==Inf,999,ifelse(rr_and_ci$upper==-Inf,0,rr_and_ci$upper))
+            event_pair_rr_ci_lower=ifelse(is.nan(rr_and_ci$lower),0,ifelse(rr_and_ci$lower==Inf,999,ifelse(rr_and_ci$lower==-Inf,0,rr_and_ci$lower)))
+            event_pair_rr_ci_upper=ifelse(is.nan(rr_and_ci$upper),999,ifelse(rr_and_ci$upper==Inf,999,ifelse(rr_and_ci$upper==-Inf,0,rr_and_ci$upper)))
             event_pair_rr_pvalue=rr_and_ci$pvalue
             if(!is.na(event_pair_rr)) ParallelLogger::logDebug('Relative risk ',round(event_pair_rr,2),' (95%CI ',round(event_pair_rr_ci_lower,2),'..',round(event_pair_rr_ci_upper,2),', p-value=',event_pair_rr_pvalue,')')
 

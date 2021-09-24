@@ -16,20 +16,21 @@ Maintainer: Kadri Künnapuu <kadri.kunnapuu@stacc.ee>
 License: GPL-3
 Depends:
     R (>= 3.2.2),
-    dplyr (>= 0.8.5)
+    dplyr (>= 1.0.7)
 Imports:
     DatabaseConnector (>= 2.2.0),
     SqlRender (>= 1.5.2),
     stringi (>= 1.4.5),
-    openxlsx (>= 4.1.4),
+    openxlsx (>= 4.2.4),
     jsonlite (>= 1.7.1),
-    epiR (>= 2.0.26),
     ggplot2 (>= 3.3.3),
     igraph (>= 1.2.5),
     lubridate (>= 1.7.10),
     ParallelLogger (>= 2.0.1),
-    MatchIt (>= 4.2.0)
+    MatchIt (>= 4.2.0),
+    tidyselect (>= 1.1.1),
+    epitools (>= 0.5-10.1)
 Encoding: UTF-8
-RoxygenNote: 7.1.1
+RoxygenNote: 7.1.2
 Suggests: 
     testthat (>= 2.1.0)
