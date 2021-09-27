@@ -1,697 +1,763 @@
 	E1_CONCEPT_ID	E2_CONCEPT_ID	E1_NAME	E2_NAME	E1_DOMAIN	E2_DOMAIN	RR_IN_PREVIOUS_STUDY
-1	140648	19032619	Onychomycosis due to dermatophyte	amorolfine	Condition	Drug	999
-2	321318	1383815	Angina pectoris	isosorbide	Condition	Drug	180
-3	140673	1501700	Hypothyroidism	levothyroxine	Condition	Drug	71.75
-4	4270024	314666	Acute non-ST segment elevation myocardial infarction	Old myocardial infarction	Condition	Condition	61.333
-5	197032	924566	Hyperplasia of prostate	tamsulosin	Condition	Drug	45
-6	4068155	43013024	Atrial arrhythmia	apixaban	Condition	Drug	43.667
-7	440674	1167322	Gout	allopurinol	Condition	Drug	40.9
-8	4068155	1310149	Atrial arrhythmia	warfarin	Condition	Drug	40.6
-9	435262	437541	Primary open angle glaucoma	Glaucoma	Condition	Condition	39.75
-10	4079750	4183876	Osteoarthritis of knee	Old rupture of cartilage AND/OR meniscus of knee	Condition	Condition	39.333
-11	4216397	75344	Nerve root disorder	Intervertebral disc disorder	Condition	Condition	37.833
-12	81303	19020124	Labyrinthine disorder	betahistine	Condition	Drug	37.25
-13	317009	4110051	Asthma	Mixed asthma	Condition	Condition	35
-14	4216397	77079	Nerve root disorder	Spinal stenosis	Condition	Condition	28.333
-15	315558	19014035	Atherosclerosis of arteries of the extremities	nafronyl	Condition	Drug	28
-16	140673	4281109	Hypothyroidism	Autoimmune thyroiditis	Condition	Condition	27.167
-17	4079750	75346	Osteoarthritis of knee	Derangement of meniscus	Condition	Condition	22.5
-18	315558	1331247	Atherosclerosis of arteries of the extremities	pentoxifylline	Condition	Drug	21.143
-19	42537730	314666	Coronary artery graft present	Old myocardial infarction	Condition	Condition	20.308
-20	443454	4112026	Cerebral infarction	Sequelae of cerebral infarction	Condition	Condition	18.222
-21	321318	42537730	Angina pectoris	Coronary artery graft present	Condition	Condition	17.909
-22	377889	4110815	Hearing loss	Sensorineural hearing loss, bilateral	Condition	Condition	17.778
-23	3663197	435262	Glaucoma suspect	Primary open angle glaucoma	Condition	Condition	16.5
-24	77630	4164922	Disorder of shoulder	Rotator cuff syndrome	Condition	Condition	16.2
-25	42537730	1322184	Coronary artery graft present	clopidogrel	Condition	Drug	14.875
-26	77630	77644	Disorder of shoulder	Adhesive capsulitis of shoulder	Condition	Condition	13.889
-27	321318	42537729	Angina pectoris	Aortocoronary bypass graft present	Condition	Condition	13.5
-28	195588	920293	Cystitis	nitrofurantoin	Condition	Drug	13.5
-29	4079749	4115380	Osteoarthritis of hip	Primary coxarthrosis, bilateral	Condition	Condition	13.118
-30	75344	77079	Intervertebral disc disorder	Spinal stenosis	Condition	Condition	12.556
-31	4079750	4114585	Osteoarthritis of knee	Primary gonarthrosis, bilateral	Condition	Condition	12.5
-32	4068155	40241331	Atrial arrhythmia	rivaroxaban	Condition	Drug	12.286
-33	40482507	1518254	Incipient senile cataract	dexamethasone	Condition	Drug	10.294
-34	433316	19020124	Dizziness and giddiness	betahistine	Condition	Drug	10.182
+1	321318	1383815	Angina pectoris	isosorbide	Condition	Drug	173
+2	4079750	75346	Osteoarthritis of knee	Derangement of meniscus	Condition	Condition	138
+3	4079750	4183876	Osteoarthritis of knee	Old rupture of cartilage AND/OR meniscus of knee	Condition	Condition	120
+4	317009	4110051	Asthma	Mixed asthma	Condition	Condition	105
+5	4068155	43013024	Atrial arrhythmia	apixaban	Condition	Drug	65.5
+6	4270024	314666	Acute non-ST segment elevation myocardial infarction	Old myocardial infarction	Condition	Condition	61.333
+7	4216397	75344	Nerve root disorder	Intervertebral disc disorder	Condition	Condition	56.25
+8	140648	19032619	Onychomycosis due to dermatophyte	amorolfine	Condition	Drug	55
+9	435262	437541	Primary open angle glaucoma	Glaucoma	Condition	Condition	53
+10	315558	19014035	Atherosclerosis of arteries of the extremities	nafronyl	Condition	Drug	37.333
+11	197032	924566	Hyperplasia of prostate	tamsulosin	Condition	Drug	36
+12	4079749	4115380	Osteoarthritis of hip	Primary coxarthrosis, bilateral	Condition	Condition	31.857
+13	1503297	1580747	metformin	sitagliptin	Drug	Drug	28
+14	440674	1167322	Gout	allopurinol	Condition	Drug	27.267
+15	77630	4164922	Disorder of shoulder	Rotator cuff syndrome	Condition	Condition	27
+16	4068155	1310149	Atrial arrhythmia	warfarin	Condition	Drug	25.25
+17	315558	1331247	Atherosclerosis of arteries of the extremities	pentoxifylline	Condition	Drug	24.667
+18	4216397	77079	Nerve root disorder	Spinal stenosis	Condition	Condition	24.571
+19	140673	4281109	Hypothyroidism	Autoimmune thyroiditis	Condition	Condition	23.143
+20	75344	77079	Intervertebral disc disorder	Spinal stenosis	Condition	Condition	22.6
+21	81303	19020124	Labyrinthine disorder	betahistine	Condition	Drug	21.286
+22	377889	4110815	Hearing loss	Sensorineural hearing loss, bilateral	Condition	Condition	20
+23	443454	4112026	Cerebral infarction	Sequelae of cerebral infarction	Condition	Condition	18.222
+24	3663197	435262	Glaucoma suspect	Primary open angle glaucoma	Condition	Condition	17.769
+25	255573	1149380	Chronic obstructive lung disease	fluticasone	Condition	Drug	17.286
+26	4079750	4114585	Osteoarthritis of knee	Primary gonarthrosis, bilateral	Condition	Condition	15.96
+27	77630	77644	Disorder of shoulder	Adhesive capsulitis of shoulder	Condition	Condition	15.625
+28	321318	42537729	Angina pectoris	Aortocoronary bypass graft present	Condition	Condition	15
+29	439297	1518254	Nuclear senile cataract	dexamethasone	Condition	Drug	12.28
+30	316139	1326303	Heart failure	digoxin	Condition	Drug	11.636
+31	42537730	314666	Coronary artery graft present	Old myocardial infarction	Condition	Condition	11.478
+32	4068155	40241331	Atrial arrhythmia	rivaroxaban	Condition	Drug	11.467
+33	4068155	1326303	Atrial arrhythmia	digoxin	Condition	Drug	10.824
+34	316139	956874	Heart failure	furosemide	Condition	Drug	10.6
 35	317009	1149380	Asthma	fluticasone	Condition	Drug	9.769
-36	439297	1518254	Nuclear senile cataract	dexamethasone	Condition	Drug	9.029
-37	316139	1326303	Heart failure	digoxin	Condition	Drug	8.667
-38	4216397	4227449	Nerve root disorder	Spondylosis	Condition	Condition	8.571
-39	319835	1310149	Congestive heart failure	warfarin	Condition	Drug	8.278
-40	1750500	1154343	clarithromycin	albuterol	Drug	Drug	7.867
-41	1332418	978555	amlodipine	indapamide	Drug	Drug	7.81
-42	255573	1149380	Chronic obstructive lung disease	fluticasone	Condition	Drug	7.562
-43	4068155	1326303	Atrial arrhythmia	digoxin	Condition	Drug	7.48
-44	319835	1326303	Congestive heart failure	digoxin	Condition	Drug	7.458
-45	319835	970250	Congestive heart failure	spironolactone	Condition	Drug	7.118
-46	314378	42537730	Hypertensive heart disease with congestive heart failure	Coronary artery graft present	Condition	Condition	7.071
-47	316139	956874	Heart failure	furosemide	Condition	Drug	6.5
-48	4174977	35198096	Retinopathy due to diabetes mellitus	insulin aspart	Condition	Drug	6.5
-49	4174977	1567198	Retinopathy due to diabetes mellitus	insulin aspart, human	Condition	Drug	6.5
-50	4079750	1360332	Osteoarthritis of knee	glucosamine	Condition	Drug	6.444
-51	260139	1154343	Acute bronchitis	albuterol	Condition	Drug	6.409
-52	942350	970250	torsemide	spironolactone	Drug	Drug	6.355
-53	1201620	797399	codeine	gabapentin	Drug	Drug	6.286
-54	316139	942350	Heart failure	torsemide	Condition	Drug	6.224
-55	40482507	439297	Incipient senile cataract	Nuclear senile cataract	Condition	Condition	6.194
-56	260139	317009	Acute bronchitis	Asthma	Condition	Condition	6.125
-57	321318	19005626	Angina pectoris	trimetazidine	Condition	Drug	6.043
-58	4216397	797399	Nerve root disorder	gabapentin	Condition	Drug	6
-59	4174977	1502905	Retinopathy due to diabetes mellitus	insulin glargine	Condition	Drug	5.947
-60	75344	4227449	Intervertebral disc disorder	Spondylosis	Condition	Condition	5.9
-61	319835	942350	Congestive heart failure	torsemide	Condition	Drug	5.892
-62	314378	314666	Hypertensive heart disease with congestive heart failure	Old myocardial infarction	Condition	Condition	5.781
-63	1332418	40226742	amlodipine	olmesartan	Drug	Drug	5.7
-64	1503297	19059796	metformin	gliclazide	Drug	Drug	5.679
-65	314378	432867	Hypertensive heart disease with congestive heart failure	Hyperlipidemia	Condition	Condition	5.625
-66	1103314	734354	tramadol	pregabalin	Drug	Drug	5.55
-67	260139	255848	Acute bronchitis	Pneumonia	Condition	Condition	5.541
-68	314378	319835	Hypertensive heart disease with congestive heart failure	Congestive heart failure	Condition	Condition	5.532
-69	1503297	1597756	metformin	glimepiride	Drug	Drug	5.529
-70	1103314	797399	tramadol	gabapentin	Drug	Drug	5.517
-71	1373225	978555	perindopril	indapamide	Drug	Drug	5.364
-72	4216397	4001643	Nerve root disorder	Adult osteochondrosis of spine	Condition	Condition	5.312
-73	19059796	1580747	gliclazide	sitagliptin	Drug	Drug	5.033
-74	4041554	432867	Serum cholesterol raised	Hyperlipidemia	Condition	Condition	4.895
-75	194133	4001643	Low back pain	Adult osteochondrosis of spine	Condition	Condition	4.792
-76	321318	1322184	Angina pectoris	clopidogrel	Condition	Drug	4.773
-77	443732	40239216	Disorder due to type 2 diabetes mellitus	linagliptin	Condition	Drug	4.75
-78	75897	73553	Polyarthropathy	Arthropathy	Condition	Condition	4.717
-79	260139	255573	Acute bronchitis	Chronic obstructive lung disease	Condition	Condition	4.657
-80	1503297	1580747	metformin	sitagliptin	Drug	Drug	4.615
-81	1332418	19011021	amlodipine	moxonidine	Drug	Drug	4.609
-82	314378	970250	Hypertensive heart disease with congestive heart failure	spironolactone	Condition	Drug	4.516
-83	4031019	905233	Allergic contact dermatitis	mometasone	Condition	Drug	4.444
-84	316139	970250	Heart failure	spironolactone	Condition	Drug	4.405
-85	81902	920293	Urinary tract infectious disease	nitrofurantoin	Condition	Drug	4.393
-86	316139	319835	Heart failure	Congestive heart failure	Condition	Condition	4.321
-87	321318	314666	Angina pectoris	Old myocardial infarction	Condition	Condition	4.273
-88	319034	30437	Hypertensive heart disease without congestive heart failure	Gastro-esophageal reflux disease with esophagitis	Condition	Condition	4.273
-89	319835	956874	Congestive heart failure	furosemide	Condition	Drug	4.256
-90	435524	19044883	Sleep disorder	zopiclone	Condition	Drug	4.255
-91	194133	4227449	Low back pain	Spondylosis	Condition	Condition	4.231
-92	321318	317576	Angina pectoris	Coronary arteriosclerosis	Condition	Condition	4.209
-93	4068155	319835	Atrial arrhythmia	Congestive heart failure	Condition	Condition	4.149
-94	4169580	75344	Pain in spine	Intervertebral disc disorder	Condition	Condition	4.125
-95	19011355	903963	etoricoxib	triamcinolone	Drug	Drug	4.125
-96	319034	44784217	Hypertensive heart disease without congestive heart failure	Cardiac arrhythmia	Condition	Condition	4.118
-97	195588	1797513	Cystitis	ciprofloxacin	Condition	Drug	4.111
-98	443732	1580747	Disorder due to type 2 diabetes mellitus	sitagliptin	Condition	Drug	4.103
-99	314378	439846	Hypertensive heart disease with congestive heart failure	Left heart failure	Condition	Condition	4.056
-100	314378	321318	Hypertensive heart disease with congestive heart failure	Angina pectoris	Condition	Condition	4.054
-101	4146103	1518254	Degeneration of macula and posterior pole	dexamethasone	Condition	Drug	4.032
-102	77074	4114585	Joint pain	Primary gonarthrosis, bilateral	Condition	Condition	4
-103	443732	4174977	Disorder due to type 2 diabetes mellitus	Retinopathy due to diabetes mellitus	Condition	Condition	3.971
-104	4216397	194133	Nerve root disorder	Low back pain	Condition	Condition	3.958
-105	443732	376112	Disorder due to type 2 diabetes mellitus	Polyneuropathy due to diabetes mellitus	Condition	Condition	3.926
-106	443732	1516976	Disorder due to type 2 diabetes mellitus	insulin detemir	Condition	Drug	3.88
-107	314378	1310149	Hypertensive heart disease with congestive heart failure	warfarin	Condition	Drug	3.85
-108	197032	1797513	Hyperplasia of prostate	ciprofloxacin	Condition	Drug	3.846
-109	260139	1734104	Acute bronchitis	azithromycin	Condition	Drug	3.839
-110	4068155	970250	Atrial arrhythmia	spironolactone	Condition	Drug	3.783
-111	319034	42537730	Hypertensive heart disease without congestive heart failure	Coronary artery graft present	Condition	Condition	3.765
-112	435262	439297	Primary open angle glaucoma	Nuclear senile cataract	Condition	Condition	3.75
-113	314378	942350	Hypertensive heart disease with congestive heart failure	torsemide	Condition	Drug	3.742
-114	1124300	903963	diclofenac	triamcinolone	Drug	Drug	3.738
-115	443732	443729	Disorder due to type 2 diabetes mellitus	Peripheral circulatory disorder due to type 2 diabetes mellitus	Condition	Condition	3.727
-116	4114585	1360332	Primary gonarthrosis, bilateral	glucosamine	Condition	Drug	3.71
-117	443732	35198096	Disorder due to type 2 diabetes mellitus	insulin aspart	Condition	Drug	3.667
-118	443732	1567198	Disorder due to type 2 diabetes mellitus	insulin aspart, human	Condition	Drug	3.667
-119	314378	1322184	Hypertensive heart disease with congestive heart failure	clopidogrel	Condition	Drug	3.652
-120	319034	40568467	Hypertensive heart disease without congestive heart failure	Seborrheic keratosis	Condition	Condition	3.643
-121	1124300	778474	diclofenac	tizanidine	Drug	Drug	3.633
-122	314378	316139	Hypertensive heart disease with congestive heart failure	Heart failure	Condition	Condition	3.628
-123	1503297	1307863	metformin	verapamil	Drug	Drug	3.625
-124	319034	432867	Hypertensive heart disease without congestive heart failure	Hyperlipidemia	Condition	Condition	3.571
-125	260139	1750500	Acute bronchitis	clarithromycin	Condition	Drug	3.556
-126	942350	198185	torsemide	Chronic renal failure	Drug	Condition	3.528
-127	1310149	942350	warfarin	torsemide	Drug	Drug	3.524
-128	314378	4112026	Hypertensive heart disease with congestive heart failure	Sequelae of cerebral infarction	Condition	Condition	3.483
-129	1750500	1734104	clarithromycin	azithromycin	Drug	Drug	3.471
-130	4193704	379805	Type 2 diabetes mellitus without complication	Myopia	Condition	Condition	3.45
-131	1125315	797399	acetaminophen	gabapentin	Drug	Drug	3.45
-132	1103314	1201620	tramadol	codeine	Drug	Drug	3.4
-133	1103314	1125315	tramadol	acetaminophen	Drug	Drug	3.361
-134	1597756	1580747	glimepiride	sitagliptin	Drug	Drug	3.342
-135	316139	439846	Heart failure	Left heart failure	Condition	Condition	3.333
-136	1307046	1383815	metoprolol	isosorbide	Drug	Drug	3.321
-137	194133	4079749	Low back pain	Osteoarthritis of hip	Condition	Condition	3.316
-138	1124300	1185922	diclofenac	ketoprofen	Drug	Drug	3.302
-139	4068155	942350	Atrial arrhythmia	torsemide	Condition	Drug	3.301
-140	443732	19059796	Disorder due to type 2 diabetes mellitus	gliclazide	Condition	Drug	3.292
-141	904453	797399	esomeprazole	gabapentin	Drug	Drug	3.257
-142	19011355	797399	etoricoxib	gabapentin	Drug	Drug	3.25
-143	1503297	19015802	metformin	lercanidipine	Drug	Drug	3.25
-144	4169580	4216397	Pain in spine	Nerve root disorder	Condition	Condition	3.25
-145	319034	438720	Hypertensive heart disease without congestive heart failure	Mixed hyperlipidemia	Condition	Condition	3.235
-146	316139	1310149	Heart failure	warfarin	Condition	Drug	3.226
-147	319034	19020061	Hypertensive heart disease without congestive heart failure	nitrendipine	Condition	Drug	3.2
-148	40482507	4146103	Incipient senile cataract	Degeneration of macula and posterior pole	Condition	Condition	3.182
-149	438720	1510813	Mixed hyperlipidemia	rosuvastatin	Condition	Drug	3.182
-150	75897	4114585	Polyarthropathy	Primary gonarthrosis, bilateral	Condition	Condition	3.156
-151	438720	1545958	Mixed hyperlipidemia	atorvastatin	Condition	Drug	3.154
-152	4216397	1103314	Nerve root disorder	tramadol	Condition	Drug	3.15
-153	942350	1167322	torsemide	allopurinol	Drug	Drug	3.15
-154	1797513	1778162	ciprofloxacin	cefuroxime	Drug	Drug	3.149
-155	1124300	797399	diclofenac	gabapentin	Drug	Drug	3.149
-156	314378	4068155	Hypertensive heart disease with congestive heart failure	Atrial arrhythmia	Condition	Condition	3.146
-157	316139	255573	Heart failure	Chronic obstructive lung disease	Condition	Condition	3.108
-158	443732	1502905	Disorder due to type 2 diabetes mellitus	insulin glargine	Condition	Drug	3.103
-159	195588	81902	Cystitis	Urinary tract infectious disease	Condition	Condition	3.1
-160	4217557	942350	Simple obesity	torsemide	Condition	Drug	3.067
-161	443732	1322184	Disorder due to type 2 diabetes mellitus	clopidogrel	Condition	Drug	3.032
-162	75897	1115008	Polyarthropathy	naproxen	Condition	Drug	3
-163	319034	40226742	Hypertensive heart disease without congestive heart failure	olmesartan	Condition	Drug	3
-164	4193704	19015802	Type 2 diabetes mellitus without complication	lercanidipine	Condition	Drug	3
-165	40480694	1502905	High hemoglobin A1c level	insulin glargine	Condition	Drug	2.979
-166	4068155	4112026	Atrial arrhythmia	Sequelae of cerebral infarction	Condition	Condition	2.972
-167	319034	321318	Hypertensive heart disease without congestive heart failure	Angina pectoris	Condition	Condition	2.958
-168	40480694	19059796	High hemoglobin A1c level	gliclazide	Condition	Drug	2.957
-169	443732	434337	Disorder due to type 2 diabetes mellitus	Retinal vascular disorder	Condition	Condition	2.956
-170	1150345	1115008	meloxicam	naproxen	Drug	Drug	2.939
-171	321318	319835	Angina pectoris	Congestive heart failure	Condition	Condition	2.934
-172	314378	315286	Hypertensive heart disease with congestive heart failure	Chronic ischemic heart disease	Condition	Condition	2.909
-173	443732	314666	Disorder due to type 2 diabetes mellitus	Old myocardial infarction	Condition	Condition	2.896
-174	443732	42537730	Disorder due to type 2 diabetes mellitus	Coronary artery graft present	Condition	Condition	2.889
-175	4193704	432867	Type 2 diabetes mellitus without complication	Hyperlipidemia	Condition	Condition	2.882
-176	1115008	1125315	naproxen	acetaminophen	Drug	Drug	2.882
-177	4216397	4079749	Nerve root disorder	Osteoarthritis of hip	Condition	Condition	2.88
-178	314378	443729	Hypertensive heart disease with congestive heart failure	Peripheral circulatory disorder due to type 2 diabetes mellitus	Condition	Condition	2.88
-179	1360332	904453	glucosamine	esomeprazole	Drug	Drug	2.875
-180	75897	4227449	Polyarthropathy	Spondylosis	Condition	Condition	2.864
-181	956874	942350	furosemide	torsemide	Drug	Drug	2.862
-182	1503297	40480694	metformin	High hemoglobin A1c level	Drug	Condition	2.853
-183	4041554	4214376	Serum cholesterol raised	Hyperglycemia	Condition	Condition	2.848
-184	435524	781039	Sleep disorder	alprazolam	Condition	Drug	2.846
-185	443732	1383815	Disorder due to type 2 diabetes mellitus	isosorbide	Condition	Drug	2.833
-186	319034	434337	Hypertensive heart disease without congestive heart failure	Retinal vascular disorder	Condition	Condition	2.829
-187	316139	198185	Heart failure	Chronic renal failure	Condition	Condition	2.829
-188	319034	437827	Hypertensive heart disease without congestive heart failure	Pure hypercholesterolemia	Condition	Condition	2.81
-189	321318	438720	Angina pectoris	Mixed hyperlipidemia	Condition	Condition	2.803
-190	314666	942350	Old myocardial infarction	torsemide	Condition	Drug	2.791
-191	1115008	1201620	naproxen	codeine	Drug	Drug	2.784
-192	201826	781039	Type 2 diabetes mellitus	alprazolam	Condition	Drug	2.778
-193	1503297	1196677	metformin	formoterol	Drug	Drug	2.778
-194	73553	1115008	Arthropathy	naproxen	Condition	Drug	2.773
-195	4217557	978555	Simple obesity	indapamide	Condition	Drug	2.767
-196	19011355	1103314	etoricoxib	tramadol	Drug	Drug	2.763
-197	260139	1149380	Acute bronchitis	fluticasone	Condition	Drug	2.75
-198	260139	25297	Acute bronchitis	Acute pharyngitis	Condition	Condition	2.75
-199	1713332	1734104	amoxicillin	azithromycin	Drug	Drug	2.74
-200	81902	1778162	Urinary tract infectious disease	cefuroxime	Condition	Drug	2.732
-201	319835	1334456	Congestive heart failure	ramipril	Condition	Drug	2.728
-202	4193704	1580747	Type 2 diabetes mellitus without complication	sitagliptin	Condition	Drug	2.714
-203	378424	439297	Astigmatism	Nuclear senile cataract	Condition	Condition	2.708
-204	40480694	1580747	High hemoglobin A1c level	sitagliptin	Condition	Drug	2.703
-205	319835	317576	Congestive heart failure	Coronary arteriosclerosis	Condition	Condition	2.7
-206	4217557	970250	Simple obesity	spironolactone	Condition	Drug	2.7
-207	73553	19011355	Arthropathy	etoricoxib	Condition	Drug	2.694
-208	314378	4217557	Hypertensive heart disease with congestive heart failure	Simple obesity	Condition	Condition	2.678
-209	319034	1314577	Hypertensive heart disease without congestive heart failure	nebivolol	Condition	Drug	2.673
-210	4193704	40226742	Type 2 diabetes mellitus without complication	olmesartan	Condition	Drug	2.655
-211	319034	314378	Hypertensive heart disease without congestive heart failure	Hypertensive heart disease with congestive heart failure	Condition	Condition	2.655
-212	4068155	440674	Atrial arrhythmia	Gout	Condition	Condition	2.65
-213	4169580	4227449	Pain in spine	Spondylosis	Condition	Condition	2.647
-214	4169580	1125315	Pain in spine	acetaminophen	Condition	Drug	2.644
-215	4146103	439297	Degeneration of macula and posterior pole	Nuclear senile cataract	Condition	Condition	2.632
-216	1150345	19011355	meloxicam	etoricoxib	Drug	Drug	2.629
-217	443732	942350	Disorder due to type 2 diabetes mellitus	torsemide	Condition	Drug	2.629
-218	435262	4146103	Primary open angle glaucoma	Degeneration of macula and posterior pole	Condition	Condition	2.622
-219	1503297	1539403	metformin	simvastatin	Drug	Drug	2.615
-220	4079750	1115008	Osteoarthritis of knee	naproxen	Condition	Drug	2.603
-221	1307046	40241331	metoprolol	rivaroxaban	Drug	Drug	2.6
-222	319034	437541	Hypertensive heart disease without congestive heart failure	Glaucoma	Condition	Condition	2.6
-223	4169580	1201620	Pain in spine	codeine	Condition	Drug	2.6
-224	4068155	956874	Atrial arrhythmia	furosemide	Condition	Drug	2.595
-225	319034	978555	Hypertensive heart disease without congestive heart failure	indapamide	Condition	Drug	2.583
-226	4216397	19011355	Nerve root disorder	etoricoxib	Condition	Drug	2.582
-227	316139	317576	Heart failure	Coronary arteriosclerosis	Condition	Condition	2.577
-228	40480694	1567198	High hemoglobin A1c level	insulin aspart, human	Condition	Drug	2.574
-229	40480694	35198096	High hemoglobin A1c level	insulin aspart	Condition	Drug	2.574
-230	1124300	1125315	diclofenac	acetaminophen	Drug	Drug	2.57
-231	442604	44784217	Hypertensive heart disease	Cardiac arrhythmia	Condition	Condition	2.567
-232	4216397	1115008	Nerve root disorder	naproxen	Condition	Drug	2.564
-233	1124300	1103314	diclofenac	tramadol	Drug	Drug	2.559
-234	442604	433736	Hypertensive heart disease	Obesity	Condition	Condition	2.556
-235	40480694	1597756	High hemoglobin A1c level	glimepiride	Condition	Drug	2.553
-236	437530	1539403	Disorder of lipid metabolism	simvastatin	Condition	Drug	2.548
-237	1503297	40239216	metformin	linagliptin	Drug	Drug	2.545
-238	319034	4001643	Hypertensive heart disease without congestive heart failure	Adult osteochondrosis of spine	Condition	Condition	2.545
-239	4079750	1150345	Osteoarthritis of knee	meloxicam	Condition	Drug	2.537
-240	1124300	1201620	diclofenac	codeine	Drug	Drug	2.536
-241	314378	46271022	Hypertensive heart disease with congestive heart failure	Chronic kidney disease	Condition	Condition	2.52
-242	319034	440674	Hypertensive heart disease without congestive heart failure	Gout	Condition	Condition	2.511
-243	4169580	194133	Pain in spine	Low back pain	Condition	Condition	2.511
-244	443732	948078	Disorder due to type 2 diabetes mellitus	pantoprazole	Condition	Drug	2.511
-245	904453	1201620	esomeprazole	codeine	Drug	Drug	2.507
-246	4193704	378424	Type 2 diabetes mellitus without complication	Astigmatism	Condition	Condition	2.5
-247	319034	4144111	Hypertensive heart disease without congestive heart failure	Gastroesophageal reflux disease without esophagitis	Condition	Condition	2.5
-248	314378	315558	Hypertensive heart disease with congestive heart failure	Atherosclerosis of arteries of the extremities	Condition	Condition	2.5
-249	319034	314666	Hypertensive heart disease without congestive heart failure	Old myocardial infarction	Condition	Condition	2.5
-250	1503297	1367500	metformin	losartan	Drug	Drug	2.5
-251	314378	1326303	Hypertensive heart disease with congestive heart failure	digoxin	Condition	Drug	2.484
-252	904453	1125315	esomeprazole	acetaminophen	Drug	Drug	2.479
-253	4193704	939259	Type 2 diabetes mellitus without complication	budesonide	Condition	Drug	2.476
-254	4216397	73553	Nerve root disorder	Arthropathy	Condition	Condition	2.475
-255	442604	321318	Hypertensive heart disease	Angina pectoris	Condition	Condition	2.474
-256	319034	437530	Hypertensive heart disease without congestive heart failure	Disorder of lipid metabolism	Condition	Condition	2.471
-257	435262	378424	Primary open angle glaucoma	Astigmatism	Condition	Condition	2.469
-258	73553	1150345	Arthropathy	meloxicam	Condition	Drug	2.469
-259	1503297	1341927	metformin	enalapril	Drug	Drug	2.465
-260	1503297	1342001	metformin	enalaprilat	Drug	Drug	2.465
-261	314378	978555	Hypertensive heart disease with congestive heart failure	indapamide	Condition	Drug	2.463
-262	4041554	438720	Serum cholesterol raised	Mixed hyperlipidemia	Condition	Condition	2.463
-263	4079749	1103314	Osteoarthritis of hip	tramadol	Condition	Drug	2.46
-264	319034	1373225	Hypertensive heart disease without congestive heart failure	perindopril	Condition	Drug	2.456
-265	4169580	4079749	Pain in spine	Osteoarthritis of hip	Condition	Condition	2.455
-266	194133	1115008	Low back pain	naproxen	Condition	Drug	2.447
-267	1307046	1322184	metoprolol	clopidogrel	Drug	Drug	2.444
-268	904453	1103314	esomeprazole	tramadol	Drug	Drug	2.443
-269	437530	1545958	Disorder of lipid metabolism	atorvastatin	Condition	Drug	2.442
-270	19011355	1125315	etoricoxib	acetaminophen	Drug	Drug	2.441
-271	1503297	40226742	metformin	olmesartan	Drug	Drug	2.44
-272	314378	381591	Hypertensive heart disease with congestive heart failure	Cerebrovascular disease	Condition	Condition	2.44
-273	1124300	1150345	diclofenac	meloxicam	Drug	Drug	2.436
-274	314378	956874	Hypertensive heart disease with congestive heart failure	furosemide	Condition	Drug	2.432
-275	314378	4110051	Hypertensive heart disease with congestive heart failure	Mixed asthma	Condition	Condition	2.429
-276	442604	4043371	Hypertensive heart disease	Inflammatory disorder of digestive tract	Condition	Condition	2.424
-277	314378	198185	Hypertensive heart disease with congestive heart failure	Chronic renal failure	Condition	Condition	2.419
-278	321318	316139	Angina pectoris	Heart failure	Condition	Condition	2.418
-279	4079750	73553	Osteoarthritis of knee	Arthropathy	Condition	Condition	2.41
-280	1503297	1154343	metformin	albuterol	Drug	Drug	2.4
-281	1503297	1510813	metformin	rosuvastatin	Drug	Drug	2.397
-282	437827	1510813	Pure hypercholesterolemia	rosuvastatin	Condition	Drug	2.393
-283	1150345	904453	meloxicam	esomeprazole	Drug	Drug	2.384
-284	923645	19020124	omeprazole	betahistine	Drug	Drug	2.383
-285	1307046	1326303	metoprolol	digoxin	Drug	Drug	2.378
-286	443732	970250	Disorder due to type 2 diabetes mellitus	spironolactone	Condition	Drug	2.377
-287	4068155	317576	Atrial arrhythmia	Coronary arteriosclerosis	Condition	Condition	2.375
-288	316139	433736	Heart failure	Obesity	Condition	Condition	2.375
-289	201826	1167322	Type 2 diabetes mellitus	allopurinol	Condition	Drug	2.375
-290	4193704	1510813	Type 2 diabetes mellitus without complication	rosuvastatin	Condition	Drug	2.374
-291	1150345	1125315	meloxicam	acetaminophen	Drug	Drug	2.373
-292	1503297	1383815	metformin	isosorbide	Drug	Drug	2.37
-293	319835	1167322	Congestive heart failure	allopurinol	Condition	Drug	2.37
-294	19011355	1201620	etoricoxib	codeine	Drug	Drug	2.368
-295	443732	198185	Disorder due to type 2 diabetes mellitus	Chronic renal failure	Condition	Condition	2.355
-296	1503297	1332418	metformin	amlodipine	Drug	Drug	2.353
-297	319034	1322184	Hypertensive heart disease without congestive heart failure	clopidogrel	Condition	Drug	2.348
-298	314378	4001643	Hypertensive heart disease with congestive heart failure	Adult osteochondrosis of spine	Condition	Condition	2.344
-299	4079750	19011355	Osteoarthritis of knee	etoricoxib	Condition	Drug	2.342
-300	4043371	923645	Inflammatory disorder of digestive tract	omeprazole	Condition	Drug	2.333
-301	314666	319835	Old myocardial infarction	Congestive heart failure	Condition	Condition	2.328
-302	314378	435524	Hypertensive heart disease with congestive heart failure	Sleep disorder	Condition	Condition	2.325
-303	923645	1778162	omeprazole	cefuroxime	Drug	Drug	2.32
-304	4079750	4216397	Osteoarthritis of knee	Nerve root disorder	Condition	Condition	2.319
-305	4169580	19011355	Pain in spine	etoricoxib	Condition	Drug	2.318
-306	319034	4110051	Hypertensive heart disease without congestive heart failure	Mixed asthma	Condition	Condition	2.318
-307	4217557	4114585	Simple obesity	Primary gonarthrosis, bilateral	Condition	Condition	2.312
-308	1124300	1360332	diclofenac	glucosamine	Drug	Drug	2.312
-309	75897	440674	Polyarthropathy	Gout	Condition	Condition	2.311
-310	314378	4174977	Hypertensive heart disease with congestive heart failure	Retinopathy due to diabetes mellitus	Condition	Condition	2.303
-311	4169580	1150345	Pain in spine	meloxicam	Condition	Drug	2.296
-312	255848	942350	Pneumonia	torsemide	Condition	Drug	2.291
-313	4079750	4079749	Osteoarthritis of knee	Osteoarthritis of hip	Condition	Condition	2.288
-314	314378	4043371	Hypertensive heart disease with congestive heart failure	Inflammatory disorder of digestive tract	Condition	Condition	2.288
-315	1150345	1201620	meloxicam	codeine	Drug	Drug	2.283
-316	923645	970250	omeprazole	spironolactone	Drug	Drug	2.275
-317	4217557	319835	Simple obesity	Congestive heart failure	Condition	Condition	2.271
-318	443732	317576	Disorder due to type 2 diabetes mellitus	Coronary arteriosclerosis	Condition	Condition	2.268
-319	4169580	1103314	Pain in spine	tramadol	Condition	Drug	2.268
-320	1124300	19056874	diclofenac	dexketoprofen	Drug	Drug	2.267
-321	4193704	434337	Type 2 diabetes mellitus without complication	Retinal vascular disorder	Condition	Condition	2.261
-322	1503297	1545958	metformin	atorvastatin	Drug	Drug	2.261
-323	320128	4214376	Essential hypertension	Hyperglycemia	Condition	Condition	2.25
-324	194133	1150345	Low back pain	meloxicam	Condition	Drug	2.25
-325	319034	315286	Hypertensive heart disease without congestive heart failure	Chronic ischemic heart disease	Condition	Condition	2.25
-326	435262	40482507	Primary open angle glaucoma	Incipient senile cataract	Condition	Condition	2.244
-327	438720	948078	Mixed hyperlipidemia	pantoprazole	Condition	Drug	2.238
-328	1503297	19020124	metformin	betahistine	Drug	Drug	2.229
-329	437530	1510813	Disorder of lipid metabolism	rosuvastatin	Condition	Drug	2.226
-330	1124300	19011355	diclofenac	etoricoxib	Drug	Drug	2.223
-331	4079750	77074	Osteoarthritis of knee	Joint pain	Condition	Condition	2.222
-332	1124300	1115008	diclofenac	naproxen	Drug	Drug	2.221
-333	319034	4217557	Hypertensive heart disease without congestive heart failure	Simple obesity	Condition	Condition	2.221
-334	316139	4217557	Heart failure	Simple obesity	Condition	Condition	2.218
-335	201826	1332418	Type 2 diabetes mellitus	amlodipine	Condition	Drug	2.218
-336	1713332	1778162	amoxicillin	cefuroxime	Drug	Drug	2.218
-337	194133	1103314	Low back pain	tramadol	Condition	Drug	2.217
-338	319835	948078	Congestive heart failure	pantoprazole	Condition	Drug	2.212
-339	442604	314378	Hypertensive heart disease	Hypertensive heart disease with congestive heart failure	Condition	Condition	2.21
-340	435524	723013	Sleep disorder	diazepam	Condition	Drug	2.21
-341	4193704	438720	Type 2 diabetes mellitus without complication	Mixed hyperlipidemia	Condition	Condition	2.209
-342	1503297	954688	metformin	latanoprost	Drug	Drug	2.2
-343	4193704	924566	Type 2 diabetes mellitus without complication	tamsulosin	Condition	Drug	2.2
-344	1503297	1363749	metformin	fosinopril	Drug	Drug	2.2
-345	75897	4216397	Polyarthropathy	Nerve root disorder	Condition	Condition	2.198
-346	4193704	974166	Type 2 diabetes mellitus without complication	hydrochlorothiazide	Condition	Drug	2.194
-347	320128	437530	Essential hypertension	Disorder of lipid metabolism	Condition	Condition	2.193
-348	194133	19011355	Low back pain	etoricoxib	Condition	Drug	2.191
-349	443732	1545958	Disorder due to type 2 diabetes mellitus	atorvastatin	Condition	Drug	2.191
-350	1503297	939259	metformin	budesonide	Drug	Drug	2.182
-351	201826	1539403	Type 2 diabetes mellitus	simvastatin	Condition	Drug	2.18
-352	321318	948078	Angina pectoris	pantoprazole	Condition	Drug	2.177
-353	1124300	1506270	diclofenac	methylprednisolone	Drug	Drug	2.176
-354	443732	1769535	Disorder due to type 2 diabetes mellitus	cefadroxil	Condition	Drug	2.175
-355	443732	956874	Disorder due to type 2 diabetes mellitus	furosemide	Condition	Drug	2.173
-356	321318	437827	Angina pectoris	Pure hypercholesterolemia	Condition	Condition	2.169
-357	319034	316139	Hypertensive heart disease without congestive heart failure	Heart failure	Condition	Condition	2.169
-358	194133	1201620	Low back pain	codeine	Condition	Drug	2.167
-359	1503297	997881	metformin	clindamycin	Drug	Drug	2.167
-360	314378	44784217	Hypertensive heart disease with congestive heart failure	Cardiac arrhythmia	Condition	Condition	2.167
-361	443732	4217557	Disorder due to type 2 diabetes mellitus	Simple obesity	Condition	Condition	2.165
-362	194133	1125315	Low back pain	acetaminophen	Condition	Drug	2.164
-363	321318	4043371	Angina pectoris	Inflammatory disorder of digestive tract	Condition	Condition	2.162
-364	201826	1317640	Type 2 diabetes mellitus	telmisartan	Condition	Drug	2.162
-365	319034	1317640	Hypertensive heart disease without congestive heart failure	telmisartan	Condition	Drug	2.161
-366	319034	4112026	Hypertensive heart disease without congestive heart failure	Sequelae of cerebral infarction	Condition	Condition	2.161
-367	201826	4169580	Type 2 diabetes mellitus	Pain in spine	Condition	Condition	2.158
-368	442604	317009	Hypertensive heart disease	Asthma	Condition	Condition	2.156
-369	201826	443732	Type 2 diabetes mellitus	Disorder due to type 2 diabetes mellitus	Condition	Condition	2.154
-370	314378	81303	Hypertensive heart disease with congestive heart failure	Labyrinthine disorder	Condition	Condition	2.154
-371	1503297	1124300	metformin	diclofenac	Drug	Drug	2.149
-372	4193704	978555	Type 2 diabetes mellitus without complication	indapamide	Condition	Drug	2.148
-373	4216397	4114585	Nerve root disorder	Primary gonarthrosis, bilateral	Condition	Condition	2.148
-374	4193704	24134	Type 2 diabetes mellitus without complication	Neck pain	Condition	Condition	2.143
-375	1503297	1317640	metformin	telmisartan	Drug	Drug	2.143
-376	4216397	1125315	Nerve root disorder	acetaminophen	Condition	Drug	2.143
-377	321318	4068155	Angina pectoris	Atrial arrhythmia	Condition	Condition	2.141
-378	314378	255573	Hypertensive heart disease with congestive heart failure	Chronic obstructive lung disease	Condition	Condition	2.14
-379	1503297	1334456	metformin	ramipril	Drug	Drug	2.135
-380	4193704	948078	Type 2 diabetes mellitus without complication	pantoprazole	Condition	Drug	2.128
-381	442604	4227449	Hypertensive heart disease	Spondylosis	Condition	Condition	2.128
-382	1503297	1373225	metformin	perindopril	Drug	Drug	2.123
-383	4193704	1314577	Type 2 diabetes mellitus without complication	nebivolol	Condition	Drug	2.123
-384	201826	1310149	Type 2 diabetes mellitus	warfarin	Condition	Drug	2.122
-385	1503297	1310149	metformin	warfarin	Drug	Drug	2.121
-386	316139	1167322	Heart failure	allopurinol	Condition	Drug	2.121
-387	319034	1332418	Hypertensive heart disease without congestive heart failure	amlodipine	Condition	Drug	2.12
-388	4193704	1367500	Type 2 diabetes mellitus without complication	losartan	Condition	Drug	2.118
-389	314378	4227449	Hypertensive heart disease with congestive heart failure	Spondylosis	Condition	Condition	2.116
-390	314378	1383815	Hypertensive heart disease with congestive heart failure	isosorbide	Condition	Drug	2.115
-391	319034	1545958	Hypertensive heart disease without congestive heart failure	atorvastatin	Condition	Drug	2.114
-392	442604	4169580	Hypertensive heart disease	Pain in spine	Condition	Condition	2.114
-393	4079750	904453	Osteoarthritis of knee	esomeprazole	Condition	Drug	2.111
-394	4169580	77074	Pain in spine	Joint pain	Condition	Condition	2.111
-395	4193704	195306	Type 2 diabetes mellitus without complication	Gastroduodenitis	Condition	Condition	2.111
-396	75897	4079750	Polyarthropathy	Osteoarthritis of knee	Condition	Condition	2.11
-397	923645	1103314	omeprazole	tramadol	Drug	Drug	2.109
-398	443732	4112026	Disorder due to type 2 diabetes mellitus	Sequelae of cerebral infarction	Condition	Condition	2.108
-399	73553	904453	Arthropathy	esomeprazole	Condition	Drug	2.108
-400	4193704	1196677	Type 2 diabetes mellitus without complication	formoterol	Condition	Drug	2.105
-401	77074	19011355	Joint pain	etoricoxib	Condition	Drug	2.105
-402	1307046	19005626	metoprolol	trimetazidine	Drug	Drug	2.104
-403	321318	942350	Angina pectoris	torsemide	Condition	Drug	2.1
-404	442604	440674	Hypertensive heart disease	Gout	Condition	Condition	2.098
-405	4193704	1734104	Type 2 diabetes mellitus without complication	azithromycin	Condition	Drug	2.097
-406	75897	19011355	Polyarthropathy	etoricoxib	Condition	Drug	2.096
-407	201826	19011355	Type 2 diabetes mellitus	etoricoxib	Condition	Drug	2.096
-408	319034	255573	Hypertensive heart disease without congestive heart failure	Chronic obstructive lung disease	Condition	Condition	2.094
-409	4079750	1124300	Osteoarthritis of knee	diclofenac	Condition	Drug	2.092
-410	1307046	723013	metoprolol	diazepam	Drug	Drug	2.086
-411	948078	1125315	pantoprazole	acetaminophen	Drug	Drug	2.083
-412	319034	201340	Hypertensive heart disease without congestive heart failure	Gastritis	Condition	Condition	2.08
-413	319034	380094	Hypertensive heart disease without congestive heart failure	Carpal tunnel syndrome	Condition	Condition	2.077
-414	75897	4079749	Polyarthropathy	Osteoarthritis of hip	Condition	Condition	2.075
-415	1503297	978555	metformin	indapamide	Drug	Drug	2.073
-416	42537730	1307046	Coronary artery graft present	metoprolol	Condition	Drug	2.072
-417	948078	1201620	pantoprazole	codeine	Drug	Drug	2.07
-418	437827	438720	Pure hypercholesterolemia	Mixed hyperlipidemia	Condition	Condition	2.07
-419	923645	906780	omeprazole	metoclopramide	Drug	Drug	2.069
-420	781039	904453	alprazolam	esomeprazole	Drug	Drug	2.069
-421	442604	318800	Hypertensive heart disease	Gastroesophageal reflux disease	Condition	Condition	2.067
-422	4169580	1115008	Pain in spine	naproxen	Condition	Drug	2.065
-423	319034	4174977	Hypertensive heart disease without congestive heart failure	Retinopathy due to diabetes mellitus	Condition	Condition	2.065
-424	4041554	437530	Serum cholesterol raised	Disorder of lipid metabolism	Condition	Condition	2.061
-425	316139	440674	Heart failure	Gout	Condition	Condition	2.06
-426	314378	317009	Hypertensive heart disease with congestive heart failure	Asthma	Condition	Condition	2.059
-427	314378	317576	Hypertensive heart disease with congestive heart failure	Coronary arteriosclerosis	Condition	Condition	2.058
-428	942350	1778162	torsemide	cefuroxime	Drug	Drug	2.057
-429	4214376	4193704	Hyperglycemia	Type 2 diabetes mellitus without complication	Condition	Condition	2.055
-430	443732	255573	Disorder due to type 2 diabetes mellitus	Chronic obstructive lung disease	Condition	Condition	2.049
-431	201826	923645	Type 2 diabetes mellitus	omeprazole	Condition	Drug	2.049
-432	4216397	1201620	Nerve root disorder	codeine	Condition	Drug	2.047
-433	319034	195306	Hypertensive heart disease without congestive heart failure	Gastroduodenitis	Condition	Condition	2.045
-434	1124300	1177480	diclofenac	ibuprofen	Drug	Drug	2.042
-435	321318	1545958	Angina pectoris	atorvastatin	Condition	Drug	2.039
-436	1317640	1314577	telmisartan	nebivolol	Drug	Drug	2.039
-437	4079750	1201620	Osteoarthritis of knee	codeine	Condition	Drug	2.036
-438	923645	1185922	omeprazole	ketoprofen	Drug	Drug	2.036
-439	4079750	1125315	Osteoarthritis of knee	acetaminophen	Condition	Drug	2.035
-440	19044883	1125315	zopiclone	acetaminophen	Drug	Drug	2.033
-441	4068155	4043371	Atrial arrhythmia	Inflammatory disorder of digestive tract	Condition	Condition	2.032
-442	1503297	1314577	metformin	nebivolol	Drug	Drug	2.032
-443	442604	437530	Hypertensive heart disease	Disorder of lipid metabolism	Condition	Condition	2.032
-444	4079750	4227449	Osteoarthritis of knee	Spondylosis	Condition	Condition	2.031
-445	4193704	1373225	Type 2 diabetes mellitus without complication	perindopril	Condition	Drug	2.029
-446	4217557	1314577	Simple obesity	nebivolol	Condition	Drug	2.027
-447	321318	4217557	Angina pectoris	Simple obesity	Condition	Condition	2.025
-448	314666	1307046	Old myocardial infarction	metoprolol	Condition	Drug	2.023
-449	4193704	1545958	Type 2 diabetes mellitus without complication	atorvastatin	Condition	Drug	2.02
-450	1124300	1769535	diclofenac	cefadroxil	Drug	Drug	2.019
-451	4193704	905233	Type 2 diabetes mellitus without complication	mometasone	Condition	Drug	2.017
-452	4217557	73553	Simple obesity	Arthropathy	Condition	Condition	2.016
-453	4193704	1750500	Type 2 diabetes mellitus without complication	clarithromycin	Condition	Drug	2.015
-454	321318	1307046	Angina pectoris	metoprolol	Condition	Drug	2.012
-455	923645	1125315	omeprazole	acetaminophen	Drug	Drug	2.011
-456	4193704	1332418	Type 2 diabetes mellitus without complication	amlodipine	Condition	Drug	2.005
-457	1503297	924566	metformin	tamsulosin	Drug	Drug	2
-458	1307046	948078	metoprolol	pantoprazole	Drug	Drug	2
-459	319034	4227449	Hypertensive heart disease without congestive heart failure	Spondylosis	Condition	Condition	2
-460	319034	4079749	Hypertensive heart disease without congestive heart failure	Osteoarthritis of hip	Condition	Condition	2
-461	4068155	948078	Atrial arrhythmia	pantoprazole	Condition	Drug	1.987
-462	1307046	970250	metoprolol	spironolactone	Drug	Drug	1.986
-463	1124300	1734104	diclofenac	azithromycin	Drug	Drug	1.983
-464	442604	314666	Hypertensive heart disease	Old myocardial infarction	Condition	Condition	1.979
-465	4068155	1307046	Atrial arrhythmia	metoprolol	Condition	Drug	1.976
-466	437827	1545958	Pure hypercholesterolemia	atorvastatin	Condition	Drug	1.974
-467	443732	1597756	Disorder due to type 2 diabetes mellitus	glimepiride	Condition	Drug	1.971
-468	75897	1150345	Polyarthropathy	meloxicam	Condition	Drug	1.969
-469	443732	40480694	Disorder due to type 2 diabetes mellitus	High hemoglobin A1c level	Condition	Condition	1.967
-470	4193704	201078	Type 2 diabetes mellitus without complication	Atrophic vaginitis	Condition	Condition	1.967
-471	4193704	4144111	Type 2 diabetes mellitus without complication	Gastroesophageal reflux disease without esophagitis	Condition	Condition	1.963
-472	442604	75897	Hypertensive heart disease	Polyarthropathy	Condition	Condition	1.962
-473	316139	4043371	Heart failure	Inflammatory disorder of digestive tract	Condition	Condition	1.959
-474	442604	201826	Hypertensive heart disease	Type 2 diabetes mellitus	Condition	Condition	1.958
-475	1503297	1750500	metformin	clarithromycin	Drug	Drug	1.952
-476	19044883	1201620	zopiclone	codeine	Drug	Drug	1.951
-477	201826	4043371	Type 2 diabetes mellitus	Inflammatory disorder of digestive tract	Condition	Condition	1.942
-478	319034	4216397	Hypertensive heart disease without congestive heart failure	Nerve root disorder	Condition	Condition	1.938
-479	1503297	1150345	metformin	meloxicam	Drug	Drug	1.937
-480	443732	1310149	Disorder due to type 2 diabetes mellitus	warfarin	Condition	Drug	1.935
-481	314378	440674	Hypertensive heart disease with congestive heart failure	Gout	Condition	Condition	1.933
-482	1503297	1501700	metformin	levothyroxine	Drug	Drug	1.93
-483	1503297	1360332	metformin	glucosamine	Drug	Drug	1.929
-484	442604	316139	Hypertensive heart disease	Heart failure	Condition	Condition	1.928
-485	4193704	4031019	Type 2 diabetes mellitus without complication	Allergic contact dermatitis	Condition	Condition	1.927
-486	904453	19011355	esomeprazole	etoricoxib	Drug	Drug	1.927
-487	319034	433736	Hypertensive heart disease without congestive heart failure	Obesity	Condition	Condition	1.923
-488	443732	1510813	Disorder due to type 2 diabetes mellitus	rosuvastatin	Condition	Drug	1.922
-489	1307046	40226742	metoprolol	olmesartan	Drug	Drug	1.92
-490	923645	1201620	omeprazole	codeine	Drug	Drug	1.916
-491	1307046	942350	metoprolol	torsemide	Drug	Drug	1.913
-492	319034	442077	Hypertensive heart disease without congestive heart failure	Anxiety disorder	Condition	Condition	1.906
-493	1503297	19097481	metformin	cinnarizine	Drug	Drug	1.905
-494	314378	19005626	Hypertensive heart disease with congestive heart failure	trimetazidine	Condition	Drug	1.903
-495	1503297	1769535	metformin	cefadroxil	Drug	Drug	1.9
-496	443732	19020061	Disorder due to type 2 diabetes mellitus	nitrendipine	Condition	Drug	1.9
-497	319034	4193704	Hypertensive heart disease without congestive heart failure	Type 2 diabetes mellitus without complication	Condition	Condition	1.898
-498	319034	443732	Hypertensive heart disease without congestive heart failure	Disorder due to type 2 diabetes mellitus	Condition	Condition	1.894
-499	443732	1334456	Disorder due to type 2 diabetes mellitus	ramipril	Condition	Drug	1.892
-500	201826	1341927	Type 2 diabetes mellitus	enalapril	Condition	Drug	1.889
-501	201826	1342001	Type 2 diabetes mellitus	enalaprilat	Condition	Drug	1.889
-502	314378	1314577	Hypertensive heart disease with congestive heart failure	nebivolol	Condition	Drug	1.887
-503	319034	4114585	Hypertensive heart disease without congestive heart failure	Primary gonarthrosis, bilateral	Condition	Condition	1.884
-504	1150345	1103314	meloxicam	tramadol	Drug	Drug	1.88
-505	201826	1307046	Type 2 diabetes mellitus	metoprolol	Condition	Drug	1.88
-506	319034	440383	Hypertensive heart disease without congestive heart failure	Depressive disorder	Condition	Condition	1.879
-507	319034	40482507	Hypertensive heart disease without congestive heart failure	Incipient senile cataract	Condition	Condition	1.873
-508	319034	378424	Hypertensive heart disease without congestive heart failure	Astigmatism	Condition	Condition	1.873
-509	4193704	4217557	Type 2 diabetes mellitus without complication	Simple obesity	Condition	Condition	1.871
-510	1503297	974166	metformin	hydrochlorothiazide	Drug	Drug	1.87
-511	1503297	19049709	metformin	lornoxicam	Drug	Drug	1.864
-512	1503297	19011355	metformin	etoricoxib	Drug	Drug	1.857
-513	443732	438720	Disorder due to type 2 diabetes mellitus	Mixed hyperlipidemia	Condition	Condition	1.851
-514	4217557	434337	Simple obesity	Retinal vascular disorder	Condition	Condition	1.848
-515	197032	40482507	Hyperplasia of prostate	Incipient senile cataract	Condition	Condition	1.841
-516	201826	40482507	Type 2 diabetes mellitus	Incipient senile cataract	Condition	Condition	1.835
-517	1503297	1318853	metformin	nifedipine	Drug	Drug	1.833
-518	1332418	1150345	amlodipine	meloxicam	Drug	Drug	1.83
-519	923645	904453	omeprazole	esomeprazole	Drug	Drug	1.829
-520	4193704	443732	Type 2 diabetes mellitus without complication	Disorder due to type 2 diabetes mellitus	Condition	Condition	1.827
-521	1124300	904453	diclofenac	esomeprazole	Drug	Drug	1.823
-522	4079750	4217557	Osteoarthritis of knee	Simple obesity	Condition	Condition	1.817
-523	201826	437530	Type 2 diabetes mellitus	Disorder of lipid metabolism	Condition	Condition	1.816
-524	314378	4110815	Hypertensive heart disease with congestive heart failure	Sensorineural hearing loss, bilateral	Condition	Condition	1.81
-525	4193704	19059796	Type 2 diabetes mellitus without complication	gliclazide	Condition	Drug	1.807
-526	4193704	1503297	Type 2 diabetes mellitus without complication	metformin	Condition	Drug	1.804
-527	443732	4065521	Disorder due to type 2 diabetes mellitus	Urine microalbumin positive	Condition	Condition	1.803
-528	443732	1501700	Disorder due to type 2 diabetes mellitus	levothyroxine	Condition	Drug	1.8
-529	201826	4193704	Type 2 diabetes mellitus	Type 2 diabetes mellitus without complication	Condition	Condition	1.796
-530	4193704	40482507	Type 2 diabetes mellitus without complication	Incipient senile cataract	Condition	Condition	1.794
-531	201826	1383815	Type 2 diabetes mellitus	isosorbide	Condition	Drug	1.791
-532	443732	1307046	Disorder due to type 2 diabetes mellitus	metoprolol	Condition	Drug	1.79
-533	4193704	1539403	Type 2 diabetes mellitus without complication	simvastatin	Condition	Drug	1.786
-534	4193704	40480694	Type 2 diabetes mellitus without complication	High hemoglobin A1c level	Condition	Condition	1.783
-535	314666	1334456	Old myocardial infarction	ramipril	Condition	Drug	1.781
-536	320128	319034	Essential hypertension	Hypertensive heart disease without congestive heart failure	Condition	Condition	1.772
-537	443732	315558	Disorder due to type 2 diabetes mellitus	Atherosclerosis of arteries of the extremities	Condition	Condition	1.771
-538	1503297	1307046	metformin	metoprolol	Drug	Drug	1.769
-539	316139	1307046	Heart failure	metoprolol	Condition	Drug	1.766
-540	437530	438720	Disorder of lipid metabolism	Mixed hyperlipidemia	Condition	Condition	1.763
-541	314378	1307046	Hypertensive heart disease with congestive heart failure	metoprolol	Condition	Drug	1.762
-542	4193704	3663197	Type 2 diabetes mellitus without complication	Glaucoma suspect	Condition	Condition	1.76
-543	201826	433736	Type 2 diabetes mellitus	Obesity	Condition	Condition	1.758
-544	4193704	373478	Type 2 diabetes mellitus without complication	Presbyopia	Condition	Condition	1.754
-545	443732	1506270	Disorder due to type 2 diabetes mellitus	methylprednisolone	Condition	Drug	1.75
-546	319034	24134	Hypertensive heart disease without congestive heart failure	Neck pain	Condition	Condition	1.75
-547	723013	1750500	diazepam	clarithromycin	Drug	Drug	1.75
-548	319034	376112	Hypertensive heart disease without congestive heart failure	Polyneuropathy due to diabetes mellitus	Condition	Condition	1.741
-549	1124300	1750500	diclofenac	clarithromycin	Drug	Drug	1.739
-550	1503297	1115008	metformin	naproxen	Drug	Drug	1.738
-551	1503297	1167322	metformin	allopurinol	Drug	Drug	1.738
-552	1503297	778474	metformin	tizanidine	Drug	Drug	1.731
-553	442604	140673	Hypertensive heart disease	Hypothyroidism	Condition	Condition	1.725
-554	443732	4043371	Disorder due to type 2 diabetes mellitus	Inflammatory disorder of digestive tract	Condition	Condition	1.72
-555	314378	4079750	Hypertensive heart disease with congestive heart failure	Osteoarthritis of knee	Condition	Condition	1.72
-556	1503297	1713332	metformin	amoxicillin	Drug	Drug	1.716
-557	319034	317576	Hypertensive heart disease without congestive heart failure	Coronary arteriosclerosis	Condition	Condition	1.711
-558	4193704	437827	Type 2 diabetes mellitus without complication	Pure hypercholesterolemia	Condition	Condition	1.705
-559	1503297	903963	metformin	triamcinolone	Drug	Drug	1.688
-560	4193704	1363749	Type 2 diabetes mellitus without complication	fosinopril	Condition	Drug	1.688
-561	4193704	194133	Type 2 diabetes mellitus without complication	Low back pain	Condition	Condition	1.681
-562	319034	435524	Hypertensive heart disease without congestive heart failure	Sleep disorder	Condition	Condition	1.679
-563	319034	317009	Hypertensive heart disease without congestive heart failure	Asthma	Condition	Condition	1.677
-564	1307046	19020124	metoprolol	betahistine	Drug	Drug	1.672
-565	443732	1314577	Disorder due to type 2 diabetes mellitus	nebivolol	Condition	Drug	1.663
-566	201826	1580747	Type 2 diabetes mellitus	sitagliptin	Condition	Drug	1.658
-567	319034	73553	Hypertensive heart disease without congestive heart failure	Arthropathy	Condition	Condition	1.656
-568	1307046	956874	metoprolol	furosemide	Drug	Drug	1.653
-569	1503297	923645	metformin	omeprazole	Drug	Drug	1.652
-570	4193704	1597756	Type 2 diabetes mellitus without complication	glimepiride	Condition	Drug	1.649
-571	140673	4217557	Hypothyroidism	Simple obesity	Condition	Condition	1.646
-572	314378	374905	Hypertensive heart disease with congestive heart failure	Non-organic sleep disorder	Condition	Condition	1.639
-573	320128	437827	Essential hypertension	Pure hypercholesterolemia	Condition	Condition	1.635
-574	1503297	1177480	metformin	ibuprofen	Drug	Drug	1.633
-575	1503297	1734104	metformin	azithromycin	Drug	Drug	1.632
-576	320128	440383	Essential hypertension	Depressive disorder	Condition	Condition	1.632
-577	4041554	437827	Serum cholesterol raised	Pure hypercholesterolemia	Condition	Condition	1.632
-578	443732	40482507	Disorder due to type 2 diabetes mellitus	Incipient senile cataract	Condition	Condition	1.631
-579	319034	75344	Hypertensive heart disease without congestive heart failure	Intervertebral disc disorder	Condition	Condition	1.63
-580	4214376	1503297	Hyperglycemia	metformin	Condition	Drug	1.629
-581	201826	75897	Type 2 diabetes mellitus	Polyarthropathy	Condition	Condition	1.628
-582	201826	40480694	Type 2 diabetes mellitus	High hemoglobin A1c level	Condition	Condition	1.626
-583	319034	4041554	Hypertensive heart disease without congestive heart failure	Serum cholesterol raised	Condition	Condition	1.62
-584	314378	443732	Hypertensive heart disease with congestive heart failure	Disorder due to type 2 diabetes mellitus	Condition	Condition	1.619
-585	4079750	440674	Osteoarthritis of knee	Gout	Condition	Condition	1.618
-586	314378	438720	Hypertensive heart disease with congestive heart failure	Mixed hyperlipidemia	Condition	Condition	1.612
-587	320128	438720	Essential hypertension	Mixed hyperlipidemia	Condition	Condition	1.611
-588	443732	319835	Disorder due to type 2 diabetes mellitus	Congestive heart failure	Condition	Condition	1.611
-589	320128	4041554	Essential hypertension	Serum cholesterol raised	Condition	Condition	1.604
-590	4193704	376415	Type 2 diabetes mellitus without complication	Hypermetropia	Condition	Condition	1.604
-591	443732	436659	Disorder due to type 2 diabetes mellitus	Iron deficiency anemia	Condition	Condition	1.6
-592	4041554	4001643	Serum cholesterol raised	Adult osteochondrosis of spine	Condition	Condition	1.579
-593	319034	140648	Hypertensive heart disease without congestive heart failure	Onychomycosis due to dermatophyte	Condition	Condition	1.577
-594	1307046	1360332	metoprolol	glucosamine	Drug	Drug	1.571
-595	1503297	920293	metformin	nitrofurantoin	Drug	Drug	1.569
-596	201826	1503297	Type 2 diabetes mellitus	metformin	Condition	Drug	1.566
-597	442604	319034	Hypertensive heart disease	Hypertensive heart disease without congestive heart failure	Condition	Condition	1.566
-598	4217557	438720	Simple obesity	Mixed hyperlipidemia	Condition	Condition	1.564
-599	443732	4146103	Disorder due to type 2 diabetes mellitus	Degeneration of macula and posterior pole	Condition	Condition	1.563
-600	1750500	1125315	clarithromycin	acetaminophen	Drug	Drug	1.562
-601	314378	437827	Hypertensive heart disease with congestive heart failure	Pure hypercholesterolemia	Condition	Condition	1.56
-602	4193704	4216397	Type 2 diabetes mellitus without complication	Nerve root disorder	Condition	Condition	1.557
-603	443732	1317640	Disorder due to type 2 diabetes mellitus	telmisartan	Condition	Drug	1.556
-604	319034	376415	Hypertensive heart disease without congestive heart failure	Hypermetropia	Condition	Condition	1.553
-605	321318	435524	Angina pectoris	Sleep disorder	Condition	Condition	1.548
-606	319034	4146103	Hypertensive heart disease without congestive heart failure	Degeneration of macula and posterior pole	Condition	Condition	1.544
-607	443732	1363749	Disorder due to type 2 diabetes mellitus	fosinopril	Condition	Drug	1.543
-608	1307046	781039	metoprolol	alprazolam	Drug	Drug	1.54
-609	201826	44784217	Type 2 diabetes mellitus	Cardiac arrhythmia	Condition	Condition	1.54
-610	1124300	723013	diclofenac	diazepam	Drug	Drug	1.54
-611	319034	4169580	Hypertensive heart disease without congestive heart failure	Pain in spine	Condition	Condition	1.537
-612	316139	260139	Heart failure	Acute bronchitis	Condition	Condition	1.534
-613	320128	4169580	Essential hypertension	Pain in spine	Condition	Condition	1.532
-614	4193704	4146103	Type 2 diabetes mellitus without complication	Degeneration of macula and posterior pole	Condition	Condition	1.529
-615	319034	81303	Hypertensive heart disease without congestive heart failure	Labyrinthine disorder	Condition	Condition	1.528
-616	1503297	1185922	metformin	ketoprofen	Drug	Drug	1.526
-617	201826	318800	Type 2 diabetes mellitus	Gastroesophageal reflux disease	Condition	Condition	1.51
-618	319034	4043371	Hypertensive heart disease without congestive heart failure	Inflammatory disorder of digestive tract	Condition	Condition	1.507
-619	443732	1341927	Disorder due to type 2 diabetes mellitus	enalapril	Condition	Drug	1.507
-620	443732	1342001	Disorder due to type 2 diabetes mellitus	enalaprilat	Condition	Drug	1.507
-621	443732	1539403	Disorder due to type 2 diabetes mellitus	simvastatin	Condition	Drug	1.5
-622	1317640	1124300	telmisartan	diclofenac	Drug	Drug	1.497
-623	319034	257011	Hypertensive heart disease without congestive heart failure	Acute upper respiratory infection	Condition	Condition	1.494
-624	320128	435262	Essential hypertension	Primary open angle glaucoma	Condition	Condition	1.492
-625	320128	257011	Essential hypertension	Acute upper respiratory infection	Condition	Condition	1.491
-626	314378	75897	Hypertensive heart disease with congestive heart failure	Polyarthropathy	Condition	Condition	1.484
-627	319034	40480694	Hypertensive heart disease without congestive heart failure	High hemoglobin A1c level	Condition	Condition	1.475
-628	201826	442077	Type 2 diabetes mellitus	Anxiety disorder	Condition	Condition	1.469
-629	201826	317009	Type 2 diabetes mellitus	Asthma	Condition	Condition	1.465
-630	314378	260139	Hypertensive heart disease with congestive heart failure	Acute bronchitis	Condition	Condition	1.463
-631	201826	440383	Type 2 diabetes mellitus	Depressive disorder	Condition	Condition	1.452
-632	1317640	1150345	telmisartan	meloxicam	Drug	Drug	1.452
-633	257011	1750500	Acute upper respiratory infection	clarithromycin	Condition	Drug	1.451
-634	319034	4115380	Hypertensive heart disease without congestive heart failure	Primary coxarthrosis, bilateral	Condition	Condition	1.448
-635	443732	378424	Disorder due to type 2 diabetes mellitus	Astigmatism	Condition	Condition	1.444
-636	1503297	19044883	metformin	zopiclone	Drug	Drug	1.437
-637	4193704	4079750	Type 2 diabetes mellitus without complication	Osteoarthritis of knee	Condition	Condition	1.437
-638	319034	315558	Hypertensive heart disease without congestive heart failure	Atherosclerosis of arteries of the extremities	Condition	Condition	1.433
-639	1503297	904453	metformin	esomeprazole	Drug	Drug	1.431
-640	314378	1539403	Hypertensive heart disease with congestive heart failure	simvastatin	Condition	Drug	1.422
-641	201826	435262	Type 2 diabetes mellitus	Primary open angle glaucoma	Condition	Condition	1.418
-642	443732	1326303	Disorder due to type 2 diabetes mellitus	digoxin	Condition	Drug	1.417
-643	1503297	723013	metformin	diazepam	Drug	Drug	1.415
-644	319034	381591	Hypertensive heart disease without congestive heart failure	Cerebrovascular disease	Condition	Condition	1.409
-645	4193704	1341927	Type 2 diabetes mellitus without complication	enalapril	Condition	Drug	1.408
-646	4193704	1342001	Type 2 diabetes mellitus without complication	enalaprilat	Condition	Drug	1.408
-647	319034	4079750	Hypertensive heart disease without congestive heart failure	Osteoarthritis of knee	Condition	Condition	1.406
-648	201826	373478	Type 2 diabetes mellitus	Presbyopia	Condition	Condition	1.402
-649	1503297	1331247	metformin	pentoxifylline	Drug	Drug	1.4
-650	314378	4065521	Hypertensive heart disease with congestive heart failure	Urine microalbumin positive	Condition	Condition	1.397
-651	442604	435262	Hypertensive heart disease	Primary open angle glaucoma	Condition	Condition	1.397
-652	201826	1597756	Type 2 diabetes mellitus	glimepiride	Condition	Drug	1.387
-653	319034	3663197	Hypertensive heart disease without congestive heart failure	Glaucoma suspect	Condition	Condition	1.387
-654	1503297	4065521	metformin	Urine microalbumin positive	Drug	Condition	1.386
-655	319034	260139	Hypertensive heart disease without congestive heart failure	Acute bronchitis	Condition	Condition	1.383
-656	319034	319835	Hypertensive heart disease without congestive heart failure	Congestive heart failure	Condition	Condition	1.38
-657	319034	4068155	Hypertensive heart disease without congestive heart failure	Atrial arrhythmia	Condition	Condition	1.362
-658	443732	255848	Disorder due to type 2 diabetes mellitus	Pneumonia	Condition	Condition	1.357
-659	1503297	19056874	metformin	dexketoprofen	Drug	Drug	1.353
-660	201826	314378	Type 2 diabetes mellitus	Hypertensive heart disease with congestive heart failure	Condition	Condition	1.352
-661	319034	75897	Hypertensive heart disease without congestive heart failure	Polyarthropathy	Condition	Condition	1.351
-662	4193704	255573	Type 2 diabetes mellitus without complication	Chronic obstructive lung disease	Condition	Condition	1.349
-663	319034	443729	Hypertensive heart disease without congestive heart failure	Peripheral circulatory disorder due to type 2 diabetes mellitus	Condition	Condition	1.345
-664	319034	4065521	Hypertensive heart disease without congestive heart failure	Urine microalbumin positive	Condition	Condition	1.34
-665	201826	19059796	Type 2 diabetes mellitus	gliclazide	Condition	Drug	1.339
-666	201826	4065521	Type 2 diabetes mellitus	Urine microalbumin positive	Condition	Condition	1.328
-667	319034	4031019	Hypertensive heart disease without congestive heart failure	Allergic contact dermatitis	Condition	Condition	1.328
-668	201826	316139	Type 2 diabetes mellitus	Heart failure	Condition	Condition	1.324
-669	319034	439846	Hypertensive heart disease without congestive heart failure	Left heart failure	Condition	Condition	1.323
-670	201826	1363749	Type 2 diabetes mellitus	fosinopril	Condition	Drug	1.316
-671	320128	201826	Essential hypertension	Type 2 diabetes mellitus	Condition	Condition	1.295
-672	1503297	19005626	metformin	trimetazidine	Drug	Drug	1.293
-673	201826	434337	Type 2 diabetes mellitus	Retinal vascular disorder	Condition	Condition	1.282
-674	320128	195306	Essential hypertension	Gastroduodenitis	Condition	Condition	1.275
-675	320128	442604	Essential hypertension	Hypertensive heart disease	Condition	Condition	1.262
-676	4169580	195588	Pain in spine	Cystitis	Condition	Condition	1.252
-677	320128	140673	Essential hypertension	Hypothyroidism	Condition	Condition	1.25
-678	4193704	4174977	Type 2 diabetes mellitus without complication	Retinopathy due to diabetes mellitus	Condition	Condition	1.245
-679	320128	4031019	Essential hypertension	Allergic contact dermatitis	Condition	Condition	1.238
-680	201826	319034	Type 2 diabetes mellitus	Hypertensive heart disease without congestive heart failure	Condition	Condition	1.226
-681	201826	443729	Type 2 diabetes mellitus	Peripheral circulatory disorder due to type 2 diabetes mellitus	Condition	Condition	1.214
-682	4193704	4114585	Type 2 diabetes mellitus without complication	Primary gonarthrosis, bilateral	Condition	Condition	1.197
-683	201826	321318	Type 2 diabetes mellitus	Angina pectoris	Condition	Condition	1.189
-684	4193704	443729	Type 2 diabetes mellitus without complication	Peripheral circulatory disorder due to type 2 diabetes mellitus	Condition	Condition	1.179
-685	4193704	4065521	Type 2 diabetes mellitus without complication	Urine microalbumin positive	Condition	Condition	1.177
-686	320128	434337	Essential hypertension	Retinal vascular disorder	Condition	Condition	1.175
-687	320128	260139	Essential hypertension	Acute bronchitis	Condition	Condition	1.071
-688	201826	1502905	Type 2 diabetes mellitus	insulin glargine	Condition	Drug	1.07
-689	320128	379805	Essential hypertension	Myopia	Condition	Condition	1.067
-690	319034	1502905	Hypertensive heart disease without congestive heart failure	insulin glargine	Condition	Drug	1.042
-691	1503297	1322184	metformin	clopidogrel	Drug	Drug	1.042
-692	201826	1567198	Type 2 diabetes mellitus	insulin aspart, human	Condition	Drug	0.904
-693	201826	35198096	Type 2 diabetes mellitus	insulin aspart	Condition	Drug	0.904
-694	319034	1341927	Hypertensive heart disease without congestive heart failure	enalapril	Condition	Drug	0.902
-695	319034	1342001	Hypertensive heart disease without congestive heart failure	enalaprilat	Condition	Drug	0.902
-696	319034	1597756	Hypertensive heart disease without congestive heart failure	glimepiride	Condition	Drug	0.848
+36	321318	42537730	Angina pectoris	Coronary artery graft present	Condition	Condition	9.65
+37	42537730	1322184	Coronary artery graft present	clopidogrel	Condition	Drug	9.154
+38	321318	19005626	Angina pectoris	trimetazidine	Condition	Drug	9.067
+39	314378	42537730	Hypertensive heart disease with congestive heart failure	Coronary artery graft present	Condition	Condition	9
+40	319835	1310149	Congestive heart failure	warfarin	Condition	Drug	7.842
+41	319835	970250	Congestive heart failure	spironolactone	Condition	Drug	7.839
+42	4079750	1360332	Osteoarthritis of knee	glucosamine	Condition	Drug	7.733
+43	1332418	40226742	amlodipine	olmesartan	Drug	Drug	7.667
+44	314378	970250	Hypertensive heart disease with congestive heart failure	spironolactone	Condition	Drug	6.952
+45	4216397	4227449	Nerve root disorder	Spondylosis	Condition	Condition	6.914
+46	1332418	978555	amlodipine	indapamide	Drug	Drug	6.875
+47	1103314	734354	tramadol	pregabalin	Drug	Drug	6.875
+48	40482507	439297	Incipient senile cataract	Nuclear senile cataract	Condition	Condition	6.737
+49	4216397	4001643	Nerve root disorder	Adult osteochondrosis of spine	Condition	Condition	6.577
+50	319835	1326303	Congestive heart failure	digoxin	Condition	Drug	6.357
+51	314378	319835	Hypertensive heart disease with congestive heart failure	Congestive heart failure	Condition	Condition	6.341
+52	40482507	1518254	Incipient senile cataract	dexamethasone	Condition	Drug	6.25
+53	195588	920293	Cystitis	nitrofurantoin	Condition	Drug	6.231
+54	433316	19020124	Dizziness and giddiness	betahistine	Condition	Drug	6.222
+55	75344	4227449	Intervertebral disc disorder	Spondylosis	Condition	Condition	6.211
+56	260139	1154343	Acute bronchitis	albuterol	Condition	Drug	6.13
+57	314378	314666	Hypertensive heart disease with congestive heart failure	Old myocardial infarction	Condition	Condition	6.097
+58	4114585	1360332	Primary gonarthrosis, bilateral	glucosamine	Condition	Drug	6.053
+59	316139	942350	Heart failure	torsemide	Condition	Drug	6.039
+60	1750500	1154343	clarithromycin	albuterol	Drug	Drug	5.85
+61	19059796	1580747	gliclazide	sitagliptin	Drug	Drug	5.808
+62	4216397	797399	Nerve root disorder	gabapentin	Condition	Drug	5.75
+63	316139	970250	Heart failure	spironolactone	Condition	Drug	5.75
+64	314378	439846	Hypertensive heart disease with congestive heart failure	Left heart failure	Condition	Condition	5.75
+65	1201620	797399	codeine	gabapentin	Drug	Drug	5.739
+66	319835	942350	Congestive heart failure	torsemide	Condition	Drug	5.716
+67	1503297	1597756	metformin	glimepiride	Drug	Drug	5.688
+68	260139	255848	Acute bronchitis	Pneumonia	Condition	Condition	5.541
+69	314378	432867	Hypertensive heart disease with congestive heart failure	Hyperlipidemia	Condition	Condition	5.438
+70	4174977	1502905	Retinopathy due to diabetes mellitus	insulin glargine	Condition	Drug	5.182
+71	4174977	1567198	Retinopathy due to diabetes mellitus	insulin aspart, human	Condition	Drug	5.174
+72	4174977	35198096	Retinopathy due to diabetes mellitus	insulin aspart	Condition	Drug	5.174
+73	443732	1516976	Disorder due to type 2 diabetes mellitus	insulin detemir	Condition	Drug	5.111
+74	942350	970250	torsemide	spironolactone	Drug	Drug	5.079
+75	1503297	19059796	metformin	gliclazide	Drug	Drug	5.069
+76	40480694	1580747	High hemoglobin A1c level	sitagliptin	Condition	Drug	4.914
+77	443732	1567198	Disorder due to type 2 diabetes mellitus	insulin aspart, human	Condition	Drug	4.889
+78	443732	35198096	Disorder due to type 2 diabetes mellitus	insulin aspart	Condition	Drug	4.889
+79	316139	198185	Heart failure	Chronic renal failure	Condition	Condition	4.81
+80	443732	40239216	Disorder due to type 2 diabetes mellitus	linagliptin	Condition	Drug	4.792
+81	1503297	1307863	metformin	verapamil	Drug	Drug	4.714
+82	443732	1322184	Disorder due to type 2 diabetes mellitus	clopidogrel	Condition	Drug	4.619
+83	81902	920293	Urinary tract infectious disease	nitrofurantoin	Condition	Drug	4.556
+84	443732	4174977	Disorder due to type 2 diabetes mellitus	Retinopathy due to diabetes mellitus	Condition	Condition	4.533
+85	443732	376112	Disorder due to type 2 diabetes mellitus	Polyneuropathy due to diabetes mellitus	Condition	Condition	4.522
+86	260139	317009	Acute bronchitis	Asthma	Condition	Condition	4.515
+87	314378	321318	Hypertensive heart disease with congestive heart failure	Angina pectoris	Condition	Condition	4.5
+88	4031019	905233	Allergic contact dermatitis	mometasone	Condition	Drug	4.444
+89	1103314	797399	tramadol	gabapentin	Drug	Drug	4.444
+90	314378	1310149	Hypertensive heart disease with congestive heart failure	warfarin	Condition	Drug	4.412
+91	1597756	1580747	glimepiride	sitagliptin	Drug	Drug	4.379
+92	1373225	978555	perindopril	indapamide	Drug	Drug	4.37
+93	260139	255573	Acute bronchitis	Chronic obstructive lung disease	Condition	Condition	4.342
+94	435524	19044883	Sleep disorder	zopiclone	Condition	Drug	4.34
+95	194133	4227449	Low back pain	Spondylosis	Condition	Condition	4.316
+96	4169580	75344	Pain in spine	Intervertebral disc disorder	Condition	Condition	4.283
+97	314378	381591	Hypertensive heart disease with congestive heart failure	Cerebrovascular disease	Condition	Condition	4.267
+98	314378	1322184	Hypertensive heart disease with congestive heart failure	clopidogrel	Condition	Drug	4.25
+99	438720	1510813	Mixed hyperlipidemia	rosuvastatin	Condition	Drug	4.242
+100	319835	956874	Congestive heart failure	furosemide	Condition	Drug	4.2
+101	260139	1734104	Acute bronchitis	azithromycin	Condition	Drug	4.172
+102	4146103	1518254	Degeneration of macula and posterior pole	dexamethasone	Condition	Drug	4.167
+103	75897	73553	Polyarthropathy	Arthropathy	Condition	Condition	4.135
+104	4068155	319835	Atrial arrhythmia	Congestive heart failure	Condition	Condition	4.08
+105	316139	319835	Heart failure	Congestive heart failure	Condition	Condition	4.079
+106	1332418	19011021	amlodipine	moxonidine	Drug	Drug	4.077
+107	1125315	797399	acetaminophen	gabapentin	Drug	Drug	4.059
+108	1124300	903963	diclofenac	triamcinolone	Drug	Drug	4.051
+109	321318	317576	Angina pectoris	Coronary arteriosclerosis	Condition	Condition	4
+110	4216397	194133	Nerve root disorder	Low back pain	Condition	Condition	3.972
+111	316139	439846	Heart failure	Left heart failure	Condition	Condition	3.955
+112	443732	1580747	Disorder due to type 2 diabetes mellitus	sitagliptin	Condition	Drug	3.935
+113	1750500	1734104	clarithromycin	azithromycin	Drug	Drug	3.933
+114	443732	1502905	Disorder due to type 2 diabetes mellitus	insulin glargine	Condition	Drug	3.871
+115	4068155	970250	Atrial arrhythmia	spironolactone	Condition	Drug	3.864
+116	1310149	942350	warfarin	torsemide	Drug	Drug	3.795
+117	321318	314666	Angina pectoris	Old myocardial infarction	Condition	Condition	3.792
+118	321318	1322184	Angina pectoris	clopidogrel	Condition	Drug	3.786
+119	19011355	797399	etoricoxib	gabapentin	Drug	Drug	3.774
+120	319034	432867	Hypertensive heart disease without congestive heart failure	Hyperlipidemia	Condition	Condition	3.769
+121	314378	4068155	Hypertensive heart disease with congestive heart failure	Atrial arrhythmia	Condition	Condition	3.683
+122	435262	439297	Primary open angle glaucoma	Nuclear senile cataract	Condition	Condition	3.673
+123	40480694	1502905	High hemoglobin A1c level	insulin glargine	Condition	Drug	3.667
+124	4216397	1103314	Nerve root disorder	tramadol	Condition	Drug	3.585
+125	443732	19059796	Disorder due to type 2 diabetes mellitus	gliclazide	Condition	Drug	3.582
+126	1307046	1383815	metoprolol	isosorbide	Drug	Drug	3.556
+127	942350	198185	torsemide	Chronic renal failure	Drug	Condition	3.528
+128	314378	942350	Hypertensive heart disease with congestive heart failure	torsemide	Condition	Drug	3.522
+129	4193704	1580747	Type 2 diabetes mellitus without complication	sitagliptin	Condition	Drug	3.478
+130	443732	1383815	Disorder due to type 2 diabetes mellitus	isosorbide	Condition	Drug	3.476
+131	443732	314666	Disorder due to type 2 diabetes mellitus	Old myocardial infarction	Condition	Condition	3.436
+132	1503297	1310149	metformin	warfarin	Drug	Drug	3.429
+133	942350	1167322	torsemide	allopurinol	Drug	Drug	3.382
+134	1124300	797399	diclofenac	gabapentin	Drug	Drug	3.378
+135	438720	1545958	Mixed hyperlipidemia	atorvastatin	Condition	Drug	3.324
+136	260139	1750500	Acute bronchitis	clarithromycin	Condition	Drug	3.31
+137	314378	1326303	Hypertensive heart disease with congestive heart failure	digoxin	Condition	Drug	3.304
+138	19011355	903963	etoricoxib	triamcinolone	Drug	Drug	3.3
+139	1124300	1360332	diclofenac	glucosamine	Drug	Drug	3.298
+140	194133	4001643	Low back pain	Adult osteochondrosis of spine	Condition	Condition	3.286
+141	443732	443729	Disorder due to type 2 diabetes mellitus	Peripheral circulatory disorder due to type 2 diabetes mellitus	Condition	Condition	3.28
+142	4068155	942350	Atrial arrhythmia	torsemide	Condition	Drug	3.268
+143	316139	1310149	Heart failure	warfarin	Condition	Drug	3.267
+144	904453	797399	esomeprazole	gabapentin	Drug	Drug	3.257
+145	314378	316139	Hypertensive heart disease with congestive heart failure	Heart failure	Condition	Condition	3.248
+146	316139	317576	Heart failure	Coronary arteriosclerosis	Condition	Condition	3.22
+147	1797513	1778162	ciprofloxacin	cefuroxime	Drug	Drug	3.217
+148	4169580	4216397	Pain in spine	Nerve root disorder	Condition	Condition	3.198
+149	1124300	1115008	diclofenac	naproxen	Drug	Drug	3.189
+150	319034	42537730	Hypertensive heart disease without congestive heart failure	Coronary artery graft present	Condition	Condition	3.158
+151	314666	319835	Old myocardial infarction	Congestive heart failure	Condition	Condition	3.152
+152	443732	42537730	Disorder due to type 2 diabetes mellitus	Coronary artery graft present	Condition	Condition	3.125
+153	195588	81902	Cystitis	Urinary tract infectious disease	Condition	Condition	3.1
+154	319034	438720	Hypertensive heart disease without congestive heart failure	Mixed hyperlipidemia	Condition	Condition	3.057
+155	316139	255573	Heart failure	Chronic obstructive lung disease	Condition	Condition	3.053
+156	319034	40226742	Hypertensive heart disease without congestive heart failure	olmesartan	Condition	Drug	3.045
+157	1124300	778474	diclofenac	tizanidine	Drug	Drug	3.028
+158	81902	1778162	Urinary tract infectious disease	cefuroxime	Condition	Drug	3.027
+159	321318	4043371	Angina pectoris	Inflammatory disorder of digestive tract	Condition	Condition	3.02
+160	435524	781039	Sleep disorder	alprazolam	Condition	Drug	3
+161	319034	978555	Hypertensive heart disease without congestive heart failure	indapamide	Condition	Drug	3
+162	1503297	1383815	metformin	isosorbide	Drug	Drug	3
+163	319034	4217557	Hypertensive heart disease without congestive heart failure	Simple obesity	Condition	Condition	3
+164	75897	4114585	Polyarthropathy	Primary gonarthrosis, bilateral	Condition	Condition	2.979
+165	75897	4227449	Polyarthropathy	Spondylosis	Condition	Condition	2.976
+166	4217557	978555	Simple obesity	indapamide	Condition	Drug	2.975
+167	319034	437827	Hypertensive heart disease without congestive heart failure	Pure hypercholesterolemia	Condition	Condition	2.975
+168	77074	4114585	Joint pain	Primary gonarthrosis, bilateral	Condition	Condition	2.974
+169	1103314	1125315	tramadol	acetaminophen	Drug	Drug	2.971
+170	4193704	40226742	Type 2 diabetes mellitus without complication	olmesartan	Condition	Drug	2.966
+171	1103314	1201620	tramadol	codeine	Drug	Drug	2.957
+172	40480694	1597756	High hemoglobin A1c level	glimepiride	Condition	Drug	2.924
+173	19011355	1103314	etoricoxib	tramadol	Drug	Drug	2.917
+174	1503297	1367500	metformin	losartan	Drug	Drug	2.909
+175	443732	1597756	Disorder due to type 2 diabetes mellitus	glimepiride	Condition	Drug	2.891
+176	319034	314378	Hypertensive heart disease without congestive heart failure	Hypertensive heart disease with congestive heart failure	Condition	Condition	2.89
+177	4193704	974166	Type 2 diabetes mellitus without complication	hydrochlorothiazide	Condition	Drug	2.885
+178	443732	970250	Disorder due to type 2 diabetes mellitus	spironolactone	Condition	Drug	2.878
+179	319034	321318	Hypertensive heart disease without congestive heart failure	Angina pectoris	Condition	Condition	2.872
+180	4041554	4214376	Serum cholesterol raised	Hyperglycemia	Condition	Condition	2.87
+181	319034	44784217	Hypertensive heart disease without congestive heart failure	Cardiac arrhythmia	Condition	Condition	2.864
+182	73553	1115008	Arthropathy	naproxen	Condition	Drug	2.837
+183	314378	315286	Hypertensive heart disease with congestive heart failure	Chronic ischemic heart disease	Condition	Condition	2.826
+184	1503297	40480694	metformin	High hemoglobin A1c level	Drug	Condition	2.824
+185	314378	4112026	Hypertensive heart disease with congestive heart failure	Sequelae of cerebral infarction	Condition	Condition	2.806
+186	1503297	40239216	metformin	linagliptin	Drug	Drug	2.8
+187	904453	19011355	esomeprazole	etoricoxib	Drug	Drug	2.8
+188	197032	1797513	Hyperplasia of prostate	ciprofloxacin	Condition	Drug	2.8
+189	319835	317576	Congestive heart failure	Coronary arteriosclerosis	Condition	Condition	2.792
+190	320128	4214376	Essential hypertension	Hyperglycemia	Condition	Condition	2.788
+191	75897	1150345	Polyarthropathy	meloxicam	Condition	Drug	2.783
+192	1124300	1201620	diclofenac	codeine	Drug	Drug	2.766
+193	4169580	4227449	Pain in spine	Spondylosis	Condition	Condition	2.755
+194	319835	1334456	Congestive heart failure	ramipril	Condition	Drug	2.741
+195	1124300	1125315	diclofenac	acetaminophen	Drug	Drug	2.741
+196	4216397	4079749	Nerve root disorder	Osteoarthritis of hip	Condition	Condition	2.736
+197	923645	906780	omeprazole	metoclopramide	Drug	Drug	2.727
+198	4079750	1150345	Osteoarthritis of knee	meloxicam	Condition	Drug	2.726
+199	437530	1539403	Disorder of lipid metabolism	simvastatin	Condition	Drug	2.722
+200	1150345	1115008	meloxicam	naproxen	Drug	Drug	2.717
+201	1503297	1373225	metformin	perindopril	Drug	Drug	2.714
+202	314378	317576	Hypertensive heart disease with congestive heart failure	Coronary arteriosclerosis	Condition	Condition	2.7
+203	1503297	1539403	metformin	simvastatin	Drug	Drug	2.692
+204	4193704	1510813	Type 2 diabetes mellitus without complication	rosuvastatin	Condition	Drug	2.691
+205	1307046	40241331	metoprolol	rivaroxaban	Drug	Drug	2.683
+206	437827	1510813	Pure hypercholesterolemia	rosuvastatin	Condition	Drug	2.68
+207	314378	1383815	Hypertensive heart disease with congestive heart failure	isosorbide	Condition	Drug	2.667
+208	321318	438720	Angina pectoris	Mixed hyperlipidemia	Condition	Condition	2.667
+209	443732	942350	Disorder due to type 2 diabetes mellitus	torsemide	Condition	Drug	2.663
+210	1503297	1317640	metformin	telmisartan	Drug	Drug	2.656
+211	923645	1125315	omeprazole	acetaminophen	Drug	Drug	2.653
+212	4079750	1115008	Osteoarthritis of knee	naproxen	Condition	Drug	2.649
+213	4169580	194133	Pain in spine	Low back pain	Condition	Condition	2.632
+214	4068155	4112026	Atrial arrhythmia	Sequelae of cerebral infarction	Condition	Condition	2.625
+215	201826	1383815	Type 2 diabetes mellitus	isosorbide	Condition	Drug	2.621
+216	4217557	942350	Simple obesity	torsemide	Condition	Drug	2.62
+217	319034	1322184	Hypertensive heart disease without congestive heart failure	clopidogrel	Condition	Drug	2.619
+218	40480694	19059796	High hemoglobin A1c level	gliclazide	Condition	Drug	2.619
+219	320128	442077	Essential hypertension	Anxiety disorder	Condition	Condition	2.607
+220	194133	4079749	Low back pain	Osteoarthritis of hip	Condition	Condition	2.604
+221	1124300	19056874	diclofenac	dexketoprofen	Drug	Drug	2.6
+222	4217557	970250	Simple obesity	spironolactone	Condition	Drug	2.595
+223	4068155	317576	Atrial arrhythmia	Coronary arteriosclerosis	Condition	Condition	2.591
+224	443732	956874	Disorder due to type 2 diabetes mellitus	furosemide	Condition	Drug	2.571
+225	1124300	1150345	diclofenac	meloxicam	Drug	Drug	2.568
+226	1307046	1326303	metoprolol	digoxin	Drug	Drug	2.568
+227	923645	1201620	omeprazole	codeine	Drug	Drug	2.563
+228	4169580	1115008	Pain in spine	naproxen	Condition	Drug	2.56
+229	195588	1797513	Cystitis	ciprofloxacin	Condition	Drug	2.552
+230	923645	19020124	omeprazole	betahistine	Drug	Drug	2.545
+231	316139	440674	Heart failure	Gout	Condition	Condition	2.545
+232	1503297	1149380	metformin	fluticasone	Drug	Drug	2.538
+233	4193704	924566	Type 2 diabetes mellitus without complication	tamsulosin	Condition	Drug	2.538
+234	4079750	4227449	Osteoarthritis of knee	Spondylosis	Condition	Condition	2.529
+235	1503297	1332418	metformin	amlodipine	Drug	Drug	2.525
+236	260139	1149380	Acute bronchitis	fluticasone	Condition	Drug	2.521
+237	1124300	19011355	diclofenac	etoricoxib	Drug	Drug	2.52
+238	314378	255573	Hypertensive heart disease with congestive heart failure	Chronic obstructive lung disease	Condition	Condition	2.5
+239	316139	1167322	Heart failure	allopurinol	Condition	Drug	2.5
+240	437827	1545958	Pure hypercholesterolemia	atorvastatin	Condition	Drug	2.492
+241	1307046	723013	metoprolol	diazepam	Drug	Drug	2.475
+242	4079750	19011355	Osteoarthritis of knee	etoricoxib	Condition	Drug	2.467
+243	443732	40241331	Disorder due to type 2 diabetes mellitus	rivaroxaban	Condition	Drug	2.462
+244	4217557	434337	Simple obesity	Retinal vascular disorder	Condition	Condition	2.46
+245	321318	948078	Angina pectoris	pantoprazole	Condition	Drug	2.453
+246	1115008	1125315	naproxen	acetaminophen	Drug	Drug	2.45
+247	321318	437827	Angina pectoris	Pure hypercholesterolemia	Condition	Condition	2.446
+248	314378	46271022	Hypertensive heart disease with congestive heart failure	Chronic kidney disease	Condition	Condition	2.44
+249	314378	978555	Hypertensive heart disease with congestive heart failure	indapamide	Condition	Drug	2.439
+250	1503297	1545958	metformin	atorvastatin	Drug	Drug	2.438
+251	4079750	4079749	Osteoarthritis of knee	Osteoarthritis of hip	Condition	Condition	2.436
+252	443732	1310149	Disorder due to type 2 diabetes mellitus	warfarin	Condition	Drug	2.432
+253	314378	443729	Hypertensive heart disease with congestive heart failure	Peripheral circulatory disorder due to type 2 diabetes mellitus	Condition	Condition	2.429
+254	314378	956874	Hypertensive heart disease with congestive heart failure	furosemide	Condition	Drug	2.421
+255	1713332	1734104	amoxicillin	azithromycin	Drug	Drug	2.421
+256	314378	4217557	Hypertensive heart disease with congestive heart failure	Simple obesity	Condition	Condition	2.42
+257	73553	1150345	Arthropathy	meloxicam	Condition	Drug	2.42
+258	1150345	19011355	meloxicam	etoricoxib	Drug	Drug	2.418
+259	442604	4169580	Hypertensive heart disease	Pain in spine	Condition	Condition	2.416
+260	4193704	978555	Type 2 diabetes mellitus without complication	indapamide	Condition	Drug	2.412
+261	319835	948078	Congestive heart failure	pantoprazole	Condition	Drug	2.41
+262	319034	40568467	Hypertensive heart disease without congestive heart failure	Seborrheic keratosis	Condition	Condition	2.409
+263	378424	439297	Astigmatism	Nuclear senile cataract	Condition	Condition	2.407
+264	316139	4043371	Heart failure	Inflammatory disorder of digestive tract	Condition	Condition	2.407
+265	956874	942350	furosemide	torsemide	Drug	Drug	2.406
+266	75897	4079749	Polyarthropathy	Osteoarthritis of hip	Condition	Condition	2.4
+267	319034	380094	Hypertensive heart disease without congestive heart failure	Carpal tunnel syndrome	Condition	Condition	2.4
+268	1360332	904453	glucosamine	esomeprazole	Drug	Drug	2.396
+269	4169580	19011355	Pain in spine	etoricoxib	Condition	Drug	2.391
+270	4216397	4114585	Nerve root disorder	Primary gonarthrosis, bilateral	Condition	Condition	2.388
+271	1124300	1103314	diclofenac	tramadol	Drug	Drug	2.38
+272	314378	317009	Hypertensive heart disease with congestive heart failure	Asthma	Condition	Condition	2.379
+273	443732	948078	Disorder due to type 2 diabetes mellitus	pantoprazole	Condition	Drug	2.37
+274	4216397	19011355	Nerve root disorder	etoricoxib	Condition	Drug	2.37
+275	1115008	1201620	naproxen	codeine	Drug	Drug	2.367
+276	1124300	904453	diclofenac	esomeprazole	Drug	Drug	2.362
+277	319034	4112026	Hypertensive heart disease without congestive heart failure	Sequelae of cerebral infarction	Condition	Condition	2.357
+278	314378	81303	Hypertensive heart disease with congestive heart failure	Labyrinthine disorder	Condition	Condition	2.351
+279	4216397	1115008	Nerve root disorder	naproxen	Condition	Drug	2.35
+280	319034	1332418	Hypertensive heart disease without congestive heart failure	amlodipine	Condition	Drug	2.342
+281	75897	440674	Polyarthropathy	Gout	Condition	Condition	2.341
+282	904453	1103314	esomeprazole	tramadol	Drug	Drug	2.337
+283	1150345	1103314	meloxicam	tramadol	Drug	Drug	2.333
+284	435262	40482507	Primary open angle glaucoma	Incipient senile cataract	Condition	Condition	2.333
+285	75897	4079750	Polyarthropathy	Osteoarthritis of knee	Condition	Condition	2.33
+286	316139	433736	Heart failure	Obesity	Condition	Condition	2.327
+287	443732	198185	Disorder due to type 2 diabetes mellitus	Chronic renal failure	Condition	Condition	2.323
+288	443732	19020061	Disorder due to type 2 diabetes mellitus	nitrendipine	Condition	Drug	2.32
+289	1713332	1778162	amoxicillin	cefuroxime	Drug	Drug	2.319
+290	4193704	1501700	Type 2 diabetes mellitus without complication	levothyroxine	Condition	Drug	2.319
+291	1124300	1177480	diclofenac	ibuprofen	Drug	Drug	2.318
+292	1503297	19015802	metformin	lercanidipine	Drug	Drug	2.318
+293	435262	4146103	Primary open angle glaucoma	Degeneration of macula and posterior pole	Condition	Condition	2.314
+294	4114585	904453	Primary gonarthrosis, bilateral	esomeprazole	Condition	Drug	2.312
+295	443732	40480694	Disorder due to type 2 diabetes mellitus	High hemoglobin A1c level	Condition	Condition	2.308
+296	40480694	1567198	High hemoglobin A1c level	insulin aspart, human	Condition	Drug	2.302
+297	40480694	35198096	High hemoglobin A1c level	insulin aspart	Condition	Drug	2.302
+298	1307046	970250	metoprolol	spironolactone	Drug	Drug	2.302
+299	1503297	1510813	metformin	rosuvastatin	Drug	Drug	2.294
+300	314378	44784217	Hypertensive heart disease with congestive heart failure	Cardiac arrhythmia	Condition	Condition	2.294
+301	319835	1167322	Congestive heart failure	allopurinol	Condition	Drug	2.286
+302	442604	318800	Hypertensive heart disease	Gastroesophageal reflux disease	Condition	Condition	2.286
+303	319034	381591	Hypertensive heart disease without congestive heart failure	Cerebrovascular disease	Condition	Condition	2.286
+304	4079749	1103314	Osteoarthritis of hip	tramadol	Condition	Drug	2.278
+305	319034	4115380	Hypertensive heart disease without congestive heart failure	Primary coxarthrosis, bilateral	Condition	Condition	2.278
+306	75897	1115008	Polyarthropathy	naproxen	Condition	Drug	2.277
+307	4193704	434337	Type 2 diabetes mellitus without complication	Retinal vascular disorder	Condition	Condition	2.273
+308	1124300	1506270	diclofenac	methylprednisolone	Drug	Drug	2.269
+309	1503297	1137529	metformin	salmeterol	Drug	Drug	2.267
+310	948078	1201620	pantoprazole	codeine	Drug	Drug	2.262
+311	319034	4144111	Hypertensive heart disease without congestive heart failure	Gastroesophageal reflux disease without esophagitis	Condition	Condition	2.261
+312	4193704	1597756	Type 2 diabetes mellitus without complication	glimepiride	Condition	Drug	2.26
+313	319034	1314577	Hypertensive heart disease without congestive heart failure	nebivolol	Condition	Drug	2.259
+314	4216397	1201620	Nerve root disorder	codeine	Condition	Drug	2.259
+315	1150345	1125315	meloxicam	acetaminophen	Drug	Drug	2.258
+316	321318	942350	Angina pectoris	torsemide	Condition	Drug	2.257
+317	194133	1150345	Low back pain	meloxicam	Condition	Drug	2.25
+318	4216397	1125315	Nerve root disorder	acetaminophen	Condition	Drug	2.25
+319	201826	1167322	Type 2 diabetes mellitus	allopurinol	Condition	Drug	2.25
+320	1150345	1201620	meloxicam	codeine	Drug	Drug	2.246
+321	4193704	1545958	Type 2 diabetes mellitus without complication	atorvastatin	Condition	Drug	2.242
+322	948078	1125315	pantoprazole	acetaminophen	Drug	Drug	2.239
+323	319034	30437	Hypertensive heart disease without congestive heart failure	Gastro-esophageal reflux disease with esophagitis	Condition	Condition	2.238
+324	40482507	4146103	Incipient senile cataract	Degeneration of macula and posterior pole	Condition	Condition	2.238
+325	438720	948078	Mixed hyperlipidemia	pantoprazole	Condition	Drug	2.238
+326	1503297	19097481	metformin	cinnarizine	Drug	Drug	2.235
+327	1503297	1334456	metformin	ramipril	Drug	Drug	2.235
+328	4043371	923645	Inflammatory disorder of digestive tract	omeprazole	Condition	Drug	2.232
+329	1307046	1322184	metoprolol	clopidogrel	Drug	Drug	2.231
+330	73553	904453	Arthropathy	esomeprazole	Condition	Drug	2.229
+331	1307046	956874	metoprolol	furosemide	Drug	Drug	2.228
+332	319034	1373225	Hypertensive heart disease without congestive heart failure	perindopril	Condition	Drug	2.227
+333	319034	255573	Hypertensive heart disease without congestive heart failure	Chronic obstructive lung disease	Condition	Condition	2.226
+334	4068155	956874	Atrial arrhythmia	furosemide	Condition	Drug	2.224
+335	319034	1317640	Hypertensive heart disease without congestive heart failure	telmisartan	Condition	Drug	2.222
+336	77074	19011355	Joint pain	etoricoxib	Condition	Drug	2.222
+337	4041554	4001643	Serum cholesterol raised	Adult osteochondrosis of spine	Condition	Condition	2.214
+338	4068155	4043371	Atrial arrhythmia	Inflammatory disorder of digestive tract	Condition	Condition	2.214
+339	4041554	432867	Serum cholesterol raised	Hyperlipidemia	Condition	Condition	2.214
+340	314378	198185	Hypertensive heart disease with congestive heart failure	Chronic renal failure	Condition	Condition	2.212
+341	319034	437530	Hypertensive heart disease without congestive heart failure	Disorder of lipid metabolism	Condition	Condition	2.211
+342	923645	1103314	omeprazole	tramadol	Drug	Drug	2.21
+343	437530	1545958	Disorder of lipid metabolism	atorvastatin	Condition	Drug	2.205
+344	319034	434337	Hypertensive heart disease without congestive heart failure	Retinal vascular disorder	Condition	Condition	2.2
+345	314378	435524	Hypertensive heart disease with congestive heart failure	Sleep disorder	Condition	Condition	2.198
+346	437827	438720	Pure hypercholesterolemia	Mixed hyperlipidemia	Condition	Condition	2.194
+347	201826	923645	Type 2 diabetes mellitus	omeprazole	Condition	Drug	2.194
+348	4193704	1363749	Type 2 diabetes mellitus without complication	fosinopril	Condition	Drug	2.192
+349	1503297	19020061	metformin	nitrendipine	Drug	Drug	2.19
+350	321318	316139	Angina pectoris	Heart failure	Condition	Condition	2.19
+351	4079750	440674	Osteoarthritis of knee	Gout	Condition	Condition	2.184
+352	443732	1769535	Disorder due to type 2 diabetes mellitus	cefadroxil	Condition	Drug	2.179
+353	4193704	19015802	Type 2 diabetes mellitus without complication	lercanidipine	Condition	Drug	2.179
+354	4169580	4079749	Pain in spine	Osteoarthritis of hip	Condition	Condition	2.177
+355	201826	924566	Type 2 diabetes mellitus	tamsulosin	Condition	Drug	2.171
+356	4193704	3663197	Type 2 diabetes mellitus without complication	Glaucoma suspect	Condition	Condition	2.167
+357	443732	438720	Disorder due to type 2 diabetes mellitus	Mixed hyperlipidemia	Condition	Condition	2.163
+358	19011355	1125315	etoricoxib	acetaminophen	Drug	Drug	2.156
+359	1503297	1342001	metformin	enalaprilat	Drug	Drug	2.154
+360	1503297	1341927	metformin	enalapril	Drug	Drug	2.154
+361	443732	1334456	Disorder due to type 2 diabetes mellitus	ramipril	Condition	Drug	2.153
+362	1503297	1326303	metformin	digoxin	Drug	Drug	2.152
+363	314378	4043371	Hypertensive heart disease with congestive heart failure	Inflammatory disorder of digestive tract	Condition	Condition	2.145
+364	1314577	1373225	nebivolol	perindopril	Drug	Drug	2.143
+365	4146103	439297	Degeneration of macula and posterior pole	Nuclear senile cataract	Condition	Condition	2.143
+366	201826	19011355	Type 2 diabetes mellitus	etoricoxib	Condition	Drug	2.141
+367	19044883	1125315	zopiclone	acetaminophen	Drug	Drug	2.14
+368	321318	319835	Angina pectoris	Congestive heart failure	Condition	Condition	2.139
+369	1503297	1115008	metformin	naproxen	Drug	Drug	2.137
+370	4193704	1332418	Type 2 diabetes mellitus without complication	amlodipine	Condition	Drug	2.137
+371	4193704	1360332	Type 2 diabetes mellitus without complication	glucosamine	Condition	Drug	2.136
+372	1124300	1185922	diclofenac	ketoprofen	Drug	Drug	2.136
+373	4079750	77074	Osteoarthritis of knee	Joint pain	Condition	Condition	2.136
+374	1503297	939259	metformin	budesonide	Drug	Drug	2.136
+375	442604	4043371	Hypertensive heart disease	Inflammatory disorder of digestive tract	Condition	Condition	2.133
+376	443732	1506270	Disorder due to type 2 diabetes mellitus	methylprednisolone	Condition	Drug	2.133
+377	319034	19020061	Hypertensive heart disease without congestive heart failure	nitrendipine	Condition	Drug	2.13
+378	194133	1201620	Low back pain	codeine	Condition	Drug	2.127
+379	4041554	438720	Serum cholesterol raised	Mixed hyperlipidemia	Condition	Condition	2.126
+380	4068155	1307046	Atrial arrhythmia	metoprolol	Condition	Drug	2.123
+381	435262	378424	Primary open angle glaucoma	Astigmatism	Condition	Condition	2.123
+382	443732	1778162	Disorder due to type 2 diabetes mellitus	cefuroxime	Condition	Drug	2.121
+383	442604	437530	Hypertensive heart disease	Disorder of lipid metabolism	Condition	Condition	2.116
+384	260139	25297	Acute bronchitis	Acute pharyngitis	Condition	Condition	2.115
+385	442604	440674	Hypertensive heart disease	Gout	Condition	Condition	2.115
+386	1503297	1314577	metformin	nebivolol	Drug	Drug	2.115
+387	442604	44784217	Hypertensive heart disease	Cardiac arrhythmia	Condition	Condition	2.108
+388	4193704	1317640	Type 2 diabetes mellitus without complication	telmisartan	Condition	Drug	2.107
+389	75897	4216397	Polyarthropathy	Nerve root disorder	Condition	Condition	2.107
+390	443732	4217557	Disorder due to type 2 diabetes mellitus	Simple obesity	Condition	Condition	2.106
+391	4169580	1150345	Pain in spine	meloxicam	Condition	Drug	2.102
+392	1503297	954688	metformin	latanoprost	Drug	Drug	2.1
+393	321318	1510813	Angina pectoris	rosuvastatin	Condition	Drug	2.1
+394	4217557	4114585	Simple obesity	Primary gonarthrosis, bilateral	Condition	Condition	2.094
+395	19011355	1201620	etoricoxib	codeine	Drug	Drug	2.091
+396	4169580	1103314	Pain in spine	tramadol	Condition	Drug	2.091
+397	4214376	1503297	Hyperglycemia	metformin	Condition	Drug	2.09
+398	19044883	1201620	zopiclone	codeine	Drug	Drug	2.088
+399	442604	321318	Hypertensive heart disease	Angina pectoris	Condition	Condition	2.087
+400	4193704	1314577	Type 2 diabetes mellitus without complication	nebivolol	Condition	Drug	2.087
+401	314378	948078	Hypertensive heart disease with congestive heart failure	pantoprazole	Condition	Drug	2.079
+402	4193704	4144111	Type 2 diabetes mellitus without complication	Gastroesophageal reflux disease without esophagitis	Condition	Condition	2.077
+403	443732	4112026	Disorder due to type 2 diabetes mellitus	Sequelae of cerebral infarction	Condition	Condition	2.077
+404	4193704	1503297	Type 2 diabetes mellitus without complication	metformin	Condition	Drug	2.074
+405	1503297	978555	metformin	indapamide	Drug	Drug	2.073
+406	4193704	948078	Type 2 diabetes mellitus without complication	pantoprazole	Condition	Drug	2.072
+407	201826	781039	Type 2 diabetes mellitus	alprazolam	Condition	Drug	2.069
+408	4217557	1314577	Simple obesity	nebivolol	Condition	Drug	2.068
+409	1307046	40226742	metoprolol	olmesartan	Drug	Drug	2.064
+410	4193704	40480694	Type 2 diabetes mellitus without complication	High hemoglobin A1c level	Condition	Condition	2.063
+411	201826	442077	Type 2 diabetes mellitus	Anxiety disorder	Condition	Condition	2.059
+412	320128	437827	Essential hypertension	Pure hypercholesterolemia	Condition	Condition	2.055
+413	194133	1115008	Low back pain	naproxen	Condition	Drug	2.054
+414	314666	1334456	Old myocardial infarction	ramipril	Condition	Drug	2.053
+415	194133	1125315	Low back pain	acetaminophen	Condition	Drug	2.052
+416	4193704	378424	Type 2 diabetes mellitus without complication	Astigmatism	Condition	Condition	2.048
+417	443732	434337	Disorder due to type 2 diabetes mellitus	Retinal vascular disorder	Condition	Condition	2.048
+418	443732	317576	Disorder due to type 2 diabetes mellitus	Coronary arteriosclerosis	Condition	Condition	2.047
+419	42537730	1307046	Coronary artery graft present	metoprolol	Condition	Drug	2.043
+420	1510813	948078	rosuvastatin	pantoprazole	Drug	Drug	2.042
+421	4169580	77074	Pain in spine	Joint pain	Condition	Condition	2.036
+422	923645	904453	omeprazole	esomeprazole	Drug	Drug	2.034
+423	314378	1539403	Hypertensive heart disease with congestive heart failure	simvastatin	Condition	Drug	2.032
+424	314378	4110051	Hypertensive heart disease with congestive heart failure	Mixed asthma	Condition	Condition	2.031
+425	140673	4217557	Hypothyroidism	Simple obesity	Condition	Condition	2.031
+426	319034	948078	Hypertensive heart disease without congestive heart failure	pantoprazole	Condition	Drug	2.029
+427	201826	1317640	Type 2 diabetes mellitus	telmisartan	Condition	Drug	2.029
+428	1307046	948078	metoprolol	pantoprazole	Drug	Drug	2.028
+429	1503297	904453	metformin	esomeprazole	Drug	Drug	2.025
+430	1307046	942350	metoprolol	torsemide	Drug	Drug	2.022
+431	1307046	19005626	metoprolol	trimetazidine	Drug	Drug	2.019
+432	4079750	4216397	Osteoarthritis of knee	Nerve root disorder	Condition	Condition	2.019
+433	1342001	723013	enalaprilat	diazepam	Drug	Drug	2.017
+434	4169580	1201620	Pain in spine	codeine	Condition	Drug	2.017
+435	314666	942350	Old myocardial infarction	torsemide	Condition	Drug	2.017
+436	321318	4217557	Angina pectoris	Simple obesity	Condition	Condition	2.013
+437	437530	1510813	Disorder of lipid metabolism	rosuvastatin	Condition	Drug	2.01
+438	442604	314378	Hypertensive heart disease	Hypertensive heart disease with congestive heart failure	Condition	Condition	2.006
+439	4193704	24134	Type 2 diabetes mellitus without complication	Neck pain	Condition	Condition	2
+440	1503297	1196677	metformin	formoterol	Drug	Drug	2
+441	4193704	19056611	Type 2 diabetes mellitus without complication	drotaverin	Condition	Drug	2
+442	4193704	1196677	Type 2 diabetes mellitus without complication	formoterol	Condition	Drug	2
+443	4193704	939259	Type 2 diabetes mellitus without complication	budesonide	Condition	Drug	2
+444	1503297	19011355	metformin	etoricoxib	Drug	Drug	2
+445	316139	255848	Heart failure	Pneumonia	Condition	Condition	2
+446	4216397	1150345	Nerve root disorder	meloxicam	Condition	Drug	2
+447	1150345	904453	meloxicam	esomeprazole	Drug	Drug	2
+448	4216397	904453	Nerve root disorder	esomeprazole	Condition	Drug	2
+449	314378	1334456	Hypertensive heart disease with congestive heart failure	ramipril	Condition	Drug	1.987
+450	319034	4079750	Hypertensive heart disease without congestive heart failure	Osteoarthritis of knee	Condition	Condition	1.986
+451	4217557	319835	Simple obesity	Congestive heart failure	Condition	Condition	1.985
+452	723013	1750500	diazepam	clarithromycin	Drug	Drug	1.983
+453	1332418	1734104	amlodipine	azithromycin	Drug	Drug	1.983
+454	438720	723013	Mixed hyperlipidemia	diazepam	Condition	Drug	1.982
+455	443732	4065521	Disorder due to type 2 diabetes mellitus	Urine microalbumin positive	Condition	Condition	1.982
+456	4079750	4217557	Osteoarthritis of knee	Simple obesity	Condition	Condition	1.981
+457	319034	314666	Hypertensive heart disease without congestive heart failure	Old myocardial infarction	Condition	Condition	1.98
+458	201826	443732	Type 2 diabetes mellitus	Disorder due to type 2 diabetes mellitus	Condition	Condition	1.98
+459	4216397	1124300	Nerve root disorder	diclofenac	Condition	Drug	1.978
+460	4193704	40241331	Type 2 diabetes mellitus without complication	rivaroxaban	Condition	Drug	1.976
+461	1503297	1360332	metformin	glucosamine	Drug	Drug	1.976
+462	4193704	376415	Type 2 diabetes mellitus without complication	Hypermetropia	Condition	Condition	1.975
+463	319034	75344	Hypertensive heart disease without congestive heart failure	Intervertebral disc disorder	Condition	Condition	1.973
+464	442604	379019	Hypertensive heart disease	Conjunctivitis	Condition	Condition	1.971
+465	4214376	4193704	Hyperglycemia	Type 2 diabetes mellitus without complication	Condition	Condition	1.97
+466	443732	781039	Disorder due to type 2 diabetes mellitus	alprazolam	Condition	Drug	1.97
+467	314378	19005626	Hypertensive heart disease with congestive heart failure	trimetazidine	Condition	Drug	1.968
+468	1503297	1150345	metformin	meloxicam	Drug	Drug	1.967
+469	314666	1307046	Old myocardial infarction	metoprolol	Condition	Drug	1.967
+470	4217557	1167322	Simple obesity	allopurinol	Condition	Drug	1.967
+471	442604	433736	Hypertensive heart disease	Obesity	Condition	Condition	1.966
+472	1503297	40226742	metformin	olmesartan	Drug	Drug	1.964
+473	1317640	723013	telmisartan	diazepam	Drug	Drug	1.963
+474	1503297	1124300	metformin	diclofenac	Drug	Drug	1.963
+475	1317640	1314577	telmisartan	nebivolol	Drug	Drug	1.962
+476	4193704	1124300	Type 2 diabetes mellitus without complication	diclofenac	Condition	Drug	1.96
+477	437530	437827	Disorder of lipid metabolism	Pure hypercholesterolemia	Condition	Condition	1.954
+478	1503297	195588	metformin	Cystitis	Drug	Condition	1.952
+479	197032	40482507	Hyperplasia of prostate	Incipient senile cataract	Condition	Condition	1.951
+480	4169580	1125315	Pain in spine	acetaminophen	Condition	Drug	1.951
+481	1503297	1713332	metformin	amoxicillin	Drug	Drug	1.951
+482	4216397	73553	Nerve root disorder	Arthropathy	Condition	Condition	1.949
+483	435524	4031019	Sleep disorder	Allergic contact dermatitis	Condition	Condition	1.948
+484	4079750	73553	Osteoarthritis of knee	Arthropathy	Condition	Condition	1.948
+485	923645	1115008	omeprazole	naproxen	Drug	Drug	1.947
+486	201826	1332418	Type 2 diabetes mellitus	amlodipine	Condition	Drug	1.946
+487	4193704	797399	Type 2 diabetes mellitus without complication	gabapentin	Condition	Drug	1.944
+488	4068155	440674	Atrial arrhythmia	Gout	Condition	Condition	1.943
+489	4193704	903963	Type 2 diabetes mellitus without complication	triamcinolone	Condition	Drug	1.941
+490	4193704	1373225	Type 2 diabetes mellitus without complication	perindopril	Condition	Drug	1.941
+491	1503297	1307046	metformin	metoprolol	Drug	Drug	1.937
+492	4193704	905233	Type 2 diabetes mellitus without complication	mometasone	Condition	Drug	1.935
+493	904453	1125315	esomeprazole	acetaminophen	Drug	Drug	1.934
+494	1332418	1150345	amlodipine	meloxicam	Drug	Drug	1.93
+495	4193704	19059796	Type 2 diabetes mellitus without complication	gliclazide	Condition	Drug	1.929
+496	4217557	440674	Simple obesity	Gout	Condition	Condition	1.929
+497	320128	437530	Essential hypertension	Disorder of lipid metabolism	Condition	Condition	1.929
+498	201826	4193704	Type 2 diabetes mellitus	Type 2 diabetes mellitus without complication	Condition	Condition	1.928
+499	201826	4169580	Type 2 diabetes mellitus	Pain in spine	Condition	Condition	1.92
+500	1713332	905233	amoxicillin	mometasone	Drug	Drug	1.92
+501	923645	1750500	omeprazole	clarithromycin	Drug	Drug	1.909
+502	443732	255573	Disorder due to type 2 diabetes mellitus	Chronic obstructive lung disease	Condition	Condition	1.909
+503	319034	317576	Hypertensive heart disease without congestive heart failure	Coronary arteriosclerosis	Condition	Condition	1.905
+504	201826	437530	Type 2 diabetes mellitus	Disorder of lipid metabolism	Condition	Condition	1.903
+505	904453	1201620	esomeprazole	codeine	Drug	Drug	1.901
+506	1503297	1506270	metformin	methylprednisolone	Drug	Drug	1.9
+507	442604	201826	Hypertensive heart disease	Type 2 diabetes mellitus	Condition	Condition	1.899
+508	1124300	19020124	diclofenac	betahistine	Drug	Drug	1.898
+509	442604	4079749	Hypertensive heart disease	Osteoarthritis of hip	Condition	Condition	1.898
+510	442604	316139	Hypertensive heart disease	Heart failure	Condition	Condition	1.893
+511	319034	4227449	Hypertensive heart disease without congestive heart failure	Spondylosis	Condition	Condition	1.892
+512	319034	4216397	Hypertensive heart disease without congestive heart failure	Nerve root disorder	Condition	Condition	1.889
+513	201826	40480694	Type 2 diabetes mellitus	High hemoglobin A1c level	Condition	Condition	1.885
+514	923645	1167322	omeprazole	allopurinol	Drug	Drug	1.884
+515	4193704	723013	Type 2 diabetes mellitus without complication	diazepam	Condition	Drug	1.884
+516	4079750	435524	Osteoarthritis of knee	Sleep disorder	Condition	Condition	1.884
+517	316139	4217557	Heart failure	Simple obesity	Condition	Condition	1.883
+518	314378	4227449	Hypertensive heart disease with congestive heart failure	Spondylosis	Condition	Condition	1.878
+519	319034	443732	Hypertensive heart disease without congestive heart failure	Disorder due to type 2 diabetes mellitus	Condition	Condition	1.877
+520	201826	1373225	Type 2 diabetes mellitus	perindopril	Condition	Drug	1.876
+521	4193704	1383815	Type 2 diabetes mellitus without complication	isosorbide	Condition	Drug	1.875
+522	4193704	379805	Type 2 diabetes mellitus without complication	Myopia	Condition	Condition	1.875
+523	4041554	437530	Serum cholesterol raised	Disorder of lipid metabolism	Condition	Condition	1.875
+524	4193704	19030353	Type 2 diabetes mellitus without complication	bromazepam	Condition	Drug	1.875
+525	314378	440383	Hypertensive heart disease with congestive heart failure	Depressive disorder	Condition	Condition	1.868
+526	201826	1307046	Type 2 diabetes mellitus	metoprolol	Condition	Drug	1.861
+527	4193704	1154343	Type 2 diabetes mellitus without complication	albuterol	Condition	Drug	1.857
+528	4193704	1307046	Type 2 diabetes mellitus without complication	metoprolol	Condition	Drug	1.855
+529	443732	1545958	Disorder due to type 2 diabetes mellitus	atorvastatin	Condition	Drug	1.853
+530	4193704	4217557	Type 2 diabetes mellitus without complication	Simple obesity	Condition	Condition	1.853
+531	319034	433736	Hypertensive heart disease without congestive heart failure	Obesity	Condition	Condition	1.852
+532	319034	4193704	Hypertensive heart disease without congestive heart failure	Type 2 diabetes mellitus without complication	Condition	Condition	1.85
+533	4193704	1750500	Type 2 diabetes mellitus without complication	clarithromycin	Condition	Drug	1.849
+534	4193704	438720	Type 2 diabetes mellitus without complication	Mixed hyperlipidemia	Condition	Condition	1.848
+535	942350	1201620	torsemide	codeine	Drug	Drug	1.847
+536	4079750	904453	Osteoarthritis of knee	esomeprazole	Condition	Drug	1.845
+537	443732	1167322	Disorder due to type 2 diabetes mellitus	allopurinol	Condition	Drug	1.841
+538	314378	438720	Hypertensive heart disease with congestive heart failure	Mixed hyperlipidemia	Condition	Condition	1.839
+539	4041554	437827	Serum cholesterol raised	Pure hypercholesterolemia	Condition	Condition	1.837
+540	1503297	1750500	metformin	clarithromycin	Drug	Drug	1.836
+541	319034	4079749	Hypertensive heart disease without congestive heart failure	Osteoarthritis of hip	Condition	Condition	1.833
+542	443732	315558	Disorder due to type 2 diabetes mellitus	Atherosclerosis of arteries of the extremities	Condition	Condition	1.833
+543	723013	904453	diazepam	esomeprazole	Drug	Drug	1.831
+544	443732	1501700	Disorder due to type 2 diabetes mellitus	levothyroxine	Condition	Drug	1.829
+545	443732	4043371	Disorder due to type 2 diabetes mellitus	Inflammatory disorder of digestive tract	Condition	Condition	1.828
+546	314378	440674	Hypertensive heart disease with congestive heart failure	Gout	Condition	Condition	1.825
+547	4041554	4227449	Serum cholesterol raised	Spondylosis	Condition	Condition	1.823
+548	319034	316139	Hypertensive heart disease without congestive heart failure	Heart failure	Condition	Condition	1.822
+549	194133	1103314	Low back pain	tramadol	Condition	Drug	1.822
+550	4169580	73553	Pain in spine	Arthropathy	Condition	Condition	1.821
+551	1124300	19044883	diclofenac	zopiclone	Drug	Drug	1.82
+552	923645	948078	omeprazole	pantoprazole	Drug	Drug	1.819
+553	314378	1373225	Hypertensive heart disease with congestive heart failure	perindopril	Condition	Drug	1.817
+554	75897	19011355	Polyarthropathy	etoricoxib	Condition	Drug	1.817
+555	443732	1149380	Disorder due to type 2 diabetes mellitus	fluticasone	Condition	Drug	1.815
+556	201826	1310149	Type 2 diabetes mellitus	warfarin	Condition	Drug	1.812
+557	4193704	19056874	Type 2 diabetes mellitus without complication	dexketoprofen	Condition	Drug	1.811
+558	201826	1341927	Type 2 diabetes mellitus	enalapril	Condition	Drug	1.81
+559	201826	1342001	Type 2 diabetes mellitus	enalaprilat	Condition	Drug	1.81
+560	4214376	201826	Hyperglycemia	Type 2 diabetes mellitus	Condition	Condition	1.807
+561	321318	19044883	Angina pectoris	zopiclone	Condition	Drug	1.806
+562	1124300	1734104	diclofenac	azithromycin	Drug	Drug	1.806
+563	1503297	924566	metformin	tamsulosin	Drug	Drug	1.806
+564	75897	1103314	Polyarthropathy	tramadol	Condition	Drug	1.803
+565	443732	1314577	Disorder due to type 2 diabetes mellitus	nebivolol	Condition	Drug	1.802
+566	4217557	73553	Simple obesity	Arthropathy	Condition	Condition	1.797
+567	4193704	1149380	Type 2 diabetes mellitus without complication	fluticasone	Condition	Drug	1.796
+568	904453	948078	esomeprazole	pantoprazole	Drug	Drug	1.796
+569	75897	1124300	Polyarthropathy	diclofenac	Condition	Drug	1.792
+570	1307046	1332418	metoprolol	amlodipine	Drug	Drug	1.792
+571	19044883	1103314	zopiclone	tramadol	Drug	Drug	1.791
+572	4041554	40480694	Serum cholesterol raised	High hemoglobin A1c level	Condition	Condition	1.789
+573	1124300	723013	diclofenac	diazepam	Drug	Drug	1.787
+574	321318	73553	Angina pectoris	Arthropathy	Condition	Condition	1.783
+575	443732	19005626	Disorder due to type 2 diabetes mellitus	trimetazidine	Condition	Drug	1.783
+576	443732	319835	Disorder due to type 2 diabetes mellitus	Congestive heart failure	Condition	Condition	1.782
+577	320128	319034	Essential hypertension	Hypertensive heart disease without congestive heart failure	Condition	Condition	1.78
+578	319034	1545958	Hypertensive heart disease without congestive heart failure	atorvastatin	Condition	Drug	1.779
+579	443732	923645	Disorder due to type 2 diabetes mellitus	omeprazole	Condition	Drug	1.777
+580	442604	4227449	Hypertensive heart disease	Spondylosis	Condition	Condition	1.776
+581	319835	1545958	Congestive heart failure	atorvastatin	Condition	Drug	1.775
+582	1307046	1750500	metoprolol	clarithromycin	Drug	Drug	1.775
+583	317576	942350	Coronary arteriosclerosis	torsemide	Condition	Drug	1.774
+584	4068155	948078	Atrial arrhythmia	pantoprazole	Condition	Drug	1.774
+585	4193704	19020124	Type 2 diabetes mellitus without complication	betahistine	Condition	Drug	1.774
+586	1503297	19020124	metformin	betahistine	Drug	Drug	1.773
+587	321318	4068155	Angina pectoris	Atrial arrhythmia	Condition	Condition	1.772
+588	321318	1307046	Angina pectoris	metoprolol	Condition	Drug	1.77
+589	1750500	1201620	clarithromycin	codeine	Drug	Drug	1.766
+590	4193704	443732	Type 2 diabetes mellitus without complication	Disorder due to type 2 diabetes mellitus	Condition	Condition	1.764
+591	201826	1314577	Type 2 diabetes mellitus	nebivolol	Condition	Drug	1.764
+592	443732	978555	Disorder due to type 2 diabetes mellitus	indapamide	Condition	Drug	1.764
+593	942350	1125315	torsemide	acetaminophen	Drug	Drug	1.763
+594	319034	440674	Hypertensive heart disease without congestive heart failure	Gout	Condition	Condition	1.762
+595	4043371	904453	Inflammatory disorder of digestive tract	esomeprazole	Condition	Drug	1.761
+596	1124300	1750500	diclofenac	clarithromycin	Drug	Drug	1.761
+597	44784217	1307046	Cardiac arrhythmia	metoprolol	Condition	Drug	1.756
+598	314378	315558	Hypertensive heart disease with congestive heart failure	Atherosclerosis of arteries of the extremities	Condition	Condition	1.756
+599	1503297	920293	metformin	nitrofurantoin	Drug	Drug	1.756
+600	1750500	1125315	clarithromycin	acetaminophen	Drug	Drug	1.754
+601	194133	19011355	Low back pain	etoricoxib	Condition	Drug	1.753
+602	443732	1307046	Disorder due to type 2 diabetes mellitus	metoprolol	Condition	Drug	1.751
+603	443732	906780	Disorder due to type 2 diabetes mellitus	metoclopramide	Condition	Drug	1.75
+604	4193704	1150345	Type 2 diabetes mellitus without complication	meloxicam	Condition	Drug	1.75
+605	4193704	40482507	Type 2 diabetes mellitus without complication	Incipient senile cataract	Condition	Condition	1.745
+606	4169580	904453	Pain in spine	esomeprazole	Condition	Drug	1.742
+607	443732	436659	Disorder due to type 2 diabetes mellitus	Iron deficiency anemia	Condition	Condition	1.74
+608	442604	319034	Hypertensive heart disease	Hypertensive heart disease without congestive heart failure	Condition	Condition	1.74
+609	437530	4043371	Disorder of lipid metabolism	Inflammatory disorder of digestive tract	Condition	Condition	1.74
+610	75897	378424	Polyarthropathy	Astigmatism	Condition	Condition	1.738
+611	73553	19011355	Arthropathy	etoricoxib	Condition	Drug	1.737
+612	319034	1510813	Hypertensive heart disease without congestive heart failure	rosuvastatin	Condition	Drug	1.737
+613	1503297	923645	metformin	omeprazole	Drug	Drug	1.736
+614	1307046	781039	metoprolol	alprazolam	Drug	Drug	1.731
+615	923645	1185922	omeprazole	ketoprofen	Drug	Drug	1.727
+616	321318	1545958	Angina pectoris	atorvastatin	Condition	Drug	1.727
+617	443732	1510813	Disorder due to type 2 diabetes mellitus	rosuvastatin	Condition	Drug	1.725
+618	316139	1307046	Heart failure	metoprolol	Condition	Drug	1.725
+619	75897	904453	Polyarthropathy	esomeprazole	Condition	Drug	1.724
+620	1750500	1103314	clarithromycin	tramadol	Drug	Drug	1.724
+621	4193704	1185922	Type 2 diabetes mellitus without complication	ketoprofen	Condition	Drug	1.723
+622	4193704	437827	Type 2 diabetes mellitus without complication	Pure hypercholesterolemia	Condition	Condition	1.722
+623	4193704	1201620	Type 2 diabetes mellitus without complication	codeine	Condition	Drug	1.721
+624	1307046	19020124	metoprolol	betahistine	Drug	Drug	1.721
+625	4068155	1334456	Atrial arrhythmia	ramipril	Condition	Drug	1.719
+626	4193704	1167322	Type 2 diabetes mellitus without complication	allopurinol	Condition	Drug	1.718
+627	4112026	1307046	Sequelae of cerebral infarction	metoprolol	Condition	Drug	1.716
+628	314378	437827	Hypertensive heart disease with congestive heart failure	Pure hypercholesterolemia	Condition	Condition	1.71
+629	437530	438720	Disorder of lipid metabolism	Mixed hyperlipidemia	Condition	Condition	1.705
+630	314378	318800	Hypertensive heart disease with congestive heart failure	Gastroesophageal reflux disease	Condition	Condition	1.704
+631	4217557	1510813	Simple obesity	rosuvastatin	Condition	Drug	1.704
+632	201826	435262	Type 2 diabetes mellitus	Primary open angle glaucoma	Condition	Condition	1.704
+633	442604	75897	Hypertensive heart disease	Polyarthropathy	Condition	Condition	1.703
+634	1545958	948078	atorvastatin	pantoprazole	Drug	Drug	1.703
+635	443732	40482507	Disorder due to type 2 diabetes mellitus	Incipient senile cataract	Condition	Condition	1.701
+636	1307046	1545958	metoprolol	atorvastatin	Drug	Drug	1.7
+637	75897	923645	Polyarthropathy	omeprazole	Condition	Drug	1.699
+638	1334456	948078	ramipril	pantoprazole	Drug	Drug	1.691
+639	781039	904453	alprazolam	esomeprazole	Drug	Drug	1.69
+640	4193704	1125315	Type 2 diabetes mellitus without complication	acetaminophen	Condition	Drug	1.69
+641	443732	920293	Disorder due to type 2 diabetes mellitus	nitrofurantoin	Condition	Drug	1.689
+642	443732	1201620	Disorder due to type 2 diabetes mellitus	codeine	Condition	Drug	1.688
+643	19044883	1115008	zopiclone	naproxen	Drug	Drug	1.686
+644	437530	4169580	Disorder of lipid metabolism	Pain in spine	Condition	Condition	1.685
+645	443732	1797513	Disorder due to type 2 diabetes mellitus	ciprofloxacin	Condition	Drug	1.68
+646	4217557	1332418	Simple obesity	amlodipine	Condition	Drug	1.677
+647	443732	1125315	Disorder due to type 2 diabetes mellitus	acetaminophen	Condition	Drug	1.674
+648	4193704	433736	Type 2 diabetes mellitus without complication	Obesity	Condition	Condition	1.672
+649	314378	260139	Hypertensive heart disease with congestive heart failure	Acute bronchitis	Condition	Condition	1.672
+650	201826	978555	Type 2 diabetes mellitus	indapamide	Condition	Drug	1.672
+651	440674	1124300	Gout	diclofenac	Condition	Drug	1.67
+652	319034	723013	Hypertensive heart disease without congestive heart failure	diazepam	Condition	Drug	1.667
+653	4217557	438720	Simple obesity	Mixed hyperlipidemia	Condition	Condition	1.667
+654	4217557	1317640	Simple obesity	telmisartan	Condition	Drug	1.667
+655	319835	19044883	Congestive heart failure	zopiclone	Condition	Drug	1.663
+656	4079750	1124300	Osteoarthritis of knee	diclofenac	Condition	Drug	1.663
+657	194133	904453	Low back pain	esomeprazole	Condition	Drug	1.663
+658	1713332	1797513	amoxicillin	ciprofloxacin	Drug	Drug	1.661
+659	73553	1124300	Arthropathy	diclofenac	Condition	Drug	1.661
+660	1334456	942350	ramipril	torsemide	Drug	Drug	1.661
+661	319835	923645	Congestive heart failure	omeprazole	Condition	Drug	1.658
+662	1332418	19020124	amlodipine	betahistine	Drug	Drug	1.658
+663	1797513	1125315	ciprofloxacin	acetaminophen	Drug	Drug	1.657
+664	319034	194133	Hypertensive heart disease without congestive heart failure	Low back pain	Condition	Condition	1.657
+665	1307046	923645	metoprolol	omeprazole	Drug	Drug	1.656
+666	4169580	195588	Pain in spine	Cystitis	Condition	Condition	1.654
+667	4216397	378424	Nerve root disorder	Astigmatism	Condition	Condition	1.654
+668	4217557	378424	Simple obesity	Astigmatism	Condition	Condition	1.653
+669	1797513	1201620	ciprofloxacin	codeine	Drug	Drug	1.652
+670	904453	1797513	esomeprazole	ciprofloxacin	Drug	Drug	1.651
+671	319034	4043371	Hypertensive heart disease without congestive heart failure	Inflammatory disorder of digestive tract	Condition	Condition	1.651
+672	435524	723013	Sleep disorder	diazepam	Condition	Drug	1.651
+673	4193704	1334456	Type 2 diabetes mellitus without complication	ramipril	Condition	Drug	1.648
+674	443732	904453	Disorder due to type 2 diabetes mellitus	esomeprazole	Condition	Drug	1.647
+675	4217557	1373225	Simple obesity	perindopril	Condition	Drug	1.647
+676	319034	73553	Hypertensive heart disease without congestive heart failure	Arthropathy	Condition	Condition	1.645
+677	4193704	19011355	Type 2 diabetes mellitus without complication	etoricoxib	Condition	Drug	1.64
+678	40480694	1545958	High hemoglobin A1c level	atorvastatin	Condition	Drug	1.638
+679	73553	1103314	Arthropathy	tramadol	Condition	Drug	1.638
+680	319034	4169580	Hypertensive heart disease without congestive heart failure	Pain in spine	Condition	Condition	1.637
+681	1317640	1124300	telmisartan	diclofenac	Drug	Drug	1.637
+682	201826	1539403	Type 2 diabetes mellitus	simvastatin	Condition	Drug	1.636
+683	75897	4217557	Polyarthropathy	Simple obesity	Condition	Condition	1.636
+684	314378	1314577	Hypertensive heart disease with congestive heart failure	nebivolol	Condition	Drug	1.635
+685	1503297	1167322	metformin	allopurinol	Drug	Drug	1.635
+686	19044883	948078	zopiclone	pantoprazole	Drug	Drug	1.632
+687	201826	723013	Type 2 diabetes mellitus	diazepam	Condition	Drug	1.632
+688	1713332	1201620	amoxicillin	codeine	Drug	Drug	1.632
+689	75897	40482507	Polyarthropathy	Incipient senile cataract	Condition	Condition	1.63
+690	923645	19011355	omeprazole	etoricoxib	Drug	Drug	1.63
+691	4065521	1332418	Urine microalbumin positive	amlodipine	Condition	Drug	1.628
+692	1332418	1373225	amlodipine	perindopril	Drug	Drug	1.627
+693	314378	1307046	Hypertensive heart disease with congestive heart failure	metoprolol	Condition	Drug	1.626
+694	75897	4043371	Polyarthropathy	Inflammatory disorder of digestive tract	Condition	Condition	1.623
+695	1317640	1545958	telmisartan	atorvastatin	Drug	Drug	1.62
+696	443732	1317640	Disorder due to type 2 diabetes mellitus	telmisartan	Condition	Drug	1.616
+697	1713332	1125315	amoxicillin	acetaminophen	Drug	Drug	1.615
+698	4193704	904453	Type 2 diabetes mellitus without complication	esomeprazole	Condition	Drug	1.615
+699	320128	4041554	Essential hypertension	Serum cholesterol raised	Condition	Condition	1.615
+700	1314577	904453	nebivolol	esomeprazole	Drug	Drug	1.612
+701	923645	1778162	omeprazole	cefuroxime	Drug	Drug	1.611
+702	321318	443732	Angina pectoris	Disorder due to type 2 diabetes mellitus	Condition	Condition	1.611
+703	443732	1373225	Disorder due to type 2 diabetes mellitus	perindopril	Condition	Drug	1.61
+704	75897	319835	Polyarthropathy	Congestive heart failure	Condition	Condition	1.609
+705	319034	435524	Hypertensive heart disease without congestive heart failure	Sleep disorder	Condition	Condition	1.608
+706	321318	4079750	Angina pectoris	Osteoarthritis of knee	Condition	Condition	1.606
+707	321318	1332418	Angina pectoris	amlodipine	Condition	Drug	1.603
+708	1567198	1307046	insulin aspart, human	metoprolol	Drug	Drug	1.602
+709	723013	942350	diazepam	torsemide	Drug	Drug	1.602
+710	321318	40482507	Angina pectoris	Incipient senile cataract	Condition	Condition	1.602
+711	443732	1332418	Disorder due to type 2 diabetes mellitus	amlodipine	Condition	Drug	1.602
+712	443732	1713332	Disorder due to type 2 diabetes mellitus	amoxicillin	Condition	Drug	1.6
+713	314378	19044883	Hypertensive heart disease with congestive heart failure	zopiclone	Condition	Drug	1.6
+714	201826	904453	Type 2 diabetes mellitus	esomeprazole	Condition	Drug	1.598
+715	1124300	1167322	diclofenac	allopurinol	Drug	Drug	1.596
+716	201826	1150345	Type 2 diabetes mellitus	meloxicam	Condition	Drug	1.595
+717	1342001	1124300	enalaprilat	diclofenac	Drug	Drug	1.592
+718	314378	443732	Hypertensive heart disease with congestive heart failure	Disorder due to type 2 diabetes mellitus	Condition	Condition	1.591
+719	1317640	1150345	telmisartan	meloxicam	Drug	Drug	1.588
+720	1510813	1332418	rosuvastatin	amlodipine	Drug	Drug	1.588
+721	4169580	1124300	Pain in spine	diclofenac	Condition	Drug	1.585
+722	316139	948078	Heart failure	pantoprazole	Condition	Drug	1.583
+723	321318	4169580	Angina pectoris	Pain in spine	Condition	Condition	1.578
+724	314378	923645	Hypertensive heart disease with congestive heart failure	omeprazole	Condition	Drug	1.575
+725	314378	4216397	Hypertensive heart disease with congestive heart failure	Nerve root disorder	Condition	Condition	1.575
+726	321318	4216397	Angina pectoris	Nerve root disorder	Condition	Condition	1.571
+727	319835	723013	Congestive heart failure	diazepam	Condition	Drug	1.57
+728	1332418	1115008	amlodipine	naproxen	Drug	Drug	1.567
+729	40480694	1510813	High hemoglobin A1c level	rosuvastatin	Condition	Drug	1.56
+730	314378	1545958	Hypertensive heart disease with congestive heart failure	atorvastatin	Condition	Drug	1.56
+731	4041554	1510813	Serum cholesterol raised	rosuvastatin	Condition	Drug	1.558
+732	201826	75897	Type 2 diabetes mellitus	Polyarthropathy	Condition	Condition	1.558
+733	321318	1317640	Angina pectoris	telmisartan	Condition	Drug	1.556
+734	443732	19044883	Disorder due to type 2 diabetes mellitus	zopiclone	Condition	Drug	1.555
+735	443732	373478	Disorder due to type 2 diabetes mellitus	Presbyopia	Condition	Condition	1.554
+736	4041554	4216397	Serum cholesterol raised	Nerve root disorder	Condition	Condition	1.542
+737	320128	257011	Essential hypertension	Acute upper respiratory infection	Condition	Condition	1.539
+738	1317640	904453	telmisartan	esomeprazole	Drug	Drug	1.536
+739	1317640	1332418	telmisartan	amlodipine	Drug	Drug	1.529
+740	1332418	1545958	amlodipine	atorvastatin	Drug	Drug	1.529
+741	201826	1124300	Type 2 diabetes mellitus	diclofenac	Condition	Drug	1.525
+742	201826	1334456	Type 2 diabetes mellitus	ramipril	Condition	Drug	1.518
+743	260139	942350	Acute bronchitis	torsemide	Condition	Drug	1.517
+744	4079750	923645	Osteoarthritis of knee	omeprazole	Condition	Drug	1.517
+745	1307046	19044883	metoprolol	zopiclone	Drug	Drug	1.514
+746	4193704	923645	Type 2 diabetes mellitus without complication	omeprazole	Condition	Drug	1.51
+747	1124300	923645	diclofenac	omeprazole	Drug	Drug	1.506
+748	194133	1124300	Low back pain	diclofenac	Condition	Drug	1.5
+749	201826	1503297	Type 2 diabetes mellitus	metformin	Condition	Drug	1.5
+750	319034	4041554	Hypertensive heart disease without congestive heart failure	Serum cholesterol raised	Condition	Condition	1.497
+751	438720	1307046	Mixed hyperlipidemia	metoprolol	Condition	Drug	1.494
+752	314378	1332418	Hypertensive heart disease with congestive heart failure	amlodipine	Condition	Drug	1.486
+753	4217557	1124300	Simple obesity	diclofenac	Condition	Drug	1.484
+754	4041554	4217557	Serum cholesterol raised	Simple obesity	Condition	Condition	1.476
+755	40480694	1332418	High hemoglobin A1c level	amlodipine	Condition	Drug	1.473
+756	1124300	1713332	diclofenac	amoxicillin	Drug	Drug	1.472
+757	4217557	1503297	Simple obesity	metformin	Condition	Drug	1.472
+758	1332418	1124300	amlodipine	diclofenac	Drug	Drug	1.471
+759	923645	1713332	omeprazole	amoxicillin	Drug	Drug	1.47
+760	1307046	1713332	metoprolol	amoxicillin	Drug	Drug	1.451
+761	443732	1124300	Disorder due to type 2 diabetes mellitus	diclofenac	Condition	Drug	1.449
+762	4041554	1503297	Serum cholesterol raised	metformin	Condition	Drug	1.433

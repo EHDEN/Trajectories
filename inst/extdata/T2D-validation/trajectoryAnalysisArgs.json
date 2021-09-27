@@ -11,7 +11,7 @@
   "addBirths": [false],
   "addDeaths": [false],
   "daysBeforeIndexDate": ["Inf"],
-  "RRrangeToSkip": [0, 2],
+  "RRrangeToSkip": [0, 1.2],
   "cohortName": ["Type 2 diabetes"],
   "description": ["Type 2 diabetes study"],
   "eventIdsForGraphs": [4193704, 201826, 443732, 1503297]
