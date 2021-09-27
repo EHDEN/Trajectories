@@ -20,7 +20,6 @@ requireNamespace("igraph", quietly = TRUE)
 #' @param g  TrajectoriesGraph object
 #'
 #' @return TrajectoriesGraph object with filled E(g)$alignedTrajsCount, E(g)$alignedTrajsProb and V(g)$alignedTrajsCount values
-#' @export
 #'
 #' @examples
 createAlignmentTables <- function(connection,
@@ -126,7 +125,6 @@ createAlignmentTables <- function(connection,
 #' @param g TrajectoriesGraph object, that is created by createAlignmentTables() method (that ensures that necessary database tables exist)
 #'
 #' @return
-#' @export
 #'
 #' @examples
 alignTrajectoriesToGraph<-function(connection,

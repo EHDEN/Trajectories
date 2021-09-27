@@ -12,7 +12,7 @@ validate(
   runValidationAnalysis = T,
   forceRecalculationOfAnalysis = F,
   createFilteredFullgraphs = T,
-  createGraphsForSelectedEvents = T,
+  runTrajectoryAnalysis = F,
   cleanup = T
 )
 }
@@ -31,7 +31,7 @@ validate(
 
 \item{createFilteredFullgraphs}{Builds graphs based on the results. Normally set to T/TRUE but for debugging or running the analysis step-by-step one can set it to F/FALSE as well.}
 
-\item{createGraphsForSelectedEvents}{Builds graphs for selected events (event ID-s taken from trajectoryAnalysisArgs$eventIdsForGraphs). Normally set to T/TRUE but for debugging or running the analysis step-by-step one can set it to F/FALSE as well.}
+\item{runTrajectoryAnalysis}{If TRUE, runs the trajectory analysis - puts the actual trajectories to the graph}
 
 \item{cleanup}{Drops tables from the database that were created during various stages of the analysis. Normally set to T/TRUE but for debugging or running the analysis step-by-step one can set it to F/FALSE as well.}
 }

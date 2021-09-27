@@ -8,15 +8,14 @@ discover(
   connection,
   trajectoryLocalArgs,
   createCohort = T,
-  validationSetSize = 0.5,
+  validationSetSize = 0,
   createEventPairsTable = T,
   runDiscoveryAnalysis = T,
   forceRecalculationOfAnalysis = F,
   createFilteredFullgraphs = T,
   runTrajectoryAnalysis = T,
-  createGraphsForSelectedEvents = T,
   selfValidate = F,
-  cleanup = T
+  cleanup = F
 )
 }
 \arguments{
@@ -37,8 +36,6 @@ discover(
 \item{createFilteredFullgraphs}{Builds graphs based on the results.}
 
 \item{runTrajectoryAnalysis}{If TRUE, runs the trajectory analysis - puts the actual trajectories to the graph}
-
-\item{createGraphsForSelectedEvents}{Builds graphs for selected events (event ID-s taken from trajectoryAnalysisArgs$eventIdsForGraphs).}
 
 \item{selfValidate}{Normally, set to F/FALSE as it is always better to validate your results in another database. However, if you want to validate your results in your own database, then set selfValidate=T and validationSetSize=some meaningful proportion (for example, 0.5). In such case, the discovery analysis is actually conducted on half of the data and the results are then validated on another half.}
 

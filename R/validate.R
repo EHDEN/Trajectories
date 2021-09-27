@@ -7,7 +7,7 @@
 #' @param runValidationAnalysis Run the actual directionality analysis of all event pairs. Normally set to T/TRUE but for debugging or running the analysis step-by-step one can set it to F/FALSE as well.
 #' @param forceRecalculationOfAnalysis Used only when runValidationAnalysis=T. If TRUE, forces deleting previous results from the database and rerunning the whole validation analysis. Useful mostly in case something goes wrong and you need to force the recalculation (it is, when debugging). In normal circumstances using FALSE is safe.
 #' @param createFilteredFullgraphs Builds graphs based on the results. Normally set to T/TRUE but for debugging or running the analysis step-by-step one can set it to F/FALSE as well.
-#' @param createGraphsForSelectedEvents Builds graphs for selected events (event ID-s taken from trajectoryAnalysisArgs$eventIdsForGraphs). Normally set to T/TRUE but for debugging or running the analysis step-by-step one can set it to F/FALSE as well.
+#' @param runTrajectoryAnalysis If TRUE, runs the trajectory analysis - puts the actual trajectories to the graph
 #' @param cleanup Drops tables from the database that were created during various stages of the analysis. Normally set to T/TRUE but for debugging or running the analysis step-by-step one can set it to F/FALSE as well.
 #'
 #' @return
@@ -21,7 +21,7 @@ validate <- function(connection,
                      runValidationAnalysis=T,
                      forceRecalculationOfAnalysis=F,
                      createFilteredFullgraphs=T,
-                     createGraphsForSelectedEvents=T,
+                     runTrajectoryAnalysis=F,
                      cleanup=T
                       ) {
 
@@ -58,7 +58,7 @@ validate <- function(connection,
 
 
   # Create database tables of all event pairs (patient level data + summary statistics). Uses cohort_id depending on the running mode of the package
-  if(createEventPairsTable) Trajectories:::createEventPairsTableBrunak(connection=connection,
+  if(createEventPairsTable) Trajectories:::createEventPairsTable(connection=connection,
                                       trajectoryAnalysisArgs=trajectoryAnalysisArgs,
                                       trajectoryLocalArgs=trajectoryLocalArgs)
 
@@ -76,11 +76,17 @@ validate <- function(connection,
                                          trajectoryAnalysisArgs,
                                          trajectoryLocalArgs)
 
+  # Run trajectory analysis
+  if(runTrajectoryAnalysis) Trajectories:::align(connection,
+                                                 trajectoryAnalysisArgs,
+                                                 trajectoryLocalArgs)
+
+
   # Draw graphs for selected events (event ID-s taken from trajectoryAnalysisArgs$eventIdsForGraphs)
-  if(createGraphsForSelectedEvents) Trajectories:::PlotTrajectoriesGraphForEvents(connection,
-                                                                                  trajectoryAnalysisArgs,
-                                                                                  trajectoryLocalArgs,
-                                                                                  eventIds=trajectoryAnalysisArgs$eventIdsForGraphs)
+  #if(createGraphsForSelectedEvents) Trajectories:::PlotTrajectoriesGraphForEvents(connection,
+  #                                                                                trajectoryAnalysisArgs,
+  #                                                                                trajectoryLocalArgs,
+  #                                                                                eventIds=trajectoryAnalysisArgs$eventIdsForGraphs)
 
   ########### CLEANUP: DROP ANALYSIS TABLES IF THERE IS NO NEED FOR THESE RESULTS ANYMORE ###########
 

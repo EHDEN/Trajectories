@@ -36,13 +36,13 @@ trajectoryLocalArgs <- Trajectories::createTrajectoryLocalArgs(oracleTempSchema 
 
 Trajectories::discover(connection,
                        trajectoryLocalArgs,
-                       createCohort=F,
+                       createCohort=T,
                        validationSetSize=0, #set to 0 if you are you going to validate the results in another databaase anyways
-                       createEventPairsTable=F,
-                       runDiscoveryAnalysis=F,
+                       createEventPairsTable=T,
+                       runDiscoveryAnalysis=T,
                        forceRecalculationOfAnalysis=F, #used only if runDiscoveryAnalysis=T
                        createFilteredFullgraphs=T,
-                       createGraphsForSelectedEvents=F,
+                       runTrajectoryAnalysis=T,
                        selfValidate=F, #set to F if you are you going to validate the results in another databaase anyways
                        cleanup=F)
 

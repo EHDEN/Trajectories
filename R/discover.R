@@ -9,7 +9,6 @@
 #' @param forceRecalculationOfAnalysis Forces deleting previous results from the database and rerunning the whole discovery analysis. Useful mostly in case something goes wrong and you need to force the recalculation (it is, when debugging). In normal circumstances using F is safe.
 #' @param createFilteredFullgraphs Builds graphs based on the results.
 #' @param runTrajectoryAnalysis If TRUE, runs the trajectory analysis - puts the actual trajectories to the graph
-#' @param createGraphsForSelectedEvents Builds graphs for selected events (event ID-s taken from trajectoryAnalysisArgs$eventIdsForGraphs).
 #' @param selfValidate Normally, set to F/FALSE as it is always better to validate your results in another database. However, if you want to validate your results in your own database, then set selfValidate=T and validationSetSize=some meaningful proportion (for example, 0.5). In such case, the discovery analysis is actually conducted on half of the data and the results are then validated on another half.
 #' @param cleanup Drops tables from the database that were created during various stages of the analysis.
 #
@@ -20,15 +19,14 @@
 discover <- function(connection,
                      trajectoryLocalArgs,
                      createCohort=T,
-                     validationSetSize=0.5,  # used only if createCohort=T (validation set created while building cohort)
+                     validationSetSize=0,  # used only if createCohort=T (validation set created while building cohort)
                      createEventPairsTable=T,
                      runDiscoveryAnalysis=T,
                      forceRecalculationOfAnalysis=F,
                      createFilteredFullgraphs=T,
                      runTrajectoryAnalysis=T,
-                     createGraphsForSelectedEvents=T,
                      selfValidate=F,
-                     cleanup=T
+                     cleanup=F
                       ) {
 
   trajectoryAnalysisArgs<-Trajectories:::TrajectoryAnalysisArgsFromInputFolder(trajectoryLocalArgs) #also creates output folder for results, logs, etc.
@@ -92,10 +90,10 @@ discover <- function(connection,
                                                  trajectoryLocalArgs)
 
   # Draw graphs for selected events (event ID-s taken from trajectoryAnalysisArgs$eventIdsForGraphs)
-  if(createGraphsForSelectedEvents) Trajectories:::PlotTrajectoriesGraphForEvents(connection,
-                                                                                  trajectoryAnalysisArgs,
-                                                                                  trajectoryLocalArgs,
-                                                                                  eventIds=trajectoryAnalysisArgs$eventIdsForGraphs)
+  #if(createGraphsForSelectedEvents) Trajectories:::PlotTrajectoriesGraphForEvents(connection,
+  #                                                                                trajectoryAnalysisArgs,
+  #                                                                                trajectoryLocalArgs,
+  #                                                                                eventIds=trajectoryAnalysisArgs$eventIdsForGraphs)
 
   ##############################################################################################################
 
