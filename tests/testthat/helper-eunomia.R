@@ -283,7 +283,7 @@ getTrajectoryFileAsDataFrame<-function(trajectoryLocalArgs,trajectoryAnalysisArg
 
 removeTrajectoryFile<-function(trajectoryLocalArgs,trajectoryAnalysisArgs,concept_id,concept_name) {
   outputFolder<-Trajectories:::GetOutputFolder(trajectoryLocalArgs,trajectoryAnalysisArgs,createIfMissing=F)
-  filename = file.path(outputFolder,'tables',paste0(concept_name,concept_id,'.constructed.limit30.events.trajs.csv'))
+  filename = file.path(outputFolder,'tables','trajectory_counts.xlsx'))
   if(file.exists(filename)) file.remove(filename)
 }
 
