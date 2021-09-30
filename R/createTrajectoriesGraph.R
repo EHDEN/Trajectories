@@ -86,8 +86,8 @@ createTrajectoriesGraph<-function(eventPairResultsFilename) {
   vertices <- vertices %>%
      dplyr::mutate(name=as.character(concept_id),
                    concept_id=concept_id, #this is needed, otherwise somehow the concept_id column disappears
-                   color = recode(domain, !!!COLORS, .default = '#bbbbbb', .missing='#bbbbbb'),
-                   labelcolor = recode(domain, !!!LABELCOLORS, .default = '#666666', .missing='#666666')
+                   color = dplyr::recode(domain, !!!COLORS, .default = '#bbbbbb', .missing='#bbbbbb'),
+                   labelcolor = dplyr::recode(domain, !!!LABELCOLORS, .default = '#666666', .missing='#666666')
                    ) %>%
     dplyr::select(name,concept_id,concept_name,domain,count,color,labelcolor)
 

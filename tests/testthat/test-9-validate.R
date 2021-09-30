@@ -30,7 +30,7 @@ testthat::test_that("Test that validate() runs fully without any errors", {
                          createEventPairsTable=T,
                          runValidationAnalysis=T,
                          createFilteredFullgraphs=T,
-                         createGraphsForSelectedEvents = T,
+                         runTrajectoryAnalysis = T,
                          cleanup=T)
 
 

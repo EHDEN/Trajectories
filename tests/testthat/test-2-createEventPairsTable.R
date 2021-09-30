@@ -13,7 +13,7 @@ testthat::test_that("Filling in cohort table with fulldb built-in study (no even
   limitToConcepts(connection)
   setObservationPeriodForAll(connection,startdate='2010-01-01',enddate='2012-12-31')
 
-  trajectoryAnalysisArgs <- createTrajectoryAnalysisArgs(minimumDaysBetweenEvents = 1,
+  trajectoryAnalysisArgs <- Trajectories:::createTrajectoryAnalysisArgs(minimumDaysBetweenEvents = 1,
                                                                        maximumDaysBetweenEvents = 365*120,
                                                                        minPatientsPerEventPair = 10,
                                                                        addConditions=T,
@@ -37,7 +37,7 @@ testthat::test_that("Filling in cohort table with fulldb built-in study (no even
 
 
 
-  createEventPairsTable(connection=connection,
+  Trajectories:::createEventPairsTable(connection=connection,
                                       trajectoryAnalysisArgs=trajectoryAnalysisArgs,
                                       trajectoryLocalArgs=trajectoryLocalArgs)
 
@@ -62,7 +62,7 @@ testthat::test_that("Filling in cohort table with fulldb buit-in study (there ar
   #limitToConcepts(connection)
   setObservationPeriodForAll(connection,startdate='2010-01-01',enddate='2012-12-31')
 
-  trajectoryAnalysisArgs <- createTrajectoryAnalysisArgs(minimumDaysBetweenEvents = 1,
+  trajectoryAnalysisArgs <- Trajectories:::createTrajectoryAnalysisArgs(minimumDaysBetweenEvents = 1,
                                                          maximumDaysBetweenEvents = 365*120,
                                                          minPatientsPerEventPair = 10,
                                                          addConditions=T,
@@ -86,7 +86,7 @@ testthat::test_that("Filling in cohort table with fulldb buit-in study (there ar
 
 
 
-  createEventPairsTable(connection=connection,
+  Trajectories:::createEventPairsTable(connection=connection,
                         trajectoryAnalysisArgs=trajectoryAnalysisArgs,
                         trajectoryLocalArgs=trajectoryLocalArgs)
 
@@ -111,7 +111,7 @@ testthat::test_that("Test that in case of no significant order between E1 and E2
   limitToConcepts(connection)
   setObservationPeriodForAll(connection,startdate='2010-01-01',enddate='2012-12-31')
   person_ids<-addConditionEventTrajectory(connection,event_concept_ids=c(317009,255848),n=20,days_to_skip_from_obs_period_start=365) # Add asthma->pneumonia pair for 20 patients
-  person_ids<-addConditionEventTrajectory(connection,event_concept_ids=c(255848,317009),n=20,days_to_skip_from_obs_period_start=365) # Add pneumonia->asthma pair for 20 patients
+  person_ids<-addConditionEventTrajectory(connection,event_concept_ids=c(255848,317009),n=20,days_to_skip_from_obs_period_start=365,excludePatientIds=person_ids) # Add pneumonia->asthma pair for 20 patients
   addRandomEvents(connection,n_per_person_range=c(0,10),exclude_concept_ids=c(317009,255848)) # Add up to 10 random events per each patient, except events 317009 and 255848
 
 

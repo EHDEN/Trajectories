@@ -113,7 +113,7 @@ discover <- function(connection,
                            createEventPairsTable=T,
                            runValidationAnalysis=T,
                            createFilteredFullgraphs=F,
-                           createGraphsForSelectedEvents=F,
+                           runTrajectoryAnalysis = F,
                            cleanup=F)
 
   }

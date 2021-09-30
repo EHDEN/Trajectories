@@ -27,7 +27,8 @@ Imports:
     igraph (>= 1.2.5),
     lubridate (>= 1.7.10),
     ParallelLogger (>= 2.0.1),
-    MatchIt (>= 4.2.0),
+    MatchIt (>= 4.3.0),
+    optmatch (>= 0.9-15),
     tidyselect (>= 1.1.1),
     epitools (>= 0.5-10.1)
 Encoding: UTF-8

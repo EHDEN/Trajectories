@@ -30,9 +30,9 @@ loadBuiltInPersons<-function(connection) {
 
 getPatientIds<-function(connection,n=2694,excludePatientIds=c()) {
   if(length(excludePatientIds)>0) {
-    res<-querySql(connection, paste0('SELECT person_id FROM PERSON WHERE person_id NOT IN (',paste0(excludePatientIds,collapse=","),') ORDER BY random() LIMIT ',as.numeric(n),';'))
+    res<-querySql(connection, paste0('SELECT person_id FROM PERSON WHERE person_id NOT IN (',paste0(excludePatientIds,collapse=","),') ORDER BY person_id LIMIT ',as.numeric(n),';'))
   } else {
-    res<-querySql(connection, paste0('SELECT person_id FROM PERSON ORDER BY random() LIMIT ',as.numeric(n),';'))
+    res<-querySql(connection, paste0('SELECT person_id FROM PERSON ORDER BY person_id LIMIT ',as.numeric(n),';'))
   }
   return(res$PERSON_ID)
 }
@@ -92,6 +92,7 @@ getSQLiteRealFromDateSQLstring<-function(dateAsString='2010-01-01') {
 
 addRandomEventForPeson<-function(connection,person_id=6,exclude_concept_ids=c(),include_concept_ids=c()) {
 
+
   obsPeriod=getObservationPeriod(connection,person_id)
   startDate=obsPeriod$OBSERVATION_PERIOD_START_DATE
   endDate=obsPeriod$OBSERVATION_PERIOD_END_DATE
@@ -99,21 +100,28 @@ addRandomEventForPeson<-function(connection,person_id=6,exclude_concept_ids=c(),
 
   concept_id=ifelse(length(include_concept_ids)>0,
                     include_concept_ids[base::sample(length(include_concept_ids),1)],
-                    paste0("(SELECT concept_id FROM CONCEPT WHERE concept_id NOT IN (",paste(exclude_concept_ids,collapse=","),") AND DOMAIN_ID='Condition' ORDER BY random() LIMIT 1)"))
+                    paste0("(SELECT concept_id FROM CONCEPT WHERE concept_id NOT IN (",paste(exclude_concept_ids,collapse=","),") AND DOMAIN_ID='Condition' ORDER BY RANDOM() LIMIT 1)"))
 
   sql=paste0("INSERT INTO CONDITION_OCCURRENCE (person_id,condition_concept_id,condition_start_date) VALUES (",
              person_id,",",
              concept_id,",",
              getSQLiteRealFromDateSQLstring(eventDate),");")
 
+  #print(sql)
+
   executeSql(connection, sql=sql, progressBar = F,
              reportOverallTime=F)
 }
 
-addRandomEvents<-function(connection,n_per_person_range=c(0,5),exclude_concept_ids=c(),include_concept_ids=c(),exclude_person_ids=c()) {
-  print(paste0('Adding ',n_per_person_range[1],'-',n_per_person_range[2],' random events for each patients to data (exceptions possible)'))
-  person_ids<-getPatientIds(connection)
-  person_ids<-setdiff(person_ids,exclude_person_ids)
+addRandomEvents<-function(connection,n_per_person_range=c(0,5),exclude_concept_ids=c(),include_concept_ids=c(),exclude_person_ids=c(),include_person_ids=c()) {
+  if(length(include_person_ids)==0) {
+    person_ids<-getPatientIds(connection)
+    person_ids<-setdiff(person_ids,exclude_person_ids)
+  } else {
+    person_ids=include_person_ids
+  }
+  print(paste0('Adding ',n_per_person_range[1],'-',n_per_person_range[2],' random events for ',length(person_ids),' patients (exceptions possible)'))
+
   for(person_id in person_ids) {
     num_events<-sample(n_per_person_range[1]:n_per_person_range[2], 1)
     if(num_events>0) {
@@ -170,9 +178,11 @@ setUpEunomia<-function() {
 
 
   #update all patients so that they belong to the same age group (set all birthdates to 1 Jan 1980)
-  sql<-translate(paste0("UPDATE PERSON SET BIRTH_DATETIME=",getSQLiteRealFromDateSQLstring('1980-01-01'),";"), targetDialect=connection@dbms)
+  sql<-translate(paste0("UPDATE PERSON SET YEAR_OF_BIRTH=1980, MONTH_OF_BIRTH=1, DAY_OF_BIRTH=1, BIRTH_DATETIME=",getSQLiteRealFromDateSQLstring('1980-01-01'),";"), targetDialect=connection@dbms)
   executeSql(connection, sql, progressBar = F,
              reportOverallTime=F)
+
+  set.seed(0)
 
   return(list(connection=connection,trajectoryLocalArgs=trajectoryLocalArgs))
 }
@@ -272,23 +282,23 @@ getEventPairFromEventPairsTable<-function(event1_concept_id,event2_concept_id,tr
   return(res)
 }
 
-getTrajectoryFileAsDataFrame<-function(trajectoryLocalArgs,trajectoryAnalysisArgs,concept_id,concept_name) {
+getTrajectoryFileAsDataFrame<-function(trajectoryLocalArgs,trajectoryAnalysisArgs) {
   #Get output folder for this analysis
   outputFolder<-Trajectories:::GetOutputFolder(trajectoryLocalArgs,trajectoryAnalysisArgs,createIfMissing=F)
-  filename = file.path(outputFolder,'tables',paste0(concept_name,concept_id,'.constructed.limit30.events.trajs.csv'))
+  filename = file.path(outputFolder,'tables','trajectory_counts.xlsx')
   #Get event_pairs.csv table
-  d = read.csv2(file = filename, sep = '\t', header = TRUE, as.is=T)
+  d = openxlsx::read.xlsx(filename)
   return(d)
 }
 
-removeTrajectoryFile<-function(trajectoryLocalArgs,trajectoryAnalysisArgs,concept_id,concept_name) {
+removeTrajectoryFile<-function(trajectoryLocalArgs,trajectoryAnalysisArgs) {
   outputFolder<-Trajectories:::GetOutputFolder(trajectoryLocalArgs,trajectoryAnalysisArgs,createIfMissing=F)
-  filename = file.path(outputFolder,'tables','trajectory_counts.xlsx'))
+  filename = file.path(outputFolder,'tables','trajectory_counts.xlsx')
   if(file.exists(filename)) file.remove(filename)
 }
 
-getTrajectoryFromTrajectoryFile<-function(trajectoryLocalArgs,trajectoryAnalysisArgs,concept_id,concept_name,trajectory_concept_ids=c()) {
-  d<-getTrajectoryFileAsDataFrame(trajectoryLocalArgs,trajectoryAnalysisArgs,concept_id,concept_name)
+getTrajectoryFromTrajectoryFile<-function(trajectoryLocalArgs,trajectoryAnalysisArgs,trajectory_concept_ids=c()) {
+  d<-getTrajectoryFileAsDataFrame(trajectoryLocalArgs,trajectoryAnalysisArgs)
   d<-d %>% dplyr::filter(trajectory.str==paste0(trajectory_concept_ids,collapse="-") )
   return(d)
 }
@@ -307,3 +317,4 @@ removeTestableOutputFiles<-function(trajectoryLocalArgs,trajectoryAnalysisArgs) 
   if(file.exists(file.path(outputFolder,'tables',filename))) file.remove(file.path(outputFolder,'tables',filename))
 
 }
+

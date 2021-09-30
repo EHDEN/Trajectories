@@ -1,5 +1,4 @@
 requireNamespace("SqlRender", quietly = TRUE)
-requireNamespace("logger", quietly = TRUE)
 requireNamespace("openxlsx", quietly = TRUE)
 requireNamespace("dplyr", quietly = TRUE)
 
@@ -1410,13 +1409,14 @@ buildCaseControlGroups<-function(connection,trajectoryLocalArgs,diagnosis1,diagn
   f=IS_CASE ~ SEASON_OF_INDEXDATE + scale(LEN_HISTORY_DAYS) + scale(LEN_FOLLOWUP_DAYS)
   m.out1 <- suppressWarnings( MatchIt::matchit(formula=f, #formula for logistic regression
                              data=d,
-                             method = "nearest", # Find a patient with nearest propensity score for a matching control
+                             method = "optimal", # Find a control patients so that the sum of the absolute pairwise distances in the matched sample is as small as possible
                              distance = "glm", #Use logistic regression based propensity score
                              exact=c("GENDER","AGEGROUP","YEAR_OF_INDEXDATE"), #Gender, age group and year of index date must be match in case/control group
                              discard="both", # discard cases or controls where no good matching is found
                              reestimate=T) #After discarding some cases/controls, re-estimate the propensity scores
   )
-  summary(m.out1)
+  m.out1 <- Trajectories:::matchitWithTryCatch(f=f,d=d)
+  #summary(m.out1)
 
   control.ids<-as.numeric(m.out1$match.matrix[,1][!is.na(m.out1$match.matrix[,1])])
   case.ids<-as.numeric(rownames(m.out1$match.matrix)[!is.na(m.out1$match.matrix[,1])])
@@ -1434,7 +1434,7 @@ buildCaseControlGroups<-function(connection,trajectoryLocalArgs,diagnosis1,diagn
 
   #Assess the quality of matching (check that Std. Mean Diff. for all covariates is <0.15)
   MAX_ALLOWED_SDM=0.15
-  if( max(abs(summary(m.out1)$sum.matched[,'Std. Mean Diff.']))>MAX_ALLOWED_SDM ) {
+  if( max(c(abs(summary(m.out1)$sum.matched[,'Std. Mean Diff.']),-Inf),na.rm=T)>MAX_ALLOWED_SDM ) { #c(.., -Inf) here to prevent error when there are 1 case+1 control and only NA-s in "Std. Mean Diff." column
     ParallelLogger::logInfo('Propensity score based matching resulted in imbalanced groups: Std. Mean Diff. of the following covariates is >',MAX_ALLOWED_SDM,' after matching: ',paste(rownames(summary(m.out1)$sum.matched)[abs(summary(m.out1)$sum.matched[,'Std. Mean Diff.'])>MAX_ALLOWED_SDM], collapse=","))
 
     is_imbalanced=T
@@ -1463,4 +1463,42 @@ getSeason <- function(input.date){
   # rename the resulting groups (could've been done within cut(...levels=) if "Winter" wasn't double
   levels(cuts) <- c("Winter","Spring","Summer","Fall","Winter")
   return(cuts)
+}
+
+matchitWithTryCatch <- function(f,d) {
+
+    tryCatch(
+      expr = {
+        m.out1<-suppressWarnings(MatchIt::matchit(formula=f, #formula for logistic regression
+                         data=d,
+                         method = "optimal", # Find a control patients so that the sum of the absolute pairwise distances in the matched sample is as small as possible
+                         distance = "glm", #Use logistic regression based propensity score
+                         exact=c("GENDER","AGEGROUP","YEAR_OF_INDEXDATE"), #Gender, age group and year of index date must be match in case/control group
+                         discard="both", # discard cases or controls where no good matching is found
+                         reestimate=T) #After discarding some cases/controls, re-estimate the propensity scores
+        )
+        return(m.out1)
+        #message("Successfully executed the log(x) call.")
+      },
+      error = function(e){
+        ParallelLogger::logInfo('Caught an error in matchit() but catched it in try-catch:',e)
+        ParallelLogger::logInfo('Trying nearest neighbor matching instead of optimal:',e)
+        m.out1<-MatchIt::matchit(formula=f, #formula for logistic regression
+                                 data=d,
+                                 method = "nearest", # Find a control patients based on nearest neighbor method
+                                 distance = "glm", #Use logistic regression based propensity score
+                                 exact=c("GENDER","AGEGROUP","YEAR_OF_INDEXDATE"), #Gender, age group and year of index date must be match in case/control group
+                                 discard="both", # discard cases or controls where no good matching is found
+                                 reestimate=T) #After discarding some cases/controls, re-estimate the propensity scores
+
+
+      },
+      warning = function(w){
+        ParallelLogger::logInfo('Caught a warning in matchit() but catched it in try-catch:',w)
+      },
+      finally = {
+        return(m.out1)
+      }
+    )
+
 }

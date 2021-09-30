@@ -31,7 +31,7 @@ testthat::test_that("Test that discover() runs fully without any errors", {
                          createEventPairsTable=T,
                          runDiscoveryAnalysis=T,
                          createFilteredFullgraphs=T,
-                         createGraphsForSelectedEvents = T,
+                         runTrajectoryAnalysis = T,
                          selfValidate=T,
                          cleanup=T)
 

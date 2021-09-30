@@ -11,16 +11,22 @@ testthat::test_that("Test alignments to graph", {
   connection<-eunomia$connection
   trajectoryLocalArgs<-eunomia$trajectoryLocalArgs
   clearConditionsTable(connection)
-  limitToNumPatients(connection,n=500) #in analysis, use 500 patients. Big enough number is needed for having sufficient amount of events on same disharge_date
+  limitToNumPatients(connection,n=1000) #in analysis, use 500 patients. Big enough number is needed for having sufficient amount of events on same disharge_date
   limitToConcepts(connection)
   setObservationPeriodForAll(connection,startdate='2010-01-01',enddate='2011-12-31')
-  person_ids<-addConditionEventTrajectory(connection,event_concept_ids=c(317009,255848,4299128),n=40) # Add asthma->pneumonia pair for 40 patients
-  addRandomEvents(connection,n_per_person_range=c(0,10)) # Add up to 10 random events per each patient, except events 317009 and 255848
+  person_ids<-addConditionEventTrajectory(connection,event_concept_ids=c(317009,255848,4299128),n=500) # Add Asthma->Pneumonia->Third degree burn trajectory for 100 patients
+  addRandomEvents(connection,n_per_person_range=c(0,2), exclude_concept_ids=c(317009,255848,4299128)) # Add up to 10 random events per each patient, except events 317009, 255848, 4299128
+  #in order to calc RR, some 255848 and 4299128 events need to be added to some (20% fraction) non-trajectory patients also (add max 1 to each patient to avoid trajectory occurrence)
+  all_person_ids<-getPatientIds(connection)
+  nontraj_person_ids<-setdiff(all_person_ids,person_ids)
+  nontraj_person_ids_sample<-sample(nontraj_person_ids,size=floor(length(nontraj_person_ids)/2))
+  addRandomEvents(connection,n_per_person_range=c(0,1), include_concept_ids=c(317009,255848,4299128), include_person_ids=nontraj_person_ids_sample)
+
 
 
   trajectoryAnalysisArgs <- Trajectories:::createTrajectoryAnalysisArgs(minimumDaysBetweenEvents = 1,
                                                                        maximumDaysBetweenEvents = 365*120,
-                                                                       minPatientsPerEventPair = 39,
+                                                                       minPatientsPerEventPair = 499,
                                                                        addConditions=T,
                                                                        addObservations=F,
                                                                        addProcedures=F,
@@ -41,7 +47,7 @@ testthat::test_that("Test alignments to graph", {
 
   #Remove output files (if exist from previous run)
   removeTestableOutputFiles(trajectoryLocalArgs,trajectoryAnalysisArgs)
-  removeTrajectoryFile(trajectoryLocalArgs,trajectoryAnalysisArgs,concept_id=317009,concept_name='Asthma')
+  removeTrajectoryFile(trajectoryLocalArgs,trajectoryAnalysisArgs)
 
   # Create new cohort table for this package to results schema & fill it in (all having cohort_id=1 in cohort data)
   Trajectories:::createAndFillCohortTable(connection=connection,
@@ -57,21 +63,18 @@ testthat::test_that("Test alignments to graph", {
                                      trajectoryAnalysisArgs=trajectoryAnalysisArgs,
                                      trajectoryLocalArgs=trajectoryLocalArgs)
 
-  # Draw plots for specific events (uses database connection and result tables in the database for trajectory alignments)
-  Trajectories:::PlotTrajectoriesGraphForEvents(connection,
-                                               trajectoryAnalysisArgs,
-                                               trajectoryLocalArgs,
-                                               eventIds=c(317009),
-                                               skipOutputTables = F)
 
 
-  row<-getTrajectoryFromTrajectoryFile(trajectoryLocalArgs,trajectoryAnalysisArgs,concept_id=317009,concept_name='Asthma',trajectory_concept_ids=c(317009,255848,4299128))
+  Trajectories:::align(connection,
+                      trajectoryAnalysisArgs,
+                      trajectoryLocalArgs)
+
+  row<-getTrajectoryFromTrajectoryFile(trajectoryLocalArgs,trajectoryAnalysisArgs,trajectory_concept_ids=c(317009,255848,4299128))
   #Test that the trajectory comes out from the trajectory file
   testthat::expect_equal(nrow(row),1)
-  #Test that the trajectory count is 40 (due to random events, exepct the numbers to be somewhere between 20..60)
-  testthat::expect_gt(row$exact_count,20)
-  testthat::expect_lt(row$exact_count,60)
-  testthat::expect_gt(row$total_count,20)
-  testthat::expect_lt(row$total_count,60)
+  #Test that the trajectory count is 500
+  testthat::expect_equal(row$exact_count,500)
+  testthat::expect_equal(row$total_count,500)
+  testthat::expect_equal(row$length,3)
 
 })
