@@ -50,49 +50,56 @@ createTrajectoriesGraph<-function(eventPairResultsFilename) {
                     numcohortExact,
                     alignedTrajsProb)
 
-  e1s <- e %>%
-    dplyr::select(
-      concept_id=E1_CONCEPT_ID,
-      concept_name=E1_NAME,
-      domain=E1_DOMAIN,
-      count=E1_COUNT_IN_EVENTS) %>%
-    unique()
 
-  e2s <- e %>%
-    dplyr::select(
-      concept_id=E2_CONCEPT_ID,
-      concept_name=E2_NAME,
-      domain=E2_DOMAIN,
-      count=E2_COUNT_IN_EVENTS) %>%
-    unique()
+  if(nrow(edges)>0) {
 
-  vertices <- rbind(e1s,e2s) %>%
-    dplyr::group_by(concept_id, concept_name, domain) %>% #we could also do simply unique() here to get one row per the same event as the numbers should be the same,
-    dplyr::summarise(count=max(count), .groups = "drop")  #but to avoid any surprises we do group_by and count=max()
+    e1s <- e %>%
+      dplyr::select(
+        concept_id=E1_CONCEPT_ID,
+        concept_name=E1_NAME,
+        domain=E1_DOMAIN,
+        count=E1_COUNT_IN_EVENTS) %>%
+      unique()
 
-  #Add colors
-  # predefined colors
-  COLORS=list(Condition='#F1948A', #red
-              Observation='#85C1E9', #blue
-              Procedure='#ccc502',#yellow
-              Drug='#8fba75', #green
-              Unknown='#bbbbbb') #gray
-  #Drug='#ABEBC6') #green
-  LABELCOLORS=list(Condition='#7B241C',
-                   Observation='#21618C',
-                   Procedure='#7D6608',
-                   Drug='#145A32', #green
-                   Unknown='#666666')
-  vertices <- vertices %>%
-     dplyr::mutate(name=as.character(concept_id),
-                   concept_id=concept_id, #this is needed, otherwise somehow the concept_id column disappears
-                   color = dplyr::recode(domain, !!!COLORS, .default = '#bbbbbb', .missing='#bbbbbb'),
-                   labelcolor = dplyr::recode(domain, !!!LABELCOLORS, .default = '#666666', .missing='#666666')
-                   ) %>%
-    dplyr::select(name,concept_id,concept_name,domain,count,color,labelcolor)
+    e2s <- e %>%
+      dplyr::select(
+        concept_id=E2_CONCEPT_ID,
+        concept_name=E2_NAME,
+        domain=E2_DOMAIN,
+        count=E2_COUNT_IN_EVENTS) %>%
+      unique()
+
+    vertices <- rbind(e1s,e2s) %>%
+      dplyr::group_by(concept_id, concept_name, domain) %>% #we could also do simply unique() here to get one row per the same event as the numbers should be the same,
+      dplyr::summarise(count=suppressWarnings(max(count)), .groups = "drop")  #but to avoid any surprises we do group_by and count=max(). suppressWarnings() is for cases where it is an empty graph and nothing for max() is given
 
 
-  #Build a graph object from edges and vertices
+    #Add colors
+    # predefined colors
+    COLORS=list(Condition='#F1948A', #red
+                Observation='#85C1E9', #blue
+                Procedure='#ccc502',#yellow
+                Drug='#8fba75', #green
+                Unknown='#bbbbbb') #gray
+    #Drug='#ABEBC6') #green
+    LABELCOLORS=list(Condition='#7B241C',
+                     Observation='#21618C',
+                     Procedure='#7D6608',
+                     Drug='#145A32', #green
+                     Unknown='#666666')
+    vertices <- vertices %>%
+      dplyr::mutate(name=as.character(concept_id),
+                    concept_id=concept_id, #this is needed, otherwise somehow the concept_id column disappears
+                    color = dplyr::recode(domain, !!!COLORS, .default = '#bbbbbb', .missing='#bbbbbb'),
+                    labelcolor = dplyr::recode(domain, !!!LABELCOLORS, .default = '#666666', .missing='#666666')
+      ) %>%
+      dplyr::select(name,concept_id,concept_name,domain,count,color,labelcolor)
+  } else {
+    #create empty data.frame with correct column names
+    vertices <- setNames(data.frame(matrix(ncol = 7, nrow = 0)), c("name", "concept_id", "concept_name", "domain", "count", "color", "labelcolor"))
+  }
+
+  #Build a graph object from edges and vertices. Note that in case the number of edges is 0, the following command does not produce the necessary edge attributes
   g<-igraph::graph_from_data_frame(edges, directed=T, vertices=vertices)
 
 

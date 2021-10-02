@@ -432,11 +432,16 @@ RRandCI<-function(num_observations_in_cases,case_group_size,num_observations_in_
     rownames(dat) <- c("E1+", "E1-"); colnames(dat) <- c("E2+", "E2-"); dat
     #print(dat)
     r<-suppressWarnings(epitools::riskratio(dat, rev="both")) #rev=both is required here as the riskratio() requires the cells to be in the right irder
-    if(b==0 | c==0) {
+    if(b==0) { #case group sizei 0
       RR=Inf
       RR.lower=0
       RR.upper=Inf
       p.val=1
+    } else if (c==0) { #num observations in control group is 0
+      RR=Inf
+      RR.lower=Inf #in epitools, it is NaN, but we change it to Inf as otherwise it would cross 1 (and will be filtered out)
+      RR.upper=Inf
+      p.val=r$p.value[2,2]
     } else {
       RR=r$measure[2,1]
       RR.lower=r$measure[2,2]

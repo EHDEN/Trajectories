@@ -147,7 +147,7 @@ testthat::test_that("Test ability to detect a synthetic event pair in data", {
   #test that event pair 317009->255848 is among them
   row<-getEventPairFromEventPairsTable(event1_concept_id=317009,event2_concept_id=255848,trajectoryLocalArgs,trajectoryAnalysisArgs,filename='event_pairs_tested.tsv')
   testthat::expect_equal(row$E1_COUNT_IN_EVENTS, 20)
-  testthat::expect_gt(row$E2_COUNT_IN_EVENTS, 20)
+  testthat::expect_gte(row$E2_COUNT_IN_EVENTS, 20)
   testthat::expect_equal(row$E1_COUNT_IN_PAIRS, 20)
   testthat::expect_equal(row$E1_BEFORE_E2_COUNT_IN_EVENTS, 20)
 
@@ -167,6 +167,88 @@ testthat::test_that("Test ability to detect a synthetic event pair in data", {
 
 
 })
+
+
+testthat::test_that("Test ability to detect a synthetic event pair in data with 0 counts of these events outside the pair (same as previous test, but no random events)", {
+
+  eunomia <-setUpEunomia()
+  connection<-eunomia$connection
+  trajectoryLocalArgs<-eunomia$trajectoryLocalArgs
+  clearConditionsTable(connection)
+  limitToNumPatients(connection,n=100) #in analysis, use 100 patients
+  limitToConcepts(connection)
+  setObservationPeriodForAll(connection,startdate='2010-01-01',enddate='2012-12-31')
+  person_ids<-addConditionEventTrajectory(connection,event_concept_ids=c(317009,255848),n=20,days_to_skip_from_obs_period_start=365) # Add asthma->pneumonia pair for 20 patients
+  addRandomEvents(connection,n_per_person_range=c(0,10),exclude_person_ids=person_ids,exclude_concept_ids=c(317009,255848)) # Add up to 10 random events per each patient, except events 317009 and 255848
+  #all_person_ids<-getPatientIds(connection)
+  #non_case_person_ids<-setdiff(all_person_ids,person_ids)
+  #non_case_person_ids_sample<-sample(non_case_person_ids,size=floor(length(non_case_person_ids)/2))
+  #addRandomEvents(connection,n_per_person_range=c(0,1), include_concept_ids=c(255848), include_person_ids=non_case_person_ids_sample)
+
+  trajectoryAnalysisArgs <- Trajectories:::createTrajectoryAnalysisArgs(minimumDaysBetweenEvents = 1,
+                                                                        maximumDaysBetweenEvents = 365*120,
+                                                                        minPatientsPerEventPair = 10,
+                                                                        addConditions=T,
+                                                                        addObservations=F,
+                                                                        addProcedures=F,
+                                                                        addDrugExposures=F, # NB! DO NOT USE BOTH addDrugEras=T and addDrugExposures=T (not both) as it leads to analysis duplication and breaks some code... (same "drug" event may occur several times which is not allowed)
+                                                                        addDrugEras=F, # NB! DO NOT USE BOTH addDrugEras=T and addDrugExposures=T (not both) as it leads to analysis duplication and breaks some code... (same "drug" event may occur several times which is not allowed)
+                                                                        addBirths=F,
+                                                                        addDeaths=F,
+                                                                        daysBeforeIndexDate=Inf,
+                                                                        cohortName="test")
+
+
+  #Create output folder for this analysis
+  outputFolder<-Trajectories:::GetOutputFolder(trajectoryLocalArgs,trajectoryAnalysisArgs,createIfMissing=T)
+
+  #Remove output files (if exist from previous run)
+  removeTestableOutputFiles(trajectoryLocalArgs,trajectoryAnalysisArgs)
+
+  # Create new cohort table for this package to results schema & fill it in (all having cohort_id=1 in cohort data)
+  Trajectories:::createAndFillCohortTable(connection=connection,
+                                          trajectoryAnalysisArgs=trajectoryAnalysisArgs,
+                                          trajectoryLocalArgs=trajectoryLocalArgs)
+
+  # Create database tables of all event pairs (patient level data + summary statistics)
+  Trajectories:::createEventPairsTable(connection=connection,
+                                       trajectoryAnalysisArgs=trajectoryAnalysisArgs,
+                                       trajectoryLocalArgs=trajectoryLocalArgs)
+
+  Trajectories:::runDiscoveryAnalysis(connection=connection,
+                                      trajectoryAnalysisArgs=trajectoryAnalysisArgs,
+                                      trajectoryLocalArgs=trajectoryLocalArgs)
+
+  #test that event pair 317009->255848 is among tested pairs
+
+
+  #test that there is at least 1 event pairs tested
+  tested_event_pairs<-getEventPairsTableAsDataFrame(trajectoryLocalArgs,trajectoryAnalysisArgs,filename='event_pairs_tested.tsv')
+  testthat::expect_gt(nrow(tested_event_pairs),0)
+  #test that event pair 317009->255848 is among them
+  row<-getEventPairFromEventPairsTable(event1_concept_id=317009,event2_concept_id=255848,trajectoryLocalArgs,trajectoryAnalysisArgs,filename='event_pairs_tested.tsv')
+  testthat::expect_equal(row$E1_COUNT_IN_EVENTS, 20)
+  testthat::expect_equal(row$E2_COUNT_IN_EVENTS, 20)
+  testthat::expect_equal(row$E1_COUNT_IN_PAIRS, 20)
+  testthat::expect_equal(row$E1_BEFORE_E2_COUNT_IN_EVENTS, 20)
+
+  #test that event pair 317009->255848 is found significant and the counts are correct
+  row<-getEventPairFromEventPairsTable(event1_concept_id=317009,event2_concept_id=255848,trajectoryLocalArgs,trajectoryAnalysisArgs)
+  testthat::expect_equal(row$E1_COUNT_IN_PAIRS, 20)
+  testthat::expect_equal(row$E1_BEFORE_E2_COUNT_IN_EVENTS, 20)
+
+  testthat::expect_gt(as.numeric(row$RR_PVALUE), 0) # P-value of RR is calculated
+  testthat::expect_gt(as.numeric(row$DIRECTIONAL_PVALUE), 0) # P-value of direction is calculated
+
+  #test that the names are correct
+  testthat::expect_equal(row$E1_NAME, 'Asthma')
+  testthat::expect_equal(row$E1_DOMAIN, 'Condition')
+  testthat::expect_equal(row$E2_NAME, 'Pneumonia')
+  testthat::expect_equal(row$E2_DOMAIN, 'Condition')
+
+
+})
+
 
 
 

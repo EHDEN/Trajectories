@@ -488,17 +488,23 @@ align<-function(connection,
   eventPairResultsFilename = file.path(outputFolder,'tables','event_pairs_directional.tsv')
   g<-Trajectories:::createTrajectoriesGraph(eventPairResultsFilename=eventPairResultsFilename)
 
-  #Prepare data tables in the database
-  g<-Trajectories:::createAlignmentTables(connection,
-                                          trajectoryAnalysisArgs,
-                                          trajectoryLocalArgs,
-                           g)
+  if(length(igraph::E(g))==0) {
 
-  #Do the actual alignment and trajectory counting
-  Trajectories:::alignTrajectoriesToGraph(connection,
-                                     trajectoryAnalysisArgs,
-                                     trajectoryLocalArgs,
-                                     g)
+    ParallelLogger::logInof('The graph is empty, skipping the remaining alignment steps.')
+
+   } else {
+    #Prepare data tables in the database
+    g<-Trajectories:::createAlignmentTables(connection,
+                                            trajectoryAnalysisArgs,
+                                            trajectoryLocalArgs,
+                                            g)
+
+    #Do the actual alignment and trajectory counting
+    Trajectories:::alignTrajectoriesToGraph(connection,
+                                            trajectoryAnalysisArgs,
+                                            trajectoryLocalArgs,
+                                            g)
+  }
 
   ParallelLogger::logInfo('Trajectory aligment completed.')
 }

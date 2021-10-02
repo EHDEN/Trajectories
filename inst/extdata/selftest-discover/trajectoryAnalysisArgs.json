@@ -1,8 +1,8 @@
 {
   "mode": ["DISCOVERY"],
   "minimumDaysBetweenEvents": [1],
-  "maximumDaysBetweenEvents": [3650],
-  "minPatientsPerEventPair": [0.1],
+  "maximumDaysBetweenEvents": [36500],
+  "minPatientsPerEventPair": [499],
   "addConditions": [true],
   "addObservations": [false],
   "addProcedures": [false],
@@ -14,5 +14,5 @@
   "packageName": ["Trajectories"],
   "cohortName": ["Full database"],
   "description": ["Full database study for self testing of the Trajectories package."],
-  "RRrangeToSkip": [0.8, 1.2]
+  "RRrangeToSkip": [0, 1]
 }
