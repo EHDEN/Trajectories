@@ -39,9 +39,9 @@ Trajectories::validate(connection,
                        createCohort=T,
                        createEventPairsTable=T,
                        runValidationAnalysis=T,
-                       forceRecalculationOfAnalysis=F,
+                       forceRecalculationOfAnalysis=F, #used only if runDiscoveryAnalysis=T
                        createFilteredFullgraphs=T,
-                       runTrajectoryAnalysis = T,
+                       runTrajectoryAnalysis=T,
                        cleanup=F)
 
 # ##################################################
