@@ -11,7 +11,6 @@ In order to run the package, you need:
  a. Read (SELECT) permission from OMOP CDM tables and vocabulary
  b. CREATE, DROP, SELECT, INSERT, UPDATE, DELETE permission in some schema in the same database. This is used for creating and population temporary data tables. For this, you can create a separate schema in the same database.
 3. Rstudio
-4. A development version of MatchIt package is needed because the current official version https://github.com/kosukeimai/MatchIt/issues/71#issuecomment-915361967 has a bug in it that crashes the analysis. In order to install that, run ***install.packages("MatchIt")*** and then ***devtools::install_github("ngreifer/MatchIt")*** (a prerequisite for this is that you have devtools installed)
 
 ## Installation
 
