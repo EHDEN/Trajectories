@@ -1412,14 +1412,6 @@ buildCaseControlGroups<-function(connection,trajectoryLocalArgs,diagnosis1,diagn
   #table(d$IS_CASE)
 
   f=IS_CASE ~ SEASON_OF_INDEXDATE + scale(LEN_HISTORY_DAYS) + scale(LEN_FOLLOWUP_DAYS)
-  m.out1 <- suppressWarnings( MatchIt::matchit(formula=f, #formula for logistic regression
-                             data=d,
-                             method = "optimal", # Find a control patients so that the sum of the absolute pairwise distances in the matched sample is as small as possible
-                             distance = "glm", #Use logistic regression based propensity score
-                             exact=c("GENDER","AGEGROUP","YEAR_OF_INDEXDATE"), #Gender, age group and year of index date must be match in case/control group
-                             discard="both", # discard cases or controls where no good matching is found
-                             reestimate=T) #After discarding some cases/controls, re-estimate the propensity scores
-  )
   m.out1 <- Trajectories:::matchitWithTryCatch(f=f,d=d)
   #summary(m.out1)
 
@@ -1486,8 +1478,8 @@ matchitWithTryCatch <- function(f,d) {
         #message("Successfully executed the log(x) call.")
       },
       error = function(e){
-        ParallelLogger::logInfo('Caught an error in matchit() but catched it in try-catch:',e)
-        ParallelLogger::logInfo('Trying nearest neighbor matching instead of optimal:',e)
+        ParallelLogger::logInfo('Caught an error in matchit() but catched it in try-catch: ',e)
+        ParallelLogger::logInfo('Therefore, trying nearest neighbor matching instead of optimal...')
         m.out1<-MatchIt::matchit(formula=f, #formula for logistic regression
                                  data=d,
                                  method = "nearest", # Find a control patients based on nearest neighbor method
