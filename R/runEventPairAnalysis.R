@@ -1464,7 +1464,7 @@ getSeason <- function(input.date){
 
 matchitWithTryCatch <- function(f,d) {
 
-    tryCatch(
+   tryCatch(
       expr = {
         m.out1<-suppressWarnings(MatchIt::matchit(formula=f, #formula for logistic regression
                          data=d,
@@ -1480,22 +1480,22 @@ matchitWithTryCatch <- function(f,d) {
       error = function(e){
         ParallelLogger::logInfo('Caught an error in matchit() but catched it in try-catch: ',e)
         ParallelLogger::logInfo('Therefore, trying nearest neighbor matching instead of optimal...')
-        m.out1<-MatchIt::matchit(formula=f, #formula for logistic regression
+        m.out1<-suppressWarnings(MatchIt::matchit(formula=f, #formula for logistic regression
                                  data=d,
                                  method = "nearest", # Find a control patients based on nearest neighbor method
                                  distance = "glm", #Use logistic regression based propensity score
                                  exact=c("GENDER","AGEGROUP","YEAR_OF_INDEXDATE"), #Gender, age group and year of index date must be match in case/control group
                                  discard="both", # discard cases or controls where no good matching is found
-                                 reestimate=T) #After discarding some cases/controls, re-estimate the propensity scores
+                                 reestimate=T)) #After discarding some cases/controls, re-estimate the propensity scores
 
-
-      },
-      warning = function(w){
-        ParallelLogger::logInfo('Caught a warning in matchit() but catched it in try-catch:',w)
-      },
-      finally = {
         return(m.out1)
       }
+      #warning = function(w){ #warning block is commented out to prevent stopping the execution of matchIt() if warning occurs
+      #  ParallelLogger::logInfo('Caught a warning in matchit() but catched it in try-catch:',w)
+      #},
+      #finally = {
+      #
+      #}
     )
 
 }
