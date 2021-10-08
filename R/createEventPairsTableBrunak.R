@@ -91,48 +91,14 @@ createEventPairsTableBrunak<-function(connection,
 
     if(nrow(e)==0) ParallelLogger::logError("Package is run in validation mode, but file 'event_pairs_for_validation.tsv' is empty")
 
-    #Create empty table manually
-    RenderedSql <- Trajectories:::loadRenderTranslateSql(sqlFilename='createEventPairsTable-part2b-brunak.sql',
-                                                         packageName=get('TRAJECTORIES_PACKAGE_NAME', envir=TRAJECTORIES.CONSTANTS),
-                                                         dbms = connection@dbms,
-                                                         oracleTempSchema = NULL,
-                                                         resultsSchema = trajectoryLocalArgs$resultsSchema,
-                                                         prefiX = trajectoryLocalArgs$prefixForResultTableNames
-    )
-    DatabaseConnector::executeSql(connection, sql=RenderedSql, profile=F, progressBar = TRUE, reportOverallTime = TRUE)
-
-    #Fill with data
-    tablename<-paste0(trajectoryLocalArgs$resultsSchema,'.',trajectoryLocalArgs$prefixForResultTableNames,'E1E2_MODEL_INPUT')
-    ParallelLogger::logInfo("Filling ",tablename," with data from 'event_pairs_for_validation.tsv' (",nrow(e)," pairs as 100-size-chunks)...")
-    e$sql <- paste0("INSERT INTO ",
-                    tablename,
-                    " (E1_CONCEPT_ID,E2_CONCEPT_ID,E1_NAME,E1_DOMAIN,E2_NAME,E2_DOMAIN,RR_IN_PREVIOUS_STUDY) VALUES (",
-                    DBI::dbQuoteString(connection, e %>% dplyr::mutate(E1_CONCEPT_ID=dplyr::if_else(is.na(E1_CONCEPT_ID),'NULL',as.character(E1_CONCEPT_ID))) %>% dplyr::pull(E1_CONCEPT_ID)  ),
-                    ",",
-                    DBI::dbQuoteString(connection, e %>% dplyr::mutate(E2_CONCEPT_ID=dplyr::if_else(is.na(E2_CONCEPT_ID),'NULL',as.character(E2_CONCEPT_ID))) %>% dplyr::pull(E2_CONCEPT_ID)  ),
-                    ",",
-                    DBI::dbQuoteString(connection, e %>% dplyr::mutate(E1_NAME=dplyr::if_else(is.na(E1_NAME),'NULL',as.character(E1_NAME))) %>% dplyr::pull(E1_NAME)  ),
-                    ",",
-                    DBI::dbQuoteString(connection, e %>% dplyr::mutate(E1_DOMAIN=dplyr::if_else(is.na(E1_DOMAIN),'NULL',E1_DOMAIN)) %>% dplyr::pull(E1_DOMAIN)  ),
-                    ",",
-                    DBI::dbQuoteString(connection, e %>% dplyr::mutate(E2_NAME=dplyr::if_else(is.na(E1_NAME),'NULL',E2_NAME)) %>% dplyr::pull(E2_NAME)  ),
-                    ",",
-                    DBI::dbQuoteString(connection, e %>% dplyr::mutate(E2_DOMAIN=dplyr::if_else(is.na(E2_DOMAIN),'NULL',E2_DOMAIN)) %>% dplyr::pull(E2_DOMAIN)  ),
-                    ",",
-                    e %>% dplyr::mutate(RR_IN_PREVIOUS_STUDY=dplyr::if_else(is.na(RR_IN_PREVIOUS_STUDY),'NULL',as.character(RR_IN_PREVIOUS_STUDY))) %>% dplyr::pull(RR_IN_PREVIOUS_STUDY),
-                    ");")
-    e <- e %>% dplyr::arrange(-RR_IN_PREVIOUS_STUDY)
-    #create chunks - in each chunk, 100 inserts
-    chunks<-split(e$sql, ceiling(seq_along(e$sql)/100))
-    for(i in 1:length(chunks)) {
-      #print(paste('i=',i))
-      chunk<-chunks[[i]]
-      ParallelLogger::logInfo(' ...chunk ',i,'/',length(chunks),'...')
-      insertSql=paste0(chunk,collapse="")
-      RenderedSql <- SqlRender::translate(insertSql,targetDialect=attr(connection, "dbms"))
-      #print(RenderedSql)
-      DatabaseConnector::executeSql(connection, sql=RenderedSql, profile=F, progressBar = F, reportOverallTime = F)
-    }
+    #Put data to table E1E2_model_input
+    Trajectories:::insertTable(connection = connection,
+                               databaseSchema=trajectoryLocalArgs$resultsSchema,
+                               tableName = paste0(trajectoryLocalArgs$prefixForResultTableNames,'E1E2_model_input'),
+                               data = e %>%
+                                 dplyr::select(E1_CONCEPT_ID, E2_CONCEPT_ID, E1_NAME, E1_DOMAIN, E2_NAME, E2_DOMAIN, RR_IN_PREVIOUS_STUDY),
+                               dropTableIfExists=T,
+                               progressBar = T)
     ParallelLogger::logInfo("...done.")
 
   } else {

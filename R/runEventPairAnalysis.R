@@ -170,7 +170,7 @@ runValidationAnalysis<-function(connection,
   num.zerocount.events <- nrow(pairs %>% dplyr::filter(E1_COUNT_IN_EVENTS == 0 | E2_COUNT_IN_EVENTS == 0))
   pairs <- pairs %>% dplyr::filter(E1_COUNT_IN_EVENTS > 0 & E2_COUNT_IN_EVENTS > 0)
   ParallelLogger::logInfo("From those, the number of event pairs where at least one event never occurs in our data: ",num.zerocount.events)
-
+  forceRecalculation
   #get pairs that have E1_BEFORE_E2_COUNT_IN_EVENTS>0
   num.zerocount.pairs <- nrow(pairs %>% dplyr::filter(E1_BEFORE_E2_COUNT_IN_EVENTS==0))
   pairs <- pairs %>% dplyr::filter(E1_BEFORE_E2_COUNT_IN_EVENTS > 0)
@@ -581,7 +581,8 @@ SET
                                        databaseSchema=trajectoryLocalArgs$resultsSchema,
                                        tableName = paste0(trajectoryLocalArgs$prefixForResultTableNames,'matching_ep_ids'),
                                        data = eventperiod.ids,
-                                       dropTableIfExists=T)
+                                       dropTableIfExists=T,
+                                       progressBar = F)
 
 
 
@@ -617,7 +618,7 @@ SET
                                          resultsSchema = trajectoryLocalArgs$resultsSchema,
                                          prefiX =  trajectoryLocalArgs$prefixForResultTableNames)
         RenderedSql <- SqlRender::translate(sql=RenderedSql, targetDialect = connection@dbms)
-        DatabaseConnector::executeSql(connection=connection, sql=RenderedSql)
+        DatabaseConnector::executeSql(connection=connection, sql=RenderedSql, progressBar = FALSE, reportOverallTime = FALSE)
 
 
 
@@ -1410,9 +1411,9 @@ buildCaseControlGroups<-function(connection,trajectoryLocalArgs,diagnosis1,diagn
   d <- d %>% filter(!is.na(SEASON_OF_INDEXDATE))
 
   #table(d$IS_CASE)
+  table(d[d$IS_CASE==1,]$GENDER)
 
-  f=IS_CASE ~ SEASON_OF_INDEXDATE + scale(LEN_HISTORY_DAYS) + scale(LEN_FOLLOWUP_DAYS)
-  m.out1 <- Trajectories:::matchitWithTryCatch(f=f,d=d)
+  m.out1 <- Trajectories:::matchitWithTryCatch(d=d)
   #summary(m.out1)
 
   control.ids<-as.numeric(m.out1$match.matrix[,1][!is.na(m.out1$match.matrix[,1])])
@@ -1462,7 +1463,19 @@ getSeason <- function(input.date){
   return(cuts)
 }
 
-matchitWithTryCatch <- function(f,d) {
+matchitWithTryCatch <- function(d) {
+
+  #in some rare cases, the number of different "SEASON_OF_INDEXDATE" values in case group is 1.
+  #As we use it in formula, glm.fit produces error "contrasts can be applied only to factors with 2 or more levels"
+  #To prevent that, take SEASON_OF_INDEXDATE out from the formula and require exact match
+  if(length(unique(d[d$IS_CASE==1,]$SEASON_OF_INDEXDATE))==1) { #only 1 different SEASON_OF_INDEXDATE value in case group
+    f=IS_CASE ~ scale(LEN_HISTORY_DAYS) + scale(LEN_FOLLOWUP_DAYS)
+    e=c("GENDER","AGEGROUP","YEAR_OF_INDEXDATE","SEASON_OF_INDEXDATE") #Gender, age group and year of index date must be match in case/control group
+  } else {
+    #normal use case
+    f=IS_CASE ~ SEASON_OF_INDEXDATE + scale(LEN_HISTORY_DAYS) + scale(LEN_FOLLOWUP_DAYS)
+    e=c("GENDER","AGEGROUP","YEAR_OF_INDEXDATE") #Gender, age group and year of index date must be match in case/control group
+  }
 
    tryCatch(
       expr = {
@@ -1470,7 +1483,7 @@ matchitWithTryCatch <- function(f,d) {
                          data=d,
                          method = "optimal", # Find a control patients so that the sum of the absolute pairwise distances in the matched sample is as small as possible
                          distance = "glm", #Use logistic regression based propensity score
-                         exact=c("GENDER","AGEGROUP","YEAR_OF_INDEXDATE"), #Gender, age group and year of index date must be match in case/control group
+                         exact=e,
                          discard="both", # discard cases or controls where no good matching is found
                          reestimate=T) #After discarding some cases/controls, re-estimate the propensity scores
         )
@@ -1484,7 +1497,7 @@ matchitWithTryCatch <- function(f,d) {
                                  data=d,
                                  method = "nearest", # Find a control patients based on nearest neighbor method
                                  distance = "glm", #Use logistic regression based propensity score
-                                 exact=c("GENDER","AGEGROUP","YEAR_OF_INDEXDATE"), #Gender, age group and year of index date must be match in case/control group
+                                 exact=e,
                                  discard="both", # discard cases or controls where no good matching is found
                                  reestimate=T)) #After discarding some cases/controls, re-estimate the propensity scores
 

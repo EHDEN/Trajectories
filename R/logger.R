@@ -11,23 +11,24 @@ InitLogger<-function(logfile, threshold="INFO") {
   #Clear (remove) default loggers
   ParallelLogger::clearLoggers()
 
+  #delete old log file if exists
+  if (file.exists(logfile)) {
+    file.remove(logfile)
+    print(paste0('Old log file ',logfile,' removed.'))
+  }
+  #s=file.create(logfile)
+
   logger <- ParallelLogger::createLogger(name = "LOGGER",
                          threshold = threshold,
                          appenders = list(ParallelLogger::createConsoleAppender(layout=ParallelLogger::layoutTimestamp),
                                           ParallelLogger::createFileAppender(
                                             layout = ParallelLogger::layoutTimestamp,
                                             fileName=logfile,
-                                            overwrite = TRUE
+                                            overwrite = FALSE
                                           )
                          ))
 
   ParallelLogger::registerLogger(logger)
 
-  #delete old log file if exists
-  if (file.exists(logfile)) {
-    file.remove(logfile)
-    ParallelLogger::logInfo('Old log file ',logfile,' removed.')
-  }
-
-  s=file.create(logfile)
+  ParallelLogger::logInfo('Registered logger with threshold=',threshold,' and console + file appender (',logfile,')')
 }
