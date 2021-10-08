@@ -67,7 +67,8 @@ runDiscoveryAnalysis<-function(connection,
   pairs=Trajectories:::getAllPairs(connection,
                                    trajectoryAnalysisArgs,
                                    trajectoryLocalArgs)
-  Trajectories:::makeRRPvaluePlot(pairs,RRPvaluePlotFilename,trajectoryAnalysisArgs)
+  #The following command for makeRRPvaluePlot is commented out as the function does not work properly
+  #Trajectories:::makeRRPvaluePlot(pairs,RRPvaluePlotFilename,trajectoryAnalysisArgs)
 
   #get Pairs that are having significant RR
   pairs <- pairs %>% dplyr::filter(!is.na(RR_SIGNIFICANT) & RR_SIGNIFICANT=='*')
@@ -92,6 +93,12 @@ runDiscoveryAnalysis<-function(connection,
   Trajectories:::drawProcessGraph(annotated.pairs=pairs,filename=processDiagramfilename,trajectoryAnalysisArgs=trajectoryAnalysisArgs,title='General process flow of the discovery of directional event pairs')
 
   #write results to file
+
+  #convert 999-s back to Inf
+  pairs$RR <- ifelse(pairs$RR==999,Inf,pairs$RR)
+  pairs$RR_CI_LOWER <- ifelse(pairs$RR_CI_LOWER==999,Inf,pairs$RR_CI_LOWER)
+  pairs$RR_CI_UPPER <- ifelse(pairs$RR_CI_UPPER==999,Inf,pairs$RR_CI_UPPER)
+
   write.table(pairs, file=allResultsFilenameTsv, quote=FALSE, sep='\t', col.names = NA)
   openxlsx::write.xlsx(pairs, allResultsFilenameXls, overwrite=T)
   ParallelLogger::logInfo('All tested pairs were written to ',allResultsFilenameTsv,' and ',allResultsFilenameXls,'.')
@@ -195,7 +202,8 @@ runValidationAnalysis<-function(connection,
   pairs=Trajectories:::getAllPairs(connection,
                                    trajectoryAnalysisArgs,
                                    trajectoryLocalArgs)
-  Trajectories:::makeRRPvaluePlot(pairs,RRPvaluePlotFilename,trajectoryAnalysisArgs)
+  #The following command for makeRRPvaluePlot is commented out as the function does not work properly
+  #Trajectories:::makeRRPvaluePlot(pairs,RRPvaluePlotFilename,trajectoryAnalysisArgs)
 
   #get Pairs that are having significant RR
   pairs <- pairs %>% dplyr::filter(!is.na(RR_SIGNIFICANT) & RR_SIGNIFICANT=='*')
@@ -227,6 +235,12 @@ runValidationAnalysis<-function(connection,
   Trajectories:::drawProcessGraph(annotated.pairs=pairs,filename=processDiagramfilename,trajectoryAnalysisArgs=trajectoryAnalysisArgs,title='General process flow of the validation of directional event pairs')
 
   #write results to file
+
+  #convert 999-s back to Inf
+  pairs$RR <- ifelse(pairs$RR==999,Inf,pairs$RR)
+  pairs$RR_CI_LOWER <- ifelse(pairs$RR_CI_LOWER==999,Inf,pairs$RR_CI_LOWER)
+  pairs$RR_CI_UPPER <- ifelse(pairs$RR_CI_UPPER==999,Inf,pairs$RR_CI_UPPER)
+
   write.table(pairs, file=allResultsFilenameTsv, quote=FALSE, sep='\t', col.names = NA)
   openxlsx::write.xlsx(pairs, allResultsFilenameXls)
   ParallelLogger::logInfo('All tested pairs were written to ',allResultsFilenameTsv,' and ',allResultsFilenameXls)
@@ -1039,7 +1053,7 @@ annotateValidationResults<-function(pairs,trajectoryAnalysisArgs,verbose=F) {
       RR_SIGNIFICANT=='*' & sign(RR_IN_PREVIOUS_STUDY-1)!=sign(RR-1)                                                                                                  ~ '7. Validation failed: Despite having RR significantly different from 1, its direction is the opposite to discovery study).',
       !is.na(DIRECTIONAL_SIGNIFICANT) & DIRECTIONAL_SIGNIFICANT=='' & DIRECTIONAL_SIGNIFICANT_IF_SAME_DAY_EVENTS_ORDERED=='*'  ~ '8a. Validation failed: Despite having RR significantly different from 1, there is no significant E1->E2 order. However, if eventperiods where the events happened on the same day, were considered as ordered, the pair would become directionally significant.',
       !is.na(DIRECTIONAL_SIGNIFICANT) & DIRECTIONAL_SIGNIFICANT=='' & DIRECTIONAL_POWER<=0.8                                                         ~  '8c. Validation failed: Despite having RR significantly different from 1, there is no significant E1->E2 order (also low power for detecting less than 20% elevated order).',
-      !is.na(DIRECTIONAL_SIGNIFICANT) & DIRECTIONAL_SIGNIFICANT=='' ~ '8b. Validation failed: Despite having RR significantly different from 1, there is no significant E1->E2 order (despite having enough power for detecting 20% elevated E1->E2 order and even when consedered the same day events happening as ordered).',
+      !is.na(DIRECTIONAL_SIGNIFICANT) & DIRECTIONAL_SIGNIFICANT=='' ~ '8b. Validation failed: Despite having RR significantly different from 1, there is no significant E1->E2 order (despite having enough power for detecting 20% elevated E1->E2 order and even when considered the same day events happening as ordered).',
       !is.na(DIRECTIONAL_SIGNIFICANT) & DIRECTIONAL_SIGNIFICANT=='*'                                                          ~ '9. Validation successful: Event pair has RR significantly different from 1 and significant temporal order',
       TRUE                                                                                                                    ~  'Other (unkwown situation, not automatically labelled).'
     ))
@@ -1310,7 +1324,7 @@ adjustPValues<-function(connection,trajectoryLocalArgs,dbcol.pvalue='RR_PVALUE',
 makeRRPvaluePlot <- function(pairs,filename,trajectoryAnalysisArgs) {
   pairs_for_plot<-pairs %>% dplyr::mutate(id = dplyr::row_number()) %>% dplyr::select(id, RR, RR_PVALUE, RR_SIGNIFICANT)
   pairs_for_plot <- pairs_for_plot %>% dplyr::arrange(-RR_PVALUE)
-  pairs_for_plot <- pairs_for_plot %>% dplyr::filter(!is.na(RR) & !is.na(RR_PVALUE) & RR_PVALUE>0 & RR>0 & RR_PVALUE!=Inf & RR != Inf)
+  pairs_for_plot <- pairs_for_plot %>% dplyr::filter(!is.na(RR) & !is.na(RR_PVALUE) & RR_PVALUE>0 & RR>0 & RR_PVALUE!=Inf & RR != Inf & RR != 999)
 
   #print(table(pairs_for_plot$RR))
   #print(table(pairs_for_plot$RR_PVALUE))
@@ -1332,7 +1346,7 @@ makeRRPvaluePlot <- function(pairs,filename,trajectoryAnalysisArgs) {
   pairs_for_plot$LOG_RR=suppressWarnings(log10(pairs_for_plot$RR))
   pairs_for_plot$LOG_RR_PVAL=suppressWarnings(log10(pairs_for_plot$RR_PVALUE))
 
-  pairs_for_plot <- pairs_for_plot %>% dplyr::filter(LOG_RR>Inf & LOG_RR_PVAL>Inf)
+  #pairs_for_plot <- pairs_for_plot %>% dplyr::filter(LOG_RR>-Inf & LOG_RR_PVAL>-Inf)
 
   p<-suppressWarnings(ggplot2::ggplot(pairs_for_plot, ggplot2::aes(x=LOG_RR,y=LOG_RR_PVAL)) +
                         ggplot2::geom_point() +
@@ -1416,13 +1430,18 @@ buildCaseControlGroups<-function(connection,trajectoryLocalArgs,diagnosis1,diagn
   m.out1 <- Trajectories:::matchitWithTryCatch(d=d)
   #summary(m.out1)
 
-  control.ids<-as.numeric(m.out1$match.matrix[,1][!is.na(m.out1$match.matrix[,1])])
-  case.ids<-as.numeric(rownames(m.out1$match.matrix)[!is.na(m.out1$match.matrix[,1])])
+  if(is.null(m.out1)) { #if matching failed (no matches were found)
+    control.ids<-c()
+    case.ids<-c()
+  } else { #if matching process succeeded
+    control.ids<-as.numeric(m.out1$match.matrix[,1][!is.na(m.out1$match.matrix[,1])])
+    case.ids<-as.numeric(rownames(m.out1$match.matrix)[!is.na(m.out1$match.matrix[,1])])
+  }
+
 
   if(length(control.ids)==0 | length(case.ids)==0) {
     ParallelLogger::logWarn('After matching, the number of cases or controls is 0 - cannot build case-control groups for the first event')
     return(list(Cases = case.ids, Controls = c()), IsImbalanced=1, ImbalanceComment='After matching, the number of cases or controls is 0 - cannot build case-control groups for the first event')
-
   } else {
     ParallelLogger::logInfo('Out of ',num.cases.original,' cases and ',num.noncases.original,' non-cases, ',length(case.ids),'+',length(control.ids),' were selected for matched cases and controls.')
   }
@@ -1493,15 +1512,25 @@ matchitWithTryCatch <- function(d) {
       error = function(e){
         ParallelLogger::logInfo('Caught an error in matchit() but catched it in try-catch: ',e)
         ParallelLogger::logInfo('Therefore, trying nearest neighbor matching instead of optimal...')
-        m.out1<-suppressWarnings(MatchIt::matchit(formula=f, #formula for logistic regression
+
+        tryCatch(
+          expr = {
+            m.out1<-suppressWarnings(MatchIt::matchit(formula=f, #formula for logistic regression
                                  data=d,
                                  method = "nearest", # Find a control patients based on nearest neighbor method
                                  distance = "glm", #Use logistic regression based propensity score
                                  exact=exact,
                                  discard="both", # discard cases or controls where no good matching is found
-                                 reestimate=T)) #After discarding some cases/controls, re-estimate the propensity scores
-
-        return(m.out1)
+                                 reestimate=T) #After discarding some cases/controls, re-estimate the propensity scores
+            )
+            return(m.out1)
+          },
+          error = function(e){
+            ParallelLogger::logInfo('Still caught an error in matchit() but catched it in try-catch: ',e)
+            ParallelLogger::logInfo('Giving up on trying matching case-control groups...')
+            return(NULL)
+          }
+        ) #tryCatch
       }
       #warning = function(w){ #warning block is commented out to prevent stopping the execution of matchIt() if warning occurs
       #  ParallelLogger::logInfo('Caught a warning in matchit() but catched it in try-catch:',w)
@@ -1509,6 +1538,7 @@ matchitWithTryCatch <- function(d) {
       #finally = {
       #
       #}
-    )
+    ) #tryCatch
 
+  return(NULL)
 }

@@ -27,7 +27,7 @@ createTrajectoriesGraph<-function(eventPairResultsFilename) {
 
   #apply minimum RR threshold (there is no sense to draw graphs for decreasing risks - hard to interpret)
   e <- e %>% dplyr::filter(RR > 1)
-  ParallelLogger::logInfo(nrow(e),' pairs remained after applying relative risk > 1 filter.')
+  ParallelLogger::logInfo(nrow(e),' pairs remained after applying relative risk (RR) > 1 filter.')
 
   ParallelLogger::logInfo('Building TrajectoriesGraph object from these pairs...')
 

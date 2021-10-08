@@ -35,7 +35,12 @@ plotTrajectoriesGraph<-function(g,layout=igraph::layout_nicely(g),outputPdfFullp
     if(max(linknumbers)==min(linknumbers)) { #for cases when there is only 1 link
       normalizedLinknumbers=rep(1,length(linknumbers))
     } else {
-      normalizedLinknumbers=linknumbers/max(linknumbers)
+      non.inf.linknumber.idx <- linknumbers!=Inf #which linknumbers=Inf
+      normalizedLinknumbers=rep(1,length(linknumbers)) #new array, fill with 1-s
+      if(length(non.inf.linknumber.idx)>0) {
+        normalizedLinknumbers[non.inf.linknumber.idx] <- linknumbers[non.inf.linknumber.idx]/max(linknumbers[non.inf.linknumber.idx])
+      }
+
       #if(max(linknumbers)<=100) {
       #  normalizedLinknumbers=linknumbers/max(linknumbers)
       #} else {
