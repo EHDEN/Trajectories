@@ -1470,11 +1470,11 @@ matchitWithTryCatch <- function(d) {
   #To prevent that, take SEASON_OF_INDEXDATE out from the formula and require exact match
   if(length(unique(d[d$IS_CASE==1,]$SEASON_OF_INDEXDATE))==1) { #only 1 different SEASON_OF_INDEXDATE value in case group
     f=IS_CASE ~ scale(LEN_HISTORY_DAYS) + scale(LEN_FOLLOWUP_DAYS)
-    e=c("GENDER","AGEGROUP","YEAR_OF_INDEXDATE","SEASON_OF_INDEXDATE") #Gender, age group and year of index date must be match in case/control group
+    exact=c("GENDER","AGEGROUP","YEAR_OF_INDEXDATE","SEASON_OF_INDEXDATE") #Gender, age group and year of index date must be match in case/control group
   } else {
     #normal use case
     f=IS_CASE ~ SEASON_OF_INDEXDATE + scale(LEN_HISTORY_DAYS) + scale(LEN_FOLLOWUP_DAYS)
-    e=c("GENDER","AGEGROUP","YEAR_OF_INDEXDATE") #Gender, age group and year of index date must be match in case/control group
+    exact=c("GENDER","AGEGROUP","YEAR_OF_INDEXDATE") #Gender, age group and year of index date must be match in case/control group
   }
 
    tryCatch(
@@ -1483,7 +1483,7 @@ matchitWithTryCatch <- function(d) {
                          data=d,
                          method = "optimal", # Find a control patients so that the sum of the absolute pairwise distances in the matched sample is as small as possible
                          distance = "glm", #Use logistic regression based propensity score
-                         exact=e,
+                         exact=exact,
                          discard="both", # discard cases or controls where no good matching is found
                          reestimate=T) #After discarding some cases/controls, re-estimate the propensity scores
         )
@@ -1497,7 +1497,7 @@ matchitWithTryCatch <- function(d) {
                                  data=d,
                                  method = "nearest", # Find a control patients based on nearest neighbor method
                                  distance = "glm", #Use logistic regression based propensity score
-                                 exact=e,
+                                 exact=exact,
                                  discard="both", # discard cases or controls where no good matching is found
                                  reestimate=T)) #After discarding some cases/controls, re-estimate the propensity scores
 
