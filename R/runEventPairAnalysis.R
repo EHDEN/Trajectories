@@ -1411,7 +1411,7 @@ buildCaseControlGroups<-function(connection,trajectoryLocalArgs,diagnosis1,diagn
 
   if(all(d$IS_CASE==1)) {
     ParallelLogger::logWarn('All eventperiods are in case group (no controls), cannot build case-control groups for the first event')
-    return(list(Cases = sort(d$EVENTPERIOD_ID), Controls = c()), IsImbalanced=1, ImbalanceComment='All eventperiods are in case group (no controls), cannot build propensity score for the first event')
+    return(list(Cases = sort(d$EVENTPERIOD_ID), Controls = c(), IsImbalanced=1, ImbalanceComment='All eventperiods are in case group (no controls), cannot build propensity score for the first event'))
 
   }
 
@@ -1441,7 +1441,7 @@ buildCaseControlGroups<-function(connection,trajectoryLocalArgs,diagnosis1,diagn
 
   if(length(control.ids)==0 | length(case.ids)==0) {
     ParallelLogger::logWarn('After matching, the number of cases or controls is 0 - cannot build case-control groups for the first event')
-    return(list(Cases = case.ids, Controls = c()), IsImbalanced=1, ImbalanceComment='After matching, the number of cases or controls is 0 - cannot build case-control groups for the first event')
+    return(list(Cases = case.ids, Controls = c(), IsImbalanced=1, ImbalanceComment='After matching, the number of cases or controls is 0 - cannot build case-control groups for the first event'))
   } else {
     ParallelLogger::logInfo('Out of ',num.cases.original,' cases and ',num.noncases.original,' non-cases, ',length(case.ids),'+',length(control.ids),' were selected for matched cases and controls.')
   }

@@ -250,6 +250,72 @@ testthat::test_that("Test ability to detect a synthetic event pair in data with 
 })
 
 
+testthat::test_that("Test that error in matchit() function does not cause the analysis to stop", {
+
+  eunomia <-setUpEunomia()
+  connection<-eunomia$connection
+  trajectoryLocalArgs<-eunomia$trajectoryLocalArgs
+  clearConditionsTable(connection)
+  limitToNumPatients(connection,n=100) #in analysis, use 100 patients
+  limitToConcepts(connection)
+  setObservationPeriodForAll(connection,startdate='2010-01-01',enddate='2012-12-31')
+  person_ids<-addConditionEventTrajectory(connection,event_concept_ids=c(317009,255848),n=20,days_to_skip_from_obs_period_start=365) # Add asthma->pneumonia pair for 10 patients
+  #leave only females to cases (remove males) (8532=F)
+  executeSql(connection, paste0('DELETE FROM CONDITION_OCCURRENCE WHERE PERSON_ID IN (
+                              SELECT PERSON_ID FROM PERSON WHERE gender_concept_id!=8532
+  );'))
+  #querySql(connection, paste0('SELECT p.gender_concept_id,COUNT(*) FROM CONDITION_OCCURRENCE c LEFT JOIN PERSON p ON c.person_id=p.person_id GROUP BY p.gender_concept_id;'))
+  all_person_ids<-getPatientIds(connection)
+  non_case_person_ids<-setdiff(all_person_ids,person_ids)
+  non_case_person_ids_sample<-sample(non_case_person_ids,size=50)
+  addRandomEvents(connection,n_per_person_range=c(0,1), include_concept_ids=c(255848), include_person_ids=non_case_person_ids_sample)
+  #remove all females from non-cases. That should lead to error in matching (no gender match)
+  executeSql(connection, paste0('DELETE FROM CONDITION_OCCURRENCE WHERE PERSON_ID IN (
+                              SELECT PERSON_ID FROM PERSON WHERE gender_concept_id=8532
+                              AND PERSON_ID IN (',paste0(non_case_person_ids_sample,collapse=","),')
+  );'))
+  #querySql(connection, paste0('SELECT p.gender_concept_id,COUNT(*) FROM CONDITION_OCCURRENCE c LEFT JOIN PERSON p ON c.person_id=p.person_id GROUP BY p.gender_concept_id;'))
+
+
+
+  trajectoryAnalysisArgs <- Trajectories:::createTrajectoryAnalysisArgs(minimumDaysBetweenEvents = 1,
+                                                                        maximumDaysBetweenEvents = 365*120,
+                                                                        minPatientsPerEventPair = 2,
+                                                                        addConditions=T,
+                                                                        addObservations=F,
+                                                                        addProcedures=F,
+                                                                        addDrugExposures=F, # NB! DO NOT USE BOTH addDrugEras=T and addDrugExposures=T (not both) as it leads to analysis duplication and breaks some code... (same "drug" event may occur several times which is not allowed)
+                                                                        addDrugEras=F, # NB! DO NOT USE BOTH addDrugEras=T and addDrugExposures=T (not both) as it leads to analysis duplication and breaks some code... (same "drug" event may occur several times which is not allowed)
+                                                                        addBirths=F,
+                                                                        addDeaths=F,
+                                                                        daysBeforeIndexDate=Inf,
+                                                                        cohortName="test")
+
+
+  #Create output folder for this analysis
+  outputFolder<-Trajectories:::GetOutputFolder(trajectoryLocalArgs,trajectoryAnalysisArgs,createIfMissing=T)
+
+  #Remove output files (if exist from previous run)
+  removeTestableOutputFiles(trajectoryLocalArgs,trajectoryAnalysisArgs)
+
+  # Create new cohort table for this package to results schema & fill it in (all having cohort_id=1 in cohort data)
+  Trajectories:::createAndFillCohortTable(connection=connection,
+                                          trajectoryAnalysisArgs=trajectoryAnalysisArgs,
+                                          trajectoryLocalArgs=trajectoryLocalArgs)
+
+  # Create database tables of all event pairs (patient level data + summary statistics)
+  Trajectories:::createEventPairsTable(connection=connection,
+                                       trajectoryAnalysisArgs=trajectoryAnalysisArgs,
+                                       trajectoryLocalArgs=trajectoryLocalArgs)
+
+  Trajectories:::runDiscoveryAnalysis(connection=connection,
+                                      trajectoryAnalysisArgs=trajectoryAnalysisArgs,
+                                      trajectoryLocalArgs=trajectoryLocalArgs)
+
+  #No further test, just confirm that the previous command did not produce any error
+
+
+})
 
 
 testthat::test_that("Test ability to detect a synthetic event pair association (not directional) in data", {
