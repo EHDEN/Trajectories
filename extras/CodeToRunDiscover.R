@@ -24,9 +24,9 @@ trajectoryLocalArgs <- Trajectories::createTrajectoryLocalArgs(oracleTempSchema 
                                                                vocabDatabaseSchema = 'ohdsi_cdm_next',
                                                                resultsSchema = 'ohdsi_temp',
                                                                sqlRole = F, # You may always use 'F'. Setting specific role might be useful in PostgreSQL when you want to create tables by using specific role so that the others also see the results. However, then you must ensure that this role has permissions to read from all necessary schemas and also create tables to resultsSchema
-                                                               inputFolder=system.file("extdata", "T2D", package = "Trajectories"), # Full path to input folder that contains SQL file for cohort definition and optionally also trajectoryAnalysisArgs.json. You can use built-in folders of this package such as: inputFolder=system.file("extdata", "T2D", package = "Trajectories")
+                                                               inputFolder=system.file("extdata", "brunak", package = "Trajectories"), # Full path to input folder that contains SQL file for cohort definition and optionally also trajectoryAnalysisArgs.json. You can use built-in folders of this package such as: inputFolder=system.file("extdata", "T2D", package = "Trajectories")
                                                                mainOutputFolder='/Users/sulevr/temp', #Subfolders will be created automatically
-                                                               databaseHumanReadableName='RITA') #Use something short. This will be used as a folder name an it will be added to the titles of the graph.
+                                                               databaseHumanReadableName='RITA.BRUNAK.REPLICATE') #Use something short. This will be used as a folder name an it will be added to the titles of the graph.
 
 
 
@@ -36,9 +36,9 @@ trajectoryLocalArgs <- Trajectories::createTrajectoryLocalArgs(oracleTempSchema 
 
 Trajectories::discover(connection,
                        trajectoryLocalArgs,
-                       createCohort=T,
+                       createCohort=F,
                        validationSetSize=0, #set to 0 if you are you going to validate the results in another databaase anyways
-                       createEventPairsTable=T,
+                       createEventPairsTable=F,
                        runDiscoveryAnalysis=T,
                        forceRecalculationOfAnalysis=F, #used only if runDiscoveryAnalysis=T
                        createFilteredFullgraphs=T,

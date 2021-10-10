@@ -1425,7 +1425,7 @@ buildCaseControlGroups<-function(connection,trajectoryLocalArgs,diagnosis1,diagn
   d <- d %>% filter(!is.na(SEASON_OF_INDEXDATE))
 
   #table(d$IS_CASE)
-  table(d[d$IS_CASE==1,]$GENDER)
+  #table(d[d$IS_CASE==1,]$GENDER)
 
   m.out1 <- Trajectories:::matchitWithTryCatch(d=d)
   #summary(m.out1)
@@ -1496,49 +1496,52 @@ matchitWithTryCatch <- function(d) {
     exact=c("GENDER","AGEGROUP","YEAR_OF_INDEXDATE") #Gender, age group and year of index date must be match in case/control group
   }
 
-   tryCatch(
-      expr = {
-        m.out1<-suppressWarnings(MatchIt::matchit(formula=f, #formula for logistic regression
-                         data=d,
-                         method = "optimal", # Find a control patients so that the sum of the absolute pairwise distances in the matched sample is as small as possible
-                         distance = "glm", #Use logistic regression based propensity score
-                         exact=exact,
-                         discard="both", # discard cases or controls where no good matching is found
-                         reestimate=T) #After discarding some cases/controls, re-estimate the propensity scores
-        )
-        return(m.out1)
-        #message("Successfully executed the log(x) call.")
-      },
-      error = function(e){
-        ParallelLogger::logInfo('Caught an error in matchit() but catched it in try-catch: ',e)
-        ParallelLogger::logInfo('Therefore, trying nearest neighbor matching instead of optimal...')
+ tryCatch(
+    expr = {
+      m.out1<-suppressWarnings(MatchIt::matchit(formula=f, #formula for logistic regression
+                       data=d,
+                       method = "optimal", # Find a control patients so that the sum of the absolute pairwise distances in the matched sample is as small as possible
+                       distance = "glm", #Use logistic regression based propensity score
+                       exact=exact,
+                       discard="both", # discard cases or controls where no good matching is found
+                       reestimate=T) #After discarding some cases/controls, re-estimate the propensity scores
+      )
+      return(m.out1)
+      #message("Successfully executed the log(x) call.")
+    },
+    error = function(e){
+      ParallelLogger::logInfo('Caught an error in matchit() but catched it in try-catch: ',e)
+      ParallelLogger::logInfo('Therefore, trying nearest neighbor matching instead of optimal...')
+    }
+    #warning = function(w){ #warning block is commented out to prevent stopping the execution of matchIt() if warning occurs
+    #  ParallelLogger::logInfo('Caught a warning in matchit() but catched it in try-catch:',w)
+    #},
+    #finally = {
+    #
+    #}
+  ) #tryCatch
 
-        tryCatch(
-          expr = {
-            m.out1<-suppressWarnings(MatchIt::matchit(formula=f, #formula for logistic regression
-                                 data=d,
-                                 method = "nearest", # Find a control patients based on nearest neighbor method
-                                 distance = "glm", #Use logistic regression based propensity score
-                                 exact=exact,
-                                 discard="both", # discard cases or controls where no good matching is found
-                                 reestimate=T) #After discarding some cases/controls, re-estimate the propensity scores
-            )
-            return(m.out1)
-          },
-          error = function(e){
-            ParallelLogger::logInfo('Still caught an error in matchit() but catched it in try-catch: ',e)
-            ParallelLogger::logInfo('Giving up on trying matching case-control groups...')
-            return(NULL)
-          }
-        ) #tryCatch
-      }
-      #warning = function(w){ #warning block is commented out to prevent stopping the execution of matchIt() if warning occurs
-      #  ParallelLogger::logInfo('Caught a warning in matchit() but catched it in try-catch:',w)
-      #},
-      #finally = {
-      #
-      #}
-    ) #tryCatch
+  #should reach here only if an error occurred
 
+  tryCatch(
+    expr = {
+      m.out1<-suppressWarnings(MatchIt::matchit(formula=f, #formula for logistic regression
+                                                data=d,
+                                                method = "nearest", # Find a control patients based on nearest neighbor method
+                                                distance = "glm", #Use logistic regression based propensity score
+                                                exact=exact,
+                                                discard="both", # discard cases or controls where no good matching is found
+                                                reestimate=T) #After discarding some cases/controls, re-estimate the propensity scores
+      )
+      return(m.out1)
+    },
+    error = function(e){
+      ParallelLogger::logInfo('Still caught an error in matchit() but catched it in try-catch: ',e)
+      ParallelLogger::logInfo('Giving up on trying matching case-control groups...')
+      return(NULL)
+    }
+  ) #tryCatch
+
+  #should never reach here
   return(NULL)
 }
