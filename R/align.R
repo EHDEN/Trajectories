@@ -261,11 +261,11 @@ alignTrajectoriesToGraph<-function(connection,
   #Save trajectories to TSV and RData file
   Trajectories:::saveAllTrajs(all_trajs,trajectoryAnalysisArgs,trajectoryLocalArgs)
 
-  #Save trajectories to TSV and RData file
-  Trajectories:::saveAllTrajs(all_trajs,trajectoryAnalysisArgs,trajectoryLocalArgs)
-
   #Add column trajectory.names.str
   all_trajs <- all_trajs %>% Trajectories:::addEventNamesToTrajectories(Node.names)
+
+  #Save trajectories to TSV and RData file
+  Trajectories:::saveAllTrajs(all_trajs,trajectoryAnalysisArgs,trajectoryLocalArgs)
 
   #detect subgraphs
   #To prevent very resource demanding calculations, limit the scope of subgraph detection if the number of trajectories is very big
@@ -286,7 +286,7 @@ alignTrajectoriesToGraph<-function(connection,
     #put the results back to the original all_trajs dataframe
     if('total_count' %in% colnames(all_trajs)) all_trajs <- all_trajs %>% dplyr::select(-total_count)
     if('is_subtrajectory_of' %in% colnames(all_trajs)) all_trajs <- all_trajs %>% dplyr::select(-is_subtrajectory_of)
-    all_trajs <- dplyr::left_join(all_trajs_left %>% dplyr::select(id, approx_total_count=total_count, is_subtrajectory_of), by=c('id'='id'))
+    all_trajs <- all_trajs %>% dplyr::left_join(all_trajs_left %>% dplyr::select(id, approx_total_count=total_count, is_subtrajectory_of), by=c('id'='id'))
 
   } else {
     all_trajs<-Trajectories:::detectSubgraphs(all_trajs)
