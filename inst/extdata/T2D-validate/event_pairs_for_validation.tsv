@@ -1,0 +1,139 @@
+	E1_CONCEPT_ID	E2_CONCEPT_ID	E1_NAME	E2_NAME	E1_DOMAIN	E2_DOMAIN	RR_IN_PREVIOUS_STUDY
+1	440674	1167322	Gout	allopurinol	Condition	Drug	238
+2	140673	1501700	Hypothyroidism	levothyroxine	Condition	Drug	40.4
+3	201826	1503297	Type 2 diabetes mellitus	metformin	Condition	Drug	33.206
+4	201826	19059796	Type 2 diabetes mellitus	gliclazide	Condition	Drug	27.467
+5	1373225	978555	perindopril	indapamide	Drug	Drug	21.429
+6	321318	1383815	Angina pectoris	isosorbide	Condition	Drug	18
+7	81902	1778162	Urinary tract infectious disease	cefuroxime	Condition	Drug	17.5
+8	1797513	1778162	ciprofloxacin	cefuroxime	Drug	Drug	15.333
+9	437530	438720	Disorder of lipid metabolism	Mixed hyperlipidemia	Condition	Condition	14.4
+10	316139	970250	Heart failure	spironolactone	Condition	Drug	13.108
+11	201826	1580747	Type 2 diabetes mellitus	sitagliptin	Condition	Drug	12.286
+12	195588	81902	Cystitis	Urinary tract infectious disease	Condition	Condition	11.914
+13	321318	317576	Angina pectoris	Coronary arteriosclerosis	Condition	Condition	11.833
+14	195588	920293	Cystitis	nitrofurantoin	Condition	Drug	11.376
+15	1503297	19059796	metformin	gliclazide	Drug	Drug	9.962
+16	435524	19044883	Sleep disorder	zopiclone	Condition	Drug	7.75
+17	19059796	1580747	gliclazide	sitagliptin	Drug	Drug	7.727
+18	195588	1797513	Cystitis	ciprofloxacin	Condition	Drug	7.163
+19	316139	1326303	Heart failure	digoxin	Condition	Drug	6.729
+20	1503297	1580747	metformin	sitagliptin	Drug	Drug	6.487
+21	201826	1597756	Type 2 diabetes mellitus	glimepiride	Condition	Drug	6.188
+22	1503297	1597756	metformin	glimepiride	Drug	Drug	6.123
+23	321318	1322184	Angina pectoris	clopidogrel	Condition	Drug	5.789
+24	1103314	797399	tramadol	gabapentin	Drug	Drug	5.735
+25	1103314	734354	tramadol	pregabalin	Drug	Drug	5.719
+26	81902	920293	Urinary tract infectious disease	nitrofurantoin	Condition	Drug	5.378
+27	316139	956874	Heart failure	furosemide	Condition	Drug	5.133
+28	4174977	1567198	Retinopathy due to diabetes mellitus	insulin aspart, human	Condition	Drug	5
+29	1597756	1580747	glimepiride	sitagliptin	Drug	Drug	4.857
+30	260139	255573	Acute bronchitis	Chronic obstructive lung disease	Condition	Condition	4.8
+31	1503297	40239216	metformin	linagliptin	Drug	Drug	4.4
+32	4174977	1502905	Retinopathy due to diabetes mellitus	insulin glargine	Condition	Drug	3.896
+33	1713332	1778162	amoxicillin	cefuroxime	Drug	Drug	3.786
+34	1307046	1326303	metoprolol	digoxin	Drug	Drug	3.701
+35	321318	1373225	Angina pectoris	perindopril	Condition	Drug	3.447
+36	314666	1307046	Old myocardial infarction	metoprolol	Condition	Drug	3.273
+37	321318	1307046	Angina pectoris	metoprolol	Condition	Drug	3.273
+38	1125315	797399	acetaminophen	gabapentin	Drug	Drug	3.227
+39	1713332	1734104	amoxicillin	azithromycin	Drug	Drug	3.207
+40	321318	1510813	Angina pectoris	rosuvastatin	Condition	Drug	3.145
+41	1124300	1103314	diclofenac	tramadol	Drug	Drug	3.016
+42	260139	255848	Acute bronchitis	Pneumonia	Condition	Condition	2.987
+43	1307046	1383815	metoprolol	isosorbide	Drug	Drug	2.972
+44	260139	1154343	Acute bronchitis	albuterol	Condition	Drug	2.942
+45	1124300	1506270	diclofenac	methylprednisolone	Drug	Drug	2.915
+46	1713332	1797513	amoxicillin	ciprofloxacin	Drug	Drug	2.838
+47	317009	1149380	Asthma	fluticasone	Condition	Drug	2.809
+48	201826	1539403	Type 2 diabetes mellitus	simvastatin	Condition	Drug	2.76
+49	201826	1373225	Type 2 diabetes mellitus	perindopril	Condition	Drug	2.741
+50	321318	316139	Angina pectoris	Heart failure	Condition	Condition	2.725
+51	321318	948078	Angina pectoris	pantoprazole	Condition	Drug	2.723
+52	1124300	1150345	diclofenac	meloxicam	Drug	Drug	2.663
+53	320128	438720	Essential hypertension	Mixed hyperlipidemia	Condition	Condition	2.652
+54	260139	1734104	Acute bronchitis	azithromycin	Condition	Drug	2.608
+55	316139	1167322	Heart failure	allopurinol	Condition	Drug	2.587
+56	1124300	723013	diclofenac	diazepam	Drug	Drug	2.561
+57	1503297	978555	metformin	indapamide	Drug	Drug	2.542
+58	1307046	970250	metoprolol	spironolactone	Drug	Drug	2.537
+59	1503297	1539403	metformin	simvastatin	Drug	Drug	2.525
+60	194133	4227449	Low back pain	Spondylosis	Condition	Condition	2.508
+61	1124300	797399	diclofenac	gabapentin	Drug	Drug	2.45
+62	1124300	19011355	diclofenac	etoricoxib	Drug	Drug	2.443
+63	4079750	19011355	Osteoarthritis of knee	etoricoxib	Condition	Drug	2.367
+64	4079750	1150345	Osteoarthritis of knee	meloxicam	Condition	Drug	2.345
+65	320128	437530	Essential hypertension	Disorder of lipid metabolism	Condition	Condition	2.302
+66	194133	1103314	Low back pain	tramadol	Condition	Drug	2.229
+67	255573	1149380	Chronic obstructive lung disease	fluticasone	Condition	Drug	2.222
+68	201826	1326303	Type 2 diabetes mellitus	digoxin	Condition	Drug	2.174
+69	1750500	1797513	clarithromycin	ciprofloxacin	Drug	Drug	2.139
+70	1124300	1125315	diclofenac	acetaminophen	Drug	Drug	2.136
+71	1307046	40241331	metoprolol	rivaroxaban	Drug	Drug	2.115
+72	1307046	956874	metoprolol	furosemide	Drug	Drug	2.113
+73	321318	1545958	Angina pectoris	atorvastatin	Condition	Drug	2.095
+74	1124300	1177480	diclofenac	ibuprofen	Drug	Drug	2.084
+75	435524	723013	Sleep disorder	diazepam	Condition	Drug	2.02
+76	1307046	1373225	metoprolol	perindopril	Drug	Drug	2.019
+77	923645	1750500	omeprazole	clarithromycin	Drug	Drug	1.997
+78	1503297	1373225	metformin	perindopril	Drug	Drug	1.993
+79	1307046	1332418	metoprolol	amlodipine	Drug	Drug	1.989
+80	1124300	903963	diclofenac	triamcinolone	Drug	Drug	1.986
+81	316139	1307046	Heart failure	metoprolol	Condition	Drug	1.972
+82	1124300	1201620	diclofenac	codeine	Drug	Drug	1.967
+83	1124300	1115008	diclofenac	naproxen	Drug	Drug	1.925
+84	260139	1149380	Acute bronchitis	fluticasone	Condition	Drug	1.924
+85	321318	435524	Angina pectoris	Sleep disorder	Condition	Condition	1.891
+86	320128	201826	Essential hypertension	Type 2 diabetes mellitus	Condition	Condition	1.889
+87	201826	1501700	Type 2 diabetes mellitus	levothyroxine	Condition	Drug	1.851
+88	201826	1510813	Type 2 diabetes mellitus	rosuvastatin	Condition	Drug	1.849
+89	923645	1103314	omeprazole	tramadol	Drug	Drug	1.848
+90	1307046	1322184	metoprolol	clopidogrel	Drug	Drug	1.843
+91	1503297	1545958	metformin	atorvastatin	Drug	Drug	1.837
+92	923645	1167322	omeprazole	allopurinol	Drug	Drug	1.83
+93	201826	1545958	Type 2 diabetes mellitus	atorvastatin	Condition	Drug	1.823
+94	260139	1750500	Acute bronchitis	clarithromycin	Condition	Drug	1.787
+95	201826	904453	Type 2 diabetes mellitus	esomeprazole	Condition	Drug	1.783
+96	4079749	1103314	Osteoarthritis of hip	tramadol	Condition	Drug	1.776
+97	923645	1115008	omeprazole	naproxen	Drug	Drug	1.765
+98	201826	1167322	Type 2 diabetes mellitus	allopurinol	Condition	Drug	1.755
+99	1124300	19020124	diclofenac	betahistine	Drug	Drug	1.745
+100	923645	19011355	omeprazole	etoricoxib	Drug	Drug	1.715
+101	194133	4079749	Low back pain	Osteoarthritis of hip	Condition	Condition	1.712
+102	1201620	797399	codeine	gabapentin	Drug	Drug	1.706
+103	1124300	1750500	diclofenac	clarithromycin	Drug	Drug	1.643
+104	1503297	1341927	metformin	enalapril	Drug	Drug	1.607
+105	923645	1201620	omeprazole	codeine	Drug	Drug	1.606
+106	1124300	904453	diclofenac	esomeprazole	Drug	Drug	1.588
+107	1503297	1332418	metformin	amlodipine	Drug	Drug	1.579
+108	201826	1383815	Type 2 diabetes mellitus	isosorbide	Condition	Drug	1.57
+109	1503297	1510813	metformin	rosuvastatin	Drug	Drug	1.569
+110	1307046	1167322	metoprolol	allopurinol	Drug	Drug	1.561
+111	316139	948078	Heart failure	pantoprazole	Condition	Drug	1.556
+112	201826	923645	Type 2 diabetes mellitus	omeprazole	Condition	Drug	1.551
+113	201826	1332418	Type 2 diabetes mellitus	amlodipine	Condition	Drug	1.535
+114	194133	1125315	Low back pain	acetaminophen	Condition	Drug	1.533
+115	923645	1125315	omeprazole	acetaminophen	Drug	Drug	1.529
+116	1124300	19044883	diclofenac	zopiclone	Drug	Drug	1.522
+117	201826	1307046	Type 2 diabetes mellitus	metoprolol	Condition	Drug	1.521
+118	433736	1503297	Obesity	metformin	Condition	Drug	1.507
+119	904453	1103314	esomeprazole	tramadol	Drug	Drug	1.498
+120	4079750	1115008	Osteoarthritis of knee	naproxen	Condition	Drug	1.498
+121	4079750	1103314	Osteoarthritis of knee	tramadol	Condition	Drug	1.482
+122	1503297	1307046	metformin	metoprolol	Drug	Drug	1.474
+123	1503297	923645	metformin	omeprazole	Drug	Drug	1.471
+124	923645	906780	omeprazole	metoclopramide	Drug	Drug	1.453
+125	194133	1115008	Low back pain	naproxen	Condition	Drug	1.453
+126	923645	19020124	omeprazole	betahistine	Drug	Drug	1.442
+127	1124300	905233	diclofenac	mometasone	Drug	Drug	1.435
+128	1124300	1734104	diclofenac	azithromycin	Drug	Drug	1.433
+129	1503297	1124300	metformin	diclofenac	Drug	Drug	1.41
+130	4079750	1125315	Osteoarthritis of knee	acetaminophen	Condition	Drug	1.41
+131	1503297	904453	metformin	esomeprazole	Drug	Drug	1.397
+132	1307046	948078	metoprolol	pantoprazole	Drug	Drug	1.387
+133	201826	1713332	Type 2 diabetes mellitus	amoxicillin	Condition	Drug	1.38
+134	1503297	1115008	metformin	naproxen	Drug	Drug	1.379
+135	201826	1124300	Type 2 diabetes mellitus	diclofenac	Condition	Drug	1.376
+136	201826	1115008	Type 2 diabetes mellitus	naproxen	Condition	Drug	1.369
+137	260139	195588	Acute bronchitis	Cystitis	Condition	Condition	1.319
+138	1503297	1713332	metformin	amoxicillin	Drug	Drug	1.314

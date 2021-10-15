@@ -1,0 +1,18 @@
+{
+  "mode": ["VALIDATION"],
+  "minimumDaysBetweenEvents": [1],
+  "maximumDaysBetweenEvents": [365],
+  "minPatientsPerEventPair": [0.01],
+  "addConditions": [true],
+  "addObservations": [false],
+  "addProcedures": [false],
+  "addDrugExposures": [false],
+  "addDrugEras": [true],
+  "addBirths": [false],
+  "addDeaths": [false],
+  "daysBeforeIndexDate": ["Inf"],
+  "RRrangeToSkip": [0, 1.2],
+  "cohortName": ["Type 2 diabetes"],
+  "description": ["Validation study of Type 2 diabetes cohort, event pairs taken from Kunnapuu et al."],
+  "eventIdsForGraphs": [4193704, 201826, 443732, 1503297]
+}

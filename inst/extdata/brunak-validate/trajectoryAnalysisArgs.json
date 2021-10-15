@@ -15,5 +15,5 @@
   "cohortName": ["Full database"],
   "description": ["Brunak validation study"],
   "eventIdsForGraphs": [null],
-  "RRrangeToSkip": [0.8, 1.2]
+  "RRrangeToSkip": [1, 1]
 }

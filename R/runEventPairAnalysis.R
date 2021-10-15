@@ -443,9 +443,9 @@ RRandCI<-function(num_observations_in_cases,case_group_size,num_observations_in_
   } else {
 
     dat <- matrix(c(a,b-a,c,d-c), nrow = 2, byrow = TRUE)
-    rownames(dat) <- c("E1+", "E1-"); colnames(dat) <- c("E2+", "E2-"); dat
+    rownames(dat) <- c("E1+", "E1-"); colnames(dat) <- c("E2+", "E2-")
     #print(dat)
-    r<-suppressWarnings(epitools::riskratio(dat, rev="both")) #rev=both is required here as the riskratio() requires the cells to be in the right irder
+    r<-suppressWarnings(epitools::riskratio(dat, rev="both")) #rev=both is required here as the riskratio() requires the cells to be in the right order
     if(b==0) { #case group sizei 0
       RR=Inf
       RR.lower=0
@@ -1480,6 +1480,44 @@ getSeason <- function(input.date){
   # rename the resulting groups (could've been done within cut(...levels=) if "Winter" wasn't double
   levels(cuts) <- c("Winter","Spring","Summer","Fall","Winter")
   return(cuts)
+}
+
+
+matchitWithTryCatchAlternative <- function(d) {
+
+  #in some rare cases, the number of different "SEASON_OF_INDEXDATE" values in case group is 1.
+  #As we use it in formula, glm.fit produces error "contrasts can be applied only to factors with 2 or more levels"
+  #To prevent that, take SEASON_OF_INDEXDATE out from the formula and require exact match
+  if(length(unique(d[d$IS_CASE==1,]$SEASON_OF_INDEXDATE))==1) { #only 1 different SEASON_OF_INDEXDATE value in case group
+    f=IS_CASE ~ scale(LEN_HISTORY_DAYS) + scale(LEN_FOLLOWUP_DAYS)
+    exact=c("GENDER","AGEGROUP","YEAR_OF_INDEXDATE","SEASON_OF_INDEXDATE") #Gender, age group and year of index date must be match in case/control group
+  } else {
+    #normal use case
+    f=IS_CASE ~ SEASON_OF_INDEXDATE + scale(LEN_HISTORY_DAYS) + scale(LEN_FOLLOWUP_DAYS)
+    exact=c("GENDER","AGEGROUP","YEAR_OF_INDEXDATE") #Gender, age group and year of index date must be match in case/control group
+  }
+
+  tryCatch(
+    expr = {
+      m.out1<-suppressWarnings(MatchIt::matchit(formula=f, #formula for logistic regression
+                                                data=d,
+                                                method = "nearest", # Find a control patients based on nearest neighbor method
+                                                distance = "glm", #Use logistic regression based propensity score
+                                                exact=exact,
+                                                discard="both", # discard cases or controls where no good matching is found
+                                                reestimate=T) #After discarding some cases/controls, re-estimate the propensity scores
+      )
+      return(m.out1)
+    },
+    error = function(e){
+      ParallelLogger::logInfo('Still caught an error in matchit() but catched it in try-catch: ',e)
+      ParallelLogger::logInfo('Giving up on trying matching case-control groups...')
+      return(NULL)
+    }
+  ) #tryCatch
+
+  #should never reach here
+  return(NULL)
 }
 
 matchitWithTryCatch <- function(d) {
