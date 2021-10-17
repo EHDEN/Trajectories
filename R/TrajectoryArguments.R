@@ -3,9 +3,9 @@ requireNamespace("jsonlite", quietly = TRUE)
 #' Creates an object to hold analysis-specific data
 #'
 #' @param mode Indicates whether the analysis is run in DISCOVERY or VALIDATION mode. In VALIDATION mode, the package tries to validate predefined event pairs. In DISCOVERY mode, it tries to identify all directional event pairs from the data.
-#' @param minimumDaysBetweenEvents The smallest number of days between 2 events of the patient that can be considered as event pair. Usually we have used 1.
-#' @param maximumDaysBetweenEvents The maximum number of days between 2 events of the patient that can be considered as event pair. Ususally we have not really limited it so we have used 3650 (10 years)
-#' @param minPatientsPerEventPair Minimum number of people having event1 -> event2 (directional) progression (satisfying minimumDaysBetweenEvents and maximumDaysBetweenEvents requirements) to be included in analysis. If the value is >=1, it is considered as the absolute count of event pairs. If the value is less than 1, the value is considered as prevalence among the cohort size. For instance, if you have 1000 persons in the cohort and the value is 0.05, each event pair must occur at least 1000x0.05=50 times. Can be used for limiting analysis to frequent event pairs only. However, it does not throw less frequent diagnosis pairs out of the (control group) data and therefore, does not affect the statistical significance.
+#' @param minimumDaysBetweenEvents The smallest number of days between two events of the patient that can be considered as event pair. Usually we have used 1 but 0 is also possible. The smaller the number is, the more time the calculation takes.
+#' @param maximumDaysBetweenEvents The maximum number of days between two events of the patient that can be considered as event pair. Ususally we have not really limited it so we have used 3650 (10 years)
+#' @param minPatientsPerEventPair Minimum number of people having event1 -> event2 (directional) progression (satisfying minimumDaysBetweenEvents and maximumDaysBetweenEvents requirements) to be included in analysis. If the value is >=1, it is considered as the absolute count of event pairs. If the value is less than 1, the value is considered as prevalence among the cohort size. For instance, if you have 1000 persons in the cohort and the value is 0.05, each event pair must occur at least 1000x0.05=50 times. Can be used for limiting analysis to frequent event pairs only. However, it does not affect control group matching and therefore, either the p-value.
 #' @param addConditions TRUE/FALSE parameter to indicate whether events from Condition_occurrence table should be included in the analysis
 #' @param addObservations TRUE/FALSE parameter to indicate whether events from Condition_occurrence table should be included in the analysis
 #' @param addProcedures TRUE/FALSE parameter to indicate whether events from Procedure_occurrence table should be included in the analysis
@@ -55,6 +55,26 @@ createTrajectoryAnalysisArgs <- function(mode='DISCOVERY',
   }
   if(RRrangeToSkip[2]<1) {
     ParallelLogger::logError("Error in RRrangeToSkip=c(",RRrangeToSkip[1],",",RRrangeToSkip[2],") value: The second value of the range must be greater than 1.")
+    stop()
+  }
+  if(!is.numeric(minimumDaysBetweenEvents)) {
+    ParallelLogger::logError("Error in parameters: minimumDaysBetweenEvents value '",minimumDaysBetweenEvents,"' is not numeric.")
+    stop()
+  }
+  if(minimumDaysBetweenEvents<0) {
+    ParallelLogger::logError("Error in parameters: minimumDaysBetweenEvents value '",minimumDaysBetweenEvents,"' is negative which is not allowed.")
+    stop()
+  }
+  if(!is.numeric(maximumDaysBetweenEvents)) {
+    ParallelLogger::logError("Error in parameters: maximumDaysBetweenEvents value '",maximumDaysBetweenEvents,"' is not numeric.")
+    stop()
+  }
+  if(maximumDaysBetweenEvents<0) {
+    ParallelLogger::logError("Error in parameters: maximumDaysBetweenEvents value '",maximumDaysBetweenEvents,"' is negative which is not allowed.")
+    stop()
+  }
+  if(minimumDaysBetweenEvents>maximumDaysBetweenEvents) {
+    ParallelLogger::logError("Error in parameters: minimumDaysBetweenEvents value '",maximumDaysBetweenEvents,"' is larger than maximumDaysBetweenEvents value '",maximumDaysBetweenEvents,"' which is not allowed.")
     stop()
   }
 

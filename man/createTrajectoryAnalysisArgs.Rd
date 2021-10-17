@@ -26,11 +26,11 @@ createTrajectoryAnalysisArgs(
 \arguments{
 \item{mode}{Indicates whether the analysis is run in DISCOVERY or VALIDATION mode. In VALIDATION mode, the package tries to validate predefined event pairs. In DISCOVERY mode, it tries to identify all directional event pairs from the data.}
 
-\item{minimumDaysBetweenEvents}{The smallest number of days between 2 events of the patient that can be considered as event pair. Usually we have used 1.}
+\item{minimumDaysBetweenEvents}{The smallest number of days between two events of the patient that can be considered as event pair. Usually we have used 1 but 0 is also possible. The smaller the number is, the more time the calculation takes.}
 
-\item{maximumDaysBetweenEvents}{The maximum number of days between 2 events of the patient that can be considered as event pair. Ususally we have not really limited it so we have used 3650 (10 years)}
+\item{maximumDaysBetweenEvents}{The maximum number of days between two events of the patient that can be considered as event pair. Ususally we have not really limited it so we have used 3650 (10 years)}
 
-\item{minPatientsPerEventPair}{Minimum number of people having event1 -> event2 (directional) progression (satisfying minimumDaysBetweenEvents and maximumDaysBetweenEvents requirements) to be included in analysis. If the value is >=1, it is considered as the absolute count of event pairs. If the value is less than 1, the value is considered as prevalence among the cohort size. For instance, if you have 1000 persons in the cohort and the value is 0.05, each event pair must occur at least 1000x0.05=50 times. Can be used for limiting analysis to frequent event pairs only. However, it does not throw less frequent diagnosis pairs out of the (control group) data and therefore, does not affect the statistical significance.}
+\item{minPatientsPerEventPair}{Minimum number of people having event1 -> event2 (directional) progression (satisfying minimumDaysBetweenEvents and maximumDaysBetweenEvents requirements) to be included in analysis. If the value is >=1, it is considered as the absolute count of event pairs. If the value is less than 1, the value is considered as prevalence among the cohort size. For instance, if you have 1000 persons in the cohort and the value is 0.05, each event pair must occur at least 1000x0.05=50 times. Can be used for limiting analysis to frequent event pairs only. However, it does not affect control group matching and therefore, either the p-value.}
 
 \item{addConditions}{TRUE/FALSE parameter to indicate whether events from Condition_occurrence table should be included in the analysis}
 

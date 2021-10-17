@@ -397,7 +397,7 @@ getPowerRR<-function(case_group_size,control_group_size,num_observations_in_case
 
 }
 
-#Get power of direction: the probability that we detect the direction E1->E2 in case E1->E2 is overrepresented by 20%
+#Get power of direction: the probability that we detect the direction E1->E2 in case E1->E2 is overrepresented by 20% when compared to E2->E1
 getPowerDirection<-function(EVENTPERIOD_COUNT_E1_OCCURS_FIRST,EVENTPERIOD_COUNT_E2_OCCURS_FIRST,EVENTPERIOD_COUNT_E1_E2_OCCUR_ON_SAME_DAY,rr.threshold=1.2) {
 
   n=1000
@@ -409,8 +409,17 @@ getPowerDirection<-function(EVENTPERIOD_COUNT_E1_OCCURS_FIRST,EVENTPERIOD_COUNT_
   elevated_signal_prob=rr.threshold/(1+rr.threshold) #if one direction has prevalence 55% (elevated signal prob) and the other 45%, then the signal strength is 20% (45% x 20%)
   if(elevated_signal_prob>1) elevated_signal_prob=1 #probability cant be higher than 1
 
-  #Sample this distribution 1000 times (from infinite distribution) and see how many elevated_e1_occurs_first-s you'll get (skip tests where EVENTPERIOD_COUNT_E1_E2_OCCUR_ON_SAME_DAY)
-  elevated_e1_occurs_first = apply(replicate(n = n, expr=sample(c(1,0), total_tests-EVENTPERIOD_COUNT_E1_E2_OCCUR_ON_SAME_DAY, T, c(elevated_signal_prob,1-elevated_signal_prob)), simplify = T),2,sum)
+  #If there were at least some occurrences of the pair where E1 and E2 did not happen on the same day
+  if(total_tests-EVENTPERIOD_COUNT_E1_E2_OCCUR_ON_SAME_DAY>1) {
+    #Sample this distribution 1000 times (from infinite distribution) and see how many elevated_e1_occurs_first-s you'll get (skip tests where EVENTPERIOD_COUNT_E1_E2_OCCUR_ON_SAME_DAY)
+    elevated_e1_occurs_first = apply(replicate(n = n, expr=sample(c(1,0), total_tests-EVENTPERIOD_COUNT_E1_E2_OCCUR_ON_SAME_DAY, replace=T, prob=c(elevated_signal_prob,1-elevated_signal_prob)), simplify = T),2,sum)
+  } else if(total_tests-EVENTPERIOD_COUNT_E1_E2_OCCUR_ON_SAME_DAY==1) {
+    # A special case (a pair occurred at different days only once) to handle as apply() behaves differently
+    elevated_e1_occurs_first = replicate(n = n, expr=sample(c(1,0), total_tests-EVENTPERIOD_COUNT_E1_E2_OCCUR_ON_SAME_DAY, replace=T, prob=c(elevated_signal_prob,1-elevated_signal_prob)), simplify = T)
+  } else {
+    #E1 and E2 always happened on the same day.
+    elevated_e1_occurs_first=rep(0,n=n)
+  }
 
   #Calculate p-value for each of these sampled case groups
   p.vals <- mapply(Trajectories:::getPValueForDirection,

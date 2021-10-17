@@ -85,7 +85,7 @@ discover <- function(connection,
                                          trajectoryLocalArgs)
 
   # Run trajectory analysis
-  if(runTrajectoryAnalysis) Trajectories:::align(connection,
+  if(runTrajectoryAnalysis) Trajectories:::countTrajectories(connection,
                                                  trajectoryAnalysisArgs,
                                                  trajectoryLocalArgs)
 

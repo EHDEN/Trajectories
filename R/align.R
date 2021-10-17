@@ -4,15 +4,6 @@ requireNamespace("igraph", quietly = TRUE)
 
 #' Creates and fills alignment tables to the database for a given graph.
 #' Particularly, creates table "graph_events" for events and table "graph_event_pairs" for the pairs
-#' Note that these pairs are not "between any combination" of events like in discovery/validation analysis,
-#' but specifically between the events that are occurring temporally next to each other.
-#' For example, A->B->C produces pairs A->B and B->C only.
-#'
-#' Also note that "graph_event_pairs" does not include pairs between events that occur on the same day.
-#' In case B and C occur on the same day on A->B/C->D trajectory, the pairs A->B, A->C, A->D, B->D, C->D are created.
-#' Therefore, a single eventperiod can still produce several "paths" in the graph from A to D.
-#'
-#' In case a patient has A->B->C->D, but there are only edges A->B, A->D, C->D on the graph, it also produces 2 separate trajectories: A->B and C->D
 #'
 #' @param connection
 #' @param trajectoryAnalysisArgs
@@ -22,10 +13,10 @@ requireNamespace("igraph", quietly = TRUE)
 #' @return TrajectoriesGraph object with filled E(g)$alignedTrajsCount, E(g)$alignedTrajsProb and V(g)$alignedTrajsCount values
 #'
 #' @examples
-createAlignmentTables <- function(connection,
-                      trajectoryAnalysisArgs,
-                      trajectoryLocalArgs,
-                      g) {
+createAlignmentTableNew <- function(connection,
+                                    trajectoryAnalysisArgs,
+                                    trajectoryLocalArgs,
+                                    g) {
 
   if(!inherits(g, 'TrajectoriesGraph')) stop('Error in createAlignmentTables(): object g is not class TrajectoriesGraph object')
 
@@ -50,15 +41,15 @@ createAlignmentTables <- function(connection,
   #querySql(connection, paste0("SELECT COUNT(*) FROM ",tablename))
 
   #align trajectories to graph (to get the exact E1->E2 counts with no intermediate events)
-  #Takes all trajectories that pass any event of that graph. Leaves out intermediate events that are not given in the graph.
   #Creates table "graph_events" for events and also pairs of these events to "graph_event_pairs" (does not include pairs between events that occur on the same day)
   ParallelLogger::logInfo('Filtering these event pairs in the database and extracting counts, and finally writing the counts back to the database...')
-  RenderedSql <- Trajectories:::loadRenderTranslateSql("map_actual_trajs_to_graph3.sql",
+  RenderedSql <- Trajectories:::loadRenderTranslateSql("map_actual_trajs_to_graph4.sql",
                                                        packageName=get('TRAJECTORIES_PACKAGE_NAME', envir=TRAJECTORIES.CONSTANTS),
                                                        dbms=attr(connection, "dbms"),
                                                        resultsSchema =  trajectoryLocalArgs$resultsSchema,
                                                        prefiX = trajectoryLocalArgs$prefixForResultTableNames
   )
+
   DatabaseConnector::executeSql(connection, RenderedSql)
   ParallelLogger::logInfo('... done.')
 
@@ -70,22 +61,6 @@ createAlignmentTables <- function(connection,
   tablename<-paste0(trajectoryLocalArgs$resultsSchema,'.',trajectoryLocalArgs$prefixForResultTableNames,'graph_event_pairs')
   actual_event_pairs<-querySql(connection, paste0("SELECT e1_concept_id,e2_concept_id,COUNT(*) AS count FROM ",tablename,' GROUP BY e1_concept_id,e2_concept_id ORDER BY COUNT(*) DESC'))
 
-  #Calculate percentages
-  #Get cohortsize (needed for calculating the percentages later)
-  sql<-"SELECT COUNT(*) AS COHORTSIZE FROM @resultsSchema.@prefiXmycohort;"
-  RenderedSql <- SqlRender::render(sql, resultsSchema=trajectoryLocalArgs$resultsSchema, prefiX = trajectoryLocalArgs$prefixForResultTableNames)
-  RenderedSql <- SqlRender::translate(RenderedSql,targetDialect=attr(connection, "dbms"))
-  res<-c(DatabaseConnector::querySql(connection, RenderedSql))
-  COHORTSIZE=res$COHORTSIZE
-  actual_events$PERC <- actual_events$COUNT/COHORTSIZE
-  actual_event_pairs$PERC <- actual_event_pairs$COUNT/COHORTSIZE
-
-  #clear all alignedTrajsCount values
-  igraph::E(g)$alignedTrajsCount<-0
-  igraph::V(g)$alignedTrajsCount<-0
-  igraph::E(g)$alignedTrajsProb<-0
-
-
   #update alignedTrajsCount values
   v<-igraph::as_data_frame(g,what="vertices")
   e<-igraph::as_data_frame(g,what="edges")
@@ -93,209 +68,21 @@ createAlignmentTables <- function(connection,
   if('count' %in% colnames(v)) v <- v %>% dplyr::select(-count) #remove this to prevent old COUNT existing and leading to multiple COUNT columns after join
   v <- v %>%
     dplyr::left_join(actual_events, by=c('concept_id'='CONCEPT_ID')) %>%
-    dplyr::mutate(alignedTrajsCount=dplyr::if_else(is.na(COUNT),as.integer(0),as.integer(COUNT)))
+    dplyr::mutate(COUNT=dplyr::if_else(is.na(COUNT),as.integer(0),as.integer(COUNT)))
   e <- e %>%
     dplyr::left_join(actual_event_pairs, by=c('e1_concept_id'='E1_CONCEPT_ID', 'e2_concept_id'='E2_CONCEPT_ID')) %>%
-    dplyr::mutate(alignedTrajsCount=dplyr::if_else(is.na(COUNT),as.integer(0),as.integer(COUNT)))
+    dplyr::mutate(COUNT=dplyr::if_else(is.na(COUNT),as.integer(0),as.integer(COUNT)))
   g2 <- igraph::graph_from_data_frame(e, directed=TRUE, vertices=v)
 
-
-  #create alignedTrajsProb values
-  edge.start <- igraph::ends(g2, es=igraph::E(g2), names=F)[,1] #outputs the start node id of each edge
-  igraph::E(g2)$alignedTrajsProb <- igraph::E(g2)$alignedTrajsCount/igraph::V(g2)$alignedTrajsCount[edge.start]
-
-
   #For reporting purposes create temporarily a filtered graph also (where edge count>0):
-  g3 <- igraph::subgraph.edges(g2, igraph::E(g2)[igraph::E(g2)$alignedTrajsCount>0], delete.vertices = TRUE)
+  g3 <- igraph::subgraph.edges(g2, igraph::E(g2)[igraph::E(g2)$COUNT>0], delete.vertices = TRUE)
 
   ParallelLogger::logInfo('Done. Out of ',length(igraph::V(g)),' events and ',length(igraph::E(g)),' pairs in original graph, ',length(igraph::V(g3)),' events and ',length(igraph::E(g3)),' pairs remained after applying count>0 filter.')
 
   # make it of the class TrajectoriesGraph which is derived from the class igraph
   class(g2) <- c("TrajectoriesGraph","igraph")
 
-
   return(g2)
-}
-
-#' Takes actual event trajectories of the cohort and puts them to the given graph. Counts all different trajectories. Expects that the graph is created by createAlignmentTables() method which has created necessary database tables
-#'
-#' @param connection
-#' @param trajectoryAnalysisArgs
-#' @param trajectoryLocalArgs
-#' @param g TrajectoriesGraph object, that is created by createAlignmentTables() method (that ensures that necessary database tables exist)
-#'
-#' @return
-#'
-#' @examples
-alignTrajectoriesToGraph<-function(connection,
-                         trajectoryAnalysisArgs,
-                         trajectoryLocalArgs,
-                         g) {
-
-  DEBUG=F
-
-  if(!inherits(g, 'TrajectoriesGraph')) stop('Error in alignTrajectoriesToGraph(): object g is not class TrajectoriesGraph object')
-  if(any(is.na(igraph::E(g)$alignedTrajsCount)==T)) stop("Error in alignTrajectoriesToGraph(): edges of g does not have attribute alignedTrajsCount. Is this object created by createAlignmentTables() method as required?")
-
-
-  #Create a list of concept names (for faster search later when adding names to the concept_id-s)
-  Node.names<-igraph::as_data_frame(g, what="vertices") %>% dplyr::select(concept_id,concept_name) %>% mutate(concept_id=as.character(concept_id))
-
-  all_trajs<-data.frame()
-  number_of_single_node_trajs=0
-
-  #Get all eventperiods
-  sql<-"SELECT DISTINCT(EVENTPERIOD_ID) AS EVENTPERIOD_ID FROM @resultsSchema.@prefiXgraph_events ORDER BY EVENTPERIOD_ID;"
-  RenderedSql <- SqlRender::render(sql, resultsSchema=trajectoryLocalArgs$resultsSchema, prefiX = trajectoryLocalArgs$prefixForResultTableNames)
-  RenderedSql <- SqlRender::translate(RenderedSql,targetDialect=attr(connection, "dbms"))
-  res<-c(DatabaseConnector::querySql(connection, RenderedSql))
-  EVENTPERIOD_IDS=res$EVENTPERIOD_ID
-
-  #create chunks - in each chunk, 100 persons
-  chunks<-split(EVENTPERIOD_IDS, ceiling(seq_along(EVENTPERIOD_IDS)/100))
-  if(length(chunks)>1) {
-    starttime=Sys.time()
-    for(i in 1:length(chunks)) {
-      ParallelLogger::logDebug('i=',i)
-      chunk<-chunks[[i]]
-      ParallelLogger::logInfo('Putting ',length(chunk),' event-periods to the graph (',i,'/',length(chunks),', total progress ',
-                              round(100*(i/length(chunks))),'%, ETA: ',Trajectories:::estimatedTimeRemaining(progress_perc=(i-1)/length(chunks),starttime=starttime),
-                              ')...')
-
-      #Get event pairs of these eventperiods (note that the trajectory of one patient can be split into several sections (some trajectories) )
-      RenderedSql <- Trajectories:::loadRenderTranslateSql("get_actual_trajs_to_graph2.sql",
-                                                           packageName=get('TRAJECTORIES_PACKAGE_NAME', envir=TRAJECTORIES.CONSTANTS),
-                                                           dbms=attr(connection, "dbms"),
-                                                           resultsSchema =  trajectoryLocalArgs$resultsSchema,
-                                                           prefiX = trajectoryLocalArgs$prefixForResultTableNames,
-                                                           eventperiodids=paste(chunk,collapse=",")
-      )
-      res<-DatabaseConnector::querySql(connection, RenderedSql)
-
-
-      for(k in 1:length(chunk)) {
-        cohort_id<-chunk[k]
-        ParallelLogger::logDebug('Aligning event-period #',(i-1)*100+k,": ",cohort_id)
-        pairs<-res %>% dplyr::filter(EVENTPERIOD_ID==get('cohort_id'))
-
-        if(nrow(pairs)==0) { #this is a "unconnected events" eventperiod, no event pairs constructed
-          number_of_single_node_trajs=number_of_single_node_trajs+1
-          ParallelLogger::logDebug('Eventperiod ',cohort_id,' does not produce any trajectories on that graph.')
-
-        } else {
-
-          #A graph of this eventperiod
-          v<-igraph::as_data_frame(g, what="vertices") %>% dplyr::select(concept_id,name)
-          w<-pairs %>% dplyr::left_join(v, by=c("E1_CONCEPT_ID"="concept_id")) %>% dplyr::rename(E1=name)
-          w<-w %>% dplyr::left_join(v, by=c("E2_CONCEPT_ID"="concept_id")) %>% dplyr::rename(E2=name)
-          x<-igraph::graph_from_data_frame(w %>% dplyr::select(E1,E2,E1_COHORT_DAY,E2_COHORT_DAY), directed = TRUE, vertices = NULL)
-
-          if(DEBUG) {
-            #plot(x,layout=layout_)
-            plot(x,main=paste0("Actual trajectories of eventperiod ",cohort_id))
-
-            #Actual order of the events
-            sql="SELECT CONCEPT_ID,date from @resultsSchema.@prefiXevents WHERE EVENTPERIOD_ID=@id AND CONCEPT_ID in (
-                  select e1_concept_id as e from @resultsSchema.@prefiXmylinks
-                  union
-                  select e2_concept_id as e from @resultsSchema.@prefiXmylinks) ORDER BY date;"
-            RenderedSql <- SqlRender::render(sql, resultsSchema=trajectoryLocalArgs$resultsSchema, prefiX = trajectoryLocalArgs$prefixForResultTableNames, id=cohort_id)
-            RenderedSql <- SqlRender::translate(RenderedSql,targetDialect=attr(connection, "dbms"))
-            res2<-c(DatabaseConnector::querySql(connection, RenderedSql))
-            eventtable<-data.frame(date=res2$DATE, event=res2$CONCEPT_ID)
-            eventtable
-
-            #Actual order of the graph events
-            sql="SELECT e AS CONCEPT_ID,cohort_day AS DATE from @resultsSchema.@prefiXgraph_events WHERE EVENTPERIOD_ID=@id AND e in (
-                  select e1_concept_id as e from @resultsSchema.@prefiXmylinks
-                  union
-                  select e2_concept_id as e from @resultsSchema.@prefiXmylinks) ORDER BY cohort_day;"
-            RenderedSql <- SqlRender::render(sql, resultsSchema=trajectoryLocalArgs$resultsSchema, prefiX = trajectoryLocalArgs$prefixForResultTableNames, id=cohort_id)
-            RenderedSql <- SqlRender::translate(RenderedSql,targetDialect=attr(connection, "dbms"))
-            res2<-c(DatabaseConnector::querySql(connection, RenderedSql))
-            eventtable<-data.frame(date=res2$DATE, event=res2$CONCEPT_ID)
-            eventtable
-
-            for(j in 1:nrow(pairs)) {
-              pair<-pairs[j,]
-              #check that the edge/pair exists in our graph
-              eid<-which(igraph::E(g)$e1_concept_id==pair$E1_CONCEPT_ID & igraph::E(g)$e2_concept_id==pair$E2_CONCEPT_ID)
-              if(length(eid)==1) {
-                ParallelLogger::logDebug('Added ',pair$E1_CONCEPT_ID,':',igraph::V(g)[igraph::V(g)$concept_id==pair$E1_CONCEPT_ID]$name,'->',pair$E2_CONCEPT_ID,':',igraph::V(g)[igraph::V(g)$concept_id==pair$E2_CONCEPT_ID]$name,' (eventperiod ',cohort_id,') to graph')
-              } else {
-                ParallelLogger::logWarn('Cannot add ',pair$E1_CONCEPT_ID,':',igraph::V(g)[igraph::V(g)$concept_id==pair$E1_CONCEPT_ID]$name,'->',pair$E2_CONCEPT_ID,':',igraph::V(g)[igraph::V(g)$concept_id==pair$E2_CONCEPT_ID]$name,' (eventperiod ',cohort_id,') as this edge is not part of the graph. Should not happen, actually.')
-              }
-
-            } #for pair
-          } #if DEBUG
-
-          #break graph into components (a graph may contain unconnected subgraphs - each is a separate trajectory. Add each trajectory to all_trajs)
-          components <- igraph::decompose(x, mode='weak', min.vertices=0)
-          for(m in 1:length(components)) {
-            component=components[[m]]
-            #skip single-event components (with no edges)
-            if(length(igraph::E(component))>0) {
-              trajObjects<-Trajectories:::getTrajectoryObjects(component)
-              all_trajs <- all_trajs %>% Trajectories:::addToAllTrajs(trajObjects)
-            }
-          } #for m
-
-        } #if-else
-
-      } #for k
-
-    } #for i
-  } # if(length(chunks)>1)
-
-  ParallelLogger::logInfo("In total, ",nrow(all_trajs),' different trajectories on the given graph were identified.')
-
-  #Calculate trajectory lengths
-  all_trajs$length<-as.numeric(lapply(all_trajs$trajectory,length))
-
-  #Add id-s
-  all_trajs <- all_trajs %>%
-    dplyr::arrange(-exact_count,-length) %>%
-    dplyr::mutate(id=dplyr::row_number())
-  all_trajs$total_count=all_trajs$exact_count
-
-  #Save trajectories to TSV and RData file
-  Trajectories:::saveAllTrajs(all_trajs,trajectoryAnalysisArgs,trajectoryLocalArgs)
-
-  #Add column trajectory.names.str
-  all_trajs <- all_trajs %>% Trajectories:::addEventNamesToTrajectories(Node.names)
-
-  #Save trajectories to TSV and RData file
-  Trajectories:::saveAllTrajs(all_trajs,trajectoryAnalysisArgs,trajectoryLocalArgs)
-
-  #detect subgraphs
-  #To prevent very resource demanding calculations, limit the scope of subgraph detection if the number of trajectories is very big
-  all_trajs_left<-all_trajs
-  MAX_NUM_TRAJS_TO_COUNT=10000
-  if(nrow(all_trajs)>MAX_NUM_TRAJS_TO_COUNT) {
-    ParallelLogger::logInfo('Due to the large number of different trajectories (n=',nrow(all_trajs_left),'), limiting subgraph detection analysis to the subset only...')
-    n=1
-    while(nrow(all_trajs_left)>MAX_NUM_TRAJS_TO_COUNT) {
-     n=n+1
-     all_trajs_left<-all_trajs_left %>% dplyr::filter(exact_count>=n)
-    }
-    ParallelLogger::logInfo('Subgraph detection analysis limited to the trajectories that occur at least ',n,' times (n=',nrow(all_trajs_left),')...')
-
-    #detect subgraphs of this subset
-    all_trajs_left<-Trajectories:::detectSubgraphs(all_trajs_left)
-
-    #put the results back to the original all_trajs dataframe
-    if('total_count' %in% colnames(all_trajs)) all_trajs <- all_trajs %>% dplyr::select(-total_count)
-    if('is_subtrajectory_of' %in% colnames(all_trajs)) all_trajs <- all_trajs %>% dplyr::select(-is_subtrajectory_of)
-    all_trajs <- all_trajs %>% dplyr::left_join(all_trajs_left %>% dplyr::select(id, approx_total_count=total_count, is_subtrajectory_of), by=c('id'='id'))
-
-  } else {
-    all_trajs<-Trajectories:::detectSubgraphs(all_trajs)
-
-  }
-
-
-  #Save trajectories to TSV and RData file
-  Trajectories:::saveAllTrajs(all_trajs,trajectoryAnalysisArgs,trajectoryLocalArgs)
 
 }
 
@@ -342,11 +129,8 @@ addToAllTrajs<-function(all_trajs,trajObjects) {
 
 saveAllTrajs<-function(all_trajs,trajectoryAnalysisArgs,trajectoryLocalArgs) {
 
-    if(!'exact_count' %in% colnames(all_trajs)) stop("ERROR in saveAllTrajs(): all_trajs does not have column all_trajs")
-    if(!'length' %in% colnames(all_trajs)) stop("ERROR in saveAllTrajs(): all_trajs does not have column length")
-
-    #order by exact_count desc
-    all_trajs <- all_trajs %>% dplyr::arrange(-exact_count,-length)
+    #order by count desc
+    all_trajs <- all_trajs %>% dplyr::arrange(-trajectory.count,-length)
 
     #reorder columns - id column to first
     all_trajs <- all_trajs %>% dplyr::select(id,tidyselect::everything())
@@ -359,7 +143,7 @@ saveAllTrajs<-function(all_trajs,trajectoryAnalysisArgs,trajectoryLocalArgs) {
     rdatafile=file.path(outputFolder,'tables','trajectory_counts.RData')
 
     ParallelLogger::logInfo('Saving trajectory counts to Excel-file: ',xlsxfile,'...')
-    openxlsx::write.xlsx(all_trajs %>% select(-trajectory),file=xlsxfile, overwrite=T) #skip "trajectory" column as this is a list
+    openxlsx::write.xlsx(all_trajs,file=xlsxfile, overwrite=T)
     ParallelLogger::logInfo(' ...done.')
 
     ParallelLogger::logInfo('Saving trajectory counts to R-object-file: ',rdatafile,'...')
@@ -370,13 +154,16 @@ saveAllTrajs<-function(all_trajs,trajectoryAnalysisArgs,trajectoryLocalArgs) {
 addEventNamesToTrajectories<-function(all_trajs, Node.names) {
   ParallelLogger::logInfo('Adding event names to trajectory descriptions (may take some time if the number of different trajectories is large)...')
 
-  all_trajs$trajectory.str.names<-lapply(all_trajs$trajectory,Trajectories:::getTrajectoryStringWithNames, Node.names=Node.names)
+  all_trajs$trajectory.str.names<-lapply(all_trajs$trajectory.str,Trajectories:::getTrajectoryStringWithNames, Node.names=Node.names)
 
   ParallelLogger::logInfo('...done.')
   return(all_trajs)
 }
 
-getTrajectoryStringWithNames<-function(trajectory,Node.names) {
+getTrajectoryStringWithNames<-function(trajectory.str,Node.names) {
+
+  trajectory=strsplit(as.character(trajectory.str),"-",fixed=TRUE)[[1]]
+
   elem_eventnames_as_str=c()
   for(e in 1:length(trajectory)) {
     elem=trajectory[e]
@@ -394,13 +181,13 @@ getTrajectoryStringWithNames<-function(trajectory,Node.names) {
 }
 
 detectSubgraphs<-function(all_trajs) {
-  ParallelLogger::logInfo('Finding actual counts of each trajectory by considering also sub-trajectories...')
+  ParallelLogger::logInfo('Detecting sub-trajectories...')
   d<-all_trajs
-  d$total_count=d$exact_count
   d$is_subtrajectory_of=NA
+  d$trajectory=strsplit(as.character(d$trajectory.str),"-",fixed=TRUE)
 
   #make sure that trajectories are still ordered by count desc (trajectories with larger count cannot be sub-trajectories of smaller count)
-  d<-d %>% dplyr::arrange(-exact_count,-length)
+  d<-d %>% dplyr::arrange(-trajectory.count,-length)
 
   #d <- d %>% dplyr::select(id,trajectory,trajectory.str,exact_count,total_count,length,is_subtrajectory_of,trajectory.names.str)
   if(nrow(d)>1) {
@@ -426,7 +213,7 @@ detectSubgraphs<-function(all_trajs) {
       i_elems_without_combined=grep('&',d$trajectory[[i]],invert=T,fixed=T,value=T)
       j_elems_without_combined=comparator$trajectory[!grepl('&',comparator$trajectory,fixed=T)]
       comparator <- comparator[unlist(lapply(j_elems_without_combined,function(x) {all(i_elems_without_combined %in% x)})),]
-      comparator<-comparator %>% dplyr::arrange(-exact_count,-length)
+      comparator<-comparator %>% dplyr::arrange(-trajectory.count,-length)
 
       subtraj_ids=c()
       if(nrow(comparator)>0){
@@ -450,10 +237,6 @@ detectSubgraphs<-function(all_trajs) {
             if(state>length(d$trajectory[[i]])) {
               #ParallelLogger::logInfo('...yes, it is.')
               subtraj_ids<-c(subtraj_ids,comparator$id[j])
-              #print(subtraj_ids)
-              d$total_count[i]<-d$total_count[i]+comparator$total_count[j]
-              #ParallelLogger::logInfo('...Checking whether ',d$trajectory.str[[i]],' (count=',d$total_count[i],') is a sub-trajectory of ',comparator$trajectory.str[[j]],' (count=',comparator$total_count[j],')...')
-              #ParallelLogger::logInfo('New count of ',d$trajectory.str[[i]],' is ',d$total_count[i])
               break
             }
           }
@@ -465,6 +248,8 @@ detectSubgraphs<-function(all_trajs) {
       d$is_subtrajectory_of[i]<-paste(subtraj_ids,collapse=",")
     } #for i
   }
+
+  d <- d %>% dplyr::select(-trajectory)
   return(d)
 }
 
@@ -476,11 +261,139 @@ removeOldTrajectoryResults<-function(trajectoryAnalysisArgs,trajectoryLocalArgs)
   if(file.exists(rdatafile)) file.remove(rdatafile)
 }
 
-align<-function(connection,
-                trajectoryAnalysisArgs,
-                trajectoryLocalArgs) {
 
-  ParallelLogger::logInfo('Start the trajectory alignment to the given graph...')
+
+
+getTrajectoryObjectsNew<-function(visited_concepts_ordered,traj_count) {
+  trajectory.str=paste(visited_concepts_ordered,collapse="-")
+  return(
+    data.frame(
+      trajectory.str=trajectory.str,
+      trajectory.count=traj_count
+    )
+  )
+}
+
+
+addToAllTrajsNew<-function(all_trajs,trajObjects) {
+  if(nrow(all_trajs)==0) {
+    all_trajs=trajObjects
+  } else {
+    if(any(trajObjects$trajectory.str %in% all_trajs$trajectory.str)) {
+      stop(paste0('ERROR in addToAllTrajsNew: trying to add',trajObjects$trajectory.str,' but it is already in all_trajs.'))
+    } else {
+      all_trajs <- rbind(all_trajs, trajObjects)
+    }
+  }
+  return(all_trajs)
+}
+
+getEventperiodsOfEdge<-function(trajectoryLocalArgs, g, edge, limit_to_eventperiods=c()) {
+
+  edge.end.concept_id=as.numeric(igraph::ends(g,edge)[1,2])
+  #When reaching this point, the edge has count >= MIN.TRAJ.COUNT
+  #However, we need to identify the eventperiod_ids
+
+  sql="SELECT DISTINCT EVENTPERIOD_ID FROM @resultsSchema.@prefiXgraph_event_pairs
+        WHERE
+          e1_concept_id=@e1
+          AND
+          e2_concept_id=@e2
+          AND
+          e2_cohort_day >= e1_cohort_day @whereand ;"
+  if(length(limit_to_eventperiods)>0) {
+    whereand<-paste0("AND eventperiod_id IN (",paste0(limit_to_eventperiods,collapse=","),")")
+  } else {
+    whereand<-""
+  }
+  RenderedSql <- SqlRender::render(sql, resultsSchema=trajectoryLocalArgs$resultsSchema, prefiX = trajectoryLocalArgs$prefixForResultTableNames, e1=concept_id, e2=edge.end.concept_id, whereand=whereand)
+  RenderedSql <- SqlRender::translate(RenderedSql,targetDialect=attr(connection, "dbms"))
+  res<-c(DatabaseConnector::querySql(connection, RenderedSql))
+
+  eventperiod_ids=res$EVENTPERIOD_ID
+  return(eventperiod_ids)
+}
+
+expandTrajectory<-function(g,MIN.TRAJ.COUNT,traj,eventperiod_ids=c()) {
+  allTrajObjects=data.frame(
+    trajectory.str=c(),
+    trajectory.count=c()
+  )
+
+  logSpacer=paste0(rep("  ",length(traj)),collapse="")
+
+  ParallelLogger::logInfo(logSpacer,'Expanding trajectory ',paste0(traj,collapse="-"),'...')
+
+  #Get the last element of the trajectory
+  if(length(traj)==0) stop('ERROR in expandTrajectory: length(traj)=0 which shoult not happen. You should not call this function without a single node as trajectory.')
+  if(length(traj)>10) stop('ERROR in expandTrajectory: length(traj)>10. Is everything OK?')
+
+
+  if(length(eventperiod_ids)==0) {
+    traj.count=0
+  } else {
+    traj.count=length(eventperiod_ids)
+  }
+  last.concept.id<-traj[length(traj)]
+  node=igraph::V(g)[igraph::V(g)$concept_id==last.concept.id]
+
+  #find outgoing edges from the node
+  outgoing.edges <- igraph::incident(g, node, mode="out")
+  if(length(outgoing.edges)==0) {
+    ParallelLogger::logDebug(logSpacer,'...no outgoing edges found from ',last.concept.id,' (or their count<',MIN.TRAJ.COUNT,'). Therefore, the trajectory counting stops here.')
+    return(allTrajObjects)
+  } else {
+
+    #loop over edges
+    for(e.idx in 1:length(outgoing.edges)) {
+      edge=outgoing.edges[e.idx]
+      edge.end.concept_id=as.numeric(igraph::ends(g,edge)[1,2])
+
+      edge.eventperiod_ids=Trajectories:::getEventperiodsOfEdge(trajectoryLocalArgs, g, edge, limit_to_eventperiods=eventperiod_ids)
+
+      if(length(edge.eventperiod_ids)>=MIN.TRAJ.COUNT) {
+        #Can expand the trajectory to new event
+        new.traj<-c(traj,edge.end.concept_id)
+
+        trajObjects<-getTrajectoryObjectsNew(new.traj,traj_count=length(edge.eventperiod_ids))
+        allTrajObjects<-Trajectories:::addToAllTrajsNew(allTrajObjects,trajObjects)
+        ParallelLogger::logDebug(logSpacer,'...added trajectory ',paste0(new.traj, collapse="-"),' (count=',length(edge.eventperiod_ids),').')
+
+
+        #nested call to expand trajectory from this event further
+        trajObjects<-Trajectories:::expandTrajectory(g,MIN.TRAJ.COUNT,new.traj,eventperiod_ids=edge.eventperiod_ids)
+
+        #add result to all trajObjects as we continue the search from other edges as well
+        if(nrow(trajObjects)>0) {
+          allTrajObjects<-Trajectories:::addToAllTrajsNew(allTrajObjects,trajObjects)
+        }
+
+      } else {
+        ParallelLogger::logDebug(logSpacer,'...the number of trajectories that reach ',paste0(traj,collapse="-"),'->',edge.end.concept_id,' is ',length(edge.eventperiod_ids),' which is less than MIN.TRAJ.COUNT. Therefore, the trajectory counting stops here.')
+      }
+
+    } #for
+    ParallelLogger::logDebug(logSpacer,'End of for-loop. Returning allTrajObjects')
+    #print(allTrajObjects)
+
+    # All outgoing edges scanned through
+    return(allTrajObjects)
+
+  }
+}
+
+addTrajLength<-function(allTrajObjects) {
+
+  trajectory.lengths <- lapply(strsplit(as.character(allTrajObjects$trajectory.str),"-",fixed=TRUE),length)
+  allTrajObjects$length <- unlist(trajectory.lengths)
+  return(allTrajObjects)
+}
+
+countTrajectories<-function(connection,
+                 trajectoryAnalysisArgs,
+                 trajectoryLocalArgs) {
+
+  ParallelLogger::logInfo('Starting counting of longer trajectories...')
 
   Trajectories:::removeOldTrajectoryResults(trajectoryAnalysisArgs,trajectoryLocalArgs)
 
@@ -488,25 +401,96 @@ align<-function(connection,
   eventPairResultsFilename = file.path(outputFolder,'tables','event_pairs_directional.tsv')
   g<-Trajectories:::createTrajectoriesGraph(eventPairResultsFilename=eventPairResultsFilename)
 
-  if(length(igraph::E(g))==0) {
 
-    ParallelLogger::logInof('The graph is empty, skipping the remaining alignment steps.')
 
-   } else {
+  if(length(igraph::E(g))>0) {
     #Prepare data tables in the database
-    g<-Trajectories:::createAlignmentTables(connection,
-                                            trajectoryAnalysisArgs,
-                                            trajectoryLocalArgs,
-                                            g)
+    g<-Trajectories:::createAlignmentTableNew(connection,
+                                              trajectoryAnalysisArgs,
+                                              trajectoryLocalArgs,
+                                              g)
 
-    #Do the actual alignment and trajectory counting
-    Trajectories:::alignTrajectoriesToGraph(connection,
-                                            trajectoryAnalysisArgs,
-                                            trajectoryLocalArgs,
-                                            g)
+    # APPLY MINIMIUM COUNT THRESHOLD
+    #MIN.TRAJ.COUNT=20 #Do not count trajectories that have less than this (in Siggaard et al. 2020 the number was 20)
+    MIN.TRAJ.COUNT<-Trajectories:::getMinPatientsPerEventPair(connection,
+                                                                       trajectoryAnalysisArgs,
+                                                                       trajectoryLocalArgs)
+    g <- igraph::subgraph.edges(g, igraph::E(g)[igraph::E(g)$COUNT>=MIN.TRAJ.COUNT], delete.vertices = TRUE)
+    ParallelLogger::logInfo(length(igraph::V(g)),' events and ',length(igraph::E(g)),' pairs remained after applying count>=',MIN.TRAJ.COUNT,' filter.')
+
+    # Topological sort: first nodes to left
+    node_order<-igraph::topo_sort(g, mode="out")
+
+    allTrajObjects=data.frame(
+      trajectory.str=c(),
+      trajectory.count=c()
+    )
+
+
+    #Loop through all nodes and count the trajectory patterns
+    starttime=Sys.time()
+    for(i in 1:length(node_order)) {
+      node=node_order[i]
+      concept_id=node$concept_id
+      ParallelLogger::logInfo('Counting trajectories ',i,'/',length(node_order),' starting with ',concept_id,' (event count=',node$COUNT,'), total progress ',
+                              round(100*(i/length(node_order))),'%, ETA: ',Trajectories:::estimatedTimeRemaining(progress_perc=(i-1)/length(node_order),starttime=starttime),
+                              '...')
+
+
+      trajObjects<-Trajectories:::expandTrajectory(g,MIN.TRAJ.COUNT=MIN.TRAJ.COUNT,traj=c(concept_id),eventperiod_ids=c())
+      if(nrow(trajObjects)>0) {
+        allTrajObjects<-Trajectories:::addToAllTrajsNew(allTrajObjects,trajObjects)
+        #print('allTrajObjects is now:')
+        #print(allTrajObjects)
+      }
+    } #for
+
+    #load('all_trajectories.R')
+
+    #sort by: count descending
+    allTrajObjects <- allTrajObjects %>% arrange(-trajectory.count)
+
+    #Add trajectory length column
+    allTrajObjects <- allTrajObjects %>% Trajectories:::addTrajLength()
+
+    #Add id column
+    allTrajObjects <- allTrajObjects %>% mutate(id=row_number())
+
+    #detect subgraphs
+    #To prevent very resource demanding calculations, limit the scope of subgraph detection if the number of trajectories is very big
+    all_trajs_left<-allTrajObjects
+    MAX_NUM_TRAJS_TO_COUNT=10000
+    if(nrow(allTrajObjects)>MAX_NUM_TRAJS_TO_COUNT) {
+      ParallelLogger::logInfo('Due to the large number of different trajectories (n=',nrow(all_trajs_left),'), limiting subgraph detection analysis to the subset only...')
+      n=1
+      while(nrow(all_trajs_left)>MAX_NUM_TRAJS_TO_COUNT) {
+        n=n+1
+        all_trajs_left<-all_trajs_left %>% dplyr::filter(exact_count>=n)
+      }
+      ParallelLogger::logInfo('Subgraph detection analysis limited to the trajectories that occur at least ',n,' times (n=',nrow(all_trajs_left),')...')
+
+      #detect subgraphs of this subset
+      all_trajs_left<-Trajectories:::detectSubgraphs(all_trajs_left)
+
+      #put the results back to the original allTrajObjects dataframe
+      if('is_subtrajectory_of' %in% colnames(allTrajObjects)) allTrajObjects <- allTrajObjects %>% dplyr::select(-is_subtrajectory_of)
+      allTrajObjects <- allTrajObjects %>% dplyr::left_join(all_trajs_left %>% dplyr::select(id, approx_total_count=total_count, is_subtrajectory_of), by=c('id'='id'))
+
+    } else {
+      allTrajObjects<-Trajectories:::detectSubgraphs(allTrajObjects)
+
+    }
+
+    #Add node names
+    Node.names<-igraph::as_data_frame(g, what="vertices") %>% dplyr::select(concept_id,concept_name) %>% mutate(concept_id=as.character(concept_id))
+    allTrajObjects <- allTrajObjects %>% Trajectories:::addEventNamesToTrajectories(Node.names)
+
+    #Save trajectories to TSV and RData file
+    Trajectories:::saveAllTrajs(allTrajObjects,trajectoryAnalysisArgs,trajectoryLocalArgs)
+
+  } else {
+    ParallelLogger::logInfo('Size of the graph is 0, nothing to count...')
   }
 
-  ParallelLogger::logInfo('Trajectory aligment completed.')
+  ParallelLogger::logInfo('Trajectory counting completed.')
 }
-
-

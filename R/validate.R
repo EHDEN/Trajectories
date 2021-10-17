@@ -65,9 +65,9 @@ validate <- function(connection,
 
   # Detect statistically significant directional event pairs and write the results to eventPairResultsFilename. Also creates validation setup.
   if(runValidationAnalysis) Trajectories:::runValidationAnalysis(connection,
-                                     trajectoryAnalysisArgs,
-                                     trajectoryLocalArgs,
-                                     forceRecalculation=forceRecalculationOfAnalysis)
+                                                                 trajectoryAnalysisArgs,
+                                                                 trajectoryLocalArgs,
+                                                                 forceRecalculation=forceRecalculationOfAnalysis)
 
 
 
