@@ -271,7 +271,7 @@ TrajectoryAnalysisArgsFromInputFolder<-function(trajectoryLocalArgs) {
   outputFolder<-Trajectories:::GetOutputFolder(trajectoryLocalArgs,trajectoryAnalysisArgs,createIfMissing=T)
 
   # Set up logger
-  Trajectories:::InitLogger(logfile = file.path(outputFolder,'logs',paste0(format(Sys.time(), "%Y%m%d-%H%M%S"),"-log.txt")), threshold = 'INFO')
+  Trajectories:::InitLogger(logfile = file.path(outputFolder,'logs',paste0(format(Sys.time(), "%Y%m%d-%H%M%S"),"-log.txt")), threshold = get('LOGGER_THRESHOLD', envir=TRAJECTORIES.CONSTANTS))
 
   return(trajectoryAnalysisArgs)
 }

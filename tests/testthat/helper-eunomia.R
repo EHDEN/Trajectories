@@ -55,8 +55,13 @@ addConditionEventTrajectoryForPerson<-function(connection,event_concept_ids=c(13
   datecounter=0
   for(concept_id in event_concept_ids) {
     datecounter=datecounter+1
-    eventDate=sample(seq(as.Date(prevDate)+1, as.Date(endDate)-(length(event_concept_ids)-datecounter), by="day"), 1) #some magic here just to guarantee that no events occur on same date and there are enough free dates for the events
-    if(eventDate==prevDate) stop(paste0('Error in helper-eunomia: addConditionEventTrajectoryForPerson(): eventDate is the same as prevDate (',eventDate,')'))
+    if(startDate!=endDate) {
+      eventDate=sample(seq(as.Date(prevDate)+1, as.Date(endDate)-(length(event_concept_ids)-datecounter), by="day"), 1) #some magic here just to guarantee that no events occur on same date and there are enough free dates for the events
+      if(eventDate==prevDate) stop(paste0('Error in helper-eunomia: addConditionEventTrajectoryForPerson(): eventDate is the same as prevDate (',eventDate,')'))
+    } else {
+      eventDate=startDate #=endDate
+    }
+
     #For SQLite, we must convert dates to real numbers (otherwise it does not work with other REAL dates in Eunomia package)
     #Therefore, some magic is needed. First, convert to YYYYMMDD format and second, use SQL CONVERT(DATE,...) function.
     #Another problem is SqlRender translation bug https://github.com/OHDSI/SqlRender/issues/232 So we hardcode SQLite translation here

@@ -77,9 +77,9 @@ validate <- function(connection,
                                          trajectoryLocalArgs)
 
   # Run trajectory analysis
-  if(runTrajectoryAnalysis) Trajectories:::align(connection,
-                                                 trajectoryAnalysisArgs,
-                                                 trajectoryLocalArgs)
+  if(runTrajectoryAnalysis) Trajectories:::countTrajectories(connection,
+                                                             trajectoryAnalysisArgs,
+                                                             trajectoryLocalArgs)
 
 
   # Draw graphs for selected events (event ID-s taken from trajectoryAnalysisArgs$eventIdsForGraphs)

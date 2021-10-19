@@ -154,6 +154,7 @@ saveAllTrajs<-function(all_trajs,trajectoryAnalysisArgs,trajectoryLocalArgs) {
 addEventNamesToTrajectories<-function(all_trajs, Node.names) {
   ParallelLogger::logInfo('Adding event names to trajectory descriptions (may take some time if the number of different trajectories is large)...')
 
+  all_trajs <- all_trajs %>% tibble::add_column(trajectory.str.names=NA)
   all_trajs$trajectory.str.names<-lapply(all_trajs$trajectory.str,Trajectories:::getTrajectoryStringWithNames, Node.names=Node.names)
 
   ParallelLogger::logInfo('...done.')
@@ -180,10 +181,22 @@ getTrajectoryStringWithNames<-function(trajectory.str,Node.names) {
   return(trajectory.names.str)
 }
 
+
+#' Title
+#'
+#' @param all_trajs Must have columns trajectory.str, trajectory.count, length
+#'
+#' @return
+#'
+#' @examples
 detectSubgraphs<-function(all_trajs) {
+  stopifnot("trajectory.str" %in% colnames(all_trajs))
+  stopifnot("trajectory.count" %in% colnames(all_trajs))
+  stopifnot("length" %in% colnames(all_trajs))
+
   ParallelLogger::logInfo('Detecting sub-trajectories...')
   d<-all_trajs
-  d$is_subtrajectory_of=NA
+  d <- d %>% tibble::add_column(is_subtrajectory_of=NA)
   d$trajectory=strsplit(as.character(d$trajectory.str),"-",fixed=TRUE)
 
   #make sure that trajectories are still ordered by count desc (trajectories with larger count cannot be sub-trajectories of smaller count)
@@ -250,6 +263,8 @@ detectSubgraphs<-function(all_trajs) {
   }
 
   d <- d %>% dplyr::select(-trajectory)
+
+  ParallelLogger::logInfo('...detection of sub-trajectories completed.')
   return(d)
 }
 
@@ -288,8 +303,9 @@ addToAllTrajsNew<-function(all_trajs,trajObjects) {
   return(all_trajs)
 }
 
-getEventperiodsOfEdge<-function(trajectoryLocalArgs, g, edge, limit_to_eventperiods=c()) {
+getEventperiodsOfEdge<-function(connection,trajectoryLocalArgs, g, edge, limit_to_eventperiods=c()) {
 
+  edge.start.concept_id=as.numeric(igraph::ends(g,edge)[1,1])
   edge.end.concept_id=as.numeric(igraph::ends(g,edge)[1,2])
   #When reaching this point, the edge has count >= MIN.TRAJ.COUNT
   #However, we need to identify the eventperiod_ids
@@ -306,7 +322,7 @@ getEventperiodsOfEdge<-function(trajectoryLocalArgs, g, edge, limit_to_eventperi
   } else {
     whereand<-""
   }
-  RenderedSql <- SqlRender::render(sql, resultsSchema=trajectoryLocalArgs$resultsSchema, prefiX = trajectoryLocalArgs$prefixForResultTableNames, e1=concept_id, e2=edge.end.concept_id, whereand=whereand)
+  RenderedSql <- SqlRender::render(sql, resultsSchema=trajectoryLocalArgs$resultsSchema, prefiX = trajectoryLocalArgs$prefixForResultTableNames, e1=edge.start.concept_id, e2=edge.end.concept_id, whereand=whereand)
   RenderedSql <- SqlRender::translate(RenderedSql,targetDialect=attr(connection, "dbms"))
   res<-c(DatabaseConnector::querySql(connection, RenderedSql))
 
@@ -314,7 +330,7 @@ getEventperiodsOfEdge<-function(trajectoryLocalArgs, g, edge, limit_to_eventperi
   return(eventperiod_ids)
 }
 
-expandTrajectory<-function(g,MIN.TRAJ.COUNT,traj,eventperiod_ids=c()) {
+expandTrajectory<-function(connection,trajectoryLocalArgs,g,MIN.TRAJ.COUNT,traj,eventperiod_ids=c()) {
   allTrajObjects=data.frame(
     trajectory.str=c(),
     trajectory.count=c()
@@ -329,11 +345,11 @@ expandTrajectory<-function(g,MIN.TRAJ.COUNT,traj,eventperiod_ids=c()) {
   if(length(traj)>10) stop('ERROR in expandTrajectory: length(traj)>10. Is everything OK?')
 
 
-  if(length(eventperiod_ids)==0) {
-    traj.count=0
-  } else {
-    traj.count=length(eventperiod_ids)
-  }
+  #if(length(eventperiod_ids)==0) {
+  #  traj.count=0
+  #} else {
+  #  traj.count=length(eventperiod_ids)
+  #}
   last.concept.id<-traj[length(traj)]
   node=igraph::V(g)[igraph::V(g)$concept_id==last.concept.id]
 
@@ -349,27 +365,39 @@ expandTrajectory<-function(g,MIN.TRAJ.COUNT,traj,eventperiod_ids=c()) {
       edge=outgoing.edges[e.idx]
       edge.end.concept_id=as.numeric(igraph::ends(g,edge)[1,2])
 
-      edge.eventperiod_ids=Trajectories:::getEventperiodsOfEdge(trajectoryLocalArgs, g, edge, limit_to_eventperiods=eventperiod_ids)
+      #if the current trajectory is A->B->C and the new node to be added is D, but C->D or B->C->D is already tested and any of these found count<MIN.TRAJ.COUNT then there is no need to test A->B->C->D
+      #The following method isTrajRareBasedOnPrevCounts() automatically updates the global list of rare trajectories also
+      if(!Trajectories:::isTrajRareBasedOnPrevCounts(traj,edge.end.concept_id)) {
 
-      if(length(edge.eventperiod_ids)>=MIN.TRAJ.COUNT) {
-        #Can expand the trajectory to new event
-        new.traj<-c(traj,edge.end.concept_id)
+        edge.eventperiod_ids=Trajectories:::getEventperiodsOfEdge(connection, trajectoryLocalArgs, g, edge, limit_to_eventperiods=eventperiod_ids)
 
-        trajObjects<-getTrajectoryObjectsNew(new.traj,traj_count=length(edge.eventperiod_ids))
-        allTrajObjects<-Trajectories:::addToAllTrajsNew(allTrajObjects,trajObjects)
-        ParallelLogger::logDebug(logSpacer,'...added trajectory ',paste0(new.traj, collapse="-"),' (count=',length(edge.eventperiod_ids),').')
+        if(length(edge.eventperiod_ids)>=MIN.TRAJ.COUNT) {
+          #Can expand the trajectory to new event
+          new.traj<-c(traj,edge.end.concept_id)
 
-
-        #nested call to expand trajectory from this event further
-        trajObjects<-Trajectories:::expandTrajectory(g,MIN.TRAJ.COUNT,new.traj,eventperiod_ids=edge.eventperiod_ids)
-
-        #add result to all trajObjects as we continue the search from other edges as well
-        if(nrow(trajObjects)>0) {
+          trajObjects<-getTrajectoryObjectsNew(new.traj,traj_count=length(edge.eventperiod_ids))
           allTrajObjects<-Trajectories:::addToAllTrajsNew(allTrajObjects,trajObjects)
-        }
+          ParallelLogger::logDebug(logSpacer,'...added trajectory ',paste0(new.traj, collapse="-"),' (count=',length(edge.eventperiod_ids),').')
 
+
+          #nested call to expand trajectory from this event further
+          trajObjects<-Trajectories:::expandTrajectory(connection, trajectoryLocalArgs,g,MIN.TRAJ.COUNT,new.traj,eventperiod_ids=edge.eventperiod_ids)
+
+          #add result to all trajObjects as we continue the search from other edges as well
+          if(nrow(trajObjects)>0) {
+            allTrajObjects<-Trajectories:::addToAllTrajsNew(allTrajObjects,trajObjects)
+          }
+
+        } else {
+          ParallelLogger::logDebug(logSpacer,'...the number of trajectories that reach ',paste0(traj,collapse="-"),'->',edge.end.concept_id,' is ',length(edge.eventperiod_ids),' which is less than MIN.TRAJ.COUNT. Therefore, the trajectory counting stops here.')
+          #update global list of rare trajectories
+          new.traj<-c(traj,edge.end.concept_id)
+          rare_trajectories <- get('RARE_TRAJECTORIES', envir=TRAJECTORIES.CONSTANTS)
+          rare_trajectories <- c(rare_trajectories, paste0(new.traj,collapse="-"))
+          assign('RARE_TRAJECTORIES', rare_trajectories, envir=TRAJECTORIES.CONSTANTS)
+        }
       } else {
-        ParallelLogger::logDebug(logSpacer,'...the number of trajectories that reach ',paste0(traj,collapse="-"),'->',edge.end.concept_id,' is ',length(edge.eventperiod_ids),' which is less than MIN.TRAJ.COUNT. Therefore, the trajectory counting stops here.')
+        ParallelLogger::logDebug(logSpacer,'...based on previous counts, the event is rare. No need to expand it any further.')
       }
 
     } #for
@@ -383,10 +411,43 @@ expandTrajectory<-function(g,MIN.TRAJ.COUNT,traj,eventperiod_ids=c()) {
 }
 
 addTrajLength<-function(allTrajObjects) {
-
   trajectory.lengths <- lapply(strsplit(as.character(allTrajObjects$trajectory.str),"-",fixed=TRUE),length)
-  allTrajObjects$length <- unlist(trajectory.lengths)
+  allTrajObjects <- allTrajObjects %>% tibble::add_column(length=NA)
+  if(length(trajectory.lengths)>0) allTrajObjects$length=unlist(trajectory.lengths)
   return(allTrajObjects)
+}
+
+
+#if the current trajectory is A->B->C and the new node to be added is D, but C->D or B->C->D is already tested and any of these found count<MIN.TRAJ.COUNT then there is no need to test A->B->C->D
+isTrajRareBasedOnPrevCounts<-function(traj,edge.end.concept_id) {
+
+  new.traj=c(traj,edge.end.concept_id)
+  ParallelLogger::logDebug('isTrajRareBasedOnPrevCounts: Testing whether ',paste0(new.traj,collapse="-"),' has a low count based on the counts of its subtrajectories...')
+
+  rare_trajectories <- get('RARE_TRAJECTORIES', envir=TRAJECTORIES.CONSTANTS)
+
+  #For 2-element trajectory should never be considered as rare before calculation
+  if(length(traj)<=1) return(FALSE)
+
+  for(i in 1:(length(traj)-1)) {
+    traj_to_test <- c(traj[(length(traj)-i+1):length(traj)], edge.end.concept_id)
+    traj_to_test.as.str=paste0(traj_to_test,collapse="-")
+    ParallelLogger::logDebug('isTrajRareBasedOnPrevCounts: Testing whether ',traj_to_test.as.str,' is in global list of rare trajectories...')
+    if(traj_to_test.as.str %in% rare_trajectories) {
+      ParallelLogger::logDebug('isTrajRareBasedOnPrevCounts: ',paste0(new.traj,collapse="-"),' has a low count based on the previously calculated counts of ',traj_to_test.as.str)
+
+      #update global list of rare trajectories also
+      rare_trajectories <- c(rare_trajectories, paste0(new.traj,collapse="-"))
+      assign('RARE_TRAJECTORIES', rare_trajectories, envir=TRAJECTORIES.CONSTANTS)
+
+      return(TRUE)
+    } else {
+      ParallelLogger::logDebug('isTrajRareBasedOnPrevCounts: ...no, it is not.')
+    }
+  }
+  ParallelLogger::logDebug('isTrajRareBasedOnPrevCounts: based on the counts of subtrajectories, we cannot say that ',paste0(new.traj,collapse="-"),' has a low count. Need to calculate it!')
+  return(FALSE)
+
 }
 
 countTrajectories<-function(connection,
@@ -397,13 +458,17 @@ countTrajectories<-function(connection,
 
   Trajectories:::removeOldTrajectoryResults(trajectoryAnalysisArgs,trajectoryLocalArgs)
 
+  allTrajObjects=data.frame(
+    trajectory.str=character(),
+    trajectory.count=numeric()
+  )
+
   outputFolder<-Trajectories:::GetOutputFolder(trajectoryLocalArgs,trajectoryAnalysisArgs,createIfMissing=F)
   eventPairResultsFilename = file.path(outputFolder,'tables','event_pairs_directional.tsv')
   g<-Trajectories:::createTrajectoriesGraph(eventPairResultsFilename=eventPairResultsFilename)
 
-
-
   if(length(igraph::E(g))>0) {
+
     #Prepare data tables in the database
     g<-Trajectories:::createAlignmentTableNew(connection,
                                               trajectoryAnalysisArgs,
@@ -413,84 +478,96 @@ countTrajectories<-function(connection,
     # APPLY MINIMIUM COUNT THRESHOLD
     #MIN.TRAJ.COUNT=20 #Do not count trajectories that have less than this (in Siggaard et al. 2020 the number was 20)
     MIN.TRAJ.COUNT<-Trajectories:::getMinPatientsPerEventPair(connection,
-                                                                       trajectoryAnalysisArgs,
-                                                                       trajectoryLocalArgs)
+                                                              trajectoryAnalysisArgs,
+                                                              trajectoryLocalArgs)
     g <- igraph::subgraph.edges(g, igraph::E(g)[igraph::E(g)$COUNT>=MIN.TRAJ.COUNT], delete.vertices = TRUE)
     ParallelLogger::logInfo(length(igraph::V(g)),' events and ',length(igraph::E(g)),' pairs remained after applying count>=',MIN.TRAJ.COUNT,' filter.')
 
-    # Topological sort: first nodes to left
-    node_order<-igraph::topo_sort(g, mode="out")
 
-    allTrajObjects=data.frame(
-      trajectory.str=c(),
-      trajectory.count=c()
-    )
+    if(length(igraph::E(g))>0) {
 
-
-    #Loop through all nodes and count the trajectory patterns
-    starttime=Sys.time()
-    for(i in 1:length(node_order)) {
-      node=node_order[i]
-      concept_id=node$concept_id
-      ParallelLogger::logInfo('Counting trajectories ',i,'/',length(node_order),' starting with ',concept_id,' (event count=',node$COUNT,'), total progress ',
-                              round(100*(i/length(node_order))),'%, ETA: ',Trajectories:::estimatedTimeRemaining(progress_perc=(i-1)/length(node_order),starttime=starttime),
-                              '...')
-
-
-      trajObjects<-Trajectories:::expandTrajectory(g,MIN.TRAJ.COUNT=MIN.TRAJ.COUNT,traj=c(concept_id),eventperiod_ids=c())
-      if(nrow(trajObjects)>0) {
-        allTrajObjects<-Trajectories:::addToAllTrajsNew(allTrajObjects,trajObjects)
-        #print('allTrajObjects is now:')
-        #print(allTrajObjects)
+      # Topological sort: first nodes to left (can be used only if the graph is acyclic)
+      if(igraph::is_dag(g)) {
+        node_order<-igraph::topo_sort(g, mode="in") #start from the right. should add some speed performance
+      } else {
+        node_order<-igraph::V(g)
       }
-    } #for
 
-    #load('all_trajectories.R')
+      #Loop through all nodes and count the trajectory patterns
+      assign('RARE_TRAJECTORIES', c(), envir=TRAJECTORIES.CONSTANTS) #clear previous counts of rare trajectories
+      starttime=Sys.time()
+      for(i in 1:length(node_order)) {
+        node=node_order[i]
+        concept_id=node$concept_id
+        ParallelLogger::logInfo('Counting trajectories ',i,'/',length(node_order),' starting with ',concept_id,' (event count=',node$COUNT,'), total progress ',
+                                round(100*(i/length(node_order))),'%, ETA: ',Trajectories:::estimatedTimeRemaining(progress_perc=(i-1)/length(node_order),starttime=starttime),
+                                '...')
 
-    #sort by: count descending
-    allTrajObjects <- allTrajObjects %>% arrange(-trajectory.count)
 
-    #Add trajectory length column
-    allTrajObjects <- allTrajObjects %>% Trajectories:::addTrajLength()
+        trajObjects<-Trajectories:::expandTrajectory(connection,trajectoryLocalArgs,g,MIN.TRAJ.COUNT=MIN.TRAJ.COUNT,traj=c(concept_id),eventperiod_ids=c())
+        if(nrow(trajObjects)>0) {
+          allTrajObjects<-Trajectories:::addToAllTrajsNew(allTrajObjects,trajObjects)
+          #print('allTrajObjects is now:')
+          #print(allTrajObjects)
+        }
+      } #for
 
-    #Add id column
-    allTrajObjects <- allTrajObjects %>% mutate(id=row_number())
-
-    #detect subgraphs
-    #To prevent very resource demanding calculations, limit the scope of subgraph detection if the number of trajectories is very big
-    all_trajs_left<-allTrajObjects
-    MAX_NUM_TRAJS_TO_COUNT=10000
-    if(nrow(allTrajObjects)>MAX_NUM_TRAJS_TO_COUNT) {
-      ParallelLogger::logInfo('Due to the large number of different trajectories (n=',nrow(all_trajs_left),'), limiting subgraph detection analysis to the subset only...')
-      n=1
-      while(nrow(all_trajs_left)>MAX_NUM_TRAJS_TO_COUNT) {
-        n=n+1
-        all_trajs_left<-all_trajs_left %>% dplyr::filter(exact_count>=n)
-      }
-      ParallelLogger::logInfo('Subgraph detection analysis limited to the trajectories that occur at least ',n,' times (n=',nrow(all_trajs_left),')...')
-
-      #detect subgraphs of this subset
-      all_trajs_left<-Trajectories:::detectSubgraphs(all_trajs_left)
-
-      #put the results back to the original allTrajObjects dataframe
-      if('is_subtrajectory_of' %in% colnames(allTrajObjects)) allTrajObjects <- allTrajObjects %>% dplyr::select(-is_subtrajectory_of)
-      allTrajObjects <- allTrajObjects %>% dplyr::left_join(all_trajs_left %>% dplyr::select(id, approx_total_count=total_count, is_subtrajectory_of), by=c('id'='id'))
 
     } else {
-      allTrajObjects<-Trajectories:::detectSubgraphs(allTrajObjects)
-
+      ParallelLogger::logInfo('Size of the graph after limiting by the count>=',MIN.TRAJ.COUNT,' is 0, nothing to count...')
     }
 
-    #Add node names
-    Node.names<-igraph::as_data_frame(g, what="vertices") %>% dplyr::select(concept_id,concept_name) %>% mutate(concept_id=as.character(concept_id))
-    allTrajObjects <- allTrajObjects %>% Trajectories:::addEventNamesToTrajectories(Node.names)
 
-    #Save trajectories to TSV and RData file
-    Trajectories:::saveAllTrajs(allTrajObjects,trajectoryAnalysisArgs,trajectoryLocalArgs)
 
   } else {
     ParallelLogger::logInfo('Size of the graph is 0, nothing to count...')
   }
 
+
+
+  #load('all_trajectories.R')
+
+  #sort by: count descending
+  allTrajObjects <- allTrajObjects %>% arrange(-trajectory.count)
+
+  #Add trajectory length column
+  allTrajObjects <- allTrajObjects %>% Trajectories:::addTrajLength()
+
+  #Add id column
+  allTrajObjects <- allTrajObjects %>% mutate(id=row_number())
+
+  #detect subgraphs
+  #To prevent very resource demanding calculations, limit the scope of subgraph detection if the number of trajectories is very big
+  all_trajs_left<-allTrajObjects
+  MAX_NUM_TRAJS_TO_COUNT=1000
+  if(nrow(allTrajObjects)>MAX_NUM_TRAJS_TO_COUNT) {
+    ParallelLogger::logInfo('Due to the large number of different trajectories (n=',nrow(all_trajs_left),'), limiting subgraph detection analysis to the subset only...')
+    n=1
+    while(nrow(all_trajs_left)>MAX_NUM_TRAJS_TO_COUNT) {
+      n=n+1
+      all_trajs_left<-all_trajs_left %>% dplyr::filter(trajectory.count>=n)
+    }
+    ParallelLogger::logInfo('Subgraph detection analysis limited to the trajectories that occur at least ',n,' times (n=',nrow(all_trajs_left),')...')
+
+    #detect subgraphs of this subset
+    all_trajs_left<-Trajectories:::detectSubgraphs(all_trajs_left)
+
+    #put the results back to the original allTrajObjects dataframe
+    if('is_subtrajectory_of' %in% colnames(allTrajObjects)) allTrajObjects <- allTrajObjects %>% dplyr::select(-is_subtrajectory_of)
+    allTrajObjects <- allTrajObjects %>% dplyr::left_join(all_trajs_left %>% dplyr::select(id, approx_total_count=total_count, is_subtrajectory_of), by=c('id'='id'))
+
+  } else {
+    allTrajObjects<-Trajectories:::detectSubgraphs(allTrajObjects)
+
+  }
+
+  #Add node names
+  Node.names<-igraph::as_data_frame(g, what="vertices") %>% dplyr::select(concept_id,concept_name) %>% mutate(concept_id=as.character(concept_id))
+  allTrajObjects <- allTrajObjects %>% Trajectories:::addEventNamesToTrajectories(Node.names)
+
+  #Save trajectories to TSV and RData file
+  Trajectories:::saveAllTrajs(allTrajObjects,trajectoryAnalysisArgs,trajectoryLocalArgs)
+
   ParallelLogger::logInfo('Trajectory counting completed.')
 }
+
