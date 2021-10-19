@@ -126,7 +126,7 @@ createTrajectoriesGraph<-function(eventPairResultsFilename) {
   ParallelLogger::logInfo('...done. Full graph contains ',igraph::gsize(g),' links between ',igraph::gorder(g),' events.')
 
   if(!igraph::is_dag(g)) {
-    ParallelLogger::logWarn('For your information, there are cycles in this graph. We do not stop executing the code at this point but the package is not extensively tested with cyclic graphs.')
+    ParallelLogger::logWarn('For your information, there are cycles in this graph.')
   }
 
   # make it of the class TrajectoriesGraph which is derived from the class igraph
