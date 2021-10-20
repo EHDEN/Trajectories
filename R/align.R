@@ -127,27 +127,27 @@ addToAllTrajs<-function(all_trajs,trajObjects) {
   return(all_trajs)
 }
 
-saveAllTrajs<-function(all_trajs,trajectoryAnalysisArgs,trajectoryLocalArgs) {
+saveAllTrajs<-function(allTrajObjects,trajectoryAnalysisArgs,trajectoryLocalArgs) {
 
     #order by count desc
-    all_trajs <- all_trajs %>% dplyr::arrange(-trajectory.count,-length)
+  allTrajObjects <- allTrajObjects %>% dplyr::arrange(-trajectory.count,-length)
 
     #reorder columns - id column to first
-    all_trajs <- all_trajs %>% dplyr::select(id,tidyselect::everything())
+  allTrajObjects <- allTrajObjects %>% dplyr::select(id,tidyselect::everything())
 
     #convert trajectory.str.names from list to chr
-    all_trajs$trajectory.str.names<-unlist(all_trajs$trajectory.str.names)
+  allTrajObjects$trajectory.str.names<-unlist(allTrajObjects$trajectory.str.names)
 
     outputFolder<-Trajectories:::GetOutputFolder(trajectoryLocalArgs,trajectoryAnalysisArgs,createIfMissing=F)
     xlsxfile=file.path( outputFolder,'tables','trajectory_counts.xlsx')
     rdatafile=file.path(outputFolder,'tables','trajectory_counts.RData')
 
     ParallelLogger::logInfo('Saving trajectory counts to Excel-file: ',xlsxfile,'...')
-    openxlsx::write.xlsx(all_trajs,file=xlsxfile, overwrite=T)
+    openxlsx::write.xlsx(allTrajObjects,file=xlsxfile, overwrite=T)
     ParallelLogger::logInfo(' ...done.')
 
     ParallelLogger::logInfo('Saving trajectory counts to R-object-file: ',rdatafile,'...')
-    save(all_trajs, file=rdatafile)
+    save(allTrajObjects, file=rdatafile)
     ParallelLogger::logInfo(' ...done.')
 }
 
@@ -316,13 +316,23 @@ getEventperiodsOfEdge<-function(connection,trajectoryLocalArgs, g, edge, limit_t
           AND
           e2_concept_id=@e2
           AND
-          e2_cohort_day >= e1_cohort_day @whereand ;"
+          e2_cohort_day >= e1_cohort_day"
   if(length(limit_to_eventperiods)>0) {
-    whereand<-paste0("AND eventperiod_id IN (",paste0(limit_to_eventperiods,collapse=","),")")
-  } else {
-    whereand<-""
+
+    #Can't use simply SqlRender::insertTable here because in Eunomia package it does not solve schema name correctly. Therefore, currently using workaround function from Trajectories package
+    Trajectories:::insertTable(connection=connection,
+                               databaseSchema=trajectoryLocalArgs$resultsSchema,
+                               tableName=paste0(trajectoryLocalArgs$prefixForResultTableNames,'traj_eventperiods'),
+                               data=data.frame(EVENTPERIOD_ID=limit_to_eventperiods),
+                               dropTableIfExists=T,
+                               tempTable=F,
+                               progressBar=F)
+
+
+    sql<-paste0(sql," AND eventperiod_id IN (SELECT EVENTPERIOD_ID FROM @resultsSchema.@prefiXtraj_eventperiods)")
   }
-  RenderedSql <- SqlRender::render(sql, resultsSchema=trajectoryLocalArgs$resultsSchema, prefiX = trajectoryLocalArgs$prefixForResultTableNames, e1=edge.start.concept_id, e2=edge.end.concept_id, whereand=whereand)
+  sql<-paste0(sql,";")
+  RenderedSql <- SqlRender::render(sql, resultsSchema=trajectoryLocalArgs$resultsSchema, prefiX = trajectoryLocalArgs$prefixForResultTableNames, e1=edge.start.concept_id, e2=edge.end.concept_id)
   RenderedSql <- SqlRender::translate(RenderedSql,targetDialect=attr(connection, "dbms"))
   res<-c(DatabaseConnector::querySql(connection, RenderedSql))
 
@@ -488,9 +498,16 @@ countTrajectories<-function(connection,
 
       # Topological sort: first nodes to left (can be used only if the graph is acyclic)
       if(igraph::is_dag(g)) {
-        node_order<-igraph::topo_sort(g, mode="in") #start from the right. should add some speed performance
+        node_order<-igraph::topo_sort(g, mode="in") #start from the right (last nodes). Should add some speed performance
       } else {
-        node_order<-igraph::V(g)
+        #In casea graph is cyclic, topo_sort returns partial node list as result. Therefore, the we take the partial node list and add to it all the remaining nodes
+        node_order_short<-suppressWarnings(igraph::topo_sort(g, mode="in"))
+        if(length(node_order_short)<length(igraph::V(g)))
+        node_order<- c(node_order_short, igraph::V(g)[setdiff(igraph::V(g),node_order_short)]) #add the remaining nodes
+      }
+      #make sure that no nodes are left out
+      if(length(node_order)!=length(igraph::V(g))) {
+        ParallelLogger::logInfo('Something is not right in countTrajectories(): the graph has ',length(igraph::V(g)),' edges but in the node order there are only ',length(node_order),' nodes.')
       }
 
       #Loop through all nodes and count the trajectory patterns
@@ -554,7 +571,10 @@ countTrajectories<-function(connection,
 
     #put the results back to the original allTrajObjects dataframe
     if('is_subtrajectory_of' %in% colnames(allTrajObjects)) allTrajObjects <- allTrajObjects %>% dplyr::select(-is_subtrajectory_of)
-    allTrajObjects <- allTrajObjects %>% dplyr::left_join(all_trajs_left %>% dplyr::select(id, approx_total_count=total_count, is_subtrajectory_of), by=c('id'='id'))
+    allTrajObjects <- allTrajObjects %>% dplyr::left_join(all_trajs_left %>% dplyr::select(id, is_subtrajectory_of) %>% dplyr::mutate(subtrajectory_analyzed=T), by=c('id'='id'))
+    allTrajObjects <- allTrajObjects %>% mutate(
+      is_subtrajectory_of=ifelse(subtrajectory_analyzed==T,is_subtrajectory_of,NA) ) %>%
+      select(-subtrajectory_analyzed)
 
   } else {
     allTrajObjects<-Trajectories:::detectSubgraphs(allTrajObjects)

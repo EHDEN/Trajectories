@@ -79,6 +79,9 @@ createEventPairsTable<-function(connection,
     e = read.csv2(file = f, sep = '\t', header = TRUE, as.is=T)
     e$RR_IN_PREVIOUS_STUDY<-as.numeric(e$RR_IN_PREVIOUS_STUDY)
 
+    #convert Inf values to 999
+    e <- e %>% mutate(RR_IN_PREVIOUS_STUDY=ifelse(RR_IN_PREVIOUS_STUDY==Inf,999,RR_IN_PREVIOUS_STUDY))
+
     if(any(is.na(e$RR_IN_PREVIOUS_STUDY))) ParallelLogger::logError("Package is run in validation mode, but RR_IN_PREVIOUS_STUDY in file 'event_pairs_for_validation.tsv' is empty for at least one pair. This is not allowed (please remove such rows).")
     if(!is.numeric(e$RR_IN_PREVIOUS_STUDY)) ParallelLogger::logError("Package is run in validation mode, but RR_IN_PREVIOUS_STUDY column in file 'event_pairs_for_validation.tsv' is not numeric. This is not allowed (please remove non-numeric rows).")
 

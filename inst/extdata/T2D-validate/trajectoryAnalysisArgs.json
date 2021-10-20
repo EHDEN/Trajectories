@@ -1,6 +1,6 @@
 {
   "mode": ["VALIDATION"],
-  "minimumDaysBetweenEvents": [1],
+  "minimumDaysBetweenEvents": [0],
   "maximumDaysBetweenEvents": [365],
   "minPatientsPerEventPair": [0.01],
   "addConditions": [true],
