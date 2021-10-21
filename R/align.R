@@ -173,7 +173,7 @@ getTrajectoryStringWithNames<-function(trajectory.str,Node.names) {
     elem_eventnames <- data.frame(concept_id=as.character(elem_events[[1]]), stringsAsFactors=FALSE) %>%
       dplyr::left_join(Node.names, by=c("concept_id"="concept_id")) %>%
       dplyr::mutate(namelength=stringi::stri_length(concept_name)) %>%
-      dplyr::mutate(node=paste0(concept_id,":\"",  ifelse(namelength<=20, concept_name, paste0(substr(concept_name,1,20), "...")),"\"")) %>%
+      dplyr::mutate(node=paste0(concept_id,":\"",  ifelse(namelength<=40, concept_name, paste0(substr(concept_name,1,40), "...")),"\"")) %>%
       dplyr::pull(node)
     elem_eventnames_as_str=c(elem_eventnames_as_str, paste(elem_eventnames,collapse="&"))
   }
@@ -303,40 +303,33 @@ addToAllTrajsNew<-function(all_trajs,trajObjects) {
   return(all_trajs)
 }
 
-getEventperiodsOfEdge<-function(connection,trajectoryLocalArgs, g, edge, limit_to_eventperiods=c()) {
+# if limit_to_eventperiods=T then expects that eventperiods are already in table "traj_eventperiods"
+getEventperiodsOfEdge<-function(connection,trajectoryLocalArgs, g, edge, limit_to_eventperiods=F) {
 
-  edge.start.concept_id=as.numeric(igraph::ends(g,edge)[1,1])
-  edge.end.concept_id=as.numeric(igraph::ends(g,edge)[1,2])
+  edge.start.concept_id=igraph::ends(g,edge)[1,1]
+  edge.end.concept_id=igraph::ends(g,edge)[1,2]
   #When reaching this point, the edge has count >= MIN.TRAJ.COUNT
   #However, we need to identify the eventperiod_ids
 
-  sql="SELECT DISTINCT EVENTPERIOD_ID FROM @resultsSchema.@prefiXgraph_event_pairs
+  sql="SELECT
+        -- DISTINCT -- all eventperiods should be distinct anyways for each pairs
+        EVENTPERIOD_ID FROM @resultsSchema.@prefiXgraph_event_pairs
         WHERE
           e1_concept_id=@e1
           AND
-          e2_concept_id=@e2
-          AND
-          e2_cohort_day >= e1_cohort_day"
-  if(length(limit_to_eventperiods)>0) {
-
-    #Can't use simply SqlRender::insertTable here because in Eunomia package it does not solve schema name correctly. Therefore, currently using workaround function from Trajectories package
-    Trajectories:::insertTable(connection=connection,
-                               databaseSchema=trajectoryLocalArgs$resultsSchema,
-                               tableName=paste0(trajectoryLocalArgs$prefixForResultTableNames,'traj_eventperiods'),
-                               data=data.frame(EVENTPERIOD_ID=limit_to_eventperiods),
-                               dropTableIfExists=T,
-                               tempTable=F,
-                               progressBar=F)
-
-
-    sql<-paste0(sql," AND eventperiod_id IN (SELECT EVENTPERIOD_ID FROM @resultsSchema.@prefiXtraj_eventperiods)")
+          e2_concept_id=@e2" #DO NOT add any sql comment to the end of this row as the conditional WHERE below will be then commented out
+  if(limit_to_eventperiods) {
+    sql<-paste0(sql," AND EVENTPERIOD_ID IN (SELECT EVENTPERIOD_ID FROM @resultsSchema.@prefiXtraj_eventperiods)")
   }
   sql<-paste0(sql,";")
-  RenderedSql <- SqlRender::render(sql, resultsSchema=trajectoryLocalArgs$resultsSchema, prefiX = trajectoryLocalArgs$prefixForResultTableNames, e1=edge.start.concept_id, e2=edge.end.concept_id)
+  RenderedSql <- SqlRender::render(sql, resultsSchema=trajectoryLocalArgs$resultsSchema, prefiX = trajectoryLocalArgs$prefixForResultTableNames,
+                                   e1=ifelse(is.numeric(edge.start.concept_id),edge.start.concept_id,paste0("'",edge.start.concept_id,"'")),
+                                   e2=ifelse(is.numeric(edge.end.concept_id),edge.end.concept_id,paste0("'",edge.end.concept_id,"'")))
   RenderedSql <- SqlRender::translate(RenderedSql,targetDialect=attr(connection, "dbms"))
   res<-c(DatabaseConnector::querySql(connection, RenderedSql))
 
   eventperiod_ids=res$EVENTPERIOD_ID
+
   return(eventperiod_ids)
 }
 
@@ -348,11 +341,15 @@ expandTrajectory<-function(connection,trajectoryLocalArgs,g,MIN.TRAJ.COUNT,traj,
 
   logSpacer=paste0(rep("  ",length(traj)),collapse="")
 
-  ParallelLogger::logInfo(logSpacer,'Expanding trajectory ',paste0(traj,collapse="-"),'...')
+  if(length(eventperiod_ids)>0) {
+    ParallelLogger::logInfo(logSpacer,'Expanding trajectory ',paste0(traj,collapse="-"),' (count=',length(eventperiod_ids),')...')
+  } else {
+    ParallelLogger::logInfo(logSpacer,'Expanding trajectory ',paste0(traj,collapse="-"),'...')
+  }
 
   #Get the last element of the trajectory
   if(length(traj)==0) stop('ERROR in expandTrajectory: length(traj)=0 which shoult not happen. You should not call this function without a single node as trajectory.')
-  if(length(traj)>10) stop('ERROR in expandTrajectory: length(traj)>10. Is everything OK?')
+  if(length(traj)>20) stop('ERROR in expandTrajectory: length(traj)>20. Is everything OK? The package stops here to prevent infinite loop.')
 
 
   #if(length(eventperiod_ids)==0) {
@@ -370,44 +367,69 @@ expandTrajectory<-function(connection,trajectoryLocalArgs,g,MIN.TRAJ.COUNT,traj,
     return(allTrajObjects)
   } else {
 
+    #sort outgoing edges based on their count (descending) - needed in case of cycles (always prefer edges with larger counts)
+    outgoing.edges <- outgoing.edges[order(-outgoing.edges$COUNT)]
+
+    if(length(eventperiod_ids)>0) {
+      #Create eventperiods table to the database (will be later used)
+      #Can't use simply SqlRender::insertTable here because in Eunomia package it does not solve schema name correctly. Therefore, currently using workaround function from Trajectories package
+      Trajectories:::insertTable(connection=connection,
+                                 databaseSchema=trajectoryLocalArgs$resultsSchema,
+                                 tableName=paste0(trajectoryLocalArgs$prefixForResultTableNames,'traj_eventperiods'),
+                                 data=data.frame(EVENTPERIOD_ID=eventperiod_ids),
+                                 dropTableIfExists=T,
+                                 tempTable=F,
+                                 progressBar=F)
+    }
+
+
     #loop over edges
     for(e.idx in 1:length(outgoing.edges)) {
       edge=outgoing.edges[e.idx]
-      edge.end.concept_id=as.numeric(igraph::ends(g,edge)[1,2])
+      edge.end.concept_id=igraph::ends(g,edge)[1,2]
 
-      #if the current trajectory is A->B->C and the new node to be added is D, but C->D or B->C->D is already tested and any of these found count<MIN.TRAJ.COUNT then there is no need to test A->B->C->D
-      #The following method isTrajRareBasedOnPrevCounts() automatically updates the global list of rare trajectories also
-      if(!Trajectories:::isTrajRareBasedOnPrevCounts(traj,edge.end.concept_id)) {
+      #in case of cycles the new endpoint may already be presented in the trajectory path. Skip such endpoints.
+      if(edge.end.concept_id %in% traj) {
+        ParallelLogger::logDebug(logSpacer,'...skipping extending to ',paste0(traj, collapse="-"),'->',edge.end.concept_id,' because ',edge.end.concept_id,' is already part of the trajectory.')
+      } else {
+        #if the current trajectory is A->B->C and the new node to be added is D, but C->D or B->C->D is already tested and any of these found count<MIN.TRAJ.COUNT then there is no need to test A->B->C->D
+        #The following method isTrajRareBasedOnPrevCounts() automatically updates the global list of rare trajectories also
+        if(!Trajectories:::isTrajRareBasedOnPrevCounts(traj,edge.end.concept_id)) {
 
-        edge.eventperiod_ids=Trajectories:::getEventperiodsOfEdge(connection, trajectoryLocalArgs, g, edge, limit_to_eventperiods=eventperiod_ids)
-
-        if(length(edge.eventperiod_ids)>=MIN.TRAJ.COUNT) {
-          #Can expand the trajectory to new event
-          new.traj<-c(traj,edge.end.concept_id)
-
-          trajObjects<-getTrajectoryObjectsNew(new.traj,traj_count=length(edge.eventperiod_ids))
-          allTrajObjects<-Trajectories:::addToAllTrajsNew(allTrajObjects,trajObjects)
-          ParallelLogger::logDebug(logSpacer,'...added trajectory ',paste0(new.traj, collapse="-"),' (count=',length(edge.eventperiod_ids),').')
-
-
-          #nested call to expand trajectory from this event further
-          trajObjects<-Trajectories:::expandTrajectory(connection, trajectoryLocalArgs,g,MIN.TRAJ.COUNT,new.traj,eventperiod_ids=edge.eventperiod_ids)
-
-          #add result to all trajObjects as we continue the search from other edges as well
-          if(nrow(trajObjects)>0) {
-            allTrajObjects<-Trajectories:::addToAllTrajsNew(allTrajObjects,trajObjects)
+          if(length(eventperiod_ids)==0) {
+            edge.eventperiod_ids=Trajectories:::getEventperiodsOfEdge(connection, trajectoryLocalArgs, g, edge, limit_to_eventperiods=F)
+          } else {
+            edge.eventperiod_ids=Trajectories:::getEventperiodsOfEdge(connection, trajectoryLocalArgs, g, edge, limit_to_eventperiods=T)
           }
 
+          if(length(edge.eventperiod_ids)>=MIN.TRAJ.COUNT) {
+            #Can expand the trajectory to new event
+            new.traj<-c(traj,edge.end.concept_id)
+
+            trajObjects<-Trajectories:::getTrajectoryObjectsNew(new.traj,traj_count=length(edge.eventperiod_ids))
+            allTrajObjects<-Trajectories:::addToAllTrajsNew(allTrajObjects,trajObjects)
+            ParallelLogger::logDebug(logSpacer,'...added trajectory ',paste0(new.traj, collapse="-"),' (count=',length(edge.eventperiod_ids),').')
+
+
+            #nested call to expand trajectory from this event further
+            trajObjects<-Trajectories:::expandTrajectory(connection, trajectoryLocalArgs,g,MIN.TRAJ.COUNT,new.traj,eventperiod_ids=edge.eventperiod_ids)
+
+            #add result to all trajObjects as we continue the search from other edges as well
+            if(nrow(trajObjects)>0) {
+              allTrajObjects<-Trajectories:::addToAllTrajsNew(allTrajObjects,trajObjects)
+            }
+
+          } else {
+            ParallelLogger::logDebug(logSpacer,'...the number of trajectories that reach ',paste0(traj,collapse="-"),'->',edge.end.concept_id,' is ',length(edge.eventperiod_ids),' which is less than MIN.TRAJ.COUNT. Therefore, the trajectory counting stops here.')
+            #update global list of rare trajectories
+            new.traj<-c(traj,edge.end.concept_id)
+            rare_trajectories <- get('RARE_TRAJECTORIES', envir=TRAJECTORIES.CONSTANTS)
+            rare_trajectories <- c(rare_trajectories, paste0(new.traj,collapse="-"))
+            assign('RARE_TRAJECTORIES', rare_trajectories, envir=TRAJECTORIES.CONSTANTS)
+          }
         } else {
-          ParallelLogger::logDebug(logSpacer,'...the number of trajectories that reach ',paste0(traj,collapse="-"),'->',edge.end.concept_id,' is ',length(edge.eventperiod_ids),' which is less than MIN.TRAJ.COUNT. Therefore, the trajectory counting stops here.')
-          #update global list of rare trajectories
-          new.traj<-c(traj,edge.end.concept_id)
-          rare_trajectories <- get('RARE_TRAJECTORIES', envir=TRAJECTORIES.CONSTANTS)
-          rare_trajectories <- c(rare_trajectories, paste0(new.traj,collapse="-"))
-          assign('RARE_TRAJECTORIES', rare_trajectories, envir=TRAJECTORIES.CONSTANTS)
+          ParallelLogger::logDebug(logSpacer,'...based on previous counts, the event is rare. No need to expand it any further.')
         }
-      } else {
-        ParallelLogger::logDebug(logSpacer,'...based on previous counts, the event is rare. No need to expand it any further.')
       }
 
     } #for
@@ -490,6 +512,7 @@ countTrajectories<-function(connection,
     MIN.TRAJ.COUNT<-Trajectories:::getMinPatientsPerEventPair(connection,
                                                               trajectoryAnalysisArgs,
                                                               trajectoryLocalArgs)
+    #MIN.TRAJ.COUNT<-1000
     g <- igraph::subgraph.edges(g, igraph::E(g)[igraph::E(g)$COUNT>=MIN.TRAJ.COUNT], delete.vertices = TRUE)
     ParallelLogger::logInfo(length(igraph::V(g)),' events and ',length(igraph::E(g)),' pairs remained after applying count>=',MIN.TRAJ.COUNT,' filter.')
 
@@ -505,7 +528,7 @@ countTrajectories<-function(connection,
         if(length(node_order_short)<length(igraph::V(g)))
         node_order<- c(node_order_short, igraph::V(g)[setdiff(igraph::V(g),node_order_short)]) #add the remaining nodes
       }
-      #make sure that no nodes are left out
+      # make sure that none of the nodes is left out
       if(length(node_order)!=length(igraph::V(g))) {
         ParallelLogger::logInfo('Something is not right in countTrajectories(): the graph has ',length(igraph::V(g)),' edges but in the node order there are only ',length(node_order),' nodes.')
       }

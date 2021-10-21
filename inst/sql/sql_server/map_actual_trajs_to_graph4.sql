@@ -32,8 +32,8 @@ IF OBJECT_ID('@resultsSchema.@prefiXgraph_event_pairs', 'U') IS NOT NULL
   DROP TABLE @resultsSchema.@prefiXgraph_event_pairs;
 
 SELECT  a.EVENTPERIOD_ID,
-        a.e1_date as e1_cohort_day,
-        a.e2_date as e2_cohort_day,
+        --a.e1_date as e1_cohort_day,
+        --a.e2_date as e2_cohort_day,
         a.e1_concept_id as e1_concept_id,
         a.e2_concept_id as e2_concept_id
 INTO @resultsSchema.@prefiXgraph_event_pairs
@@ -41,6 +41,10 @@ FROM
        @resultsSchema.@prefiXpairs a
        INNER JOIN @resultsSchema.@prefiXmylinks l
         ON a.e1_concept_id=l.e1_concept_id AND a.e2_concept_id=l.e2_concept_id
-ORDER BY a.EVENTPERIOD_ID,a.e1_date,a.e2_date,a.e1_concept_id,a.e2_concept_id
+ORDER BY a.EVENTPERIOD_ID,
+  --a.e1_date,a.e2_date,
+  a.e1_concept_id,a.e2_concept_id
 ;
+
+CREATE INDEX @prefiXgraph_event_pairs_idx ON @resultsSchema.@prefiXgraph_event_pairs (E1_CONCEPT_ID,E2_CONCEPT_ID);
 

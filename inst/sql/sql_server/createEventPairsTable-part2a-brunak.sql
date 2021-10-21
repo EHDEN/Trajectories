@@ -30,13 +30,13 @@ ALTER TABLE @resultsSchema.@prefiXE1E2_model_input ADD E2_DOMAIN VARCHAR(20) NUL
 ALTER TABLE @resultsSchema.@prefiXE1E2_model_input ADD RR_IN_PREVIOUS_STUDY DECIMAL NULL;
 
 --- Instead of using concept id-s, add concept names + concept domains
-UPDATE ohdsi_temp.sr_E1E2_model_input
+UPDATE @resultsSchema.@prefiXE1E2_model_input
 SET E1_NAME = SUBSTRING(name,1,220),
 E1_DOMAIN = 'Condition'
 FROM classifications.icd10_parent_chain i WHERE i.code=E1_CONCEPT_ID;
 
 
-UPDATE ohdsi_temp.sr_E1E2_model_input
+UPDATE @resultsSchema.@prefiXE1E2_model_input
 SET E2_NAME = SUBSTRING(name,1,220),
 E2_DOMAIN = 'Condition'
 FROM classifications.icd10_parent_chain i WHERE i.code=E2_CONCEPT_ID;
