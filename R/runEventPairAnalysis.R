@@ -242,12 +242,12 @@ runValidationAnalysis<-function(connection,
   pairs$RR_CI_UPPER <- ifelse(pairs$RR_CI_UPPER==999,Inf,pairs$RR_CI_UPPER)
 
   write.table(pairs, file=allResultsFilenameTsv, quote=FALSE, sep='\t', col.names = NA)
-  openxlsx::write.xlsx(pairs, allResultsFilenameXls)
+  openxlsx::write.xlsx(pairs, allResultsFilenameXls, overwrite=T)
   ParallelLogger::logInfo('All tested pairs were written to ',allResultsFilenameTsv,' and ',allResultsFilenameXls)
 
   p<-pairs %>% dplyr::filter(!is.na(DIRECTIONAL_SIGNIFICANT) & DIRECTIONAL_SIGNIFICANT=='*')
   write.table(p, file=directionalResultsFilenameTsv, quote=FALSE, sep='\t', col.names = NA)
-  openxlsx::write.xlsx(p, directionalResultsFilenameXls)
+  openxlsx::write.xlsx(p, directionalResultsFilenameXls, overwrite=T)
   ParallelLogger::logInfo('All directional pairs were written to ',directionalResultsFilenameTsv,' and ',directionalResultsFilenameXls)
 
 

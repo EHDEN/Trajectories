@@ -35,6 +35,7 @@ createTrajectoriesGraph<-function(eventPairResultsFilename) {
   edges <- e %>%
     dplyr::mutate(from=as.character(E1_CONCEPT_ID),
                   to=as.character(E2_CONCEPT_ID),
+                  count=E1_BEFORE_E2_COUNT_IN_EVENTS,
                   prob=E1_BEFORE_E2_COUNT_IN_EVENTS/E1_COUNT_IN_EVENTS,
                   numcohortExact=NA,
                   alignedTrajsProb=NA) %>%
@@ -45,6 +46,7 @@ createTrajectoriesGraph<-function(eventPairResultsFilename) {
                     e1=E1_NAME,
                     e2=E2_NAME,
                     e1_count=E1_COUNT_IN_EVENTS,
+                    count,
                     prob,
                     effect=RR,
                     numcohortExact,

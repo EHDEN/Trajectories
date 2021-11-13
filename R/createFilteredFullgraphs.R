@@ -89,43 +89,46 @@ createFilteredFullgraphs<-function(connection,
 
 
 
-  # Take the events/edges from full graph, find the actual counts of these edges and make a graph of these numbers
-  # create a plot of all event pairs (no filtering)
-  title=paste0('All actual sequences on the graph of significant directional event pairs among ',cohortName,' patients')
-  #Truncate the title for file name if it is too long
-  truncated_title=ifelse(stringi::stri_length(title)<=200,title,paste(substr(title,1,200)))
-  g2<-Trajectories:::alignActualTrajectoriesToGraphFull(connection,
-                                                       trajectoryAnalysisArgs,
-                                                       trajectoryLocalArgs,
-                                                       g)
-  Trajectories:::plotTrajectoriesGraph(g2,
-                                      layout=igraph::layout_with_graphopt(g2),
-                                      nodesizes=igraph::V(g2)$alignedTrajsCount,
-                                      linknumbers=igraph::E(g2)$alignedTrajsProb,
-                                      linklabels=paste0(round(100*igraph::E(g2)$alignedTrajsProb),'%'),
-                                      outputPdfFullpath=file.path(outputFolder,'figures',paste0(make.names(truncated_title),'.pdf')),
-                                      title=paste0(title,"\n",format(Sys.time(), '%d %B %Y %H:%M'))
-  )
 
   # Remove low-probability event pairs (keep 20, 50, 100 event pairs with highest probability)
   s=c(20,50,100)
-  s<-s[s<length(igraph::E(g2))] #if the graph does not have that many edges, skip drawing the plot
+  s<-s[s<length(igraph::E(g))] #if the graph does not have that many edges, skip drawing the plot
 
   for(limitOfLinks in s) {
-    ParallelLogger::logInfo('Creating a plot of the same graph, but filtered to ',limitOfLinks,' high-probability pairs only...')
+    ParallelLogger::logInfo('Creating a plot of the same graph, but filtered to ',limitOfLinks,' most prevalent pairs only...')
     #limitOfLinks=50
-    title=paste0('Actual most prevalent ',limitOfLinks,' sequences among ',cohortName,' patients')
-    h<-Trajectories:::filterIgraphRemoveLowEffectLinksAndOrphanNodes(g2, limitOfLinks=limitOfLinks,edge_param_to_sort_by='alignedTrajsCount')
+    title=paste0('Actual most prevalent ',limitOfLinks,' sequences among ',cohortName,' patients, count')
+    h<-Trajectories:::filterIgraphRemoveLowEffectLinksAndOrphanNodes(g, limitOfLinks=limitOfLinks,edge_param_to_sort_by='count')
+    countlabels<-igraph::E(h)$count
+    thousands<-which(countlabels>=1000 & countlabels<1000000)
+    millions<-which(countlabels>=1000000)
+    if(sum(thousands)>0) countlabels[thousands]<-paste0(round(countlabels[thousands]/1000,1),'K')
+    if(sum(millions)>0)countlabels[millions]<-paste0(round(countlabels[millions]/1000000,1),'M')
+
     #Truncate the title for file name if it is too long
     truncated_title=ifelse(stringi::stri_length(title)<=200,title,paste(substr(title,1,200)))
     Trajectories:::plotTrajectoriesGraph(h,
                                         layout=igraph::layout_with_graphopt(h),
-                                        nodesizes=igraph::V(h)$alignedTrajsCount,
-                                        linknumbers=igraph::E(h)$alignedTrajsCount,
-                                        linklabels=paste0(round(100*igraph::E(h)$alignedTrajsProb),'%'),
+                                        nodesizes=igraph::V(h)$count,
+                                        linknumbers=igraph::E(h)$count,
+                                        linklabels=countlabels,
                                         outputPdfFullpath=file.path(outputFolder,'figures',paste0(make.names(truncated_title),'.pdf')),
                                         title=paste0(title,"\n",
                                                      format(Sys.time(), '%d %B %Y %H:%M')))
+
+    title=paste0('Actual most prevalent ',limitOfLinks,' sequences among ',cohortName,' patients, RR')
+    h<-Trajectories:::filterIgraphRemoveLowEffectLinksAndOrphanNodes(g, limitOfLinks=limitOfLinks,edge_param_to_sort_by='count')
+
+    #Truncate the title for file name if it is too long
+    truncated_title=ifelse(stringi::stri_length(title)<=200,title,paste(substr(title,1,200)))
+    Trajectories:::plotTrajectoriesGraph(h,
+                                         layout=igraph::layout_with_graphopt(h),
+                                         nodesizes=igraph::V(h)$count,
+                                         linknumbers=round(100*igraph::E(h)$effect),
+                                         linklabels=paste0(round(igraph::E(h)$effect,1),'x'),
+                                         outputPdfFullpath=file.path(outputFolder,'figures',paste0(make.names(truncated_title),'.pdf')),
+                                         title=paste0(title,"\n",
+                                                      format(Sys.time(), '%d %B %Y %H:%M')))
   }
 
 

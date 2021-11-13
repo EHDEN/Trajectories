@@ -1,15 +1,15 @@
 Package: Trajectories
 Type: Package
 Title: Tool to detect and visualize temporal event trajectories in OMOP common data model
-Version: 0.0.1
-Date: 2020-04-07
-Description: Takes events from OMOP CDM database, detects significant directional event pairs, visualizes them.
+Version: 1.0.0
+Date: 2021-11-12
+Description: Takes events from OMOP CDM database, detects significant directional event pairs and trajectories.
 LazyData: true
 Authors@R: c(
-    person("Kadri", "Künnapuu", , "kadri.kunnapuu@stacc.ee", role = c("aut", "cre")),
+    person("Kadri", "Künnapuu", , "kadri.kunnapuu@stacc.ee", role = c("aut")),
     person("Kadri", "Ligi", role = c("aut")),
     person("Raivo", "Kolde", role = c("aut")),
-    person("Sulev", "Reisberg", role = c("aut")),
+    person("Sulev", "Reisberg", , "sulev.reisberg@ut.ee", role = c("aut", "cre")),
     person("Sven", "Laur", role = c("aut"))
     )
 Maintainer: Kadri Künnapuu <kadri.kunnapuu@stacc.ee>
@@ -27,11 +27,10 @@ Imports:
     igraph (>= 1.2.5),
     lubridate (>= 1.7.10),
     ParallelLogger (>= 2.0.1),
-    MatchIt (>= 4.3.0),
-    optmatch (>= 0.9-15),
     tidyselect (>= 1.1.1),
-    epitools (>= 0.5-10.1)
+    epitools (>= 0.5-10.1),
+    optmatch (>= 0.9-16)
 Encoding: UTF-8
-RoxygenNote: 7.1.2
 Suggests: 
     testthat (>= 2.1.0)
+RoxygenNote: 7.1.2

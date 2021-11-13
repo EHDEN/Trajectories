@@ -8,8 +8,7 @@
 filterIgraphRemoveLowEffectLinksAndOrphanNodes(
   g,
   limitOfLinks = 20,
-  edge_param_to_sort_by = c("effect", "numcohortExact", "numcohortCustom",
-    "effectCount", "prob")
+  edge_param_to_sort_by = "effect"
 )
 }
 \arguments{

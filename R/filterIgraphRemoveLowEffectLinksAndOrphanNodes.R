@@ -7,7 +7,7 @@
 #' @return
 #'
 #' @examples
-filterIgraphRemoveLowEffectLinksAndOrphanNodes<-function(g, limitOfLinks=20,edge_param_to_sort_by=c('effect','numcohortExact','numcohortCustom','effectCount','prob')) {
+filterIgraphRemoveLowEffectLinksAndOrphanNodes<-function(g, limitOfLinks=20,edge_param_to_sort_by='effect') {
   ParallelLogger::logInfo('Filtering graph by removing links with small effect/people size and orphan nodes...')
 
   if(!inherits(g, 'TrajectoriesGraph')) stop('Error in filterIgraphRemoveLowEffectLinksAndOrphanNodes(): object g is not class TrajectoriesGraph object')
@@ -19,29 +19,17 @@ filterIgraphRemoveLowEffectLinksAndOrphanNodes<-function(g, limitOfLinks=20,edge
 
   ParallelLogger::logInfo('...The original graph contains ',length(igraph::V(g)),' events and ',length(igraph::E(g)),' links between them...')
 
-  #igraph does not support Edge reordering. Therefore, to reorder, we create a new graph (with reordered edges)
-  if(edge_param_to_sort_by=='numcohortExact') {
-    #ParallelLogger::logDebug('Sort by numcohortExact')
-    o<-order(igraph::E(g)$numcohortExact, decreasing=T)
-  } else if(edge_param_to_sort_by=='numcohortCustom') {
-    #ParallelLogger::logDebug('Sort by numcohortCustom')
-    o<-order(igraph::E(g)$numcohortCustom, decreasing=T)
-  } else if(edge_param_to_sort_by=='effectCount') {
-    ParallelLogger::logDebug('Sort by effectCount')
-    o<-order(igraph::E(g)$effectCount, decreasing=T)
-  } else if(edge_param_to_sort_by=='prob') {
-    ParallelLogger::logDebug('Sort by prob')
-    o<-order(igraph::E(g)$prob, decreasing=T)
-  } else if(edge_param_to_sort_by=='actualTrajsProb') {
-    ParallelLogger::logDebug('Sort by actualTrajsProb')
-    o<-order(igraph::E(g)$actualTrajsProb, decreasing=T)
-  } else if(edge_param_to_sort_by=='alignedTrajsCount') {
-    ParallelLogger::logDebug('Sort by alignedTrajsCount')
-    o<-order(igraph::E(g)$alignedTrajsCount, decreasing=T)
-  } else {
-    ParallelLogger::logWarn('Sort column in filterIgraphRemoveLowEffectLinksAndOrphanNodes not set. Sorting by effect (default) ')
-    o<-order(abs(igraph::E(g)$effect-1), decreasing=T)
+  if(!edge_param_to_sort_by %in% igraph::edge_attr_names(g)) {
+    ParallelLogger::logError('Error in filterIgraphRemoveLowEffectLinksAndOrphanNodes(): edge_param_to_sort_by="',edge_param_to_sort_by,'" but there is no such edge attribute in igraph object')
   }
+
+  #igraph does not support Edge reordering. Therefore, to reorder, we create a new graph (with reordered edges)
+  if(edge_param_to_sort_by=='effect') {
+    o<-order(abs(igraph::E(g)$effect-1), decreasing=T)
+  } else {
+    o<-order(igraph::edge_attr(g, edge_param_to_sort_by), decreasing=T)
+  }
+
   #create a new graph from reordered edges (take only first limitOfLinks edges)
   g=igraph::graph_from_data_frame(d=igraph::as_data_frame(
     g,
