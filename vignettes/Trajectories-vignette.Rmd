@@ -1,9 +1,17 @@
 ---
-title: "Trajectories-vignette"
-author: "Kadri Künnapuu, Kadri Ligi, Raivo Kolde, Sven Laur, Solomon Ioannou, Peter Rijnbeek, Jaak Vilo and Sulev Reisberg"
-output: rmarkdown::html_vignette
+title: "Trajectories"
+author:
+  - "Kadri Künnapuu"
+  - "Kadri Ligi"
+  - "Raivo Kolde"
+  - "Sven Laur"
+  - "Solomon Ioannou"
+  - "Peter Rijnbeek"
+  - "Jaak Vilo"
+  - "Sulev Reisberg"
+output: pdf_document
 vignette: >
-  %\VignetteIndexEntry{my-vignette}
+  %\VignetteIndexEntry{Trajectories}
   %\VignetteEngine{knitr::rmarkdown}
   %\VignetteEncoding{UTF-8}
 ---
@@ -39,7 +47,7 @@ In order to run the package, you need:
     + Read (SELECT) permission from OMOP CDM tables and vocabulary
     + CREATE, DROP, SELECT, INSERT, UPDATE, DELETE permission in some schema of the same database. This is used for creating and temporary analysis tables. For this, you can create a separate schema in the same database.
     
-In case you do not have an access to any OMOP CDM, you can use tast data from Eunomia package. To run a package on that data, simply run all commands from `./extras/CodeToRunEunomia.R`
+In case you do not have an access to any OMOP CDM, you can use test data from Eunomia package. To run a package on that data, simply run all commands from `./extras/CodeToRunEunomia.R`
 
 ## Setting up the database login credentials
 
@@ -65,6 +73,8 @@ If you need to create a new cohort + analysis, follow these steps:
 
 For more information of the parameters, run 
 
+`?Trajectories::createTrajectoryAnalysisArgs`
+
 ## Setting up study parameters and running the package
 
 The easiest way to run the package is to open either `./extras/CodeToRunDiscover.R` or `./extras/CodeToRunValidate.R` depending on whether you wish to find new event trajectories or you are just validating the pairs from someone's result.
@@ -83,14 +93,28 @@ Second, set up the correct values when calling `createTrajectoryLocalArgs()`
 
 ```{r tidy=FALSE,eval=FALSE}
 oracleTempSchema = "temp_schema", #no need to change this even when you are not using Oracle
-prefixForResultTableNames = "", #It is a prefix that is used for creating temporary table names. You can be set to "".
-cdmDatabaseSchema = '...', #It is the name of database schema where the OMOP CDM data is actually kept/taken
-vocabDatabaseSchema = '...', #It is the name of database schema where the OMOP vocabularies are kept/taken
-resultsSchema = '...', #It is the name of database schema where the analysis tables will be created
-sqlRole = F, # You may always use 'F'. Setting specific role might be useful in PostgreSQL when you want to create tables by using specific role so that the others also see the results. However, then you must ensure that this role has permissions to read from all necessary schemas and also create tables to resultsSchema
-inputFolder=system.file("extdata", "T2D-validate", package = "Trajectories"), # Full path to input folder that contains SQL file for cohort definition and trajectoryAnalysisArgs.json. You can use built-in folders of this package such as: inputFolder=system.file("extdata", "T2D-validate", package = "Trajectories"). Otherwise use full path: inputFolder='/here/is/my/path'
-mainOutputFolder='/here/is/my/path', #Path to general folder where all the outputs of the package will be written. The folder must exist. Each database and analysis will have a separate subfolder automatically.
-databaseHumanReadableName='...' #Use something short. This will be used as a folder name an it will be added to the titles of the graph.
+prefixForResultTableNames = "", #It is a prefix that is used for creating temporary table names.
+             #You can be set to "".
+cdmDatabaseSchema = '...', #It is the name of database schema where the OMOP CDM data is actually
+             #kept/taken
+vocabDatabaseSchema = '...', #It is the name of database schema where the OMOP vocabularies are
+             #kept/taken
+resultsSchema = '...', #It is the name of database schema where the analysis tables will be
+             #created
+sqlRole = F, #You may always use 'F'. Setting specific role might be useful in PostgreSQL when
+             #you want to create tables by using specific role so that the others also see the
+             #results. However, then you must ensure that this role has permissions to read from
+             #all necessary schemas and also create tables to resultsSchema
+inputFolder=system.file("extdata", "T2D-validate", package = "Trajectories"), # Full path to
+             #input folder that contains SQL file for cohort definition and
+             #trajectoryAnalysisArgs.json. You can use built-in folders of this package such as:
+             #inputFolder=system.file("extdata", "T2D-validate", package = "Trajectories").
+             #Otherwise use full path: inputFolder='/here/is/my/path'
+mainOutputFolder='/here/is/my/path', #Path to general folder where all the outputs of the package
+             #will be written. The folder must exist. Each database and analysis will have a
+             #separate subfolder automatically.
+databaseHumanReadableName='...' #Use something short. This will be used as a folder name an it will
+             #be added to the titles of the graph.
 ```
 
 For more information about the parameters you can always use
@@ -107,7 +131,7 @@ inputFolder=system.file("extdata", "T2D-validate", package = "Trajectories")
 
 Now you have all set and you can simply run the workhorse `Trajectories::discover()` or `Trajectories::validate()`.
 
-For your convenience, you can change TRUE/FALSE flags when calling these functions - it is only for running the workhorses step-by-step. Run 
+Both processes are made of several subprocesses which start one after another. For your convenience, you can change TRUE/FALSE flags when calling these subprocesses. Run 
 
 ```{r tidy=FALSE,eval=FALSE}
 ?Trajectories::discover
