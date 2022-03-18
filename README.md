@@ -31,3 +31,7 @@ See vignette for more information.
 ## Contributors
 
 This package is developed by Kadri Künnapuu, Kadri Ligi, Raivo Kolde, Sven Laur, Solomon Ioannou, Peter Rijnbeek, Jaak Vilo and Sulev Reisberg. See details from the corresponding scientific paper. This work was supported by the Estonian Research Council grants (PRG1095, RITA1/02-96-11); the European Union through the European Regional Development Fund grant EU48684; and the European Social Fund via IT Academy programme. The European Health Data & Evidence Network has received funding from the Innovative Medicines Initiative 2 Joint Undertaking (JU) under grant agreement No 806968. The JU receives support from the European Union’s Horizon 2020 research and innovation programme and EFPIA.
+
+## Publications
+
+Kadri Künnapuu, Solomon Ioannou, Kadri Ligi, Raivo Kolde, Sven Laur, Jaak Vilo, Peter R Rijnbeek, Sulev Reisberg, ***Trajectories: a framework for detecting temporal clinical event sequences from health data standardized to the Observational Medical Outcomes Partnership (OMOP) Common Data Model***, JAMIA Open, Volume 5, Issue 1, April 2022, ooac021, https://doi.org/10.1093/jamiaopen/ooac021
