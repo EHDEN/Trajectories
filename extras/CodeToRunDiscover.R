@@ -1,4 +1,4 @@
-#Load required libraries
+# Load required libraries
 library(Trajectories)
 library(DatabaseConnector)
 
@@ -8,12 +8,12 @@ library(DatabaseConnector)
 
 # Change the values of the following parameters according to your database setup
 connectionDetails = createConnectionDetails(dbms = 'postgresql',#  e.g. oracle, postgresql, redshift. See for all options in DatabaseConnector::createConnectionDetails()
-                                            user = Sys.getenv('DB_USERNAME'), #Currently takes the value form .Renviron file in the package folder
-                                            password = Sys.getenv('DB_PASSWORD'), #Currently takes the value form .Renviron file in the package folder
+                                            user = Sys.getenv('DB_USERNAME'), # Currently takes the value form .Renviron file in the package folder
+                                            password = Sys.getenv('DB_PASSWORD'), # Currently takes the value form .Renviron file in the package folder
                                             connectionString = "jdbc:postgresql://localhost:63333/maitt"
 )
 connection <- DatabaseConnector::connect(connectionDetails)
-on.exit(DatabaseConnector::disconnect(connection)) #Close db connection on error or exit
+# on.exit(DatabaseConnector::disconnect(connection)) #Close db connection on error or exit
 
 
 
@@ -25,8 +25,8 @@ trajectoryLocalArgs <- Trajectories::createTrajectoryLocalArgs(oracleTempSchema 
                                                                resultsSchema = 'ohdsi_temp',
                                                                sqlRole = F, # You may always use 'F'. Setting specific role might be useful in PostgreSQL when you want to create tables by using specific role so that the others also see the results. However, then you must ensure that this role has permissions to read from all necessary schemas and also create tables to resultsSchema
                                                                inputFolder=system.file("extdata", "T2D", package = "Trajectories"), # Full path to input folder that contains SQL file for cohort definition and optionally also trajectoryAnalysisArgs.json. You can use built-in folders of this package such as: inputFolder=system.file("extdata", "T2D", package = "Trajectories")
-                                                               mainOutputFolder='/Users/sulevr/temp', #Subfolders will be created automatically
-                                                               databaseHumanReadableName='RITA') #Use something short. This will be used as a folder name an it will be added to the titles of the graph.
+                                                               mainOutputFolder='/Users/sulevr/temp', # Subfolders will be created automatically
+                                                               databaseHumanReadableName='RITA') # Use something short. This will be used as a folder name an it will be added to the titles of the graph.
 
 
 
@@ -37,13 +37,13 @@ trajectoryLocalArgs <- Trajectories::createTrajectoryLocalArgs(oracleTempSchema 
 Trajectories::discover(connection,
                        trajectoryLocalArgs,
                        createCohort=T,
-                       validationSetSize=0, #set to 0 if you are you going to validate the results in another databaase anyways
+                       validationSetSize=0, # set to 0 if you are you going to validate the results in another databaase anyways
                        createEventPairsTable=T,
                        runDiscoveryAnalysis=T,
-                       forceRecalculationOfAnalysis=F, #used only if runDiscoveryAnalysis=T
+                       forceRecalculationOfAnalysis=F, # used only if runDiscoveryAnalysis=T
                        createFilteredFullgraphs=T,
                        runTrajectoryAnalysis=T,
-                       selfValidate=F, #set to F if you are you going to validate the results in another databaase anyways
+                       selfValidate=F, # set to F if you are you going to validate the results in another databaase anyways
                        cleanup=F)
 
 # ##################################################
