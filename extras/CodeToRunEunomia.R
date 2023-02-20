@@ -9,20 +9,23 @@ if(!require(drat)){
   install.packages("drat")
   library(drat)
 }
+
 drat::addRepo("OHDSI")
 if(!require(Eunomia)){
   install.packages("Eunomia")
   library(Eunomia)
 }
-connectionDetails <- getEunomiaConnectionDetails()
 
+connectionDetails <- getEunomiaConnectionDetails()
 connection <- DatabaseConnector::connect(connectionDetails)
-on.exit(DatabaseConnector::disconnect(connection)) #Close db connection on error or exit
+
+# on.exit(DatabaseConnector::disconnect(connection)) # Close db connection on error or exit
 
 Eunomia::createCohorts(connectionDetails)
 
 # Setting database parameters:
 library(stringi)
+mainOutputFolder <- readline(prompt = "Main Output Folder: ")
 trajectoryLocalArgs <- Trajectories::createTrajectoryLocalArgs(oracleTempSchema = "temp_schema",
                                                                prefixForResultTableNames = "",
                                                                cdmDatabaseSchema = 'main',
@@ -30,7 +33,7 @@ trajectoryLocalArgs <- Trajectories::createTrajectoryLocalArgs(oracleTempSchema 
                                                                resultsSchema = 'main',
                                                                sqlRole = F,
                                                                inputFolder=system.file("extdata", "fulldb", package = "Trajectories"), # Full path to input folder that contains SQL file for cohort definition and optionally also trajectoryAnalysisArgs.json. You can use built-in folders of this package such as: inputFolder=system.file("extdata", "T2D", package = "Trajectories")
-                                                               mainOutputFolder='/Users/sulevr/temp', #Subfolders to this will be created automatically
+                                                               mainOutputFolder=mainOutputFolder, # Subfolders to this will be created automatically
                                                                databaseHumanReadableName='Eunomia')
 
 
@@ -42,10 +45,10 @@ Trajectories::discover(connection,
                        trajectoryLocalArgs,
                        createCohort=F,
                        validationSetSize=0,
-                       createEventPairsTable=F,
+                       createEventPairsTable=T,
                        runDiscoveryAnalysis=F,
                        createFilteredFullgraphs=T,
-                       createGraphsForSelectedEvents = F,
+#                       createGraphsForSelectedEvents = F, # Complains as if it is unused argument
                        selfValidate=F,
                        cleanup=T)
 
