@@ -35,9 +35,6 @@ validate(
 
 \item{cleanup}{Drops tables from the database that were created during various stages of the analysis. Normally set to T/TRUE but for debugging or running the analysis step-by-step one can set it to F/FALSE as well.}
 }
-\value{
-
-}
 \description{
 The main function to run the Trajectory package in validation mode - that is, to validate someone's results in your local OMOP CDM
 }

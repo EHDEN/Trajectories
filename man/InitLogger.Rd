@@ -11,9 +11,6 @@ InitLogger(logfile, threshold = "INFO")
 
 \item{threshold}{log_threshold values from "ParallelLogger" package: TRACE, DEBUG, INFO, WARN, ERROR}
 }
-\value{
-
-}
 \description{
 Initializes logger for Trajectories package
 }

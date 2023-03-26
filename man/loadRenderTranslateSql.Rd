@@ -16,9 +16,6 @@ loadRenderTranslateSql(
 \arguments{
 \item{warnOnMissingParameters}{}
 }
-\value{
-
-}
 \description{
 Copy of SqlRender::loadRenderTranslateSql() method to corrrectly solve pathToSql inside Trajectories package
 }

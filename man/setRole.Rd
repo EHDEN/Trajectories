@@ -11,9 +11,6 @@ setRole(connection, sqlRole)
 
 \item{sqlRole}{SQL role to be set}
 }
-\value{
-
-}
 \description{
 This function switches role of the database session by simply executing SET ROLE ...;
 }

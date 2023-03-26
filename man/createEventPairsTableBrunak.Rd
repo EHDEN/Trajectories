@@ -17,9 +17,6 @@ createEventPairsTableBrunak(
 
 \item{trajectoryLocalArgs}{Object created by Trajectories:::createTrajectoryLocalArgs() method}
 }
-\value{
-
-}
 \description{
 Creates event pairs table and populates it with the data
 }

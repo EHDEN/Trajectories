@@ -29,9 +29,6 @@ PlotTrajectoriesGraphForEvent(
 
 \item{skipOutputTables}{If set to T, no output data tables are made (the PDF graphs only).}
 }
-\value{
-
-}
 \description{
 Plots graph for a specific event
 }

@@ -11,9 +11,6 @@ estimatedTimeRemaining(progress_perc = 0.25, starttime = Sys.time())
 
 \item{starttime}{Time when current task was started}
 }
-\value{
-
-}
 \description{
 Returns estimated time remaining in a textual manner, based on the current progress percentage
 }

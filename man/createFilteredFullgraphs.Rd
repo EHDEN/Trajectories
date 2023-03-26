@@ -17,9 +17,6 @@ createFilteredFullgraphs(
 
 \item{trajectoryLocalArgs}{TrajectoryLocalArgs object that must be created by createTrajectoryLocalArgs() method}
 }
-\value{
-
-}
 \description{
 Creates full graph plots from event pairs (not filtered to specific concept id-s)
 }

@@ -8,8 +8,8 @@ filterTrajectoriesGraphCrossingEvent(
   g,
   eventname = 4283892,
   limitOfNodes = F,
-  edge_param_to_sort_by = c("effect", "numcohortExact", "numcohortCustom",
-    "effectCount", "prob")
+  edge_param_to_sort_by = c("effect", "numcohortExact", "numcohortCustom", "effectCount",
+    "prob")
 )
 }
 \arguments{
@@ -20,9 +20,6 @@ filterTrajectoriesGraphCrossingEvent(
 \item{limitOfNodes}{limitOfNodes}
 
 \item{edge_param_to_sort_by}{edge_param_to_sort_by}
-}
-\value{
-
 }
 \description{
 Creates a subgraph of edges that go through EVETNAME. Starts building it from EVENTNAME, adds most probable edge. Then takes both events together, adds most probable edge out from these two etc. Limits to limitOfNodes nodes.

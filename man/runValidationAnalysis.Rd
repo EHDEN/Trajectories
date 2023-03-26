@@ -22,9 +22,6 @@ runValidationAnalysis(
 
 \item{minRelativeRiskToValidate}{Relative risk that is used as a minimum threshold for filtering pairs from DISCOVERY STUDY that are being validated}
 }
-\value{
-
-}
 \description{
 Runs the analysis that validates given event pairs and writes the results to file. Data is taken from database and it is expected that the tables are created by function createEventPairsTable()
 }
