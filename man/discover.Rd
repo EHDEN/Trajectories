@@ -13,7 +13,8 @@ discover(
   runDiscoveryAnalysis = T,
   forceRecalculationOfAnalysis = F,
   createFilteredFullgraphs = T,
-  runTrajectoryAnalysis = T,
+  createGraphsForSelectedEvents = T,
+  runTrajectoryAnalysis = F,
   selfValidate = F,
   cleanup = F
 )
@@ -40,9 +41,6 @@ discover(
 \item{selfValidate}{Normally, set to F/FALSE as it is always better to validate your results in another database. However, if you want to validate your results in your own database, then set selfValidate=T and validationSetSize=some meaningful proportion (for example, 0.5). In such case, the discovery analysis is actually conducted on half of the data and the results are then validated on another half.}
 
 \item{cleanup}{Drops tables from the database that were created during various stages of the analysis.}
-}
-\value{
-
 }
 \description{
 The main function to run the Trajectory package in discovery mode - that is, to identify the temporal event sequences in the cohort of your local OMOP CDM

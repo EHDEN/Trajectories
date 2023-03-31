@@ -11,9 +11,6 @@ createValidationSetup(trajectoryAnalysisArgs, trajectoryLocalArgs)
 
 \item{trajectoryLocalArgs}{TrajectoryLocalArgs object that must be created by createTrajectoryLocalArgs() method}
 }
-\value{
-
-}
 \description{
 Creates setup file for the validation of the results in a separate database
 }

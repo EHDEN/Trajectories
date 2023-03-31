@@ -175,7 +175,7 @@ setUpEunomia<-function() {
                                                                  vocabDatabaseSchema = 'main',
                                                                  resultsSchema = 'main',
                                                                  sqlRole = F,
-                                                                 inputFolder=system.file("extdata", "fulldb", package = "Trajectories"), # Full path to input folder that contains SQL file for cohort definition and optionally also trajectoryAnalysisArgs.json. You can use built-in folders of this package such as: inputFolder=system.file("extdata", "T2D", package = "Trajectories")
+                                                                 inputFolder=system.file("extdata", "Hypertension", package = "Trajectories"), # Full path to input folder that contains SQL file for cohort definition and optionally also trajectoryAnalysisArgs.json. You can use built-in folders of this package such as: inputFolder=system.file("extdata", "T2D", package = "Trajectories")
                                                                  #mainOutputFolder=tempdir(check=TRUE),
                                                                  mainOutputFolder=getwd(),
                                                                  databaseHumanReadableName='TEST'

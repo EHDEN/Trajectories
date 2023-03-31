@@ -11,9 +11,6 @@ IsValidationMode(trajectoryAnalysisArgs, verbose = F)
 
 \item{verbose}{If TRUE, outputs some info in INFO/DEBUG log level. Otherwise, returns the results silently.}
 }
-\value{
-
-}
 \description{
 Returns TRUE if the package is run in validation mode.
 }

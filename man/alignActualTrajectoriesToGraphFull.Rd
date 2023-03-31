@@ -20,9 +20,6 @@ alignActualTrajectoriesToGraphFull(
 
 \item{g}{An igrpah object that is created by specific graph functions in this package}
 }
-\value{
-
-}
 \description{
 Adds numcohortCustom value to graph nodes and edges - actual number of people on that edge/node
 }

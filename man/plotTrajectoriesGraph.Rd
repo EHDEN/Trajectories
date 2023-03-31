@@ -29,9 +29,6 @@ plotTrajectoriesGraph(
 
 \item{title}{Title of the graph}
 }
-\value{
-
-}
 \description{
 Plot TrajectoriesGraph object to PDF file
 }

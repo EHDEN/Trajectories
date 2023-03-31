@@ -13,9 +13,6 @@ dbCleanup(connection, trajectoryAnalysisArgs, trajectoryLocalArgs)
 
 \item{trajectoryLocalArgs}{TrajectoryLocalArgs object that must be created by createTrajectoryLocalArgs() method}
 }
-\value{
-
-}
 \description{
 Removes all database tables that were created during the analysis
 }
