@@ -10,8 +10,7 @@ Authors@R: c(
     person("Kadri", "Ligi", role = c("aut")),
     person("Raivo", "Kolde", role = c("aut")),
     person("Sulev", "Reisberg", , "sulev.reisberg@ut.ee", role = c("aut", "cre")),
-    person("Sven", "Laur", role = c("aut")),
-    person("Samir", "Musali", , "samir.musali@ut.ee", role = c("aut"))
+    person("Sven", "Laur", role = c("aut"))
     )
 Maintainer: Kadri Künnapuu <kadri.kunnapuu@stacc.ee>
 License: GPL-3
@@ -19,8 +18,6 @@ Depends:
     R (>= 3.2.2),
     dplyr (>= 1.0.7)
 Imports:
-    CohortGenerator (>= 0.8.0),
-    CirceR (>= 1.3.0),
     DatabaseConnector (>= 2.2.0),
     SqlRender (>= 1.5.2),
     stringi (>= 1.4.5),
@@ -33,13 +30,10 @@ Imports:
     tidyselect (>= 1.1.1),
     epitools (>= 0.5-10.1),
     optmatch (>= 0.9-16)
-Remotes:
-    OHDSI/CohortGenerator
-    OHDSI/CirceR
 Encoding: UTF-8
 Suggests: 
     testthat (>= 2.1.0),
     knitr,
     rmarkdown
-RoxygenNote: 7.2.3
+RoxygenNote: 7.1.2
 VignetteBuilder: knitr

@@ -24,8 +24,7 @@ discover <- function(connection,
                      runDiscoveryAnalysis=T,
                      forceRecalculationOfAnalysis=F,
                      createFilteredFullgraphs=T,
-                     createGraphsForSelectedEvents=T,
-                     runTrajectoryAnalysis=F,
+                     runTrajectoryAnalysis=T,
                      selfValidate=F,
                      cleanup=F
                       ) {
@@ -91,10 +90,10 @@ discover <- function(connection,
                                                  trajectoryLocalArgs)
 
   # Draw graphs for selected events (event ID-s taken from trajectoryAnalysisArgs$eventIdsForGraphs)
-  if(createGraphsForSelectedEvents) Trajectories:::PlotTrajectoriesGraphForEvents(connection,
-                                                                                  trajectoryAnalysisArgs,
-                                                                                  trajectoryLocalArgs,
-                                                                                  eventIds=trajectoryAnalysisArgs$eventIdsForGraphs)
+  #if(createGraphsForSelectedEvents) Trajectories:::PlotTrajectoriesGraphForEvents(connection,
+  #                                                                                trajectoryAnalysisArgs,
+  #                                                                                trajectoryLocalArgs,
+  #                                                                                eventIds=trajectoryAnalysisArgs$eventIdsForGraphs)
 
   ##############################################################################################################
 
