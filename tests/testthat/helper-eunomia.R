@@ -175,7 +175,7 @@ setUpEunomia<-function() {
                                                                  vocabDatabaseSchema = 'main',
                                                                  resultsSchema = 'main',
                                                                  sqlRole = F,
-                                                                 inputFolder=system.file("extdata", "Hypertension", package = "Trajectories"), # Full path to input folder that contains SQL file for cohort definition and optionally also trajectoryAnalysisArgs.json. You can use built-in folders of this package such as: inputFolder=system.file("extdata", "T2D", package = "Trajectories")
+                                                                 inputFolder=system.file("extdata", "fulldb", package = "Trajectories"), # Full path to input folder that contains SQL file for cohort definition and optionally also trajectoryAnalysisArgs.json. You can use built-in folders of this package such as: inputFolder=system.file("extdata", "T2D", package = "Trajectories")
                                                                  #mainOutputFolder=tempdir(check=TRUE),
                                                                  mainOutputFolder=getwd(),
                                                                  databaseHumanReadableName='TEST'
@@ -230,21 +230,21 @@ limitToConcepts<-function(connection,concept_ids=c(9201, #inpatient visit
                                                    317009, #Condition: Asthma
                                                    378419, #Condition: Alzheimer
                                                    4144583, #Condition: Diabetes mellitus due to cystic fibrosis
-                                                   4001336,	#Condition:Concussion injury of brain
-                                                   192671,	#Condition:Gastrointestinal hemorrhage
-                                                   4029498,	#Condition:Seizure disorder
-                                                   4132546,	#Condition:Traumatic brain injury
-                                                   140673,	#Condition:Hypothyroidism
-                                                   4027663,	#Condition:Peptic ulcer
-                                                   4066995,	#Condition:Fracture of vertebral column with spinal cord injury
-                                                   4043241,	#Condition:Familial Alzheimer's disease of early onset
-                                                    4059173,	#Condition:Fracture of ankle
-                                                    4084167,	#Condition:Acute allergic reaction
-                                                    4056621,	#Condition:Recurrent urinary tract infection
-                                                    4134304,	#Condition:Fracture subluxation of wrist
-                                                    4299128,	#Condition:Third degree burn
-                                                    4329847,	#Condition:Myocardial infarction
-                                                    44782520,	#Condition:Chronic paralysis due to lesion of spinal cord
+                                                   4001336, #Condition:Concussion injury of brain
+                                                   192671,  #Condition:Gastrointestinal hemorrhage
+                                                   4029498, #Condition:Seizure disorder
+                                                   4132546, #Condition:Traumatic brain injury
+                                                   140673,  #Condition:Hypothyroidism
+                                                   4027663, #Condition:Peptic ulcer
+                                                   4066995, #Condition:Fracture of vertebral column with spinal cord injury
+                                                   4043241, #Condition:Familial Alzheimer's disease of early onset
+                                                    4059173,  #Condition:Fracture of ankle
+                                                    4084167,  #Condition:Acute allergic reaction
+                                                    4056621,  #Condition:Recurrent urinary tract infection
+                                                    4134304,  #Condition:Fracture subluxation of wrist
+                                                    4299128,  #Condition:Third degree burn
+                                                    4329847,  #Condition:Myocardial infarction
+                                                    44782520, #Condition:Chronic paralysis due to lesion of spinal cord
 
                                                    442116, #Observation: Allergy to eggs
                                                    4168004, #Observation: Burn injury
@@ -322,4 +322,3 @@ removeTestableOutputFiles<-function(trajectoryLocalArgs,trajectoryAnalysisArgs) 
   if(file.exists(file.path(outputFolder,'tables',filename))) file.remove(file.path(outputFolder,'tables',filename))
 
 }
-

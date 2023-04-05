@@ -2,6 +2,10 @@ library(Trajectories)
 library(DatabaseConnector)
 
 # ##################################################
+library(Trajectories)
+library(DatabaseConnector)
+
+# ##################################################
 # SETTING UP THE PARAMETER VALUES
 # ##################################################
 
@@ -33,9 +37,7 @@ trajectoryLocalArgs <- Trajectories::createTrajectoryLocalArgs(oracleTempSchema 
                                                                vocabDatabaseSchema = 'main',
                                                                resultsSchema = 'main',
                                                                sqlRole = F,
-                                                               # Full path to input folder that contains SQL file for cohort definition and optionally also trajectoryAnalysisArgs.json.
-                                                               # You can use built-in folders of this package such as: inputFolder=system.file("extdata", "T2D", package = "Trajectories")
-                                                               inputFolder=system.file("extdata", "Hypertension", package = "Trajectories"),
+                                                               inputFolder=system.file("extdata", "fulldb", package = "Trajectories"), # Full path to input folder that contains SQL file for cohort definition and optionally also trajectoryAnalysisArgs.json. You can use built-in folders of this package such as: inputFolder=system.file("extdata", "T2D", package = "Trajectories")
                                                                mainOutputFolder=mainOutputFolder, # Subfolders to this will be created automatically
                                                                databaseHumanReadableName='Eunomia')
 
@@ -46,12 +48,12 @@ trajectoryLocalArgs <- Trajectories::createTrajectoryLocalArgs(oracleTempSchema 
 
 Trajectories::discover(connection,
                        trajectoryLocalArgs,
-                       createCohort=T,
-                       validationSetSize=1,
-                       createEventPairsTable=F,
+                       createCohort=F,
+                       validationSetSize=0,
+                       createEventPairsTable=T,
                        runDiscoveryAnalysis=F,
-                       createFilteredFullgraphs=F,
-                       createGraphsForSelectedEvents=F,
+                       createFilteredFullgraphs=T,
+#                       createGraphsForSelectedEvents = F, # Complains as if it is unused argument
                        selfValidate=F,
                        cleanup=T)
 
