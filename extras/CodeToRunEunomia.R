@@ -55,7 +55,8 @@ Trajectories::discover(connection,
                        createFilteredFullgraphs=T,
 #                       createGraphsForSelectedEvents = F, # Complains as if it is unused argument
                        selfValidate=F,
-                       cleanup=T)
+                       cleanup=T,
+                       beta=F) # for testing new things
 
 # ##################################################
 # DISCONNECT FROM DATABASE

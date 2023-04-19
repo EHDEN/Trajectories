@@ -11,6 +11,7 @@
 #' @param runTrajectoryAnalysis If TRUE, runs the trajectory analysis - puts the actual trajectories to the graph
 #' @param selfValidate Normally, set to F/FALSE as it is always better to validate your results in another database. However, if you want to validate your results in your own database, then set selfValidate=T and validationSetSize=some meaningful proportion (for example, 0.5). In such case, the discovery analysis is actually conducted on half of the data and the results are then validated on another half.
 #' @param cleanup Drops tables from the database that were created during various stages of the analysis.
+#' @param beta Whether to use new features or not.
 #
 #' @return
 #' @export
@@ -26,7 +27,8 @@ discover <- function(connection,
                      createFilteredFullgraphs=T,
                      runTrajectoryAnalysis=T,
                      selfValidate=F,
-                     cleanup=F
+                     cleanup=F,
+                     beta=F
                       ) {
 
   trajectoryAnalysisArgs<-Trajectories:::TrajectoryAnalysisArgsFromInputFolder(trajectoryLocalArgs) #also creates output folder for results, logs, etc.
@@ -46,9 +48,15 @@ discover <- function(connection,
 
   # Create new cohort table for this package to results schema & fill it in (all having cohort_id=1 in cohort data)
   if(createCohort) {
-    Trajectories:::createAndFillCohortTable(connection=connection,
-                                         trajectoryAnalysisArgs=trajectoryAnalysisArgs,
-                                         trajectoryLocalArgs=trajectoryLocalArgs)
+    if (beta==F) {
+      Trajectories:::createAndFillCohortTable(connection=connection,
+                                              trajectoryAnalysisArgs=trajectoryAnalysisArgs,
+                                              trajectoryLocalArgs=trajectoryLocalArgs)
+    } else {
+      Trajectories:::createAndFillCohortTableBeta(connection=connection,
+                                                  trajectoryAnalysisArgs=trajectoryAnalysisArgs,
+                                                  trajectoryLocalArgs=trajectoryLocalArgs)
+    }
 
     # Assign ...% of the event-periods from the cohort to validation set (discovery set=data in cohort table where cohort_id=1; validation set=data in cohort table where cohort_id=2)
     if(validationSetSize>0) Trajectories:::createValidationSet(connection=connection,
