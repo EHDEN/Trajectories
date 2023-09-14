@@ -26,6 +26,9 @@ PlotTrajectoriesGraphForEvents(
 
 \item{skipOutputTables}{If set to TRUE, no output data tables are made (the PDF graphs only).}
 }
+\value{
+
+}
 \description{
 Analysis results, obtained by runEventPairAnalysis(), have to exist in output folder, set by Trajectories:::GetOutputFolder(trajectoryLocalArgs,trajectoryAnalysisArgs).
 This function also alignes actual trajectories to the graph, therefore it requires database connection.

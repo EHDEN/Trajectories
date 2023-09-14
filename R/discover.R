@@ -2,7 +2,7 @@
 #'
 #' @param connection Database connection object created by createConnectionDetails() method in DatabaseConnector package
 #' @param trajectoryLocalArgs TrajectoryLocalArgs object that must be created by createTrajectoryLocalArgs() method
-#' @param createCohort Builds a study cohort in the database. If validationSetSize is set to non-zero, splits the cohort into disovery and validation set.
+#' @param createEventsTable Builds a study cohort in the database. If validationSetSize is set to non-zero, splits the cohort into disovery and validation set.
 #' @param validationSetSize If set to non-zero, splits the whole cohort into discovery and (self-)validation set. Is meaningful only if selfValidate=T. Allowed values are in range 0..1.
 #' @param createEventPairsTable Builds all event pairs and necessary data tables in the database for the analysis. Also clears all results from the database if they exist.
 #' @param runDiscoveryAnalysis Run the actual directionality analysis of all event pairs.
@@ -18,7 +18,7 @@
 #' @examples
 discover <- function(connection,
                      trajectoryLocalArgs,
-                     createCohort=T,
+                     createEventsTable=T,
                      validationSetSize=0,  # used only if createCohort=T (validation set created while building cohort)
                      createEventPairsTable=T,
                      runDiscoveryAnalysis=T,
@@ -45,16 +45,18 @@ discover <- function(connection,
   ##############################################################################################################
 
   # Create new cohort table for this package to results schema & fill it in (all having cohort_id=1 in cohort data)
-  if(createCohort) {
-    Trajectories:::createAndFillCohortTable(connection=connection,
+  if(createEventsTable) {
+    Trajectories:::createEventsTable(connection=connection,
                                          trajectoryAnalysisArgs=trajectoryAnalysisArgs,
                                          trajectoryLocalArgs=trajectoryLocalArgs)
 
     # Assign ...% of the event-periods from the cohort to validation set (discovery set=data in cohort table where cohort_id=1; validation set=data in cohort table where cohort_id=2)
     if(validationSetSize>0) Trajectories:::createValidationSet(connection=connection,
-                                      trajectoryAnalysisArgs,
-                                      trajectoryLocalArgs,
-                                      size=0)
+                                                               trajectoryAnalysisArgs,
+                                                               trajectoryLocalArgs,
+                                                               size=validationSetSize)
+
+    #querySql(connection, paste0('SELECT * FROM main.traj_base_cohort;'))
   }
 
   ##############################################################################################################

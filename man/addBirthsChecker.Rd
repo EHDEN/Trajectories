@@ -13,6 +13,9 @@ addBirthsChecker(connection, trajectoryAnalysisArgs, trajectoryLocalArgs)
 
 \item{trajectoryLocalArgs}{TrajectoryLocalArgs object that must be created by createTrajectoryLocalArgs() method}
 }
+\value{
+
+}
 \description{
 Checks whether person.birth_datetime is recorded in the data if addBirths is set to TRUE
 }

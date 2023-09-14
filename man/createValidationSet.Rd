@@ -20,6 +20,9 @@ createValidationSet(
 
 \item{size}{Ratio for assigning event pairs from the cohort to validation set.}
 }
+\value{
+
+}
 \description{
 Randomly assigns event pairs from the cohort to validation set by using the given ratio
 }

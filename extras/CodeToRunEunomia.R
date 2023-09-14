@@ -1,6 +1,3 @@
-library(Trajectories)
-library(DatabaseConnector)
-
 # ##################################################
 library(Trajectories)
 library(DatabaseConnector)
@@ -37,7 +34,7 @@ trajectoryLocalArgs <- Trajectories::createTrajectoryLocalArgs(oracleTempSchema 
                                                                vocabDatabaseSchema = 'main',
                                                                resultsSchema = 'main',
                                                                sqlRole = F,
-                                                               inputFolder=system.file("extdata", "fulldb", package = "Trajectories"), # Full path to input folder that contains SQL file for cohort definition and optionally also trajectoryAnalysisArgs.json. You can use built-in folders of this package such as: inputFolder=system.file("extdata", "T2D", package = "Trajectories")
+                                                               inputFolder=system.file("extdata", "test", package = "Trajectories"), # Full path to input folder that contains SQL file for cohort definition and optionally also trajectoryAnalysisArgs.json. You can use built-in folders of this package such as: inputFolder=system.file("extdata", "T2D", package = "Trajectories")
                                                                mainOutputFolder=mainOutputFolder, # Subfolders to this will be created automatically
                                                                databaseHumanReadableName='Eunomia')
 

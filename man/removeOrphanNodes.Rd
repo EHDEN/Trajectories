@@ -9,6 +9,9 @@ removeOrphanNodes(g)
 \arguments{
 \item{g}{igraph object}
 }
+\value{
+
+}
 \description{
 Removes orphan nodes from igraph/TrajectoriesGraph object
 }

@@ -10,12 +10,12 @@ createEventPairsTable<-function(connection,
                                 trajectoryLocalArgs
                                ) {
 
-  # cohort_id=1 when running in DISCOVERY mode
-  # cohort_id=2 when running in VALIDATION mode
-  COHORT_ID=ifelse(Trajectories:::IsValidationMode(trajectoryAnalysisArgs)==TRUE,2,1)
+  # IS_VALIDATION_SET=0 when running in DISCOVERY mode
+  # IS_VALIDATION_SET=1 when running in VALIDATION mode
+  IS_VALIDATION_SET=ifelse(Trajectories:::IsValidationMode(trajectoryAnalysisArgs)==TRUE,1,0)
 
-  ParallelLogger::logInfo("Create database tables + data for all event pairs from cohort ID=",
-                          COHORT_ID, " to '",trajectoryLocalArgs$resultsSchema,"' schema...")
+  ParallelLogger::logInfo("Create database tables + data for all event periods having IS_VALIDATION_SET=",
+                          IS_VALIDATION_SET, " to '",trajectoryLocalArgs$resultsSchema,"' schema...")
 
 
   # In case trajectoryAnalysisArgs$minPatientsPerEventPair < 1,
@@ -24,15 +24,6 @@ createEventPairsTable<-function(connection,
   minPatientsPerEventPair<-Trajectories:::getMinPatientsPerEventPair(connection,
                                                                      trajectoryAnalysisArgs,
                                                                      trajectoryLocalArgs)
-
-  # Check if there is data in person.birth_datetime if addBirths=T
-  if(trajectoryAnalysisArgs$addBirths==T){
-    Trajectories:::addBirthsChecker(connection=connection,
-                                    trajectoryAnalysisArgs=trajectoryAnalysisArgs,
-                                    trajectoryLocalArgs=trajectoryLocalArgs)
-  }
-
-
 
   # Store used analysis arguments to JSON file
   Trajectories:::TrajectoryAnalysisArgsToJson(trajectoryAnalysisArgs,
@@ -43,33 +34,16 @@ createEventPairsTable<-function(connection,
                                                         "trajectoryAnalysisArgs_used.json")
                                               )
 
-
-  # Set SQL role of the database session
-  Trajectories:::setRole(connection,trajectoryLocalArgs$sqlRole)
-
   # Create everything up to E1E2_model table
   ParallelLogger::logInfo("Creating event pairs in data...")
   RenderedSql = Trajectories:::loadRenderTranslateSql(sqlFilename='createEventPairsTable-part1.sql',
                                                       packageName=get('TRAJECTORIES_PACKAGE_NAME', envir=TRAJECTORIES.CONSTANTS),
                                                       dbms = connection@dbms,
-                                                      oracleTempSchema = NULL,
-                                                      resultsSchema = trajectoryLocalArgs$resultsSchema,
                                                       cdmDatabaseSchema = trajectoryLocalArgs$cdmDatabaseSchema,
-                                                      vocabDatabaseSchema = trajectoryLocalArgs$vocabDatabaseSchema,
+                                                      resultsSchema = trajectoryLocalArgs$resultsSchema,
                                                       minimumDaysBetweenEvents = trajectoryAnalysisArgs$minimumDaysBetweenEvents,
                                                       maximumDaysBetweenEvents = trajectoryAnalysisArgs$maximumDaysBetweenEvents,
-                                                      daysBeforeIndexDate = trajectoryAnalysisArgs$daysBeforeIndexDate,
-                                                      prefiX = trajectoryLocalArgs$prefixForResultTableNames,
-                                                      cohortTableSchema = trajectoryLocalArgs$resultsSchema,
-                                                      cohortTable = paste0(trajectoryLocalArgs$prefixForResultTableNames,'cohort'),
-                                                      cohortId = COHORT_ID,
-                                                      addConditions = ifelse(trajectoryAnalysisArgs$addConditions==T,1,0),
-                                                      addObservations = ifelse(trajectoryAnalysisArgs$addObservations==T,1,0),
-                                                      addProcedures = ifelse(trajectoryAnalysisArgs$addProcedures==T,1,0),
-                                                      addDrugExposures = ifelse(trajectoryAnalysisArgs$addDrugExposures==T,1,0),
-                                                      addDrugEras = ifelse(trajectoryAnalysisArgs$addDrugEras==T,1,0),
-                                                      addBirths = ifelse(trajectoryAnalysisArgs$addBirths==T,1,0),
-                                                      addDeaths = ifelse(trajectoryAnalysisArgs$addDeaths==T,1,0)
+                                                      prefiX = trajectoryLocalArgs$prefixForResultTableNames
   )
   DatabaseConnector::executeSql(connection,
                                 sql=RenderedSql,
@@ -179,7 +153,7 @@ getMinPatientsPerEventPair<-function(connection,
   # the actual value means "prevalence", not absolute number.
   # Therefore, we need to calculate the absolute number from this
   if(trajectoryAnalysisArgs$minPatientsPerEventPair<1) {
-    cohortCount<-getCohortSize(connection, trajectoryAnalysisArgs, trajectoryLocalArgs)
+    cohortCount<-Trajectories:::getCohortSize(connection, trajectoryAnalysisArgs, trajectoryLocalArgs)
     minPatientsPerEventPair=round(cohortCount*trajectoryAnalysisArgs$minPatientsPerEventPair)
     if(minPatientsPerEventPair==0) minPatientsPerEventPair=1
     ParallelLogger::logInfo('Parameter value of minPatientsPerEventPair=',trajectoryAnalysisArgs$minPatientsPerEventPair,' is less than 1. ',

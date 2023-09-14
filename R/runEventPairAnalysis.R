@@ -9,16 +9,18 @@ requireNamespace("dplyr", quietly = TRUE)
 #' @param trajectoryAnalysisArgs TrajectoryAnalysisArgs object that must be created by createTrajectoryAnalysisArgs() method
 #' @param trajectoryLocalArgs TrajectoryLocalArgs object that must be created by createTrajectoryLocalArgs() method
 #' @param forceRecalculation Set to TRUE if you wish to recalculate p-values for all pairs again. If it is set to FALSE, it avoids overcalculating p-values for pairs that have been analyzed already.
-#' @return
+#' @param skip_exact_matching_requirement Set to FALSE only when testing the package and you want to skip the exact matching by gender, age group and year
 #'
 #' @examples
 runDiscoveryAnalysis<-function(connection,
                                trajectoryAnalysisArgs,
                                trajectoryLocalArgs,
-                               forceRecalculation=F) {
+                               forceRecalculation=F,
+                               skip_exact_matching_requirement=F) {
 
   ParallelLogger::logInfo("Begin the analysis of detecting statistically significant directional event pairs...")
 
+  if(skip_exact_matching_requirement==T) ParallelLogger::logWarn("Exact matching is disabled in discovery analysis (should be disabled only when testing).")
 
   #Delete the old results files if exist
   outputFolder<-Trajectories:::GetOutputFolder(trajectoryLocalArgs,trajectoryAnalysisArgs)
@@ -34,9 +36,6 @@ runDiscoveryAnalysis<-function(connection,
   if(file.exists(directionalResultsFilenameXls)) file.remove(directionalResultsFilenameXls)
   if(file.exists(RRPvaluePlotFilename)) file.remove(RRPvaluePlotFilename)
   if(file.exists(processDiagramfilename)) file.remove(processDiagramfilename)
-
-  #Set SQL role of the database session
-  Trajectories:::setRole(connection, trajectoryLocalArgs$sqlRole)
 
   #Get pairs
   pairs=Trajectories:::getAllPairs(connection,
@@ -57,7 +56,8 @@ runDiscoveryAnalysis<-function(connection,
                                        #relativeRiskForPowerCalculations=relativeRiskForPowerCalculations, #get power of detecting RR=10
                                        #powerPvalCutoff=0.05, #no correction here
                                        outputFolder,
-                                       forceRecalculation = forceRecalculation
+                                       forceRecalculation = forceRecalculation,
+                                       skip_exact_matching_requirement = skip_exact_matching_requirement
   )
 
   #Multple testing correction for p-values of RR
@@ -110,7 +110,7 @@ runDiscoveryAnalysis<-function(connection,
 
   # Create validation setup for validating the results in another database
   Trajectories:::createValidationSetup(trajectoryAnalysisArgs,
-                                      trajectoryLocalArgs)
+                                       trajectoryLocalArgs)
 
 
 }
@@ -128,9 +128,9 @@ runDiscoveryAnalysis<-function(connection,
 #'
 #' @examples
 runValidationAnalysis<-function(connection,
-                               trajectoryAnalysisArgs,
-                               trajectoryLocalArgs,
-                               forceRecalculation=F) {
+                                trajectoryAnalysisArgs,
+                                trajectoryLocalArgs,
+                                forceRecalculation=F) {
 
   ParallelLogger::logInfo("Begin the analysis of validation given directional event pairs...")
 
@@ -253,7 +253,7 @@ runValidationAnalysis<-function(connection,
 
   # Create validation setup for validating the (validation) results in another database
   Trajectories:::createValidationSetup(trajectoryAnalysisArgs,
-                                      trajectoryLocalArgs)
+                                       trajectoryLocalArgs)
 
 
 }
@@ -311,7 +311,7 @@ getPValueForAccociation<-function(expected_prob,observation_count,observed_match
     #if relative risk > 1
 
     ParallelLogger::logDebug('Actual prevalence of E2 in (adjusted) control group is ',round(expected_prob*100),'% (and in case group ',round(observed_matches*100/observation_count),'%). If the expected prevalence of E2 in case group is ',round(expected_prob*100),'%, what is the probability that we observe E2 in case group more than ',(observed_matches-1),' (we actually did ',observed_matches,')?')
-    ParallelLogger::logDebug('If the expected prevalence of event2_concept_id in case group is ',round(expected_prob*100),'%, what is the probability that we observe event2_concept_id in case group more than ',(observed_matches-1),'?')
+    ParallelLogger::logDebug('If the expected prevalence of event2_COHORT_ID in case group is ',round(expected_prob*100),'%, what is the probability that we observe event2_COHORT_ID in case group more than ',(observed_matches-1),'?')
     event_pair_pvalue <- pbinom(q = ifelse(observed_matches==0,0,observed_matches-1), size = observation_count, prob = expected_prob, lower.tail=FALSE)
     return(event_pair_pvalue)
 
@@ -320,7 +320,7 @@ getPValueForAccociation<-function(expected_prob,observation_count,observed_match
     #if relative risk <= 1
 
     ParallelLogger::logDebug('Actual prevalence of E2 in (adjusted) control group is ',round(expected_prob*100),'% (and in case group ',round(observed_matches*100/observation_count),'). If the expected prevalence of E2 in case group is ',round(expected_prob*100),'%, what is the probability that we observe E2 in case group less than ',observed_matches,' (as we actually did)?')
-    ParallelLogger::logDebug('If the expected prevalence of event2_concept_id in case group is ',round(expected_prob*100),'%, what is the probability that we observe event2_concept_id in case group more than ',observed_matches,'?')
+    ParallelLogger::logDebug('If the expected prevalence of event2_COHORT_ID in case group is ',round(expected_prob*100),'%, what is the probability that we observe event2_COHORT_ID in case group more than ',observed_matches,'?')
     event_pair_pvalue <- pbinom(q = ifelse(observed_matches==0,0,observed_matches), size = observation_count, prob = expected_prob)
     return(event_pair_pvalue)
 
@@ -481,23 +481,21 @@ RRandCI<-function(num_observations_in_cases,case_group_size,num_observations_in_
 
 # Calculates all necessary input values for statistical tests
 calcRRandPower<-function(connection,
-                            trajectoryAnalysisArgs,
-                            trajectoryLocalArgs,
-                            pairs,
-                            #relativeRiskForPowerCalculations=10, #ignored if RR_IN_PREVIOUS_STUDY is given in the data
-                            #powerPvalCutoff=0.05
-                            outputFolder,
-                            forceRecalculation=T) {
+                         trajectoryAnalysisArgs,
+                         trajectoryLocalArgs,
+                         pairs,
+                         #relativeRiskForPowerCalculations=10, #ignored if RR_IN_PREVIOUS_STUDY is given in the data
+                         #powerPvalCutoff=0.05
+                         outputFolder,
+                         forceRecalculation=T,
+                         skip_exact_matching_requirement=F) {
 
   num.pairs=nrow(pairs)
   ParallelLogger::logInfo('Calculating relative risk for ',num.pairs,' event pairs...')
 
-  #Set SQL role of the database session
-  Trajectories:::setRole(connection, trajectoryLocalArgs$sqlRole)
-
-  #Group pairs by E1_CONCEPT_ID (the same case-control group can be used for all of these pairs)
+  #Group pairs by E1_COHORT_ID (the same case-control group can be used for all of these pairs)
   E1s<-pairs %>%
-    dplyr::group_by(E1_CONCEPT_ID) %>%
+    dplyr::group_by(E1_COHORT_ID) %>%
     dplyr::summarise(n=dplyr::n()) %>%
     dplyr::arrange(-n)
   num.E1s.total <- nrow(E1s)
@@ -508,23 +506,23 @@ calcRRandPower<-function(connection,
     pair_counts_starting_with_E1_and_having_rr_not_calculated<-pairs %>%
       dplyr::filter(is.na(CASE_GROUP_SIZE) | !is.na(CONTROL_GROUP_SIZE) ) %>% #means that composing a control group has not failed
       dplyr::filter(is.na(RR)) %>%
-      dplyr::group_by(E1_CONCEPT_ID) %>%
+      dplyr::group_by(E1_COHORT_ID) %>%
       dplyr::summarise(n=dplyr::n()) %>%
       dplyr::arrange(-n)
 
     #for which pairs starting with E1 (and building matched control group has not failed) all RR-s are not FULLY calculated
     E1s_of_pairs_where_rr_not_fully_calculated <- E1s %>%
-      dplyr::left_join(pair_counts_starting_with_E1_and_having_rr_not_calculated, by = c("E1_CONCEPT_ID")) %>%
+      dplyr::left_join(pair_counts_starting_with_E1_and_having_rr_not_calculated, by = c("E1_COHORT_ID")) %>%
       dplyr::filter(n.y!=0) %>%
-      dplyr::select(E1_CONCEPT_ID)
+      dplyr::select(E1_COHORT_ID)
     num.E1s.already.calculated=nrow(E1s)-nrow(E1s_of_pairs_where_rr_not_fully_calculated)
     if(num.E1s.already.calculated>0) ParallelLogger::logInfo('For the pairs of ',num.E1s.already.calculated,' first events, RR is already calculated. Skipping these from recalculation.')
 
     #Update pairs and E1s
     pairs <- pairs %>%
-      dplyr::inner_join(E1s_of_pairs_where_rr_not_fully_calculated, by = c("E1_CONCEPT_ID"))
+      dplyr::inner_join(E1s_of_pairs_where_rr_not_fully_calculated, by = c("E1_COHORT_ID"))
     E1s <- pairs %>%
-      dplyr::group_by(E1_CONCEPT_ID) %>%
+      dplyr::group_by(E1_COHORT_ID) %>%
       dplyr::summarise(n=dplyr::n()) %>%
       dplyr::arrange(-n)
     num.already.calculated=num.pairs-nrow(pairs)
@@ -564,15 +562,15 @@ SET
   # For each E1, create case-control groups
   if(nrow(E1s)>0) {
     for(j in 1:nrow(E1s)) {
-      diagnosis1        <- as.data.frame(E1s)[j,'E1_CONCEPT_ID'] # as.data.frame() is used here to get single value instead of 1x1 tibble
-      diagnosis1name    <- c(pairs %>% dplyr::filter(E1_CONCEPT_ID==diagnosis1) %>% pull(E1_NAME))[1]
+      diagnosis1        <- as.data.frame(E1s)[j,'E1_COHORT_ID'] # as.data.frame() is used here to get single value instead of 1x1 tibble
+      diagnosis1name    <- c(pairs %>% dplyr::filter(E1_COHORT_ID==diagnosis1) %>% pull(E1_NAME))[1]
 
       ParallelLogger::logInfo('Matching control group ',j+num.E1s.already.calculated,'/',num.E1s.total,' for event pairs starting with ',diagnosis1,' (total progress ',
                               round(100*(j+num.E1s.already.calculated)/num.E1s.total),'%, ETA: ',Trajectories:::estimatedTimeRemaining(progress_perc=(j-1)/nrow(E1s),starttime=starttime),
                               ')...')
 
       # build case-control groups (create some data to database table 'matching' also which will be used by getMatchedCaseControlCounts() function)
-      matches <- Trajectories:::buildCaseControlGroups(connection,trajectoryLocalArgs,diagnosis1,diagnosis1name,outputFolder)
+      matches <- Trajectories:::buildCaseControlGroups(connection,trajectoryLocalArgs,diagnosis1,diagnosis1name,outputFolder,skip_exact_matching_requirement)
 
       if(length(matches$Controls)==0) {
         #Matching failed
@@ -596,16 +594,16 @@ SET
 
         # Conduct the test for each pair starting with that E1
         E1.pairs <- pairs %>%
-          dplyr::filter(E1_CONCEPT_ID==diagnosis1)
+          dplyr::filter(E1_COHORT_ID==diagnosis1)
 
 
         eventperiod.ids<-data.frame(EVENTPERIOD_ID=c(matches$Cases,matches$Controls))
         Trajectories:::insertTable(connection = connection,
-                                       databaseSchema=trajectoryLocalArgs$resultsSchema,
-                                       tableName = paste0(trajectoryLocalArgs$prefixForResultTableNames,'matching_ep_ids'),
-                                       data = eventperiod.ids,
-                                       dropTableIfExists=T,
-                                       progressBar = F)
+                                   databaseSchema=trajectoryLocalArgs$resultsSchema,
+                                   tableName = paste0(trajectoryLocalArgs$prefixForResultTableNames,'matching_ep_ids'),
+                                   data = eventperiod.ids,
+                                   dropTableIfExists=T,
+                                   progressBar = F)
 
 
 
@@ -622,7 +620,7 @@ SET
       FROM
       (SELECT
         m.IS_CASE,
-        p.E2_CONCEPT_ID,
+        p.E2_COHORT_ID,
         p.EVENTPERIOD_ID
       FROM
       @resultsSchema.@prefiXpairs p
@@ -630,7 +628,7 @@ SET
       INNER JOIN @resultsSchema.@prefiXmatching m ON p.EVENTPERIOD_ID=m.EVENTPERIOD_ID
       WHERE
       p.E1_DATE=m.INDEX_DATE -- all pairs where the first event occurs on INDEX date
-      AND p.E2_CONCEPT_ID IN (',paste(DBI::dbQuoteString(connection,as.character(E1.pairs %>% dplyr::pull(E2_CONCEPT_ID))),collapse=","),')
+      AND p.E2_COHORT_ID IN (',paste(DBI::dbQuoteString(connection,as.character(E1.pairs %>% dplyr::pull(E2_COHORT_ID))),collapse=","),')
       AND DATEDIFF(DAY,m.index_date, p.E2_DATE)>=0 --E2 occurs AFTER index date
       ) a;')
 
@@ -647,16 +645,16 @@ SET
 
 
         sql='SELECT
-        E2_CONCEPT_ID,
+        E2_COHORT_ID,
         IS_CASE,
         COUNT(DISTINCT EVENTPERIOD_ID) AS COUNT
       FROM
         @resultsSchema.@prefiXpairs_of_matching
       GROUP BY
-        E2_CONCEPT_ID,
+        E2_COHORT_ID,
         IS_CASE
       ORDER BY
-        E2_CONCEPT_ID, IS_CASE;'
+        E2_COHORT_ID, IS_CASE;'
 
         #read data from the table
         RenderedSql <- SqlRender::render(sql=sql,
@@ -670,20 +668,20 @@ SET
         if(nrow(E1.pairs)>0) {
           for(i in 1:nrow(E1.pairs))
           {
-            diagnosis2        <- as.data.frame(E1.pairs)[i,'E2_CONCEPT_ID'] # as.data.frame() is used here to get single value instead of 1x1 tibble
+            diagnosis2        <- as.data.frame(E1.pairs)[i,'E2_COHORT_ID'] # as.data.frame() is used here to get single value instead of 1x1 tibble
 
             rr_in_previous_study=E1.pairs[i,'RR_IN_PREVIOUS_STUDY']
 
             ParallelLogger::logInfo('  Calculating RR for event pair ',counter+num.already.calculated,'/',num.pairs,': ',diagnosis1,' -> ',diagnosis2)
 
             # Do Case/Control matching, get the counts
-            r=E2counts.in.groups %>% dplyr::filter(E2_CONCEPT_ID==get('diagnosis2') & IS_CASE==1) %>% dplyr::pull(COUNT)
+            r=E2counts.in.groups %>% dplyr::filter(E2_COHORT_ID==get('diagnosis2') & IS_CASE==1) %>% dplyr::pull(COUNT)
             matches$E2_count_in_cases=ifelse(length(r)==0,0,r)
-            r=E2counts.in.groups %>% dplyr::filter(E2_CONCEPT_ID==get('diagnosis2') & IS_CASE==0) %>% dplyr::pull(COUNT)
+            r=E2counts.in.groups %>% dplyr::filter(E2_COHORT_ID==get('diagnosis2') & IS_CASE==0) %>% dplyr::pull(COUNT)
             matches$E2_count_in_controls=ifelse(length(r)==0,0,r)
             counts=Trajectories:::getMatchedCaseControlCounts(connection,trajectoryLocalArgs,matches,diagnosis1,diagnosis2)
 
-            #What is the "relative risk" (effect) (how many times the event2_concept_id prevalence in case group is higher than in control group) and its CI
+            #What is the "relative risk" (effect) (how many times the event2_COHORT_ID prevalence in case group is higher than in control group) and its CI
             rr_and_ci=Trajectories:::RRandCI(counts$num_observations_in_cases,
                                              counts$case_group_size,
                                              counts$num_observations_in_controls,
@@ -755,8 +753,8 @@ SET
 
 
 runDirectionTests<-function(connection,
-                              trajectoryAnalysisArgs,
-                              trajectoryLocalArgs,
+                            trajectoryAnalysisArgs,
+                            trajectoryLocalArgs,
                             pairs,
                             p.value.adjust.method='fdr', #for validation, use 'bonferroni'
                             forceRecalculation=F) {
@@ -765,12 +763,10 @@ runDirectionTests<-function(connection,
   num.pairs=nrow(pairs)
   ParallelLogger::logInfo('Running directionality tests for ',num.pairs,' event pairs to identify pairs where events have significant temporal order...')
 
-  #Set SQL role of the database session
-  Trajectories:::setRole(connection, trajectoryLocalArgs$sqlRole)
 
-  #Group pairs by E1_CONCEPT_ID
+  #Group pairs by E1_COHORT_ID
   E1s<-pairs %>%
-    dplyr::group_by(E1_CONCEPT_ID) %>%
+    dplyr::group_by(E1_COHORT_ID) %>%
     dplyr::summarise(n=dplyr::n()) %>%
     dplyr::arrange(-n)
   num.E1s.total <- nrow(E1s)
@@ -780,23 +776,23 @@ runDirectionTests<-function(connection,
     #for how many pairs for each E1, the directionality counts are not calculated (but should)
     pair_counts_starting_with_E1_and_having_counts_not_calculated<-pairs %>%
       dplyr::filter(is.na(E1_AND_E2_ON_SAME_DAY_COUNT_IN_EVENTS)) %>%
-      dplyr::group_by(E1_CONCEPT_ID) %>%
+      dplyr::group_by(E1_COHORT_ID) %>%
       dplyr::summarise(n=dplyr::n()) %>%
       dplyr::arrange(-n)
 
     #for which pairs starting with E1 all counts are not FULLY calculated
     E1s_of_pairs_where_counts_not_fully_calculated <- E1s %>%
-      dplyr::left_join(pair_counts_starting_with_E1_and_having_counts_not_calculated, by = c("E1_CONCEPT_ID")) %>%
+      dplyr::left_join(pair_counts_starting_with_E1_and_having_counts_not_calculated, by = c("E1_COHORT_ID")) %>%
       dplyr::filter(n.y!=0) %>%
-      dplyr::select(E1_CONCEPT_ID)
+      dplyr::select(E1_COHORT_ID)
     num.E1s.already.calculated=nrow(E1s)-nrow(E1s_of_pairs_where_counts_not_fully_calculated)
     if(num.E1s.already.calculated>0) ParallelLogger::logInfo('For the pairs of ',num.E1s.already.calculated,' first events, counts for directionality tests are already calculated. Skipping these from recalculation.')
 
     #Update pairs and E1s
     pairs <- pairs %>%
-      dplyr::inner_join(E1s_of_pairs_where_counts_not_fully_calculated, by = c("E1_CONCEPT_ID"))
+      dplyr::inner_join(E1s_of_pairs_where_counts_not_fully_calculated, by = c("E1_COHORT_ID"))
     E1s <- pairs %>%
-      dplyr::group_by(E1_CONCEPT_ID) %>%
+      dplyr::group_by(E1_COHORT_ID) %>%
       dplyr::summarise(n=dplyr::n()) %>%
       dplyr::arrange(-n)
     num.already.calculated=num.pairs-nrow(pairs)
@@ -833,8 +829,8 @@ SET
   # For each E1, create case-control groups
   if(nrow(E1s)>0) {
     for(j in 1:nrow(E1s)) {
-      diagnosis1        <- as.data.frame(E1s)[j,'E1_CONCEPT_ID'] # as.data.frame() is used here to get single value instead of 1x1 tibble
-      diagnosis1name    <- c(pairs %>% dplyr::filter(E1_CONCEPT_ID==diagnosis1) %>% pull(E1_NAME))[1]
+      diagnosis1        <- as.data.frame(E1s)[j,'E1_COHORT_ID'] # as.data.frame() is used here to get single value instead of 1x1 tibble
+      diagnosis1name    <- c(pairs %>% dplyr::filter(E1_COHORT_ID==diagnosis1) %>% pull(E1_NAME))[1]
 
       ParallelLogger::logInfo('Getting counts ',j+num.E1s.already.calculated,'/',num.E1s.total,' for event pairs starting with ',diagnosis1,' (total progress ',
                               round(100*(j+num.E1s.already.calculated)/num.E1s.total),'%, ETA: ',Trajectories:::estimatedTimeRemaining(progress_perc=(j-1)/nrow(E1s),starttime=starttime),
@@ -851,9 +847,9 @@ SET
       DatabaseConnector::executeSql(connection, sql=RenderedSql, progressBar = FALSE, reportOverallTime = FALSE)
 
       #Step 2. Prepare a temporary table of all E2 events for that E1
-      E1.pairs <- pairs %>% dplyr::filter(E1_CONCEPT_ID==get('diagnosis1')) %>% dplyr::arrange(E2_CONCEPT_ID)
+      E1.pairs <- pairs %>% dplyr::filter(E1_COHORT_ID==get('diagnosis1')) %>% dplyr::arrange(E2_COHORT_ID)
 
-      E2.concept.ids<-data.frame(CONCEPT_ID=c(E1.pairs %>% dplyr::pull(E2_CONCEPT_ID)))
+      E2.concept.ids<-data.frame(COHORT_ID=c(E1.pairs %>% dplyr::pull(E2_COHORT_ID)))
       Trajectories:::insertTable(connection = connection,
                                  databaseSchema=trajectoryLocalArgs$resultsSchema,
                                  tableName = paste0(trajectoryLocalArgs$prefixForResultTableNames,'temp1_for_direction_counts'),
@@ -871,11 +867,11 @@ SET
       if(nrow(E1.pairs)>0) {
         for(i in 1:nrow(E1.pairs))
         {
-          diagnosis2        <- as.data.frame(E1.pairs)[i,'E2_CONCEPT_ID'] # as.data.frame() is used here to get single value instead of 1x1 tibble
+          diagnosis2        <- as.data.frame(E1.pairs)[i,'E2_COHORT_ID'] # as.data.frame() is used here to get single value instead of 1x1 tibble
 
           ParallelLogger::logInfo('  Calculating direction counts ',counter+num.already.calculated,'/',num.pairs,': ',diagnosis1,' -> ',diagnosis2)
 
-          #Calculate in database: among people that have event1_concept_id and event2_concept_id pair, how many have date1<date2, date1=date2, date1>date2
+          #Calculate in database: among people that have event1_COHORT_ID and event2_COHORT_ID pair, how many have date1<date2, date1=date2, date1>date2
           RenderedSql <- Trajectories:::loadRenderTranslateSql("7DirectionCounts-3.sql",
                                                                packageName=get('TRAJECTORIES_PACKAGE_NAME', envir=TRAJECTORIES.CONSTANTS),
                                                                dbms=connection@dbms,
@@ -900,8 +896,8 @@ SET
 
   # We load all pairs (and their counts) from database but we look at the pairs only that have the counts calculated
   pairs <- Trajectories:::getAllPairs(connection,
-                                            trajectoryAnalysisArgs,
-                                            trajectoryLocalArgs)
+                                      trajectoryAnalysisArgs,
+                                      trajectoryLocalArgs)
   pairs <- pairs %>% dplyr::filter(!is.na(E1_AND_E2_ON_SAME_DAY_COUNT_IN_EVENTS))
   num.pairs<-nrow(pairs)
   ParallelLogger::logInfo('Running statistical direction tests for ',num.pairs,' event pairs...')
@@ -920,8 +916,8 @@ SET
 
     for(i in 1:nrow(pairs)){
 
-      diagnosis1        <- pairs[i,'E1_CONCEPT_ID']
-      diagnosis2        <- pairs[i,'E2_CONCEPT_ID']
+      diagnosis1        <- pairs[i,'E1_COHORT_ID']
+      diagnosis2        <- pairs[i,'E2_COHORT_ID']
 
       ParallelLogger::logInfo('Running direction test ',i+num.already.calculated,'/',num.pairs,': ',diagnosis1,' -> ',diagnosis2,' (total progress ',
                               round(100*(i+num.already.calculated)/num.pairs),'%, ETA: ',Trajectories:::estimatedTimeRemaining(progress_perc=(i-1)/nrow(pairs),starttime=starttime),
@@ -929,12 +925,12 @@ SET
 
       direction_counts <- pairs[i,]
 
-      # If there is no significant direction in event pair event1_concept_id and event2_concept_id, then we expect to see event1_concept_id->event2_concept_id and event2_concept_id->event1_concept_id sequences
-      # with the same frequency. Say, we would expect that event1_concept_id is the first diagnosis in 50% cases (prob=0.5).
-      # Therefore: If the expected probability of seeing event1_concept_id as the first diagnosis is 0.5,
-      #            what is the probability that we observe event1_concept_id as the first diagnosis more than 'direction_counts$people_count_event1_occurs_first-1' times?
+      # If there is no significant direction in event pair event1_COHORT_ID and event2_COHORT_ID, then we expect to see event1_COHORT_ID->event2_COHORT_ID and event2_COHORT_ID->event1_COHORT_ID sequences
+      # with the same frequency. Say, we would expect that event1_COHORT_ID is the first diagnosis in 50% cases (prob=0.5).
+      # Therefore: If the expected probability of seeing event1_COHORT_ID as the first diagnosis is 0.5,
+      #            what is the probability that we observe event1_COHORT_ID as the first diagnosis more than 'direction_counts$people_count_event1_occurs_first-1' times?
       # This question can be easily answered by pbinom(..., lower.tail=FALSE) which gives cumulative density function (cdf) as a result
-      # Using lower.tail=FALSE is necessary, because otherwise pbinom would give the probability that we observe event1_concept_id as first diagnosis  LESS than 'direction_counts$people_count_event1_occurs_first'
+      # Using lower.tail=FALSE is necessary, because otherwise pbinom would give the probability that we observe event1_COHORT_ID as first diagnosis  LESS than 'direction_counts$people_count_event1_occurs_first'
       event_pair_pvalue = Trajectories:::getPValueForDirection(
         EVENTPERIOD_COUNT_E1_OCCURS_FIRST=direction_counts$E1_BEFORE_E2_COUNT_IN_EVENTS,
         EVENTPERIOD_COUNT_E2_OCCURS_FIRST=direction_counts$E1_AFTER_E2_COUNT_IN_EVENTS,
@@ -955,17 +951,17 @@ SET
 
       # Store the pvalue to database
       RenderedSql <- Trajectories:::loadRenderTranslateSql("9PvalInserterDirection.sql",
-                                                          packageName=get('TRAJECTORIES_PACKAGE_NAME', envir=TRAJECTORIES.CONSTANTS),
-                                                          dbms=connection@dbms,
-                                                          resultsSchema =   trajectoryLocalArgs$resultsSchema,
-                                                          pval = event_pair_pvalue,
-                                                          pvalSignificant="''",
-                                                          pvalIfSameDayOK = event_pair_pvalue_same_day_ok,
-                                                          significantIfSameDayOK="''",
-                                                          diag1 = diagnosis1,
-                                                          diag2 = diagnosis2,
-                                                          powerDirection=ifelse(is.na(powerDirection),'NULL',powerDirection),
-                                                          prefix =  trajectoryLocalArgs$prefixForResultTableNames
+                                                           packageName=get('TRAJECTORIES_PACKAGE_NAME', envir=TRAJECTORIES.CONSTANTS),
+                                                           dbms=connection@dbms,
+                                                           resultsSchema =   trajectoryLocalArgs$resultsSchema,
+                                                           pval = event_pair_pvalue,
+                                                           pvalSignificant="''",
+                                                           pvalIfSameDayOK = event_pair_pvalue_same_day_ok,
+                                                           significantIfSameDayOK="''",
+                                                           diag1 = diagnosis1,
+                                                           diag2 = diagnosis2,
+                                                           powerDirection=ifelse(is.na(powerDirection),'NULL',powerDirection),
+                                                           prefix =  trajectoryLocalArgs$prefixForResultTableNames
       )
       DatabaseConnector::executeSql(connection, sql=RenderedSql, progressBar = FALSE, reportOverallTime = FALSE)
 
@@ -1025,11 +1021,11 @@ annotateDiscoveryResults<-function(pairs,trajectoryAnalysisArgs,verbose=F) {
                  perc=round(prop.table(table(pairs$TEXTUAL_RESULT))*100,1)) %>% dplyr::select(res,count=count.Freq,freq=perc.Freq) %>% dplyr::arrange(-freq)
   if(verbose) print(df)
 
-#  df<-data.frame(res=names(table(pairs$FAILED_FILTER)),
-#                 count=table(pairs$FAILED_FILTER),
-#                 perc=round(prop.table(table(pairs$FAILED_FILTER))*100,1)) %>% select(res,count=count.Freq,freq=perc.Freq) %>% arrange(res)
-#
-#  df
+  #  df<-data.frame(res=names(table(pairs$FAILED_FILTER)),
+  #                 count=table(pairs$FAILED_FILTER),
+  #                 perc=round(prop.table(table(pairs$FAILED_FILTER))*100,1)) %>% select(res,count=count.Freq,freq=perc.Freq) %>% arrange(res)
+  #
+  #  df
 
   return(pairs)
 
@@ -1102,23 +1098,23 @@ getAllPairs<-function(connection,
                       trajectoryAnalysisArgs,
                       trajectoryLocalArgs) {
   RenderedSql <- Trajectories:::loadRenderTranslateSql('d1d2_model_reader.sql',
-                                                      packageName=get('TRAJECTORIES_PACKAGE_NAME', envir=TRAJECTORIES.CONSTANTS),
-                                                      dbms=connection@dbms,
-                                                      resultsSchema =   trajectoryLocalArgs$resultsSchema,
-                                                      prefiX =  trajectoryLocalArgs$prefixForResultTableNames
+                                                       packageName=get('TRAJECTORIES_PACKAGE_NAME', envir=TRAJECTORIES.CONSTANTS),
+                                                       dbms=connection@dbms,
+                                                       resultsSchema =   trajectoryLocalArgs$resultsSchema,
+                                                       prefiX =  trajectoryLocalArgs$prefixForResultTableNames
   )
   pairs = DatabaseConnector::querySql(connection, RenderedSql)
   return(pairs)
 }
 
 clearOldResultsFromDb<-function(connection,
-                      trajectoryAnalysisArgs,
-                      trajectoryLocalArgs) {
+                                trajectoryAnalysisArgs,
+                                trajectoryLocalArgs) {
   RenderedSql <- Trajectories:::loadRenderTranslateSql('clear_e1e2_model_results.sql',
-                                                      packageName=get('TRAJECTORIES_PACKAGE_NAME', envir=TRAJECTORIES.CONSTANTS),
-                                                      dbms=connection@dbms,
-                                                      resultsSchema =   trajectoryLocalArgs$resultsSchema,
-                                                      prefiX =  trajectoryLocalArgs$prefixForResultTableNames
+                                                       packageName=get('TRAJECTORIES_PACKAGE_NAME', envir=TRAJECTORIES.CONSTANTS),
+                                                       dbms=connection@dbms,
+                                                       resultsSchema =   trajectoryLocalArgs$resultsSchema,
+                                                       prefiX =  trajectoryLocalArgs$prefixForResultTableNames
   )
   DatabaseConnector::executeSql(connection, RenderedSql)
 }
@@ -1159,8 +1155,8 @@ getMatchedCaseControlCountsDeprecated <- function(connection,trajectoryLocalArgs
 COUNT(DISTINCT m.EVENTPERIOD_ID) as CCC
 FROM @resultsSchema.@prefiXpairs p
 INNER JOIN @resultsSchema.@prefiXmatching m ON p.EVENTPERIOD_ID=m.EVENTPERIOD_ID
-WHERE p.E1_CONCEPT_ID=',diagnosis1,'
-  AND p.E2_CONCEPT_ID=',diagnosis2,'
+WHERE p.E1_COHORT_ID=',diagnosis1,'
+  AND p.E2_COHORT_ID=',diagnosis2,'
   AND m.IS_CASE=1
   AND DATEDIFF(DAY,m.index_date, p.E2_DATE)>=0') #E2 occurs AFTER index date
 
@@ -1177,7 +1173,7 @@ COUNT(DISTINCT m.EVENTPERIOD_ID) as CCC
 FROM @resultsSchema.@prefiXpairs p
 INNER JOIN @resultsSchema.@prefiXmatching m ON p.EVENTPERIOD_ID=m.EVENTPERIOD_ID
 WHERE p.E1_DATE=m.INDEX_DATE
-  AND p.E2_CONCEPT_ID=',diagnosis2,'
+  AND p.E2_COHORT_ID=',diagnosis2,'
   AND p.EVENTPERIOD_ID IN (',paste(matches$Controls,collapse=","),')
   AND DATEDIFF(DAY,m.index_date, p.E2_DATE)>=0') #E2 occurs AFTER index date
 
@@ -1210,49 +1206,6 @@ WHERE p.E1_DATE=m.INDEX_DATE
 
 }
 
-calcPropensityScore<-function(d) {
-  #d is a data.frame of the following columns:
-  #  eventperiod_id, gender, DateOfBirth, ObservationPeriodStart, ObservationPeriodEnd, e1_date
-
-  #add some additional columns (need to do it in R as in SQLite these numbers are given as characters, not integers, and that breaks everything)
-  d <- d %>%
-    dplyr::mutate(YEAR_OF_INDEXDATE= lubridate::year(INDEX_DATE),
-               MONTH_OF_INDEXDATE= lubridate::month(INDEX_DATE))
-
-  #train model
-  d$GENDER<-factor(d$GENDER, levels<-c('M','F'))
-  #print(str(d))
-  #print(d)
-
-  if(all(d$IS_CASE==1)) {
-    ParallelLogger::logWarn('All eventperiods are in case group (no controls), cannot build propensity score for the first event')
-    d$PropScore=NA
-  } else {
-    m = suppressWarnings( glm(IS_CASE ~ GENDER + scale(AGE) + scale(YEAR_OF_INDEXDATE) + scale(MONTH_OF_INDEXDATE) + scale(LEN_HISTORY_DAYS) + scale(LEN_FOLLOWUP_DAYS), family = binomial(), data = d) )
-
-    m1<-data.frame(n=names(m$coefficients)[2:length(m$coefficients)], b=signif(m$coefficients[2:length(m$coefficients)],2))
-    ParallelLogger::logInfo('Betas of matching model: IS CASE ~ ',paste(m1$b, as.character(m1$n),  sep =" x ", collapse=" + "))
-
-    #calculate propensity scores for all
-    d = d %>%
-      dplyr::mutate(PropScore = predict(m, type = "response")) %>%
-      dplyr::select(EVENTPERIOD_ID, PropScore, everything()) %>%
-      dplyr::arrange(desc(PropScore))
-  }
-
-
-
-
-  #distribution of propensity scores before matching
-  #library(ggplot2)
-  #d %>%
-  #  ggplot(ggplot2::aes(x = PropScore, fill = as.factor(IS_CASE))) +
-  #  geom_density(ggplot2::aes(y = ..count..), alpha = 0.5) +
-  #  theme_bw()
-
-  return(d)
-}
-
 propensityScoreBasedMatch = function(d, nn = 2){
   e = d %>%
     dplyr::filter(IS_CASE == 1)
@@ -1282,7 +1235,7 @@ adjustPValues<-function(connection,trajectoryLocalArgs,dbcol.pvalue='RR_PVALUE',
   ParallelLogger::logInfo('Adjusting p-values by using method=',method,'...')
 
   #get p-values
-  sql="SELECT E1_CONCEPT_ID, E2_CONCEPT_ID, @dbcol FROM @resultsSchema.@prefiXE1E2_model WHERE @dbcol IS NOT NULL";
+  sql="SELECT E1_COHORT_ID, E2_COHORT_ID, @dbcol FROM @resultsSchema.@prefiXE1E2_model WHERE @dbcol IS NOT NULL";
   RenderedSql <- SqlRender::render(sql=sql,
                                    dbcol=dbcol.pvalue,
                                    resultsSchema = trajectoryLocalArgs$resultsSchema,
@@ -1362,12 +1315,12 @@ makeRRPvaluePlot <- function(pairs,filename,trajectoryAnalysisArgs) {
                         #ggrepel::geom_text_repel(aes(label=model)) +
                         ggplot2::geom_text(ggplot2::aes(label=id),size=3) +
                         ggplot2::annotate("rect", xmin = log10(trajectoryAnalysisArgs$RRrangeToSkip[1]), xmax = log10(trajectoryAnalysisArgs$RRrangeToSkip[2]), ymin = log10(MIN_PVALUE), ymax = log(min(MAX_PVALUE,1)), alpha = .5) +
-               ggplot2::annotate("rect", xmin = log10(MIN_RR_VALUE), xmax = log10(MAX_RR_VALUE), ymin = log10(MAX_SIGNIFICANT_PVALUE), ymax = 1, alpha = .5) +
-               #ggplot2::scale_x_continuous(trans='log10') +
-               #ggplot2::scale_y_continuous(trans='log10') +
-      ggplot2::annotation_logticks(sides="trbl") +
-      ggplot2::labs(title='RR/p-value plot of all tested event pairs. Shaded areas indicate insignificant p-values and RR values in skip range.') +
-      ggplot2::theme_bw()
+                        ggplot2::annotate("rect", xmin = log10(MIN_RR_VALUE), xmax = log10(MAX_RR_VALUE), ymin = log10(MAX_SIGNIFICANT_PVALUE), ymax = 1, alpha = .5) +
+                        #ggplot2::scale_x_continuous(trans='log10') +
+                        #ggplot2::scale_y_continuous(trans='log10') +
+                        ggplot2::annotation_logticks(sides="trbl") +
+                        ggplot2::labs(title='RR/p-value plot of all tested event pairs. Shaded areas indicate insignificant p-values and RR values in skip range.') +
+                        ggplot2::theme_bw()
   )
 
   pdf(filename)
@@ -1385,7 +1338,7 @@ makeRRPvalueQQPlot<-function(pairs) {
 
 
 
-buildCaseControlGroups<-function(connection,trajectoryLocalArgs,diagnosis1,diagnosis1name,outputFolder) {
+buildCaseControlGroups<-function(connection,trajectoryLocalArgs,diagnosis1,diagnosis1name,outputFolder,skip_exact_matching_requirement=F) {
   #create table for matching
   RenderedSql <- Trajectories:::loadRenderTranslateSql('AssignIndexDatesForMatching.sql',
                                                        packageName=get('TRAJECTORIES_PACKAGE_NAME', envir=TRAJECTORIES.CONSTANTS),
@@ -1436,8 +1389,9 @@ buildCaseControlGroups<-function(connection,trajectoryLocalArgs,diagnosis1,diagn
   #table(d$IS_CASE)
   #table(d[d$IS_CASE==1,]$GENDER)
 
-  m.out1 <- Trajectories:::matchitWithTryCatch(d=d)
-  #summary(m.out1)
+  m.out1 <- Trajectories:::matchitWithTryCatch(d=d,skip_exact_matching_requirement=skip_exact_matching_requirement)
+  #save(m.out1,d,file="test.Robj")
+
 
   if(is.null(m.out1)) { #if matching failed (no matches were found)
     control.ids<-c()
@@ -1492,66 +1446,44 @@ getSeason <- function(input.date){
 }
 
 
-matchitWithTryCatchAlternative <- function(d) {
 
-  #in some rare cases, the number of different "SEASON_OF_INDEXDATE" values in case group is 1.
-  #As we use it in formula, glm.fit produces error "contrasts can be applied only to factors with 2 or more levels"
-  #To prevent that, take SEASON_OF_INDEXDATE out from the formula and require exact match
-  if(length(unique(d[d$IS_CASE==1,]$SEASON_OF_INDEXDATE))==1) { #only 1 different SEASON_OF_INDEXDATE value in case group
+
+matchitWithTryCatch <- function(d,skip_exact_matching_requirement=F) {
+
+  if(skip_exact_matching_requirement==T) {
+    # TESTING MODE - no exact match reeuirement applied. All parameters are used in propensity score
     f=IS_CASE ~ scale(LEN_HISTORY_DAYS) + scale(LEN_FOLLOWUP_DAYS)
-    exact=c("GENDER","AGEGROUP","YEAR_OF_INDEXDATE","SEASON_OF_INDEXDATE") #Gender, age group and year of index date must be match in case/control group
+    exact=c() # No exact match requirement in testing mode
+    #save(d,file='test.Robj')
+
   } else {
-    #normal use case
-    f=IS_CASE ~ SEASON_OF_INDEXDATE + scale(LEN_HISTORY_DAYS) + scale(LEN_FOLLOWUP_DAYS)
-    exact=c("GENDER","AGEGROUP","YEAR_OF_INDEXDATE") #Gender, age group and year of index date must be match in case/control group
+    # PRODUCTION MODE
+
+    #in some rare cases, the number of different "SEASON_OF_INDEXDATE" values in case group is 1.
+    #As we use it in formula, glm.fit produces error "contrasts can be applied only to factors with 2 or more levels"
+    #To prevent that, take SEASON_OF_INDEXDATE out from the formula and require exact match
+    if(length(unique(d[d$IS_CASE==1,]$SEASON_OF_INDEXDATE))==1) { #only 1 different SEASON_OF_INDEXDATE value in case group
+      f=IS_CASE ~ scale(LEN_HISTORY_DAYS) + scale(LEN_FOLLOWUP_DAYS)
+      exact=c("GENDER","AGEGROUP","YEAR_OF_INDEXDATE","SEASON_OF_INDEXDATE") #Gender, age group and year of index date must be match in case/control group
+    } else {
+      #normal use case
+      f=IS_CASE ~ SEASON_OF_INDEXDATE + scale(LEN_HISTORY_DAYS) + scale(LEN_FOLLOWUP_DAYS)
+      exact=c("GENDER","AGEGROUP","YEAR_OF_INDEXDATE") #Gender, age group and year of index date must be match in case/control group
+    }
+
   }
+
+  #ParallelLogger::logInfo(f)
 
   tryCatch(
     expr = {
       m.out1<-suppressWarnings(MatchIt::matchit(formula=f, #formula for logistic regression
                                                 data=d,
-                                                method = "nearest", # Find a control patients based on nearest neighbor method
+                                                method = "optimal", # Find a control patients so that the sum of the absolute pairwise distances in the matched sample is as small as possible
                                                 distance = "glm", #Use logistic regression based propensity score
                                                 exact=exact,
                                                 discard="both", # discard cases or controls where no good matching is found
                                                 reestimate=T) #After discarding some cases/controls, re-estimate the propensity scores
-      )
-      return(m.out1)
-    },
-    error = function(e){
-      ParallelLogger::logInfo('Still caught an error in matchit() but catched it in try-catch: ',e)
-      ParallelLogger::logInfo('Giving up on trying matching case-control groups...')
-      return(NULL)
-    }
-  ) #tryCatch
-
-  #should never reach here
-  return(NULL)
-}
-
-matchitWithTryCatch <- function(d) {
-
-  #in some rare cases, the number of different "SEASON_OF_INDEXDATE" values in case group is 1.
-  #As we use it in formula, glm.fit produces error "contrasts can be applied only to factors with 2 or more levels"
-  #To prevent that, take SEASON_OF_INDEXDATE out from the formula and require exact match
-  if(length(unique(d[d$IS_CASE==1,]$SEASON_OF_INDEXDATE))==1) { #only 1 different SEASON_OF_INDEXDATE value in case group
-    f=IS_CASE ~ scale(LEN_HISTORY_DAYS) + scale(LEN_FOLLOWUP_DAYS)
-    exact=c("GENDER","AGEGROUP","YEAR_OF_INDEXDATE","SEASON_OF_INDEXDATE") #Gender, age group and year of index date must be match in case/control group
-  } else {
-    #normal use case
-    f=IS_CASE ~ SEASON_OF_INDEXDATE + scale(LEN_HISTORY_DAYS) + scale(LEN_FOLLOWUP_DAYS)
-    exact=c("GENDER","AGEGROUP","YEAR_OF_INDEXDATE") #Gender, age group and year of index date must be match in case/control group
-  }
-
- tryCatch(
-    expr = {
-      m.out1<-suppressWarnings(MatchIt::matchit(formula=f, #formula for logistic regression
-                       data=d,
-                       method = "optimal", # Find a control patients so that the sum of the absolute pairwise distances in the matched sample is as small as possible
-                       distance = "glm", #Use logistic regression based propensity score
-                       exact=exact,
-                       discard="both", # discard cases or controls where no good matching is found
-                       reestimate=T) #After discarding some cases/controls, re-estimate the propensity scores
       )
       return(m.out1)
       #message("Successfully executed the log(x) call.")

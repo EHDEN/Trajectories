@@ -6,19 +6,11 @@ requireNamespace("jsonlite", quietly = TRUE)
 #' @param minimumDaysBetweenEvents The smallest number of days between two events of the patient that can be considered as event pair. Usually we have used 1 but 0 is also possible. The smaller the number is, the more time the calculation takes.
 #' @param maximumDaysBetweenEvents The maximum number of days between two events of the patient that can be considered as event pair. Ususally we have not really limited it so we have used 3650 (10 years)
 #' @param minPatientsPerEventPair Minimum number of people having event1 -> event2 (directional) progression (satisfying minimumDaysBetweenEvents and maximumDaysBetweenEvents requirements) to be included in analysis. If the value is >=1, it is considered as the absolute count of event pairs. If the value is less than 1, the value is considered as prevalence among the cohort size. For instance, if you have 1000 persons in the cohort and the value is 0.05, each event pair must occur at least 1000x0.05=50 times. Can be used for limiting analysis to frequent event pairs only. However, it does not affect control group matching and therefore, either the p-value.
-#' @param addConditions TRUE/FALSE parameter to indicate whether events from Condition_occurrence table should be included in the analysis
-#' @param addObservations TRUE/FALSE parameter to indicate whether events from Condition_occurrence table should be included in the analysis
-#' @param addProcedures TRUE/FALSE parameter to indicate whether events from Procedure_occurrence table should be included in the analysis
-#' @param addDrugExposures TRUE/FALSE parameter to indicate whether events from Drug_exposure table should be included in the analysis. In most of the cases, prefer using addDrugEras instead as the particular RxNorm codes may differ in various databases (leading to no replication) but drug_era is always on ingredient level (active compound) and it also fills gaps between close events.
-#' @param addDrugEras TRUE/FALSE parameter to indicate whether events from Drug_era table should be included in the analysis. NB! use either addDrugEras=T or addDrugExposures=T (not both) as it leads to analysis duplication...
-#' @param addBirths TRUE/FALSE parameter to indicate whether births events should be included in the analysis.
-#' @param addDeaths TRUE/FALSE parameter to indicate whether events from Death table should be included in the analysis.
 #' @param daysBeforeIndexDate 0 or any positive number that indicates for how many days before index date of the cohort the events are included in the analysis. In case one wants to include all events before index date, use value Inf
-#' @param RRrangeToSkip": Range of relative risks (RR) that are skipped from the analysis. The minimum value for the range is 0. E.g RRrangeToSkip=c(0,1) searches for RR>1 only (event pairs where the first event increases the risk of the second event). To skip RR with very small effect, it is recommended to use RRrangeToSkip=c(0,1.1) or even RRrangeToSkip=c(0,1.2) in DISCOVERY mode. In case one is interested in pairs with decreasing risk also, it is recommended to use the range something like RRrangeToSkip=c(0.8,1.2) (analyse all pairs that have RR<0.8 or R>=1.2). If you don't want to skip anything, use RRrangeToSkip=c(1,1) (analyses all pairs that have RR<1 or RR>=1 - that means, all pairs). The first number of the range should be in the range 0..1 and the second number in range 1..Inf
-#' @param packageName Do not use/edit, this is required by SqlRender::loadRenderTranslateSql
 #' @param cohortName Reader-friendly short description of the cohort. Used in graph titles and file names (can contain spaces)
+#' @param RRrangeToSkip
+#' @param eventIdsForGraphs
 #' @param description This is a placeholder for any description of the study/cohort/analysis. For instance, it would be wise to descibe here what kind of cohort is that and what the analysis does.
-#' @param eventIdsForGraph List of exact concept ID-s of the events that are used to align actual trajectories in the end of analysis. Can be left not defined (NA)
 #'
 #' @return TrajectoryAnalysisArgs object
 #'
@@ -27,13 +19,6 @@ createTrajectoryAnalysisArgs <- function(mode='DISCOVERY',
                                          minimumDaysBetweenEvents=1,
                                          maximumDaysBetweenEvents=3650,
                                          minPatientsPerEventPair=10,
-                                         addConditions=T,
-                                         addObservations=F,
-                                         addProcedures=F,
-                                         addDrugExposures=F,
-                                         addDrugEras=F,
-                                         addBirths=F,
-                                         addDeaths=T,
                                          daysBeforeIndexDate=Inf,
                                          RRrangeToSkip=c(0,1.2),
                                          cohortName = 'My sample cohort',
@@ -42,8 +27,6 @@ createTrajectoryAnalysisArgs <- function(mode='DISCOVERY',
 
 
   if(!mode %in% c('DISCOVERY','VALIDATION')) stop("Error in createTrajectoryAnalysisArgs(): unknown value for MODE parameter: {mode}")
-
-  if(addDrugExposures==T & addDrugEras==T) stop("Error in createTrajectoryAnalysisArgs(): parameters values for 'addDrugExposures' and 'addDrugEras' are TRUE but both of them cannot be TRUE at the same time (choose one of them or set both to FALSE)")
 
   if(RRrangeToSkip[2]<RRrangeToSkip[1]) {
     ParallelLogger::logError("Error in RRrangeToSkip=c(",RRrangeToSkip[1],",",RRrangeToSkip[2],") value: the start value of the range ('",RRrangeToSkip[1],"') can't be larger than the end value ('",RRrangeToSkip[2],"'). Check your analysis parameters.")
@@ -79,8 +62,6 @@ createTrajectoryAnalysisArgs <- function(mode='DISCOVERY',
   }
 
   value <- list(mode=mode,minimumDaysBetweenEvents=minimumDaysBetweenEvents,maximumDaysBetweenEvents=maximumDaysBetweenEvents, minPatientsPerEventPair=minPatientsPerEventPair,
-                addConditions=addConditions,addObservations=addObservations,addProcedures=addProcedures,addDrugExposures=addDrugExposures,
-                addDrugEras=addDrugEras,addBirths=addBirths,addDeaths=addDeaths,
                 daysBeforeIndexDate=daysBeforeIndexDate,
                 RRrangeToSkip=RRrangeToSkip,
                 cohortName=cohortName,description=description,eventIdsForGraphs=eventIdsForGraphs)
@@ -94,8 +75,6 @@ createTrajectoryAnalysisArgs <- function(mode='DISCOVERY',
 #' @param cdmDatabaseSchema Schema containing source data in OMOP CDM format
 #' @param vocabDatabaseSchema Schema containing OMOP vocabulary
 #' @param resultsSchema Schema the user has writing access to (used to write analysis tables into)
-#' @param oracleTempSchema In case you are using oracle, schema for temporary tables need to be specified. A schema where temp tables can be created in Oracle. Otherwise leave it as it is (is not used)
-#' @param sqlRole Role to use in SQL for writing tables in 'resultsSchema'. It should also have access to 'cdmDatabaseSchema' and 'vocabDatabaseSchema'. Set to FALSE (or F) if setting to a specific role is not needed. It should be safe to use F if you have no idea of what the SQL roles mean.
 #' @param prefixForResultTableNames Table prefix that is used for all output tables to avoid any collision with existing table names. An empty string is also allowed.
 #' @param cohortTableSchema Schema where cohort table is located
 #' @param cohortTable Name of the cohort table in cohortTableSchema
@@ -109,13 +88,10 @@ createTrajectoryAnalysisArgs <- function(mode='DISCOVERY',
 #' @examples
 createTrajectoryLocalArgs <- function(cdmDatabaseSchema,
                                       vocabDatabaseSchema,
+                                      cohortDatabaseSchema,
+                                      cohortTableName,
                                       resultsSchema,
-                                      oracleTempSchema,
-                                      sqlRole=F,
                                       prefixForResultTableNames='',
-                                      #cohortTableSchema,
-                                      #cohortTable,
-                                      #cohortId=1, #use 1 for discovery studies and 2 for validation studies
                                       inputFolder=system.file("extdata", "RA", package = "Trajectories"),
                                       mainOutputFolder=getwd(),
                                       databaseHumanReadableName='My database') {
@@ -123,19 +99,19 @@ createTrajectoryLocalArgs <- function(cdmDatabaseSchema,
   #Sanity checks
   if(!is.logical(inputFolder)) {
     if (!dir.exists(inputFolder)) stop(paste0("ERROR in createTrajectoryLocalArgs(): inputFolder '",inputFolder,"' does not exist."))
-    if (!file.exists(file.path(inputFolder,'cohort.sql'))) stop(paste0("ERROR in createTrajectoryLocalArgs(): there is no 'cohort.sql' file in inputFolder '",inputFolder,"'."))
   }
   if (!dir.exists(mainOutputFolder)) stop(paste0("ERROR in createTrajectoryLocalArgs(): mainOutputFolder '",mainOutputFolder,"' does not exist."))
   #if (!file.exists(paste0(inputFolder,'/trajectoryAnalysisArgs.json'))) stop(paste0("ERROR in createTrajectoryLocalArgs(): there is no 'trajectoryAnalysisArgs.json' file in inputFolder '",inputFolder,"'."))
 
-  value <- list(cdmDatabaseSchema=cdmDatabaseSchema,vocabDatabaseSchema=vocabDatabaseSchema,
-                resultsSchema=resultsSchema,oracleTempSchema=oracleTempSchema,sqlRole=sqlRole,
+  value <- list(cdmDatabaseSchema=cdmDatabaseSchema,
+                vocabDatabaseSchema=vocabDatabaseSchema,
+                resultsSchema=resultsSchema,
+                cohortDatabaseSchema=cohortDatabaseSchema,
+                cohortTableName=cohortTableName,
                 prefixForResultTableNames=prefixForResultTableNames,
-                #cohortTableSchema=cohortTableSchema,
-                #cohortTable=cohortTable,
-                #cohortId=cohortId,
                 inputFolder=inputFolder,
-                mainOutputFolder=mainOutputFolder, databaseHumanReadableName=databaseHumanReadableName)
+                mainOutputFolder=mainOutputFolder,
+                databaseHumanReadableName=databaseHumanReadableName)
   class(value) <- 'TrajectoryLocalArgs'
   return(value)
 
@@ -203,13 +179,6 @@ TrajectoryAnalysisArgsFromJson<-function(filepath) {
     minimumDaysBetweenEvents=1,
     maximumDaysBetweenEvents=3650,
     minPatientsPerEventPair=10,
-    addConditions=T,
-    addObservations=F,
-    addProcedures=F,
-    addDrugExposures=F,
-    addDrugEras=F,
-    addBirths=F,
-    addDeaths=T,
     daysBeforeIndexDate=Inf,
     RRrangeToSkip=c(0,1.2),
     cohortName = 'My sample cohort',
@@ -232,13 +201,6 @@ TrajectoryAnalysisArgsFromJson<-function(filepath) {
                               minimumDaysBetweenEvents=vals_for_obj[['minimumDaysBetweenEvents']],
                                maximumDaysBetweenEvents=vals_for_obj[['maximumDaysBetweenEvents']],
                                minPatientsPerEventPair=vals_for_obj[['minPatientsPerEventPair']],
-                               addConditions=vals_for_obj[['addConditions']],
-                               addObservations=vals_for_obj[['addObservations']],
-                               addProcedures=vals_for_obj[['addProcedures']],
-                               addDrugExposures=vals_for_obj[['addDrugExposures']],
-                               addDrugEras=vals_for_obj[['addDrugEras']],
-                               addBirths=vals_for_obj[['addBirths']],
-                               addDeaths=vals_for_obj[['addDeaths']],
                                daysBeforeIndexDate=vals_for_obj[['daysBeforeIndexDate']],
                                RRrangeToSkip=vals_for_obj[['RRrangeToSkip']],
                                cohortName=vals_for_obj[['cohortName']],

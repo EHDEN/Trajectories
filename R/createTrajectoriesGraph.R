@@ -78,16 +78,18 @@ createTrajectoriesGraph<-function(eventPairResultsFilename) {
 
     #Add colors
     # predefined colors
-    COLORS=list(Condition='#F1948A', #red
-                Observation='#85C1E9', #blue
-                Procedure='#ccc502',#yellow
-                Drug='#8fba75', #green
+
+
+    COLORS=list(Condition='#ff6db6', #red
+                Observation='#b66dff', #blue
+                Procedure='#6db6ff',#yellow
+                Drug='#009292', #green
                 Unknown='#bbbbbb') #gray
     #Drug='#ABEBC6') #green
-    LABELCOLORS=list(Condition='#7B241C',
-                     Observation='#21618C',
+    LABELCOLORS=list(Condition='#920000',
+                     Observation='#490092',
                      Procedure='#7D6608',
-                     Drug='#145A32', #green
+                     Drug='#004949', #green
                      Unknown='#666666')
     vertices <- vertices %>%
       dplyr::mutate(name=as.character(concept_id),

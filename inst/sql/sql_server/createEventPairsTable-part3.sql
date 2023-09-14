@@ -9,21 +9,21 @@ IF OBJECT_ID('@resultsSchema.@prefiXE1E2_model_temp', 'U') IS NOT NULL
   DROP TABLE @resultsSchema.@prefiXE1E2_model_temp;
 
 SELECT
-        p.E1_CONCEPT_ID,
-        p.E2_CONCEPT_ID,
+        p.E1_COHORT_ID,
+        p.E2_COHORT_ID,
         round(avg(p.diff_days),0) AS avg_number_of_days_between_events,
         count(*) AS E1_E2_EVENTPERIOD_COUNT
 INTO @resultsSchema.@prefiXE1E2_model_temp
 FROM
  @resultsSchema.@prefiXpairs p
 INNER JOIN
-  @resultsSchema.@prefiXE1E2_model_input i ON i.E1_CONCEPT_ID=p.E1_CONCEPT_ID AND i.E2_CONCEPT_ID=p.E2_CONCEPT_ID
+  @resultsSchema.@prefiXE1E2_model_input i ON i.E1_COHORT_ID=p.E1_COHORT_ID AND i.E2_COHORT_ID=p.E2_COHORT_ID
 GROUP BY
-  p.E1_CONCEPT_ID,
-  p.E2_CONCEPT_ID
+  p.E1_COHORT_ID,
+  p.E2_COHORT_ID
 ORDER BY
-  p.E1_CONCEPT_ID,
-  p.E2_CONCEPT_ID;
+  p.E1_COHORT_ID,
+  p.E2_COHORT_ID;
 
 
 IF OBJECT_ID('@resultsSchema.@prefiXE1E2_model', 'U') IS NOT NULL
@@ -32,12 +32,12 @@ IF OBJECT_ID('@resultsSchema.@prefiXE1E2_model', 'U') IS NOT NULL
 
 -- In SQL Server, column order cannot be set later by ALTER TABLE, therefore we have to create the table with the right order from the beginning
 CREATE TABLE @resultsSchema.@prefiXE1E2_model (
-  E1_CONCEPT_ID INT NOT NULL,
-  E2_CONCEPT_ID INT NOT NULL,
+  E1_COHORT_ID INT NOT NULL,
+  E2_COHORT_ID INT NOT NULL,
   E1_NAME VARCHAR(255) NULL,
   E2_NAME VARCHAR(255) NULL,
-  E1_DOMAIN VARCHAR(20) NULL,
-  E2_DOMAIN VARCHAR(20) NULL,
+  E1_DOMAIN VARCHAR(1) NULL,
+  E2_DOMAIN VARCHAR(1) NULL,
 
   E1_COUNT_IN_EVENTS INT NULL, -- this is the total number of eventperiods where E1 is present. This is basically a CASE group size
 
@@ -89,8 +89,8 @@ CREATE TABLE @resultsSchema.@prefiXE1E2_model (
 );
 
 INSERT INTO @resultsSchema.@prefiXE1E2_model
-  (E1_CONCEPT_ID,
-   E2_CONCEPT_ID,
+  (E1_COHORT_ID,
+   E2_COHORT_ID,
    E1_NAME,
    E2_NAME,
    E1_DOMAIN,
@@ -99,8 +99,8 @@ INSERT INTO @resultsSchema.@prefiXE1E2_model
    AVG_NUMBER_OF_DAYS_BETWEEN_E1_AND_E2,
    E1_BEFORE_E2_COUNT_IN_EVENTS)
 SELECT
-        i.E1_CONCEPT_ID AS E1_CONCEPT_ID,
-        i.E2_CONCEPT_ID AS E2_CONCEPT_ID,
+        i.E1_COHORT_ID AS E1_COHORT_ID,
+        i.E2_COHORT_ID AS E2_COHORT_ID,
         i.E1_NAME AS E1_NAME,
         i.E2_NAME AS E2_NAME,
         i.E1_DOMAIN AS E1_DOMAIN,
@@ -111,10 +111,10 @@ SELECT
 FROM
  @resultsSchema.@prefiXE1E2_model_input i
  LEFT JOIN
- @resultsSchema.@prefiXE1E2_model_temp t ON i.E1_CONCEPT_ID=t.E1_CONCEPT_ID AND i.E2_CONCEPT_ID=t.E2_CONCEPT_ID
+ @resultsSchema.@prefiXE1E2_model_temp t ON i.E1_COHORT_ID=t.E1_COHORT_ID AND i.E2_COHORT_ID=t.E2_COHORT_ID
 ORDER BY
-  i.E1_CONCEPT_ID,
-  i.E2_CONCEPT_ID;
+  i.E1_COHORT_ID,
+  i.E2_COHORT_ID;
 
 -- DELETE FROM @resultsSchema.@prefiXE1E2_model where E1_E2_EVENTPERIOD_COUNT< @minPatientsPerEventPair; -- Minimum limit
 -- It is correct to not delete ther corresponding rows from @resultsSchema.@prefiXpairs as these rows can still be used for controls
@@ -122,13 +122,13 @@ ORDER BY
 INSERT INTO @resultsSchema.@prefiXdebug (entry) VALUES (CONCAT('..done. There are ',CAST((SELECT COUNT(*) FROM @resultsSchema.@prefiXE1E2_model) AS VARCHAR),' rows in @resultsSchema.@prefiXE1E2_model'));
 
 
-CREATE INDEX @prefiXE1E2_model_E1_idx ON @resultsSchema.@prefiXE1E2_model(E1_CONCEPT_ID);
-CREATE INDEX @prefiXE1E2_model_E2_idx ON @resultsSchema.@prefiXE1E2_model(E2_CONCEPT_ID);
-CREATE INDEX @prefiXE1E2_model_E1E2_idx ON @resultsSchema.@prefiXE1E2_model(E1_CONCEPT_ID,E2_CONCEPT_ID);
+CREATE INDEX @prefiXE1E2_model_E1_idx ON @resultsSchema.@prefiXE1E2_model(E1_COHORT_ID);
+CREATE INDEX @prefiXE1E2_model_E2_idx ON @resultsSchema.@prefiXE1E2_model(E2_COHORT_ID);
+CREATE INDEX @prefiXE1E2_model_E1E2_idx ON @resultsSchema.@prefiXE1E2_model(E1_COHORT_ID,E2_COHORT_ID);
 
 --- Calculating E1_COUNT_IN_EVENTS
 UPDATE @resultsSchema.@prefiXE1E2_model
-SET E1_COUNT_IN_EVENTS = (SELECT event_counts_in_eventperiods FROM @resultsSchema.@prefiXevent_counts_in_eventperiods WHERE CONCEPT_ID = E1_CONCEPT_ID);
+SET E1_COUNT_IN_EVENTS = (SELECT event_counts_in_eventperiods FROM @resultsSchema.@prefiXevent_counts_in_eventperiods WHERE COHORT_ID = E1_COHORT_ID);
 -- in validation mode E1 might be not present in data, force these counts to 0
 UPDATE @resultsSchema.@prefiXE1E2_model
 SET E1_COUNT_IN_EVENTS = 0
@@ -136,7 +136,7 @@ WHERE E1_COUNT_IN_EVENTS IS NULL;
 
 --- Calculating E2_COUNT_IN_EVENTS
 UPDATE @resultsSchema.@prefiXE1E2_model
-SET E2_COUNT_IN_EVENTS = (SELECT event_counts_in_eventperiods FROM @resultsSchema.@prefiXevent_counts_in_eventperiods WHERE CONCEPT_ID = E2_CONCEPT_ID);
+SET E2_COUNT_IN_EVENTS = (SELECT event_counts_in_eventperiods FROM @resultsSchema.@prefiXevent_counts_in_eventperiods WHERE COHORT_ID = E2_COHORT_ID);
 -- in validation mode E2 might be not present in data, force these counts to 0
 UPDATE @resultsSchema.@prefiXE1E2_model
 SET E2_COUNT_IN_EVENTS = 0
@@ -148,22 +148,22 @@ IF OBJECT_ID('@resultsSchema.@prefiXpairs_of_model', 'U') IS NOT NULL
   DROP TABLE @resultsSchema.@prefiXpairs_of_model;
 
 SELECT eventperiod_id,
-       e1_concept_id,
-       e2_concept_id
+       e1_COHORT_ID,
+       e2_COHORT_ID
 INTO @resultsSchema.@prefiXpairs_of_model
 FROM @resultsSchema.@prefiXpairs
-         WHERE e1_concept_id in (SELECT DISTINCT E1_CONCEPT_ID as concept_id
+         WHERE e1_COHORT_ID in (SELECT DISTINCT E1_COHORT_ID as COHORT_ID
                                  FROM @resultsSchema.@prefiXE1E2_model
                                  UNION
                                  --union removes duplicates
-                                 SELECT DISTINCT E2_CONCEPT_ID as concept_id
+                                 SELECT DISTINCT E2_COHORT_ID as COHORT_ID
                                  FROM @resultsSchema.@prefiXE1E2_model)
                 OR
-                e2_concept_id in (SELECT DISTINCT E1_CONCEPT_ID as concept_id
+                e2_COHORT_ID in (SELECT DISTINCT E1_COHORT_ID as COHORT_ID
                                  FROM @resultsSchema.@prefiXE1E2_model
                                  UNION
                                  --union removes duplicates
-                                 SELECT DISTINCT E2_CONCEPT_ID as concept_id
+                                 SELECT DISTINCT E2_COHORT_ID as COHORT_ID
                                  FROM @resultsSchema.@prefiXE1E2_model)
 ;
 
@@ -173,26 +173,26 @@ FROM @resultsSchema.@prefiXpairs
 IF OBJECT_ID('@resultsSchema.@prefiXpairs_stat', 'U') IS NOT NULL
   DROP TABLE @resultsSchema.@prefiXpairs_stat;
 
-SELECT concept_id,
+SELECT COHORT_ID,
        count(distinct eventperiod_id) as ccc
 INTO @resultsSchema.@prefiXpairs_stat
 FROM (
-         SELECT e1_concept_id as concept_id,
+         SELECT e1_COHORT_ID as COHORT_ID,
                 eventperiod_id
          FROM @resultsSchema.@prefiXpairs_of_model
 
          UNION
 
-         SELECT e2_concept_id as concept_id,
+         SELECT e2_COHORT_ID as COHORT_ID,
                 eventperiod_id
          FROM @resultsSchema.@prefiXpairs_of_model
 
      ) a
-GROUP BY concept_id
+GROUP BY COHORT_ID
 ;
 
 UPDATE @resultsSchema.@prefiXE1E2_model
-SET E1_COUNT_IN_PAIRS = (SELECT ccc FROM @resultsSchema.@prefiXpairs_stat p WHERE p.CONCEPT_ID = @prefiXE1E2_model.E1_CONCEPT_ID);
+SET E1_COUNT_IN_PAIRS = (SELECT ccc FROM @resultsSchema.@prefiXpairs_stat p WHERE p.COHORT_ID = @prefiXE1E2_model.E1_COHORT_ID);
 -- in validation mode E1 might be not present in data, force these counts to 0
 UPDATE @resultsSchema.@prefiXE1E2_model
 SET E1_COUNT_IN_PAIRS = 0
@@ -200,7 +200,7 @@ WHERE E1_COUNT_IN_PAIRS IS NULL;
 
 
 UPDATE @resultsSchema.@prefiXE1E2_model
-SET E2_COUNT_IN_PAIRS = (SELECT ccc FROM @resultsSchema.@prefiXpairs_stat p WHERE p.CONCEPT_ID = @prefiXE1E2_model.E2_CONCEPT_ID);
+SET E2_COUNT_IN_PAIRS = (SELECT ccc FROM @resultsSchema.@prefiXpairs_stat p WHERE p.COHORT_ID = @prefiXE1E2_model.E2_COHORT_ID);
 -- in validation mode E1 might be not present in data, force these counts to 0
 UPDATE @resultsSchema.@prefiXE1E2_model
 SET E2_COUNT_IN_PAIRS = 0
@@ -218,14 +218,14 @@ IF OBJECT_ID('@resultsSchema.@prefiXpairs_stat', 'U') IS NOT NULL
   DROP TABLE @resultsSchema.@prefiXpairs_stat;
 
 SELECT
-        e1_concept_id,
+        e1_COHORT_ID,
         COUNT(DISTINCT eventperiod_id) as ccc
 INTO @resultsSchema.@prefiXpairs_stat
 FROM @resultsSchema.@prefiXpairs_of_model
-GROUP BY e1_concept_id;
+GROUP BY e1_COHORT_ID;
 
 UPDATE @resultsSchema.@prefiXE1E2_model
-SET E1_COUNT_AS_FIRST_EVENT_OF_PAIRS = (SELECT ccc FROM @resultsSchema.@prefiXpairs_stat p WHERE p.E1_CONCEPT_ID = @prefiXE1E2_model.E1_CONCEPT_ID);
+SET E1_COUNT_AS_FIRST_EVENT_OF_PAIRS = (SELECT ccc FROM @resultsSchema.@prefiXpairs_stat p WHERE p.E1_COHORT_ID = @prefiXE1E2_model.E1_COHORT_ID);
 -- in validation mode E1 might be not present in data, force these counts to 0
 UPDATE @resultsSchema.@prefiXE1E2_model
 SET E1_COUNT_AS_FIRST_EVENT_OF_PAIRS = 0
@@ -242,15 +242,15 @@ IF OBJECT_ID('@resultsSchema.@prefiXpairs_stat', 'U') IS NOT NULL
   DROP TABLE @resultsSchema.@prefiXpairs_stat;
 
 SELECT
-        e2_concept_id,
+        e2_COHORT_ID,
         COUNT(DISTINCT eventperiod_id) as ccc
 INTO @resultsSchema.@prefiXpairs_stat
 FROM @resultsSchema.@prefiXpairs_of_model
-GROUP BY e2_concept_id;
+GROUP BY e2_COHORT_ID;
 
 
 UPDATE @resultsSchema.@prefiXE1E2_model
-SET E2_COUNT_AS_SECOND_EVENT_OF_PAIRS = (SELECT ccc FROM @resultsSchema.@prefiXpairs_stat p WHERE p.E2_CONCEPT_ID = @prefiXE1E2_model.E2_CONCEPT_ID);
+SET E2_COUNT_AS_SECOND_EVENT_OF_PAIRS = (SELECT ccc FROM @resultsSchema.@prefiXpairs_stat p WHERE p.E2_COHORT_ID = @prefiXE1E2_model.E2_COHORT_ID);
 -- in validation mode E2 might be not present in data, force these counts to 0
 UPDATE @resultsSchema.@prefiXE1E2_model
 SET E2_COUNT_AS_SECOND_EVENT_OF_PAIRS = 0
@@ -267,33 +267,33 @@ IF OBJECT_ID('@resultsSchema.@prefiXpairs_stat', 'U') IS NOT NULL
 IF OBJECT_ID('@resultsSchema.@prefiXpairs_stat', 'U') IS NOT NULL
   DROP TABLE @resultsSchema.@prefiXpairs_stat;
 
-SELECT e2_concept_id                  as last_event_concept_id,
+SELECT e2_COHORT_ID                  as last_event_COHORT_ID,
        count(distinct eventperiod_id) as ccc
 INTO @resultsSchema.@prefiXpairs_stat
 FROM (
-         SELECT a.e2_concept_id,
+         SELECT a.e2_COHORT_ID,
                 a.eventperiod_id
          FROM (
                   -- all non-first events (incl the last)
-                  SELECT DISTINCT e2_concept_id,
+                  SELECT DISTINCT e2_COHORT_ID,
                                 eventperiod_id
                   FROM @resultsSchema.@prefiXpairs_of_model
               ) a
                   LEFT JOIN
               (
                   -- all non-last events
-                  SELECT DISTINCT e1_concept_id,
+                  SELECT DISTINCT e1_COHORT_ID,
                                   eventperiod_id
                   FROM @resultsSchema.@prefiXpairs_of_model
-              ) b ON a.eventperiod_id = b.eventperiod_id AND a.e2_concept_id=b.e1_concept_id
+              ) b ON a.eventperiod_id = b.eventperiod_id AND a.e2_COHORT_ID=b.e1_COHORT_ID
          WHERE b.eventperiod_id IS NULL -- remains events that occur as the last elements of the eventperiods
 
      ) c
-GROUP BY e2_concept_id
+GROUP BY e2_COHORT_ID
 ;
 
 UPDATE @resultsSchema.@prefiXE1E2_model
-SET E1_COUNT_AS_LAST_EVENT_OF_EVENTPERIODS = (SELECT ccc FROM @resultsSchema.@prefiXpairs_stat p WHERE p.last_event_concept_id = @prefiXE1E2_model.E1_CONCEPT_ID);
+SET E1_COUNT_AS_LAST_EVENT_OF_EVENTPERIODS = (SELECT ccc FROM @resultsSchema.@prefiXpairs_stat p WHERE p.last_event_COHORT_ID = @prefiXE1E2_model.E1_COHORT_ID);
 -- in validation mode E1 might be not present in data, force these counts to 0
 UPDATE @resultsSchema.@prefiXE1E2_model
 SET E1_COUNT_AS_LAST_EVENT_OF_EVENTPERIODS = 0
@@ -311,33 +311,33 @@ IF OBJECT_ID('@resultsSchema.@prefiXpairs_stat', 'U') IS NOT NULL
 IF OBJECT_ID('@resultsSchema.@prefiXpairs_stat', 'U') IS NOT NULL
   DROP TABLE @resultsSchema.@prefiXpairs_stat;
 
-SELECT e1_concept_id                  as first_event_concept_id,
+SELECT e1_COHORT_ID                  as first_event_COHORT_ID,
        count(distinct eventperiod_id) as ccc
 INTO @resultsSchema.@prefiXpairs_stat
 FROM (
-         SELECT a.e1_concept_id,
+         SELECT a.e1_COHORT_ID,
                 a.eventperiod_id
          FROM (
                   -- all non-last events (incl the first)
-                  SELECT DISTINCT e1_concept_id,
+                  SELECT DISTINCT e1_COHORT_ID,
                                 eventperiod_id
                   FROM @resultsSchema.@prefiXpairs_of_model
               ) a
                   LEFT JOIN
               (
                   -- all non-first events
-                  SELECT DISTINCT e2_concept_id,
+                  SELECT DISTINCT e2_COHORT_ID,
                                   eventperiod_id
                   FROM @resultsSchema.@prefiXpairs_of_model
-              ) b ON a.eventperiod_id = b.eventperiod_id AND a.e1_concept_id=b.e2_concept_id
+              ) b ON a.eventperiod_id = b.eventperiod_id AND a.e1_COHORT_ID=b.e2_COHORT_ID
          WHERE b.eventperiod_id IS NULL -- remains events that occur as the first elements of the eventperiods
 
      ) c
-GROUP BY e1_concept_id
+GROUP BY e1_COHORT_ID
 ;
 
 UPDATE @resultsSchema.@prefiXE1E2_model
-SET E2_COUNT_AS_FIRST_EVENT_OF_EVENTPERIODS = (SELECT ccc FROM @resultsSchema.@prefiXpairs_stat p WHERE p.first_event_concept_id = @prefiXE1E2_model.E2_CONCEPT_ID);
+SET E2_COUNT_AS_FIRST_EVENT_OF_EVENTPERIODS = (SELECT ccc FROM @resultsSchema.@prefiXpairs_stat p WHERE p.first_event_COHORT_ID = @prefiXE1E2_model.E2_COHORT_ID);
 -- in validation mode E1 might be not present in data, force these counts to 0
 UPDATE @resultsSchema.@prefiXE1E2_model
 SET E2_COUNT_AS_FIRST_EVENT_OF_EVENTPERIODS = 0
@@ -354,23 +354,23 @@ IF OBJECT_ID('@resultsSchema.@prefiXpairs_stat', 'U') IS NOT NULL
 --
 --          CREATE TABLE
 --              @resultsSchema.@prefiXevents_tmp AS
---              SELECT eventperiod_id,concept_id FROM @resultsSchema.@prefiXevents
---                  WHERE concept_id in (SELECT DISTINCT E1_CONCEPT_ID as concept_id FROM @resultsSchema.@prefiXE1E2_model
+--              SELECT eventperiod_id,COHORT_ID FROM @resultsSchema.@prefiXevents
+--                  WHERE COHORT_ID in (SELECT DISTINCT E1_COHORT_ID as COHORT_ID FROM @resultsSchema.@prefiXE1E2_model
 --                      UNION --union removes duplicates
---                  SELECT DISTINCT E2_CONCEPT_ID as concept_id FROM @resultsSchema.@prefiXE1E2_model
+--                  SELECT DISTINCT E2_COHORT_ID as COHORT_ID FROM @resultsSchema.@prefiXE1E2_model
 --                      );
 
---          CREATE INDEX @prefiXevents_tmp_concept_idx ON @resultsSchema.@prefiXevents_tmp (concept_id);
+--          CREATE INDEX @prefiXevents_tmp_COHORT_IDx ON @resultsSchema.@prefiXevents_tmp (COHORT_ID);
 
 --          UPDATE @resultsSchema.@prefiXE1E2_model
 --          SET E1_AND_E2_TOGETHER_COUNT_IN_EVENTS = (
 --              SELECT COUNT(*)
 --              FROM @resultsSchema.@prefiXevents_tmp
---              where concept_id = @prefiXE1E2_model.e2_concept_id
+--              where COHORT_ID = @prefiXE1E2_model.e2_COHORT_ID
 --                AND eventperiod_id IN
 --                    (SELECT eventperiod_id
 --                     FROM @resultsSchema.@prefiXevents_tmp
---                     where concept_id = @prefiXE1E2_model.e1_concept_id)
+--                     where COHORT_ID = @prefiXE1E2_model.e1_COHORT_ID)
 --          );
 
 --          IF OBJECT_ID('@resultsSchema.@prefiXevents_tmp', 'U') IS NOT NULL

@@ -28,7 +28,7 @@ SELECT c.eventperiod_id,
       FROM
           (
                                 SELECT eventperiod_id,
-                                    MAX(case when concept_id='@diagnosis1' then date else NULL end) AS e1_date
+                                    MAX(case when cohort_id='@diagnosis1' then date else NULL end) AS e1_date
                                  FROM
                                   @resultsSchema.@prefiXevents_in_eventperiods e
                                  GROUP BY
@@ -56,7 +56,7 @@ ON index_dates.eventperiod_id=e.eventperiod_id AND index_dates.index_date=e.date
 
 LEFT JOIN
 
-@resultsSchema.@prefiXmycohort mc ON index_dates.eventperiod_id=mc.eventperiod_id
+@resultsSchema.@prefiXtraj_base_cohort mc ON index_dates.eventperiod_id=mc.eventperiod_id
 
 ) alldata;
 

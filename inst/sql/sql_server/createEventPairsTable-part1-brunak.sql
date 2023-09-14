@@ -129,6 +129,23 @@ IF OBJECT_ID('@resultsSchema.@prefiXevents', 'U') IS NOT NULL
 
     UNION ALL -- we use UNION ALL as it does not try to delete duplicates (faster) (although there cant be any anyways)
 
+    -- drug eras
+    SELECT
+      e.person_id                 AS person_id,
+      c.eventperiod_id            AS eventperiod_id,
+      e.drug_concept_id           AS CONCEPT_ID,
+      min(e.drug_era_start_date)  AS date
+    FROM @cdmDatabaseSchema.drug_era e
+    -- note that the same event may belong to several event periods. It gets multiplied here while doing this INNER JOIN
+    INNER JOIN @resultsSchema.@prefiXmycohort c ON e.person_id=c.person_id {@daysBeforeIndexDate == Inf} ? {} : { AND DATEADD(day,@daysBeforeIndexDate,e.drug_era_start_date)>=c.eventperiod_start_date } AND e.drug_era_start_date>=c.eventperiod_start_date AND e.drug_era_start_date<=c.eventperiod_end_date
+    WHERE
+      1=@addDrugEras -- if addDrugEras is TRUE, then this UNION is ADDED, otherwise this query give 0 rows as result
+      AND
+      drug_concept_id!=0
+    GROUP BY c.eventperiod_id,e.drug_concept_id,e.person_id
+
+    UNION ALL -- we use UNION ALL as it does not try to delete duplicates (faster) (although there cant be any anyways)
+
 
     -- deaths
     SELECT

@@ -11,6 +11,9 @@ TrajectoryAnalysisArgsToJson(trajectoryAnalysisArgs, filepath)
 
 \item{filepath}{Full path to the output file. Should have .json extension as this is actually a JSON file.}
 }
+\value{
+
+}
 \description{
 Writes trajectoryAnalysisArgs object to JSON file
 }

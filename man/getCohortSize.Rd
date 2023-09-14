@@ -13,6 +13,9 @@ getCohortSize(connection, trajectoryAnalysisArgs, trajectoryLocalArgs)
 
 \item{trajectoryLocalArgs}{Object created by Trajectories:::createTrajectoryLocalArgs() method}
 }
+\value{
+
+}
 \description{
 Gets cohort size (number of rows in cohort table of that particluar cohort ID)
 }

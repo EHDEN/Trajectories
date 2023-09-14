@@ -9,6 +9,9 @@ detectSubgraphs(all_trajs)
 \arguments{
 \item{all_trajs}{Must have columns trajectory.str, trajectory.count, length}
 }
+\value{
+
+}
 \description{
 Title
 }

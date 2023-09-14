@@ -8,7 +8,8 @@ runDiscoveryAnalysis(
   connection,
   trajectoryAnalysisArgs,
   trajectoryLocalArgs,
-  forceRecalculation = F
+  forceRecalculation = F,
+  skip_exact_matching_requirement = F
 )
 }
 \arguments{
@@ -19,6 +20,8 @@ runDiscoveryAnalysis(
 \item{trajectoryLocalArgs}{TrajectoryLocalArgs object that must be created by createTrajectoryLocalArgs() method}
 
 \item{forceRecalculation}{Set to TRUE if you wish to recalculate p-values for all pairs again. If it is set to FALSE, it avoids overcalculating p-values for pairs that have been analyzed already.}
+
+\item{skip_exact_matching_requirement}{Set to FALSE only when testing the package and you want to skip the exact matching by gender, age group and year}
 }
 \description{
 Runs the analysis that detects statistically significant directional event pairs and writes the results to file. Data is taken from database and it is expected that the tables are created by function createEventPairsTable()

@@ -18,13 +18,13 @@ connection <- DatabaseConnector::connect(connectionDetails)
 
 
 # Setting local system & database parameters - CHANGE ACCORDING TO YOUR SYSTEM & DATABASE:
-trajectoryLocalArgs <- Trajectories::createTrajectoryLocalArgs(oracleTempSchema = "temp_schema",
-                                                               prefixForResultTableNames = "sr2_", # Alternatively, you could use this to randomly generate the prefix (requires library(stringi) to be loaded): paste0(  if(!is.null(attr(connectionDetails,'user'))) substr(USER,1,2), stri_rand_strings(1, 2, pattern = "[A-Za-z]"), sep="_")
-                                                               cdmDatabaseSchema = 'ohdsi_cdm_next',
-                                                               vocabDatabaseSchema = 'ohdsi_cdm_next',
-                                                               resultsSchema = 'ohdsi_temp',
-                                                               sqlRole = F, # You may always use 'F'. Setting specific role might be useful in PostgreSQL when you want to create tables by using specific role so that the others also see the results. However, then you must ensure that this role has permissions to read from all necessary schemas and also create tables to resultsSchema
-                                                               inputFolder=system.file("extdata", "T2D", package = "Trajectories"), # Full path to input folder that contains SQL file for cohort definition and optionally also trajectoryAnalysisArgs.json. You can use built-in folders of this package such as: inputFolder=system.file("extdata", "T2D", package = "Trajectories")
+trajectoryLocalArgs <- Trajectories::createTrajectoryLocalArgs(prefixForResultTableNames = "sr2_", # Alternatively, you could use this to randomly generate the prefix (requires library(stringi) to be loaded): paste0(  if(!is.null(attr(connectionDetails,'user'))) substr(USER,1,2), stri_rand_strings(1, 2, pattern = "[A-Za-z]"), sep="_")
+                                                               cdmDatabaseSchema = 'ohdsi_cdm_202207',
+                                                               vocabDatabaseSchema = 'ohdsi_cdm_202207',
+                                                               cohortDatabaseSchema = 'ohdsi_results_202207',
+                                                               cohortTableName = 'cohort',
+                                                               resultsSchema = 'ohdsi_temp_202207',
+                                                               inputFolder=system.file("extdata", "test", package = "Trajectories"), # Full path to input folder that contains SQL file for cohort definition and optionally also trajectoryAnalysisArgs.json. You can use built-in folders of this package such as: inputFolder=system.file("extdata", "T2D", package = "Trajectories")
                                                                mainOutputFolder='/Users/sulevr/temp', # Subfolders will be created automatically
                                                                databaseHumanReadableName='RITA') # Use something short. This will be used as a folder name an it will be added to the titles of the graph.
 
@@ -37,7 +37,7 @@ trajectoryLocalArgs <- Trajectories::createTrajectoryLocalArgs(oracleTempSchema 
 Trajectories::discover(connection,
                        trajectoryLocalArgs,
                        createCohort=T,
-                       validationSetSize=0, # set to 0 if you are you going to validate the results in another databaase anyways
+                       validationSetSize=0, # set to 0 if you are you going to validate the results in another database anyways
                        createEventPairsTable=T,
                        runDiscoveryAnalysis=T,
                        forceRecalculationOfAnalysis=F, # used only if runDiscoveryAnalysis=T

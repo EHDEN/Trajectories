@@ -12,6 +12,209 @@ library(Eunomia)
 #querySql(connection, paste0('SELECT * FROM CONDITION_OCCURRENCE LIMIT 30;'))
 #querySql(connection, paste0('SELECT * FROM E1E2_MODEL;'))
 
+#creates synthecitc trajectory A->B where A always leads to B. Also adds B occurrences so that RR holds.
+create_synthetic_trajectory<-function(num_total_patients=100,num_traj=10,num_random_events=c(0,10),traj=c(317009,255848),rr=2) {
+  eunomia <-setUpEunomia()
+  connection<-eunomia$connection
+  trajectoryLocalArgs<-eunomia$trajectoryLocalArgs
+  clearConditionsTable(connection)
+  limitToNumPatients(connection,n=num_total_patients)
+  limitToConcepts(connection)
+  #setObservationPeriodForAll(connection,startdate='2010-01-01',enddate='2012-12-31')
+  all_person_ids<-getPatientIds(connection)
+
+  # Add up to x random events per each patient, except events in the trajectory
+  addRandomEvents(connection,n_per_person_range=num_random_events,exclude_person_ids=c(),exclude_concept_ids=traj)
+
+  if(length(traj)==2) {
+    # The number of total A-s (can't be smaller than num_trajs)
+    num_As=num_traj*2 #the probability that B is followed after A is 50% (currently hardcoded)
+    ParallelLogger::logInfo(paste0("Number of '",traj[1],"' patients before duplication: ",num_As))
+    num_As_without_preceding_B=num_As-num_traj
+    prob_B_with_prior_A=num_traj/num_As
+    ParallelLogger::logInfo(paste0('prob_B_with_prior_A=',prob_B_with_prior_A))
+    # Add trajectory A->B for x patients
+    person_ids<-addConditionEventTrajectory(connection,event_concept_ids=traj,n=num_traj,days_to_skip_from_obs_period_start=0)
+    # For num_As_without_preceding_B patients, add only the first event (so that the risk of getting the second event after the first is 50%)
+    non_case_person_ids<-setdiff(all_person_ids,person_ids)
+    num_patients_without_second_event=num_As_without_preceding_B
+    non_case_person_ids_sample<-sample(non_case_person_ids,size=num_patients_without_second_event)
+    addRandomEvents(connection,n_per_person_range=c(1,1), include_concept_ids=c(traj[1]), include_person_ids=non_case_person_ids_sample)
+    person_ids<-c(person_ids,non_case_person_ids_sample)
+    # Duplicate data (persons and events) - for control group (ideal match)
+    person_id_map<-duplicatePersonsAndTheirConditions(connection)
+    # In duplicated part (control group), replace all A-s with random events
+    persons_with_A <- querySql(connection, paste0('SELECT DISTINCT person_id FROM CONDITION_OCCURRENCE WHERE condition_concept_id=',traj[1],';'))
+    controls_with_A <- intersect(persons_with_A$PERSON_ID,person_id_map$PERSON_ID_NEW)
+    for(control_with_A in controls_with_A) {
+      replaceEventWithRandomEventForPeson(connection,person_id=control_with_A,concept_id_to_replace=traj[1],exclude_concept_ids=traj,include_concept_ids=c())
+    }
+    # Calculate required prob_B_without_prior_A from RR
+    #rr=2
+    prob_B_without_prior_A=prob_B_with_prior_A/rr
+    ParallelLogger::logInfo(paste0('prob_B_without_prior_A=',prob_B_without_prior_A))
+    # Calculate, how many B-s can we have in duplicated part to satisfy expected RR criterion
+    max_num_Bs_in_duplicated_part <- round(prob_B_without_prior_A*num_As)
+    ParallelLogger::logInfo(paste0('max_num_Bs_in_duplicated_part=',max_num_Bs_in_duplicated_part))
+    # In duplicated part (control group), replace B-s one-by-one with random events until number of B-s is smaller than max_num_Bs_in_duplicated_part
+    num_Bs_in_duplicated_part=num_traj
+    for(control_with_A in controls_with_A) {
+      if(num_Bs_in_duplicated_part<=max_num_Bs_in_duplicated_part) break;
+      if(num_Bs_in_duplicated_part<0) {
+        ParallelLogger::logWarn(paste0('Something is not right - need to decrease ',traj[2],' events in control group to satisfy RR=',rr,' requirement but there are no ',traj[2],' events in the control group anyore'))
+        break;
+      }
+      replaceEventWithRandomEventForPeson(connection,person_id=control_with_A,concept_id_to_replace=traj[2],exclude_concept_ids=traj,include_concept_ids=c())
+      num_Bs_in_duplicated_part = num_Bs_in_duplicated_part - 1
+    }
+    ParallelLogger::logInfo(paste0('num_Bs_in_duplicated_part after eliminating extra B-s=',num_Bs_in_duplicated_part))
+
+
+    #tests
+    res1=querySql(connection,paste0('SELECT COUNT(DISTINCT person_id) AS total FROM CONDITION_OCCURRENCE WHERE condition_concept_id=',traj[1]))
+    res2=querySql(connection,paste0('SELECT COUNT(DISTINCT person_id) AS total FROM CONDITION_OCCURRENCE WHERE condition_concept_id=',traj[2]))
+    ParallelLogger::logInfo(paste0("Number of '",traj[1],"' events in data: ",res1$TOTAL))
+    ParallelLogger::logInfo(paste0("Number of '",traj[2],"' events in data: ",res2$TOTAL))
+  }
+
+
+
+  trajectoryAnalysisArgs <- Trajectories:::createTrajectoryAnalysisArgs(minimumDaysBetweenEvents = 1,
+                                                                        maximumDaysBetweenEvents = 365*120,
+                                                                        minPatientsPerEventPair = ifelse(num_traj>=2,floor(num_traj/2),1), #use num_traj/2
+                                                                        addConditions=T,
+                                                                        addObservations=F,
+                                                                        addProcedures=F,
+                                                                        addDrugExposures=F,
+                                                                        addDrugEras=F,
+                                                                        addBirths=F,
+                                                                        addDeaths=F,
+                                                                        daysBeforeIndexDate=Inf,
+                                                                        cohortName="test")
+
+  return(list(connection=connection,trajectoryAnalysisArgs=trajectoryAnalysisArgs,trajectoryLocalArgs=trajectoryLocalArgs))
+}
+
+
+#creates synthecitc trajectory A->B where A always leads to B. Also adds B occurrences so that RR holds.
+create_synthetic_trajectory_old2<-function(num_total_patients=100,num_traj=10,num_random_events=c(0,10),traj=c(317009,255848),rr=2) {
+  eunomia <-setUpEunomia()
+  connection<-eunomia$connection
+  trajectoryLocalArgs<-eunomia$trajectoryLocalArgs
+  clearConditionsTable(connection)
+  limitToNumPatients(connection,n=num_total_patients)
+  limitToConcepts(connection)
+  setObservationPeriodForAll(connection,startdate='2010-01-01',enddate='2012-12-31')
+  all_person_ids<-getPatientIds(connection)
+
+  # Add trajectory for x patients
+  person_ids<-addConditionEventTrajectory(connection,event_concept_ids=traj,n=num_traj,days_to_skip_from_obs_period_start=0)
+  non_case_person_ids<-setdiff(all_person_ids,person_ids)
+  # For x/2 patients, add only the first event (so that the risk of getting the second event after the first is 50%)
+  num_patients_without_second_event=num_traj
+  non_case_person_ids_sample<-sample(non_case_person_ids,size=num_patients_without_second_event)
+  addRandomEvents(connection,n_per_person_range=c(1,1), include_concept_ids=c(traj[1]), include_person_ids=non_case_person_ids_sample)
+  person_ids<-c(person_ids,non_case_person_ids_sample)
+  # Add up to x random events per each patient, except events in the trajectory
+  addRandomEvents(connection,n_per_person_range=num_random_events,exclude_person_ids=c(),exclude_concept_ids=traj)
+  # Add 1 second trajectory event for patients who do not have the trajectory
+  # These are added so that the event prevalence among these patients corresponds to the expected RR value
+  prob_a_b=num_traj/(num_traj+num_patients_without_second_event)
+  non_case_person_ids<-setdiff(all_person_ids,person_ids)
+  prob_b_without_prior_a<-prob_a_b/rr
+  for(event in traj[2:length(traj)]) {
+    non_case_person_ids_sample<-sample(non_case_person_ids,size=floor(prob_b_without_prior_a*length(non_case_person_ids)))
+    addRandomEvents(connection,n_per_person_range=c(1,1), include_concept_ids=c(event), include_person_ids=non_case_person_ids_sample)
+  }
+
+  trajectoryAnalysisArgs <- Trajectories:::createTrajectoryAnalysisArgs(minimumDaysBetweenEvents = 1,
+                                                                        maximumDaysBetweenEvents = 365*120,
+                                                                        minPatientsPerEventPair = ifelse(num_traj>=10,floor(num_traj/2),1), #use num_traj/2
+                                                                        addConditions=T,
+                                                                        addObservations=F,
+                                                                        addProcedures=F,
+                                                                        addDrugExposures=F,
+                                                                        addDrugEras=F,
+                                                                        addBirths=F,
+                                                                        addDeaths=F,
+                                                                        daysBeforeIndexDate=Inf,
+                                                                        cohortName="test")
+
+  return(list(connection=connection,trajectoryAnalysisArgs=trajectoryAnalysisArgs,trajectoryLocalArgs=trajectoryLocalArgs))
+}
+
+create_synthetic_trajectory_old<-function(num_total_patients=100,num_traj=10,num_random_events=c(0,10),traj=c(317009,255848)) {
+  eunomia <-setUpEunomia()
+  connection<-eunomia$connection
+  trajectoryLocalArgs<-eunomia$trajectoryLocalArgs
+  clearConditionsTable(connection)
+  limitToNumPatients(connection,n=num_total_patients)
+  limitToConcepts(connection)
+  setObservationPeriodForAll(connection,startdate='2010-01-01',enddate='2012-12-31')
+  # Add trajectory for x patients
+  person_ids<-addConditionEventTrajectory(connection,event_concept_ids=traj,n=num_traj,days_to_skip_from_obs_period_start=0)
+  # Add up to x random events per each patient, except events in the trajectory
+  addRandomEvents(connection,n_per_person_range=num_random_events,exclude_person_ids=c(),exclude_concept_ids=traj)
+  # Add 1 random trajectory event for patients who do not have the trajectory
+  # These are added so that the event prevalence among these patients is not more than 0.1 x num_traj
+  all_person_ids<-getPatientIds(connection)
+  non_case_person_ids<-setdiff(all_person_ids,person_ids)
+  for(event in traj) {
+    non_case_person_ids_sample<-
+      non_case_person_ids_sample<-sample(non_case_person_ids,size=floor(1/length(traj)))
+    addRandomEvents(connection,n_per_person_range=c(1,1), include_concept_ids=c(event), include_person_ids=non_case_person_ids_sample)
+  }
+
+  trajectoryAnalysisArgs <- Trajectories:::createTrajectoryAnalysisArgs(minimumDaysBetweenEvents = 1,
+                                                                        maximumDaysBetweenEvents = 365*120,
+                                                                        minPatientsPerEventPair = ifelse(num_traj>=10,floor(num_traj/2),1), #use num_traj/2
+                                                                        addConditions=T,
+                                                                        addObservations=F,
+                                                                        addProcedures=F,
+                                                                        addDrugExposures=F,
+                                                                        addDrugEras=F,
+                                                                        addBirths=F,
+                                                                        addDeaths=F,
+                                                                        daysBeforeIndexDate=Inf,
+                                                                        cohortName="test")
+
+  return(connection)
+}
+
+run_analysis_for_synthetic_trajectory<-function(num_total_patients=100,num_traj=10,num_random_events=c(0,10),traj=c(317009,255848),rr=2) {
+
+  r=create_synthetic_trajectory(num_total_patients=num_total_patients,num_traj=num_traj,num_random_events=num_random_events,traj=traj,rr=rr)
+
+  connection=r$connection
+  trajectoryAnalysisArgs=r$trajectoryAnalysisArgs
+  trajectoryLocalArgs=r$trajectoryLocalArgs
+
+
+  #Create output folder for this analysis
+  outputFolder<-Trajectories:::GetOutputFolder(trajectoryLocalArgs,trajectoryAnalysisArgs,createIfMissing=T)
+
+  # Set up logger
+  Trajectories:::InitLogger(logfile = file.path(outputFolder,'log.txt'), threshold = 'INFO')
+
+  #Remove output files (if exist from previous run)
+  removeTestableOutputFiles(trajectoryLocalArgs,trajectoryAnalysisArgs)
+
+  # Create new cohort table for this package to results schema & fill it in (all having cohort_id=1 in cohort data)
+  Trajectories:::createAndFillCohortTable(connection=connection,
+                                          trajectoryAnalysisArgs=trajectoryAnalysisArgs,
+                                          trajectoryLocalArgs=trajectoryLocalArgs)
+
+  # Create database tables of all event pairs (patient level data + summary statistics)
+  Trajectories:::createEventPairsTable(connection=connection,
+                                       trajectoryAnalysisArgs=trajectoryAnalysisArgs,
+                                       trajectoryLocalArgs=trajectoryLocalArgs)
+
+  Trajectories:::runDiscoveryAnalysis(connection=connection,
+                                      trajectoryAnalysisArgs=trajectoryAnalysisArgs,
+                                      trajectoryLocalArgs=trajectoryLocalArgs)
+  return(list(connection=connection,trajectoryAnalysisArgs=trajectoryAnalysisArgs,trajectoryLocalArgs=trajectoryLocalArgs))
+}
+
 
 testthat::test_that("No significant event pairs in random data", {
 
@@ -571,3 +774,120 @@ testthat::test_that("Test that forceRecalculation=F does not cause any error", {
   testthat::expect_equal(nrow(tested_event_pairs),num.pairs.significant)
 
 })
+
+
+
+num_total_patients=1000
+num_traj=100
+num_random_events=c(0,20)
+rr=2
+
+is_trajectory_detected<-function(num_total_patients=num_total_patients,num_traj=num_traj,num_random_events=num_random_events,rr=rr) {
+
+  traj=c(317009,255848)
+  r=run_analysis_for_synthetic_trajectory(num_total_patients=num_total_patients,num_traj=num_traj,num_random_events=num_random_events,traj=traj,rr=rr)
+  trajectoryAnalysisArgs=r$trajectoryAnalysisArgs
+  trajectoryLocalArgs=r$trajectoryLocalArgs
+
+  #get number of directional pairs
+  num_directional_pairs<-nrow(getEventPairsTableAsDataFrame(trajectoryLocalArgs,trajectoryAnalysisArgs,filename='event_pairs_directional.tsv'))
+
+  #is our trajectory among these?
+  row<-getEventPairFromEventPairsTable(event1_concept_id=317009,event2_concept_id=255848,trajectoryLocalArgs,trajectoryAnalysisArgs,filename='event_pairs_tested.tsv')
+
+
+  if(nrow(row)!=1) return(list(is_detected=F,detected_rr=row$RR,num_directional_pairs=num_directional_pairs));
+  if(is.na(row$DIRECTIONAL_SIGNIFICANT)) return(list(is_detected=F,detected_rr=row$RR,num_directional_pairs=num_directional_pairs));
+  if(row$DIRECTIONAL_SIGNIFICANT=='*') return(list(is_detected=T,detected_rr=row$RR,num_directional_pairs=num_directional_pairs));
+  return(list(is_detected=F,detected_rr=row$RR,num_directional_pairs=num_directional_pairs));
+}
+
+is_trajectory_detected_from_no_trajectory<-function(num_total_patients=num_total_patients,num_traj=num_traj,num_random_events=num_random_events,rr=rr) {
+
+  traj=c()
+  r=run_analysis_for_synthetic_trajectory(num_total_patients=num_total_patients,num_traj=num_traj,num_random_events=num_random_events,traj=traj,rr=rr)
+  trajectoryAnalysisArgs=r$trajectoryAnalysisArgs
+  trajectoryLocalArgs=r$trajectoryLocalArgs
+
+  #get number of directional pairs
+  num_directional_pairs<-nrow(getEventPairsTableAsDataFrame(trajectoryLocalArgs,trajectoryAnalysisArgs,filename='event_pairs_directional.tsv'))
+
+  return(list(is_detected=F,detected_rr=NA,num_directional_pairs=num_directional_pairs));
+}
+
+
+library(ggplot2)
+res<-data.frame()
+for(num_total_patients in c(1000)) {
+  for(rr in c(5,2,1.5,1.2,1)) {
+    for(num_traj in c(100,50,20,10)) {
+
+        #for(num_random_events in c(1,6,12,17,30)) { #1=general prevalence is 2%, 6=10%,12 =20%, 17=30%, 30=50% (if the number of different random events is 30) }
+        for(num_random_events in c(1,6,12,17,30)) { #1=general prevalence is 2%, 6=10%,12 =20%, 17=30%, 30=50% (if the number of different random events is 30) }
+          if(num_traj>0) {
+            r<-is_trajectory_detected(num_total_patients=num_total_patients,num_traj=num_traj,num_random_events=c(0,num_random_events),rr=rr)
+          } else if (rr=1) {
+            r<-is_trajectory_detected_from_no_trajectory(num_total_patients=num_total_patients,num_traj=num_traj,num_random_events=c(0,num_random_events),rr=rr)
+          }
+
+          d<-r$is_detected
+
+          res<-rbind(res,data.frame(num_total_patients=num_total_patients,num_event_pair_occurrences=num_traj,num_random_events=num_random_events,test_rr=rr,detected_rr=r$detected_rr,num_different_directional_pairs_detected=r$num_directional_pairs,was_added_pair_detected=d))
+          save(res,file='test2.Robj')
+
+          if(d==F) break;
+        }
+    }
+
+  }
+  #add no trajectory test
+  for(num_random_events in c(1,6,12,17,30)) { #1=general prevalence is 2%, 6=10%,12 =20%, 17=30%, 30=50% (if the number of different random events is 30) }'
+    r<-is_trajectory_detected_from_no_trajectory(num_total_patients=num_total_patients,num_traj=num_traj,num_random_events=c(0,num_random_events),rr=1)
+    d<-r$is_detected
+
+    res<-rbind(res,data.frame(num_total_patients=num_total_patients,num_traj=num_traj,num_random_events=num_random_events,test_rr=1,detected_rr=r$detected_rr,num_directional_pairs=num_directional_pairs,is_detected=d))
+
+  }
+}
+
+#res_rr_2<-res
+
+res <- res %>% select(-prevalence_random_events) %>% select(-prevalence)
+
+res$prevalence<-round(100*res$num_traj/res$num_total_patients)
+res <- res %>%
+        mutate(prevalence_random_events=case_when(
+          num_random_events == 1 ~ 2,
+          num_random_events == 6 ~ 10,
+          num_random_events == 12 ~ 20,
+          num_random_events == 17 ~ 30,
+          num_random_events == 30 ~ 50,
+          TRUE ~ num_random_events
+        ))
+library(ggplot2)
+for(rr in c(5,2,1.5,1.2,1)) {
+  ggplot(res %>% filter(test_rr==rr),
+         aes(x=prevalence,y=prevalence_random_events,color=is_detected)) + geom_point() +
+    xlab('Prevalence of the trajectory in the cohort, %') +
+    ylab('Avegrage prevalence of random events, %') +
+    ggtitle(paste0('Test results for RR=',rr)) +
+    theme_bw()
+  ggsave(filename=paste0('rr',rr,'.pdf'))
+}
+rr=4
+ggplot(res %>% filter(test_rr==rr),
+       aes(x=prevalence,y=prevalence_random_events,color=is_detected)) + geom_point() +
+  xlab('Prevalence of the trajectory in the cohort, %') +
+  ylab('Avegrage prevalence of random events, %') +
+  ggtitle(paste0('Test results for RR=',rr)) +
+  theme_bw()
+
+head(res)
+save(res,file="res.R")
+openxlsx::write.xlsx(res,'testresults.xlsx')
+load('test.Robj')
+load('rr2.R')
+
+
+
+

@@ -18,6 +18,9 @@ filterIgraphRemoveLowEffectLinksAndOrphanNodes(
 
 \item{edge_param_to_sort_by}{edge_param_to_sort_by}
 }
+\value{
+
+}
 \description{
 Reduces trajectories igraph object by removing low effect links and orphan nodes
 }

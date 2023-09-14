@@ -13,10 +13,10 @@ getCohortSize<-function(connection,
 
 
   #replace parameter values in SQL
-  sql <- SqlRender::render("SELECT COUNT(*) AS CCC FROM @resultsSchema.@prefiXcohort WHERE cohort_definition_id = @cohortId;",
+  sql <- SqlRender::render("SELECT COUNT(*) AS TOTAL FROM @resultsSchema.@prefiXtraj_base_cohort WHERE IS_VALIDATION_SET = @validationMode;",
                            resultsSchema = trajectoryLocalArgs$resultsSchema,
                            prefiX = trajectoryLocalArgs$prefixForResultTableNames,
-                           cohortId=ifelse(Trajectories:::IsValidationMode(trajectoryAnalysisArgs),2,1))
+                           validationMode=ifelse(Trajectories:::IsValidationMode(trajectoryAnalysisArgs),1,0))
 
   #translate SQL into right dialect
   sql <- SqlRender::translate(sql = sql,
@@ -25,5 +25,5 @@ getCohortSize<-function(connection,
 
   result = DatabaseConnector::querySql(connection, sql)
 
-  return (result$CCC)
+  return (result$TOTAL)
 }

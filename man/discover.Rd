@@ -7,14 +7,13 @@
 discover(
   connection,
   trajectoryLocalArgs,
-  createCohort = T,
+  createEventsTable = T,
   validationSetSize = 0,
   createEventPairsTable = T,
   runDiscoveryAnalysis = T,
   forceRecalculationOfAnalysis = F,
   createFilteredFullgraphs = T,
-  createGraphsForSelectedEvents = T,
-  runTrajectoryAnalysis = F,
+  runTrajectoryAnalysis = T,
   selfValidate = F,
   cleanup = F
 )
@@ -24,7 +23,7 @@ discover(
 
 \item{trajectoryLocalArgs}{TrajectoryLocalArgs object that must be created by createTrajectoryLocalArgs() method}
 
-\item{createCohort}{Builds a study cohort in the database. If validationSetSize is set to non-zero, splits the cohort into disovery and validation set.}
+\item{createEventsTable}{Builds a study cohort in the database. If validationSetSize is set to non-zero, splits the cohort into disovery and validation set.}
 
 \item{validationSetSize}{If set to non-zero, splits the whole cohort into discovery and (self-)validation set. Is meaningful only if selfValidate=T. Allowed values are in range 0..1.}
 
@@ -41,6 +40,9 @@ discover(
 \item{selfValidate}{Normally, set to F/FALSE as it is always better to validate your results in another database. However, if you want to validate your results in your own database, then set selfValidate=T and validationSetSize=some meaningful proportion (for example, 0.5). In such case, the discovery analysis is actually conducted on half of the data and the results are then validated on another half.}
 
 \item{cleanup}{Drops tables from the database that were created during various stages of the analysis.}
+}
+\value{
+
 }
 \description{
 The main function to run the Trajectory package in discovery mode - that is, to identify the temporal event sequences in the cohort of your local OMOP CDM

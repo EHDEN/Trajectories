@@ -13,4 +13,4 @@ SET
   CASE_CONTROL_GROUPS_IMBALANCE_COMMENT='@imbalance_comment',
   E2_COUNT_IN_CASE_GROUP=@num_observations_in_cases,
   E2_COUNT_IN_CONTROL_GROUP=@num_observations_in_controls
-WHERE E1_CONCEPT_ID = '@diag1' AND  E2_CONCEPT_ID = '@diag2';
+WHERE E1_COHORT_ID = '@diag1' AND  E2_COHORT_ID = '@diag2';

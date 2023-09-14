@@ -10,5 +10,5 @@ IF OBJECT_ID('@resultsSchema.@prefixeventperiods_with_E1', 'U') IS NOT NULL
         FROM
              @resultsSchema.@prefixevents_in_eventperiods
         WHERE
-            CONCEPT_ID = (@diag1)
+            COHORT_ID = (@diag1)
         ORDER BY EVENTPERIOD_ID,date;

@@ -32,6 +32,9 @@ alignActualTrajectoriesToGraph(
 
 \item{filename_interpretation}{Full path to output file for textual interpretation of the output graph. Set to NA to skip this.}
 }
+\value{
+
+}
 \description{
 Adds numcohortCustom value to graph edges - actual number of people (out of all people who have eventId) on that edge
 }

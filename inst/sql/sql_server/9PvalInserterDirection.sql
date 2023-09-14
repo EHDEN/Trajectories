@@ -6,5 +6,5 @@ SET
   DIRECTIONAL_SIGNIFICANT_IF_SAME_DAY_EVENTS_ORDERED=@significantIfSameDayOK,
   DIRECTIONAL_POWER=@powerDirection
 WHERE
-  E1_CONCEPT_ID = '@diag1'
-  AND E2_CONCEPT_ID = '@diag2';
+  E1_COHORT_ID = '@diag1'
+  AND E2_COHORT_ID = '@diag2';

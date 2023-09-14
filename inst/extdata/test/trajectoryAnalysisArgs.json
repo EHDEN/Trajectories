@@ -1,0 +1,11 @@
+{
+  "mode": ["DISCOVERY"],
+  "minimumDaysBetweenEvents": [1],
+  "maximumDaysBetweenEvents": [90],
+  "minPatientsPerEventPair": [1],
+  "daysBeforeIndexDate": [7],
+  "cohortName": ["Test cohort"],
+  "description": ["Influenza study, looking at 7 days prior and 60 days after influenza diagnosis/measurement/positive test. Can occur several times per patient."],
+  "eventIdsForGraphs": [],
+  "RRrangeToSkip": [0, 1.1]
+}

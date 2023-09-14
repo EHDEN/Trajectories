@@ -11,6 +11,9 @@ filterByLift(g, lift.threshold = 2)
 
 \item{lift.threshold}{lift.threshold}
 }
+\value{
+
+}
 \description{
 Filtering edges by lift
 }

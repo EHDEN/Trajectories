@@ -9,13 +9,6 @@ createTrajectoryAnalysisArgs(
   minimumDaysBetweenEvents = 1,
   maximumDaysBetweenEvents = 3650,
   minPatientsPerEventPair = 10,
-  addConditions = T,
-  addObservations = F,
-  addProcedures = F,
-  addDrugExposures = F,
-  addDrugEras = F,
-  addBirths = F,
-  addDeaths = T,
   daysBeforeIndexDate = Inf,
   RRrangeToSkip = c(0, 1.2),
   cohortName = "My sample cohort",
@@ -32,31 +25,11 @@ createTrajectoryAnalysisArgs(
 
 \item{minPatientsPerEventPair}{Minimum number of people having event1 -> event2 (directional) progression (satisfying minimumDaysBetweenEvents and maximumDaysBetweenEvents requirements) to be included in analysis. If the value is >=1, it is considered as the absolute count of event pairs. If the value is less than 1, the value is considered as prevalence among the cohort size. For instance, if you have 1000 persons in the cohort and the value is 0.05, each event pair must occur at least 1000x0.05=50 times. Can be used for limiting analysis to frequent event pairs only. However, it does not affect control group matching and therefore, either the p-value.}
 
-\item{addConditions}{TRUE/FALSE parameter to indicate whether events from Condition_occurrence table should be included in the analysis}
-
-\item{addObservations}{TRUE/FALSE parameter to indicate whether events from Condition_occurrence table should be included in the analysis}
-
-\item{addProcedures}{TRUE/FALSE parameter to indicate whether events from Procedure_occurrence table should be included in the analysis}
-
-\item{addDrugExposures}{TRUE/FALSE parameter to indicate whether events from Drug_exposure table should be included in the analysis. In most of the cases, prefer using addDrugEras instead as the particular RxNorm codes may differ in various databases (leading to no replication) but drug_era is always on ingredient level (active compound) and it also fills gaps between close events.}
-
-\item{addDrugEras}{TRUE/FALSE parameter to indicate whether events from Drug_era table should be included in the analysis. NB! use either addDrugEras=T or addDrugExposures=T (not both) as it leads to analysis duplication...}
-
-\item{addBirths}{TRUE/FALSE parameter to indicate whether births events should be included in the analysis.}
-
-\item{addDeaths}{TRUE/FALSE parameter to indicate whether events from Death table should be included in the analysis.}
-
 \item{daysBeforeIndexDate}{0 or any positive number that indicates for how many days before index date of the cohort the events are included in the analysis. In case one wants to include all events before index date, use value Inf}
 
 \item{cohortName}{Reader-friendly short description of the cohort. Used in graph titles and file names (can contain spaces)}
 
 \item{description}{This is a placeholder for any description of the study/cohort/analysis. For instance, it would be wise to descibe here what kind of cohort is that and what the analysis does.}
-
-\item{RRrangeToSkip":}{Range of relative risks (RR) that are skipped from the analysis. The minimum value for the range is 0. E.g RRrangeToSkip=c(0,1) searches for RR>1 only (event pairs where the first event increases the risk of the second event). To skip RR with very small effect, it is recommended to use RRrangeToSkip=c(0,1.1) or even RRrangeToSkip=c(0,1.2) in DISCOVERY mode. In case one is interested in pairs with decreasing risk also, it is recommended to use the range something like RRrangeToSkip=c(0.8,1.2) (analyse all pairs that have RR<0.8 or R>=1.2). If you don't want to skip anything, use RRrangeToSkip=c(1,1) (analyses all pairs that have RR<1 or RR>=1 - that means, all pairs). The first number of the range should be in the range 0..1 and the second number in range 1..Inf}
-
-\item{packageName}{Do not use/edit, this is required by SqlRender::loadRenderTranslateSql}
-
-\item{eventIdsForGraph}{List of exact concept ID-s of the events that are used to align actual trajectories in the end of analysis. Can be left not defined (NA)}
 }
 \value{
 TrajectoryAnalysisArgs object

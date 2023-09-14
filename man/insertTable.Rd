@@ -6,6 +6,9 @@
 \usage{
 insertTable(connection, databaseSchema = NULL, ...)
 }
+\value{
+
+}
 \description{
 Replica of insertTable, but to handle schema problem https://github.com/OHDSI/SqlRender/issues/258 for SqlRender
 }

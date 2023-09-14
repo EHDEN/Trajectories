@@ -9,6 +9,9 @@ is.TrajectoryLocalArgs(x)
 \arguments{
 \item{x}{Any R object}
 }
+\value{
+
+}
 \description{
 Checks whether the object is of type TrajectoryLocalArgs
 }

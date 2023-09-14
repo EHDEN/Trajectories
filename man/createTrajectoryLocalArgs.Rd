@@ -7,9 +7,9 @@
 createTrajectoryLocalArgs(
   cdmDatabaseSchema,
   vocabDatabaseSchema,
+  cohortDatabaseSchema,
+  cohortTableName,
   resultsSchema,
-  oracleTempSchema,
-  sqlRole = F,
   prefixForResultTableNames = "",
   inputFolder = system.file("extdata", "RA", package = "Trajectories"),
   mainOutputFolder = getwd(),
@@ -22,10 +22,6 @@ createTrajectoryLocalArgs(
 \item{vocabDatabaseSchema}{Schema containing OMOP vocabulary}
 
 \item{resultsSchema}{Schema the user has writing access to (used to write analysis tables into)}
-
-\item{oracleTempSchema}{In case you are using oracle, schema for temporary tables need to be specified. A schema where temp tables can be created in Oracle. Otherwise leave it as it is (is not used)}
-
-\item{sqlRole}{Role to use in SQL for writing tables in 'resultsSchema'. It should also have access to 'cdmDatabaseSchema' and 'vocabDatabaseSchema'. Set to FALSE (or F) if setting to a specific role is not needed. It should be safe to use F if you have no idea of what the SQL roles mean.}
 
 \item{prefixForResultTableNames}{Table prefix that is used for all output tables to avoid any collision with existing table names. An empty string is also allowed.}
 

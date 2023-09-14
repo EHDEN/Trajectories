@@ -16,7 +16,7 @@ IF OBJECT_ID('@resultsSchema.@prefixeventperiods_with_E1E2', 'U') IS NOT NULL
                  INNER JOIN @resultsSchema.@prefixeventperiods_with_E1 a
                 ON a.EVENTPERIOD_ID = b.EVENTPERIOD_ID
         WHERE
-            b.CONCEPT_ID = (@diag2)
+            b.COHORT_ID = (@diag2)
         --ORDER BY EVENTPERIOD_ID
         ;
 
@@ -25,7 +25,7 @@ IF OBJECT_ID('@resultsSchema.@prefixeventperiods_with_E1E2', 'U') IS NOT NULL
 UPDATE @resultsSchema.@prefixE1E2_model SET E1_BEFORE_E2_COUNT_IN_EVENTS = (select count(*) from @resultsSchema.@prefixeventperiods_with_E1E2 where E1E2_ORDER=1),
                                 E1_AFTER_E2_COUNT_IN_EVENTS = (select count(*) from @resultsSchema.@prefixeventperiods_with_E1E2 where E1E2_ORDER=-1),
                                 E1_AND_E2_ON_SAME_DAY_COUNT_IN_EVENTS = (select count(*) from @resultsSchema.@prefixeventperiods_with_E1E2 where E1E2_ORDER=0)
-WHERE E1_CONCEPT_ID = @diag1 and E2_CONCEPT_ID = @diag2;
+WHERE E1_COHORT_ID = @diag1 and E2_COHORT_ID = @diag2;
 
 
 -- drop calculation table

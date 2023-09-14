@@ -9,6 +9,9 @@ createTrajectoriesGraph(eventPairResultsFilename)
 \arguments{
 \item{eventPairResultsFilename}{Full path to event pairs file}
 }
+\value{
+
+}
 \description{
 It is actually an igraph object but has some specific attributes (counts, colors) necessary for Trajectories package
 }
