@@ -1450,6 +1450,8 @@ getSeason <- function(input.date){
 
 matchitWithTryCatch <- function(d,skip_exact_matching_requirement=F) {
 
+  openxlsx::write.xlsx(d, '~/temp/matchitWithTryCatch_d.xlsx', overwrite=T)
+
   if(skip_exact_matching_requirement==T) {
     # TESTING MODE - no exact match reeuirement applied. All parameters are used in propensity score
     f=IS_CASE ~ scale(LEN_HISTORY_DAYS) + scale(LEN_FOLLOWUP_DAYS)
@@ -1458,6 +1460,13 @@ matchitWithTryCatch <- function(d,skip_exact_matching_requirement=F) {
 
   } else {
     # PRODUCTION MODE
+
+    #for debugging - how many different values there are in dataframe d?
+    s <- d %>%
+      group_by(IS_CASE) %>%
+      summarise(across(everything(), ~ n_distinct(.)))
+    print(s)
+
 
     #in some rare cases, the number of different "SEASON_OF_INDEXDATE" values in case group is 1.
     #As we use it in formula, glm.fit produces error "contrasts can be applied only to factors with 2 or more levels"
@@ -1475,30 +1484,31 @@ matchitWithTryCatch <- function(d,skip_exact_matching_requirement=F) {
 
   #ParallelLogger::logInfo(f)
 
-  tryCatch(
-    expr = {
-      m.out1<-suppressWarnings(MatchIt::matchit(formula=f, #formula for logistic regression
-                                                data=d,
-                                                method = "optimal", # Find a control patients so that the sum of the absolute pairwise distances in the matched sample is as small as possible
-                                                distance = "glm", #Use logistic regression based propensity score
-                                                exact=exact,
-                                                discard="both", # discard cases or controls where no good matching is found
-                                                reestimate=T) #After discarding some cases/controls, re-estimate the propensity scores
-      )
-      return(m.out1)
-      #message("Successfully executed the log(x) call.")
-    },
-    error = function(e){
-      ParallelLogger::logInfo('Caught an error in matchit() but catched it in try-catch: ',e)
-      ParallelLogger::logInfo('Therefore, trying nearest neighbor matching instead of optimal...')
-    }
-    #warning = function(w){ #warning block is commented out to prevent stopping the execution of matchIt() if warning occurs
-    #  ParallelLogger::logInfo('Caught a warning in matchit() but catched it in try-catch:',w)
-    #},
-    #finally = {
-    #
-    #}
-  ) #tryCatch
+  # temprarily commented out on 26.09.2023 for debugging.
+  #tryCatch(
+  #  expr = {
+  #    m.out1<-suppressWarnings(MatchIt::matchit(formula=f, #formula for logistic regression
+  #                                              data=d,
+  #                                              method = "optimal", # Find a control patients so that the sum of the absolute pairwise distances in the matched sample is as small as possible
+  #                                              distance = "glm", #Use logistic regression based propensity score
+  #                                              exact=exact,
+  #                                              discard="both", # discard cases or controls where no good matching is found
+  #                                              reestimate=T) #After discarding some cases/controls, re-estimate the propensity scores
+  #    )
+  #    return(m.out1)
+  #    #message("Successfully executed the log(x) call.")
+  #  },
+  #  error = function(e){
+  #    ParallelLogger::logInfo('Caught an error in matchit() but catched it in try-catch: ',e)
+  #    ParallelLogger::logInfo('Therefore, trying nearest neighbor matching instead of optimal...')
+  #  }
+  #  #warning = function(w){ #warning block is commented out to prevent stopping the execution of matchIt() if warning occurs
+  #  #  ParallelLogger::logInfo('Caught a warning in matchit() but catched it in try-catch:',w)
+  #  #},
+  #  #finally = {
+  #  #
+  #  #}
+  #) #tryCatch
 
   #should reach here only if an error occurred
 
